@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập / Đăng Ký - Blog</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Identity Services cho Google Login -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+    <div class="container glassmorphism">
+        <!-- Khu vực chuyển đổi tab -->
+        <div class="tabs">
+            <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">Đăng Nhập</button>
+            <button id="tab-register" class="tab-btn" onclick="switchTab('register')">Đăng Ký</button>
+        </div>
+
+        <div id="message-box" class="message-box hidden"></div>
+
+        <!-- Form Đăng Nhập -->
+        <form id="form-login" class="auth-form active">
+            <h2>Chào Mừng Trở Lại</h2>
+            <div class="input-group">
+                <input type="email" id="login-email" placeholder="Email của bạn" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="login-password" placeholder="Mật khẩu" required>
+            </div>
+            <button type="submit" class="btn primary-btn">Đăng nhập ngay</button>
+
+            <div class="divider">
+                <span>Hoặc đăng nhập liên kết</span>
+            </div>
+
+            <!-- Div giả này dùng để render nút Google Button bởi GSI script -->
+            <div class="google-wrapper">
+                <div id="googleButton" class="google-btn"></div>
+            </div>
+        </form>
+
+        <!-- Form Đăng Ký -->
+        <form id="form-register" class="auth-form hidden">
+            <h2>Tạo Tài Khoản Mới</h2>
+            <div class="input-group">
+                <input type="text" id="reg-fullname" placeholder="Họ và Tên" required>
+            </div>
+            <div class="input-group">
+                <select id="reg-gender" required>
+                    <option value="" disabled selected>Chọn Giới Tính</option>
+                    <option value="Male">Nam</option>
+                    <option value="Female">Nữ</option>
+                    <option value="Other">Khác</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="email" id="reg-email" placeholder="Email của bạn" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="reg-password" placeholder="Mật khẩu" required>
+            </div>
+            <button type="submit" class="btn primary-btn">Đăng ký tài khoản</button>
+        </form>
+
+        <!-- Area cho người dùng đã đăng nhập -->
+        <div id="user-dashboard" class="hidden">
+            <h2 id="welcome-text">Xin chào!</h2>
+            <img id="user-avatar" class="avatar hidden" src="" alt="Avatar">
+            <button class="btn secondary-btn" onclick="logout()">Đăng xuất</button>
+        </div>
+    </div>
+
+    <!-- Script điều khiển Logic -->
+    <script src="app.js"></script>
+</body>
+
+</html>
