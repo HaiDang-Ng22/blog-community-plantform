@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm kiếm - Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .search-results-container { margin-top: 2rem; }
+        .search-section { margin-bottom: 3rem; }
+        .search-section h2 { margin-bottom: 1.5rem; color: #1e293b; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+        
+        .user-result-card { display: flex; align-items: center; background: #fff; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; cursor: pointer; transition: transform 0.2s; border: 1px solid #f1f5f9; }
+        .user-result-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .user-result-card img { width: 64px; height: 64px; border-radius: 50%; margin-right: 1.5rem; object-fit: cover; }
+        .user-result-info h4 { margin: 0; color: #1e293b; }
+        .user-result-info p { margin: 0.25rem 0 0; color: #64748b; font-size: 0.9rem; }
+        
+        .no-results { text-align: center; padding: 3rem; color: #94a3b8; }
+        .no-results i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    </style>
+</head>
+
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK</a>
+            </div>
+            <div class="nav-actions" id="nav-actions"></div>
+        </nav>
+    </header>
+
+    <main class="main-content container-wide">
+        <h3 id="search-title">Đang tìm kiếm...</h3>
+        
+        <div class="search-results-container">
+            <!-- Người dùng -->
+            <section class="search-section">
+                <h2>Người dùng</h2>
+                <div id="users-results-list"></div>
+            </section>
+
+            <!-- Bài viết -->
+            <section class="search-section">
+                <h2>Bài viết</h2>
+                <div id="posts-results-list"></div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/search.js"></script>
+</body>
+
+</html>

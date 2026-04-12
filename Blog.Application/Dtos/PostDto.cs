@@ -1,4 +1,4 @@
-﻿namespace Blog.Application.Dtos;
+namespace Blog.Application.Dtos;
 
 public class PostDto
 {
@@ -12,8 +12,13 @@ public class PostDto
     public int LikeCount { get; set; }
     public string Status { get; set; } = string.Empty;
     public string AuthorName { get; set; } = string.Empty;
+    public string? AuthorAvatarUrl { get; set; }
+    public Guid AuthorId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? PublishedAt { get; set; }
+    public int CommentCount { get; set; }
+    public bool IsLikedByMe { get; set; }
+    public List<string> ImageUrls { get; set; } = new List<string>();
 }
 
 public class CreatePostDto
@@ -22,6 +27,7 @@ public class CreatePostDto
     public string Content { get; set; } = string.Empty;
     public string? Summary { get; set; }
     public string? FeaturedImageUrl { get; set; }
+    public List<string> ImageUrls { get; set; } = new List<string>();
 }
 
 public class UpdatePostDto
@@ -30,4 +36,5 @@ public class UpdatePostDto
     public string Content { get; set; } = string.Empty;
     public string? Summary { get; set; }
     public string? FeaturedImageUrl { get; set; }
+    public List<string> ImageUrls { get; set; } = new List<string>();
 }

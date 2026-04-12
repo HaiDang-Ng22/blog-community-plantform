@@ -1,0 +1,259 @@
+/* css/components.css */
+
+/* Social Media Style Post Card */
+.posts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.post-card {
+    background: white;
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid #E2E8F0;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: row;
+    gap: 1.2rem;
+    width: 100%;
+}
+
+.post-card:hover {
+    background: #F8FAFC;
+    border-color: #CBD5E1;
+}
+
+.author-avatar-col img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.post-main-col {
+    flex: 1;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.post-author-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.post-author-name:hover {
+    text-decoration: underline;
+}
+
+.post-time {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.post-title-link {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 0.8rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.post-body {
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    white-space: pre-wrap;
+}
+
+.post-media {
+    width: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid #E2E8F0;
+}
+
+.post-media img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+}
+
+.post-actions {
+    display: flex;
+    gap: 2rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.action-item:hover {
+    color: #2563EB;
+}
+
+/* Comment Section */
+.comment-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #F1F5F9;
+    animation: fadeIn 0.3s ease;
+}
+
+.comment-input-area {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.reply-input {
+    flex: 1;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 2rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+.reply-input:focus {
+    border-color: #3B82F6;
+    background: white;
+}
+
+.comment-input-area button {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.comment-item {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.comment-content-box {
+    background: #F1F5F9;
+    padding: 0.6rem 1rem;
+    border-radius: 1rem;
+    flex: 1;
+}
+
+.comment-author {
+    display: block;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.2rem;
+}
+
+.comment-text {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.comment-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 0.2rem;
+    display: block;
+}
+
+.no-comments {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    padding: 1rem 0;
+}
+
+/* Three dots menu */
+.post-options {
+    position: relative;
+}
+
+.options-btn {
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 0.5rem;
+}
+
+.options-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid #E2E8F0;
+    z-index: 10;
+    min-width: 120px;
+    overflow: hidden;
+}
+
+.options-menu button {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.options-menu button:hover {
+    background: #F1F5F9;
+}
+
+.options-menu button.delete {
+    color: #EF4444;
+}
+.skeleton {
+    background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+    background-size: 200% 100%;
+    animation: 1.5s shine linear infinite;
+    min-height: 200px;
+    border-radius: 1.5rem;
+}
+
+@keyframes shine {
+    to { background-position-x: -200%; }
+}
+
+/* Error/Empty Msg */
+.no-posts {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--text-light);
+}
+
+.no-posts i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}

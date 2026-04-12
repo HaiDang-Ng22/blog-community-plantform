@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ cá nhân - Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK</a>
+            </div>
+            
+            <div class="nav-actions" id="nav-actions">
+                <!-- Sẽ được điền bằng JS -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content container-wide">
+        <div class="profile-container">
+            <!-- Profile Header -->
+            <div class="profile-header-card" id="profile-header-loading">
+                <div class="profile-cover"></div>
+                <div class="profile-info-section">
+                    <div class="profile-avatar-wrapper">
+                        <img src="https://ui-avatars.com/api/?name=User&background=random" id="profile-avatar" class="large-avatar" alt="Avatar">
+                    </div>
+                    <div class="profile-names">
+                        <h2 id="profile-name">Đang tải...</h2>
+                        <p id="profile-username">@loading</p>
+                    </div>
+                    <div class="profile-bio" id="profile-bio">
+                        Đây là nơi chia sẻ những suy nghĩ và câu chuyện của tôi.
+                    </div>
+                    <div class="profile-stats-row">
+                        <span><b id="post-count">0</b> Bài viết</span>
+                        <span><b id="follower-count">0</b> Người theo dõi</span>
+                        <span><b id="following-count">0</b> Đang theo dõi</span>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <button id="follow-btn" class="btn primary-btn" style="width: auto; padding: 0.6rem 2rem;">Theo dõi</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Timeline -->
+            <div class="section-title">
+                <h3>Bài đăng của tôi</h3>
+            </div>
+
+            <div id="profile-posts-grid" class="posts-grid">
+                <!-- Sẽ được điền bằng JS -->
+                <div class="post-card skeleton"></div>
+            </div>
+
+            <div id="no-posts" class="no-posts hidden">
+                <i class="fa-solid fa-note-sticky"></i>
+                <p>Bạn chưa có bài đăng nào.</p>
+                <button class="btn primary-btn" onclick="window.location.href='create-post.html'" style="width: auto; padding: 0.6rem 2rem; margin-top: 1rem;">Đăng bài ngay</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container-wide">
+            <p>&copy; 2026 Zynk Community.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/post-actions.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+
+</html>

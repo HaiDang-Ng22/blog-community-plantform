@@ -4,79 +4,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập / Đăng Ký - Blog</title>
-    <!-- Google Fonts -->
+    <title>Zynk - Nền tảng Chia sẻ Kiến thức</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Google Identity Services cho Google Login -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/home.css?v=1.1">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body>
-    <div class="container glassmorphism">
-        <!-- Khu vực chuyển đổi tab -->
-        <div class="tabs">
-            <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">Đăng Nhập</button>
-            <button id="tab-register" class="tab-btn" onclick="switchTab('register')">Đăng Ký</button>
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK</a>
+            </div>
+            
+
+            <div class="nav-actions" id="nav-actions">
+                <!-- Sẽ được điền bằng JS dựa trên trạng thái đăng nhập -->
+                <a href="auth.html" class="btn-login-link">Đăng nhập</a>
+                <a href="auth.html" class="btn-register-link">Bắt đầu ngay</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content container-wide">
+        <!-- Quick Post Area -->
+        <section class="quick-post-section" id="quick-post-auth-only">
+            <div class="quick-post-card">
+                <img src="https://ui-avatars.com/api/?name=User&background=random" id="current-user-avatar" class="mini-avatar" alt="Avatar">
+                <div class="quick-post-input" onclick="window.location.href='create-post.html'">
+                    Bạn đang nghĩ gì thế?
+                </div>
+            </div>
+        </section>
+
+        <section class="posts-section">
+            <div class="section-title">
+                <h2>Bảng tin</h2>
+                <div class="filter-tabs">
+                    <button class="filter-btn active">Mới nhất</button>
+                    <button class="filter-btn">Đang theo dõi</button>
+                </div>
+            </div>
+
+            <div id="posts-grid" class="posts-grid">
+                <!-- Skeleton Loading -->
+                <div class="post-card skeleton"></div>
+            </div>
+    <div class="post-card skeleton"></div>
+            </div>
+
+            <div id="no-posts" class="no-posts hidden">
+                <i class="fa-solid fa-wind"></i>
+                <p>Mọi thứ thật yên tĩnh. Hãy là người đầu tiên đăng bài!</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container-wide">
+            <p>&copy; 2026 Zynk Community. Made with ❤️ for developers.</p>
         </div>
+    </footer>
 
-        <div id="message-box" class="message-box hidden"></div>
-
-        <!-- Form Đăng Nhập -->
-        <form id="form-login" class="auth-form active">
-            <h2>Chào Mừng Trở Lại</h2>
-            <div class="input-group">
-                <input type="email" id="login-email" placeholder="Email của bạn" required>
-            </div>
-            <div class="input-group">
-                <input type="password" id="login-password" placeholder="Mật khẩu" required>
-            </div>
-            <button type="submit" class="btn primary-btn">Đăng nhập ngay</button>
-
-            <div class="divider">
-                <span>Hoặc đăng nhập liên kết</span>
-            </div>
-
-            <!-- Div giả này dùng để render nút Google Button bởi GSI script -->
-            <div class="google-wrapper">
-                <div id="googleButton" class="google-btn"></div>
-            </div>
-        </form>
-
-        <!-- Form Đăng Ký -->
-        <form id="form-register" class="auth-form hidden">
-            <h2>Tạo Tài Khoản Mới</h2>
-            <div class="input-group">
-                <input type="text" id="reg-fullname" placeholder="Họ và Tên" required>
-            </div>
-            <div class="input-group">
-                <select id="reg-gender" required>
-                    <option value="" disabled selected>Chọn Giới Tính</option>
-                    <option value="Male">Nam</option>
-                    <option value="Female">Nữ</option>
-                    <option value="Other">Khác</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <input type="email" id="reg-email" placeholder="Email của bạn" required>
-            </div>
-            <div class="input-group">
-                <input type="password" id="reg-password" placeholder="Mật khẩu" required>
-            </div>
-            <button type="submit" class="btn primary-btn">Đăng ký tài khoản</button>
-        </form>
-
-        <!-- Area cho người dùng đã đăng nhập -->
-        <div id="user-dashboard" class="hidden">
-            <h2 id="welcome-text">Xin chào!</h2>
-            <img id="user-avatar" class="avatar hidden" src="" alt="Avatar">
-            <button class="btn secondary-btn" onclick="logout()">Đăng xuất</button>
-        </div>
-    </div>
-
-    <!-- Script điều khiển Logic -->
-    <script src="app.js"></script>
+    <!-- Scripts -->
+    <script src="js/api.js?v=1.1"></script>
+    <script src="js/auth.js?v=1.1"></script>
+    <script src="js/common.js?v=1.1"></script>
+    <script src="js/notifications.js?v=1.1"></script>
+    <script src="js/home.js?v=1.1"></script>
 </body>
 
 </html>

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Blog.Infrastructure.Repositories;
 
-public class PostRepository : Repository<Post>, IPostRepository
+public class PostRepository : GenericRepository<Post>, IPostRepository
 {
     public PostRepository(AppDbContext context) : base(context)
     {
@@ -15,6 +15,9 @@ public class PostRepository : Repository<Post>, IPostRepository
         return await _dbSet
             .Where(p => p.Status == PostStatus.Published)
             .Include(p => p.Author)
+            .Include(p => p.PostLikes)
+            .Include(p => p.Comments)
+            .Include(p => p.Images)
             .OrderByDescending(p => p.PublishedAt)
             .ToListAsync();
     }
@@ -24,6 +27,8 @@ public class PostRepository : Repository<Post>, IPostRepository
         return await _dbSet
             .Include(p => p.Author)
             .Include(p => p.Comments)
+            .Include(p => p.PostLikes)
+            .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Slug == slug);
     }
 
@@ -31,6 +36,10 @@ public class PostRepository : Repository<Post>, IPostRepository
     {
         return await _dbSet
             .Where(p => p.AuthorId == authorId)
+            .Include(p => p.Author)
+            .Include(p => p.PostLikes)
+            .Include(p => p.Comments)
+            .Include(p => p.Images)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }

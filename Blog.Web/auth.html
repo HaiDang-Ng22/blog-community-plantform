@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực - Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+    <div class="container glassmorphism">
+        <div class="tabs">
+            <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">Đăng Nhập</button>
+            <button id="tab-register" class="tab-btn" onclick="switchTab('register')">Đăng Ký</button>
+        </div>
+
+        <div id="message-box" class="message-box hidden"></div>
+
+        <form id="form-login" class="auth-form active">
+            <h2>Chào Mừng Trở Lại</h2>
+            <div class="input-group">
+                <input type="email" id="login-email" placeholder="Email của bạn" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="login-password" placeholder="Mật khẩu" required>
+            </div>
+            <button type="submit" class="btn primary-btn">Đăng nhập ngay</button>
+
+            <div class="divider">
+                <span>Hoặc đăng nhập liên kết</span>
+            </div>
+
+            <div class="google-wrapper">
+                <div id="googleButton" class="google-btn"></div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="index.html" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">← Quay lại Trang chủ</a>
+            </div>
+        </form>
+
+        <form id="form-register" class="auth-form hidden">
+            <h2>Tạo Tài Khoản Mới</h2>
+            <div class="input-group">
+                <input type="text" id="reg-fullname" placeholder="Họ và Tên" required>
+            </div>
+            <div class="input-group">
+                <select id="reg-gender" required>
+                    <option value="" disabled selected>Chọn Giới Tính</option>
+                    <option value="Male">Nam</option>
+                    <option value="Female">Nữ</option>
+                    <option value="Other">Khác</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="email" id="reg-email" placeholder="Email của bạn" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="reg-password" placeholder="Mật khẩu (8+ ký tự, 1 chữ hoa, 1 đặc biệt)" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="reg-confirm-password" placeholder="Nhập lại mật khẩu" required>
+            </div>
+            <button type="submit" class="btn primary-btn">Đăng ký tài khoản</button>
+        </form>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js?v=1.1"></script>
+    <script src="js/auth.js?v=1.1"></script>
+</body>
+
+</html>

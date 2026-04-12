@@ -5,6 +5,7 @@ using Blog.Application.Dtos;
 using Blog.Domain.Entities;
 using Blog.Infrastructure.Data;
 using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -29,6 +30,13 @@ public class AuthController : ControllerBase
     {
         if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             return BadRequest(new { message = "Email đã được sử dụng." });
+
+        if (request.Password.Length < 8 || 
+            !request.Password.Any(char.IsUpper) || 
+            !request.Password.Any(ch => !char.IsLetterOrDigit(ch)))
+        {
+            return BadRequest(new { message = "Mật khẩu không thỏa mãn yêu cầu bảo mật (8 ký tự, có chữ hoa và ký tự đặc biệt)." });
+        }
 
         var user = new User
         {
@@ -55,7 +63,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
 
         var token = GenerateJwtToken(user);
-        return Ok(new AuthResponse { Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl });
+        return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl });
     }
 
     [HttpPost("google")]
@@ -85,12 +93,39 @@ public class AuthController : ControllerBase
             }
 
             var token = GenerateJwtToken(user);
-            return Ok(new AuthResponse { Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl });
+            return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl });
         }
         catch (InvalidJwtException)
         {
             return BadRequest(new { message = "Token Google không hợp lệ." });
         }
+    }
+
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+            return Unauthorized(new { message = "Không xác định được người dùng" });
+
+        var userId = Guid.Parse(userIdClaim.Value);
+        var user = await _context.Users.FindAsync(userId);
+
+        if (user == null)
+            return NotFound(new { message = "Người dùng không tồn tại" });
+
+        return Ok(new UserProfileResponse
+        {
+            Id = user.Id,
+            Username = user.Username,
+            FullName = user.FullName,
+            Email = user.Email,
+            AvatarUrl = user.AvatarUrl,
+            Bio = user.Bio,
+            Gender = user.Gender,
+            CreatedAt = user.CreatedAt
+        });
     }
 
     private string GenerateJwtToken(User user)

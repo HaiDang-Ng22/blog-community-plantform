@@ -1,4 +1,5 @@
 using Blog.Domain.Entities;
+using Blog.Domain.Interfaces;
 
 namespace Blog.Infrastructure.Repositories;
 

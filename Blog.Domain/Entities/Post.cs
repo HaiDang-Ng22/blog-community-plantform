@@ -1,4 +1,4 @@
-﻿namespace Blog.Domain.Entities;
+namespace Blog.Domain.Entities;
 
 public class Post
 {
@@ -20,6 +20,8 @@ public class Post
     public virtual User Author { get; set; } = null!;
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
+    public virtual ICollection<PostLike> PostLikes { get; set; } = new List<PostLike>();
+    public virtual ICollection<PostImage> Images { get; set; } = new List<PostImage>();
 }
 
 public enum PostStatus
