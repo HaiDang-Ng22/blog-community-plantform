@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Blog.Domain.Entities;
+using System.IdentityModel.Tokens.Jwt;
 
+// Clear default inbound claim type mapping to prevent mapping 'role' to long XML schema URIs
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +54,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IShopRepository, ShopRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 var app = builder.Build();
 
@@ -136,6 +142,109 @@ using (var scope = app.Services.CreateScope())
                 CONSTRAINT [FK_Blocks_Users_BlockedId] FOREIGN KEY ([BlockedId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
             );
         END");
+
+        // --- Shopping Table Creation ---
+        
+        // 1. Categories
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Categories]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [Categories] ([Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [Name] NVARCHAR(MAX) NOT NULL, [Slug] NVARCHAR(MAX) NOT NULL, [Icon] NVARCHAR(MAX) NULL, [CreatedAt] DATETIME2 NOT NULL);
+            END");
+
+        // 2. ShopApplications
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[ShopApplications]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [ShopApplications] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [UserId] UNIQUEIDENTIFIER NOT NULL, [ShopName] NVARCHAR(MAX) NOT NULL, [Description] NVARCHAR(MAX) NOT NULL, [IdentityInfo] NVARCHAR(MAX) NULL, 
+                    [Status] INT NOT NULL DEFAULT 0, [AdminNote] NVARCHAR(MAX) NULL, [CreatedAt] DATETIME2 NOT NULL, [UpdatedAt] DATETIME2 NULL,
+                    CONSTRAINT [FK_ShopApps_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+                );
+            END");
+
+        // 3. Shops
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Shops]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [Shops] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [UserId] UNIQUEIDENTIFIER NOT NULL, [Name] NVARCHAR(MAX) NOT NULL, [Slug] NVARCHAR(450) NOT NULL, [Description] NVARCHAR(MAX) NOT NULL, 
+                    [LogoUrl] NVARCHAR(MAX) NULL, [CoverUrl] NVARCHAR(MAX) NULL, [Rating] FLOAT NOT NULL DEFAULT 5.0, [CreatedAt] DATETIME2 NOT NULL,
+                    CONSTRAINT [FK_Shops_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION
+                );
+                CREATE UNIQUE INDEX [IX_Shops_Slug] ON [Shops] ([Slug]);
+            END");
+
+        // 4. Products
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Products]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [Products] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [ShopId] UNIQUEIDENTIFIER NOT NULL, [CategoryId] UNIQUEIDENTIFIER NOT NULL, [Name] NVARCHAR(MAX) NOT NULL, [Slug] NVARCHAR(450) NOT NULL, 
+                    [Description] NVARCHAR(MAX) NOT NULL, [Price] DECIMAL(18,2) NOT NULL, [Stock] INT NOT NULL, [FeaturedImageUrl] NVARCHAR(MAX) NULL, [Status] INT NOT NULL DEFAULT 0, 
+                    [Rating] FLOAT NOT NULL DEFAULT 5.0, [SalesCount] INT NOT NULL DEFAULT 0, [CreatedAt] DATETIME2 NOT NULL, [UpdatedAt] DATETIME2 NULL,
+                    CONSTRAINT [FK_Products_Shops_ShopId] FOREIGN KEY ([ShopId]) REFERENCES [Shops] ([Id]) ON DELETE CASCADE,
+                    CONSTRAINT [FK_Products_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([Id]) ON DELETE NO ACTION
+                );
+                CREATE UNIQUE INDEX [IX_Products_Slug] ON [Products] ([Slug]);
+            END");
+
+        // 5. ProductImages
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[ProductImages]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [ProductImages] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [ProductId] UNIQUEIDENTIFIER NOT NULL, [Url] NVARCHAR(MAX) NOT NULL, [OrderIndex] INT NOT NULL,
+                    CONSTRAINT [FK_ProductImages_Products_ProductId] FOREIGN KEY ([ProductId]) REFERENCES [Products] ([Id]) ON DELETE CASCADE
+                );
+            END");
+
+        // 6. ProductVariants
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[ProductVariants]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [ProductVariants] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [ProductId] UNIQUEIDENTIFIER NOT NULL, [Name] NVARCHAR(MAX) NOT NULL, [PriceOverride] DECIMAL(18,2) NOT NULL, [Stock] INT NOT NULL,
+                    CONSTRAINT [FK_ProductVariants_Products_ProductId] FOREIGN KEY ([ProductId]) REFERENCES [Products] ([Id]) ON DELETE CASCADE
+                );
+            END");
+
+        // 7. Orders
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Orders]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [Orders] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [BuyerId] UNIQUEIDENTIFIER NOT NULL, [TotalAmount] DECIMAL(18,2) NOT NULL, [Status] INT NOT NULL DEFAULT 0, 
+                    [PaymentMethod] NVARCHAR(50) NOT NULL DEFAULT 'COD', [ShippingAddress] NVARCHAR(MAX) NOT NULL, [CustomerNote] NVARCHAR(MAX) NULL, [CreatedAt] DATETIME2 NOT NULL, [UpdatedAt] DATETIME2 NULL,
+                    CONSTRAINT [FK_Orders_Users_BuyerId] FOREIGN KEY ([BuyerId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION
+                );
+            END");
+
+        // 8. OrderItems
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[OrderItems]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [OrderItems] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [OrderId] UNIQUEIDENTIFIER NOT NULL, [ProductId] UNIQUEIDENTIFIER NOT NULL, [VariantId] UNIQUEIDENTIFIER NULL, [Quantity] INT NOT NULL, [UnitPrice] DECIMAL(18,2) NOT NULL,
+                    CONSTRAINT [FK_OrderItems_Orders_OrderId] FOREIGN KEY ([OrderId]) REFERENCES [Orders] ([Id]) ON DELETE CASCADE,
+                    CONSTRAINT [FK_OrderItems_Products_ProductId] FOREIGN KEY ([ProductId]) REFERENCES [Products] ([Id]) ON DELETE NO ACTION
+                );
+            END");
+            
+        // --- Seed Default Categories ---
+        if (!await dbContext.Categories.AnyAsync())
+        {
+            var cats = new List<Category>
+            {
+                new Category { Id = Guid.NewGuid(), Name = "Thời trang", Slug = "thoi-trang", Icon = "fa fa-shirt" },
+                new Category { Id = Guid.NewGuid(), Name = "Điện thoại & Phụ kiện", Slug = "dien-thoai", Icon = "fa fa-mobile-screen" },
+                new Category { Id = Guid.NewGuid(), Name = "Đồ gia dụng", Slug = "gia-dung", Icon = "fa fa-couch" },
+                new Category { Id = Guid.NewGuid(), Name = "Làm đẹp", Slug = "lam-dep", Icon = "fa fa-sparkles" },
+                new Category { Id = Guid.NewGuid(), Name = "Thực phẩm", Slug = "thuc-pham", Icon = "fa fa-bowl-food" }
+            };
+            await dbContext.Categories.AddRangeAsync(cats);
+            await dbContext.SaveChangesAsync();
+        }
     
     // Seed Real Admin User
     var adminEmail = "hd813345@gmail.com";

@@ -116,4 +116,89 @@ public class AdminController : ControllerBase
 
         return Ok(new { message = "Đã đánh dấu báo cáo là đã xử lý." });
     }
+
+    [HttpGet("shop-applications")]
+    public async Task<IActionResult> GetShopApplications()
+    {
+        var apps = await _context.ShopApplications
+            .Include(a => a.User)
+            .Select(a => new
+            {
+                a.Id,
+                a.UserId,
+                a.ShopName,
+                a.Description,
+                a.Status,
+                a.CreatedAt,
+                UserName = a.User.FullName
+            })
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+        return Ok(apps);
+    }
+
+    [HttpPost("shop-applications/{id}/approve")]
+    public async Task<IActionResult> ApproveShop(Guid id)
+    {
+        var app = await _context.ShopApplications.FindAsync(id);
+        if (app == null) return NotFound();
+
+        app.Status = ShopApplicationStatus.Approved;
+        app.UpdatedAt = DateTime.UtcNow;
+
+        // Create the official Shop
+        var slug = app.ShopName.ToLower().Replace(" ", "-") + "-" + Guid.NewGuid().ToString().Substring(0, 8);
+        var shop = new Shop
+        {
+            Id = Guid.NewGuid(),
+            UserId = app.UserId,
+            Name = app.ShopName,
+            Slug = slug,
+            Description = app.Description,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Shops.Add(shop);
+
+        // Send Notification
+        var notification = new Notification
+        {
+            Id = Guid.NewGuid(),
+            ReceiverId = app.UserId,
+            ActorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            Type = "System",
+            Message = $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã được phê duyệt!",
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Notifications.Add(notification);
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã duyệt yêu cầu mở cửa hàng." });
+    }
+
+    [HttpPost("shop-applications/{id}/reject")]
+    public async Task<IActionResult> RejectShop(Guid id, [FromBody] string note)
+    {
+        var app = await _context.ShopApplications.FindAsync(id);
+        if (app == null) return NotFound();
+
+        app.Status = ShopApplicationStatus.Rejected;
+        app.AdminNote = note;
+        app.UpdatedAt = DateTime.UtcNow;
+
+        // Send Notification
+        var notification = new Notification
+        {
+            Id = Guid.NewGuid(),
+            ReceiverId = app.UserId,
+            ActorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            Type = "System",
+            Message = $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã bị từ chối. Lý do: {note}",
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Notifications.Add(notification);
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã từ chối yêu cầu mở cửa hàng." });
+    }
 }

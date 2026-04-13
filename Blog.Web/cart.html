@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .cart-layout { max-width: 800px; margin: 3rem auto; }
+        .cart-card { background: var(--glass-bg); backdrop-filter: blur(10px); border-radius: 1.5rem; border: var(--glass-border); padding: 2rem; box-shadow: var(--shadow-md); }
+        .cart-item { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border-color); }
+        .cart-item img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; }
+        .cart-item-info { flex: 1; }
+        .cart-item-info h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .cart-price { font-weight: 700; color: #2563eb; }
+        .cart-qty { font-size: 0.9rem; color: #64748b; }
+        .cart-summary { margin-top: 2rem; text-align: right; }
+        .cart-total { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo"><a href="index.html">ZYNK</a></div>
+            <div class="nav-actions" id="nav-actions"></div>
+        </nav>
+    </header>
+
+    <main class="container-wide cart-layout">
+        <div class="cart-card">
+            <h2 style="margin-bottom: 1.5rem;"><i class="fa fa-shopping-cart"></i> Giỏ hàng của bạn</h2>
+            <div id="cart-list">
+                <!-- Data from JS -->
+            </div>
+            <div class="cart-summary" id="cart-summary">
+                <div class="cart-total">Tổng cộng: <span id="total-price">0đ</span></div>
+                <div class="input-group" style="text-align: left;">
+                    <label>Địa chỉ nhận hàng</label>
+                    <input type="text" id="ship-address" placeholder="Số nhà, đường, phường, quận..." required>
+                </div>
+                <button class="btn primary-btn" style="width: auto;" onclick="checkout()">Thanh toán COD</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js?v=1.5"></script>
+    <script src="js/common.js?v=1.5"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCart();
+        });
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+            
+            if (cart.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding: 3rem;">Giỏ hàng trống.</div>';
+                document.getElementById('cart-summary').style.display = 'none';
+                return;
+            }
+
+            let total = 0;
+            list.innerHTML = cart.map((item, index) => {
+                total += item.price * item.qty;
+                return `
+                    <div class="cart-item">
+                        <img src="${item.img || 'https://via.placeholder.com/80'}">
+                        <div class="cart-item-info">
+                            <h4>${item.name}</h4>
+                            <div class="cart-qty">Số lượng: ${item.qty}</div>
+                        </div>
+                        <div class="cart-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.qty)}</div>
+                        <button class="btn-action danger" onclick="removeFromCart(${index})"><i class="fa fa-trash"></i></button>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('total-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+        }
+
+        function removeFromCart(index) {
+            let cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+            cart.splice(index, 1);
+            localStorage.setItem('zynk_cart', JSON.stringify(cart));
+            renderCart();
+            if (window.updateCartBadge) window.updateCartBadge();
+        }
+
+        async function checkout() {
+            const address = document.getElementById('ship-address').value;
+            if (!address) return alert('Vui lòng nhập địa chỉ');
+
+            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+            
+            const data = {
+                shippingAddress: address,
+                items: cart.map(i => ({ productId: i.id, quantity: i.qty }))
+            };
+
+            try {
+                await window.api.post('orders/checkout', data);
+                alert('Đặt hàng thành công! Đơn hàng đang được chuẩn bị.');
+                localStorage.removeItem('zynk_cart');
+                window.location.href = 'profile.html'; // Or orders history
+            } catch (e) {
+                alert('Lỗi đặt hàng: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

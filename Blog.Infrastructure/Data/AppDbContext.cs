@@ -21,6 +21,16 @@ public class AppDbContext : DbContext
     public DbSet<Report> Reports { get; set; }
     public DbSet<Block> Blocks { get; set; }
 
+    // Shopping Entities
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<ShopApplication> ShopApplications { get; set; }
+    public DbSet<Shop> Shops { get; set; }
+    public DbSet<Product> Products { get; set; }
+    public DbSet<ProductImage> ProductImages { get; set; }
+    public DbSet<ProductVariant> ProductVariants { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -138,5 +148,56 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.ActorId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // --- Shopping Configurations ---
+        
+        // Product
+        modelBuilder.Entity<Product>()
+            .HasIndex(p => p.Slug)
+            .IsUnique();
+
+        modelBuilder.Entity<Product>()
+            .HasOne(p => p.Shop)
+            .WithMany(s => s.Products)
+            .HasForeignKey(p => p.ShopId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Product>()
+            .HasOne(p => p.Category)
+            .WithMany(c => c.Products)
+            .HasForeignKey(p => p.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Shop
+        modelBuilder.Entity<Shop>()
+            .HasIndex(s => s.Slug)
+            .IsUnique();
+
+        modelBuilder.Entity<Shop>()
+            .HasOne(s => s.User)
+            .WithMany()
+            .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ShopApplication
+        modelBuilder.Entity<ShopApplication>()
+            .HasOne(sa => sa.User)
+            .WithMany()
+            .HasForeignKey(sa => sa.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Order
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Buyer)
+            .WithMany()
+            .HasForeignKey(o => o.BuyerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // OrderItem
+        modelBuilder.Entity<OrderItem>()
+            .HasOne(oi => oi.Order)
+            .WithMany(o => o.Items)
+            .HasForeignKey(oi => oi.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

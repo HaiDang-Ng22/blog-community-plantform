@@ -1,0 +1,188 @@
+/* css/seller.css */
+.seller-layout {
+    max-width: 1000px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.seller-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border-radius: 2rem;
+    border: var(--glass-border);
+    padding: 3rem;
+    box-shadow: var(--shadow-lg);
+    min-height: 600px;
+}
+
+.seller-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.seller-header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.seller-header p {
+    color: var(--text-secondary);
+}
+
+/* Form Styling - Sửa lỗi giao diện */
+.input-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+}
+
+.input-group label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.input-group input, 
+.input-group textarea, 
+.input-group select {
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus, 
+.input-group textarea:focus, 
+.input-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Step/Application View */
+.application-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.status-card {
+    text-align: center;
+    padding: 3rem;
+    background: rgba(59, 130, 246, 0.05);
+    border-radius: 2rem;
+    border: 2px dashed #3B82F6;
+}
+
+.status-card i {
+    font-size: 4rem;
+    color: #3B82F6;
+    margin-bottom: 1.5rem;
+}
+
+/* Dashboard View */
+.seller-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.dashboard-tabs {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid #E2E8F0;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+}
+
+.tab-link {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.tab-link.active {
+    color: #2563EB;
+    border-bottom-color: #2563EB;
+}
+
+.dashboard-section {
+    display: none;
+}
+
+.dashboard-section.active {
+    display: block;
+}
+
+/* Table Style */
+.data-table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 1rem;
+    background: #f8fafc;
+    border-bottom: 2px solid #F1F5F9;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.data-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+
+.prod-img-mini {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    object-fit: cover;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge-success { background: #DCFCE7; color: #166534; }
+.badge-warning { background: #FEF9C3; color: #854d0e; }
+.badge-danger { background: #FEE2E2; color: #991b1b; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .seller-container { padding: 1.5rem; }
+    .seller-header h1 { font-size: 1.8rem; }
+    .stat-grid { grid-template-columns: 1fr !important; }
+}

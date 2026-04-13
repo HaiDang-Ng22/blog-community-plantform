@@ -45,7 +45,7 @@ function switchTab(tabName) {
         sec.classList.remove('active');
     });
     document.getElementById(`section-${tabName}`).classList.add('active');
-    
+
     // Smooth scrolling to top of content
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -54,7 +54,7 @@ function switchTab(tabName) {
 function toggleDarkMode() {
     const isDark = document.body.classList.toggle('dark-mode');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    
+
     const darkBtn = document.getElementById('dark-mode-btn');
     if (darkBtn) {
         darkBtn.textContent = isDark ? 'Tắt chế độ tối' : 'Bật chế độ tối';
@@ -65,18 +65,18 @@ function toggleDarkMode() {
 async function loadCurrentSettings() {
     try {
         const profile = await window.api.get('auth/profile');
-        
+
         document.getElementById('set-username').value = profile.username || '';
         document.getElementById('set-fullname').value = profile.fullName || '';
         document.getElementById('set-bio').value = profile.bio || '';
         document.getElementById('set-gender').value = profile.gender || 'Other';
-        
+
         document.getElementById('set-avatar-url').value = profile.avatarUrl || '';
         document.getElementById('set-cover-url').value = profile.coverImageUrl || '';
-        
+
         if (profile.avatarUrl) document.getElementById('avatar-preview').src = profile.avatarUrl;
         if (profile.coverImageUrl) document.getElementById('cover-preview').src = profile.coverImageUrl;
-        
+
         // Cập nhật công tắc Private Account
         const privateToggle = document.getElementById('private-account-toggle');
         if (privateToggle) {
@@ -92,7 +92,7 @@ async function loadCurrentSettings() {
 async function togglePrivateAccount() {
     const toggle = document.getElementById('private-account-toggle');
     const isPrivate = toggle.checked;
-    
+
     try {
         const result = await window.api.put('users/me/privacy', { isPrivate: isPrivate });
         showStatus(result.message || 'Cập nhật quyền riêng tư thành công!', 'success');
@@ -105,7 +105,7 @@ async function togglePrivateAccount() {
 async function saveSettings() {
     const btn = document.getElementById('save-settings-btn');
     const msg = document.getElementById('settings-msg');
-    
+
     const data = {
         username: document.getElementById('set-username').value.trim().replace('@', ''),
         fullName: document.getElementById('set-fullname').value.trim(),
@@ -118,7 +118,7 @@ async function saveSettings() {
     try {
         btn.disabled = true;
         const result = await window.api.put('users/profile', data);
-        
+
         // Update local cache
         const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
         userInfo.fullName = data.fullName;
@@ -160,7 +160,7 @@ async function changePassword() {
 // Account Deletion
 async function deleteAccount() {
     const confirmed = confirm('BẠN CÓ CHẮC CHẮN MUỐN XÓA TÀI KHOẢN?\n\nHành động này sẽ xóa toàn bộ bài viết, ảnh và dữ liệu của bạn vĩnh viễn và không thể khôi phục.');
-    
+
     if (confirmed) {
         const finalCheck = prompt('Vui lòng nhập "DELETE" để xác nhận việc xóa tài khoản:');
         if (finalCheck === 'DELETE') {
@@ -184,7 +184,7 @@ async function handleProfileUpload(input, type) {
     const btn = input.previousElementSibling;
     const preview = document.getElementById(`${type}-preview`);
     const urlInput = document.getElementById(`set-${type}-url`);
-    
+
     const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Đang tải...';

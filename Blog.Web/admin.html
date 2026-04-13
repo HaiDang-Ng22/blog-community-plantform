@@ -43,6 +43,33 @@
         body.dark-mode .admin-card, body.dark-mode .stat-card { background: #1e293b; border-color: #334155; }
         body.dark-mode .data-table th { border-bottom-color: #334155; }
         body.dark-mode .data-table td { border-bottom-color: #334155; }
+
+        /* Post Preview Modal Styles */
+        .preview-modal-content { 
+            background: var(--glass-bg); 
+            border: var(--glass-border); 
+            border-radius: 20px; 
+            padding: 0; /* Changed to handle header/body/footer padding separately */
+            box-shadow: var(--shadow-lg); 
+            max-width: 800px; 
+            width: 90%; 
+            max-height: 90vh; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.02); }
+        
+        .post-preview-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        .post-preview-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .post-preview-meta { color: var(--text-secondary); font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
+        .post-preview-image { width: 100%; border-radius: 12px; margin: 1.5rem 0; object-fit: cover; max-height: 400px; }
+        .post-preview-body { line-height: 1.6; color: var(--text-primary); font-size: 1.05rem; white-space: pre-wrap; }
+        .clickable-title { cursor: pointer; color: #6366f1; transition: 0.2s; }
+        .clickable-title:hover { text-decoration: underline; color: #4f46e5; }
     </style>
 </head>
 
@@ -67,6 +94,9 @@
                         <button class="admin-nav-item" onclick="switchAdminTab('reports')">
                             <i class="fa-solid fa-flag"></i> Báo cáo vi phạm
                             <span id="report-count-badge" class="badge badge-pending hidden">0</span>
+                        </button>
+                        <button class="admin-nav-item" onclick="switchAdminTab('shops')">
+                            <i class="fa-solid fa-shop"></i> Quản lý Cửa hàng
                         </button>
                         <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid var(--border-color);">
                         <a href="index.html" class="admin-nav-item">
@@ -130,6 +160,33 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- Shops Section -->
+                <section id="section-shops" class="admin-section hidden">
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;">Yêu cầu mở Cửa hàng</h2>
+                            <button class="btn secondary-btn" onclick="loadAdminShopApps()" style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Người đăng ký</th>
+                                        <th>Tên Shop</th>
+                                        <th>Mô tả</th>
+                                        <th>Ngày gửi</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-shops-list">
+                                    <!-- JS will inject rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </main>
@@ -137,6 +194,24 @@
     <script src="js/api.js?v=1.1"></script>
     <script src="js/common.js?v=1.6"></script>
     <script src="js/admin.js?v=1.1"></script>
+
+    <!-- Post Preview Modal -->
+    <div id="post-preview-modal" class="modal-overlay hidden">
+        <div class="modal-content preview-modal-content">
+            <div class="modal-header">
+                <h3>Xem trước bài viết</h3>
+                <button class="close-btn" onclick="closePostPreview()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="post-preview-content">
+                    <!-- Content will be injected by JS -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn secondary-btn" style="width: auto;" onclick="closePostPreview()">Đóng</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

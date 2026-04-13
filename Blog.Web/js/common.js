@@ -28,7 +28,7 @@ function updateNav() {
                     <button id="header-search-btn"><i class="fa fa-search"></i></button>
                 </div>
             </div>
-            <div class="notification-wrapper" id="noti-trigger">
+            <div class="notification-wrapper" id="noti-trigger" style="margin-right: 15px;">
                 <i class="fa-solid fa-bell"></i>
                 <span class="noti-badge hidden" id="noti-count">0</span>
                 <div class="noti-dropdown hidden" id="noti-dropdown">
@@ -37,12 +37,27 @@ function updateNav() {
                     <div class="noti-footer"><a href="#" id="mark-all-read">Đánh dấu tất cả đã đọc</a></div>
                 </div>
             </div>
+            <div class="nav-direct-links" style="display: flex; gap: 15px; margin-right: 20px; align-items: center;">
+                <a href="marketplace.html" style="color: #2563eb; font-weight: 700; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-bag-shopping"></i> Mua sắm
+                </a>
+                ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `
+                <a href="seller-center.html" style="color: #059669; font-weight: 700; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-store"></i> Kênh người bán
+                </a>
+                ` : ''}
+            </div>
             <div class="user-menu" id="user-menu-trigger">
                 <span class="user-name">Chào, ${userName}</span>
                 <img src="${userAvatar}" alt="Avatar" class="mini-avatar" onerror="this.src='https://via.placeholder.com/40'">
                 <div class="user-dropdown hidden" id="user-dropdown">
                     <a href="profile.html"><i class="fa fa-user"></i> Hồ sơ cá nhân</a>
-                    <a href="create-post.html"><i class="fa fa-plus-circle"></i> Đăng bài mới</a>
+                    <a href="marketplace.html" style="color: #2563eb; font-weight: 600;"><i class="fa fa-shopping-bag"></i> Mua sắm (Chợ)</a>
+                    ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `
+                    <a href="seller-center.html" style="color: #059669; font-weight: 600;"><i class="fa fa-shop"></i> Kênh người bán</a>
+                    ` : ''}
+                    <hr>
+                    ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? '<a href="create-post.html"><i class="fa fa-plus-circle"></i> Đăng bài mới</a>' : ''}
                     <a href="settings.html"><i class="fa fa-cog"></i> Cài đặt</a>
                     ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? '<a href="admin.html" style="color: #6366f1; font-weight: 600;"><i class="fa fa-user-shield"></i> Trang quản trị</a>' : ''}
                     <hr>

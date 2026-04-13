@@ -1,43 +1,55 @@
-# Zynk - Modern Social Community Platform 🚀
+# Zynk - Nền tảng Mạng xã hội & Thương mại Điện tử Đa năng 🚀
 
-Zynk là một nền tảng mạng xã hội hiện đại được xây dựng trên nền tảng .NET 8, tập trung vào trải nghiệm chia sẻ hình ảnh và tương tác cộng đồng với giao diện lấy cảm hứng từ Instagram.
+Zynk là một hệ sinh thái hiện đại kết hợp giữa **Mạng xã hội hình ảnh (Instagram Style)** và **Thương mại điện tử đa người bán (TikTok Shop Style)**. Dự án được phát triển dựa trên nền tảng **.NET 8** và **Vanilla JS**, tập trung vào kiến trúc mã nguồn sạch, trải nghiệm người dùng mượt mà và khả năng quản trị mạnh mẽ.
 
-![Instagram Style](https://img.shields.io/badge/UI-Instagram--Style-purple)
 ![Tech Stack](https://img.shields.io/badge/Backend-.NET%208-blue)
 ![Frontend](https://img.shields.io/badge/Frontend-Vanilla%20JS-yellow)
+![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture-green)
 
-## ✨ Tính năng nổi bật
+---
 
-### 📸 Trải nghiệm Multimedia (Instagram Style)
-- **Đăng nhiều ảnh:** Hỗ trợ tải lên và hiển thị nhiều hình ảnh trong một bài viết.
-- **Giao diện Carousel:** Thanh trượt ảnh mượt mà với hiệu ứng Scroll Snap và dấu chấm điều hướng.
-- **Tỉ lệ khung hình chuẩn:** Hình ảnh được tối ưu hóa theo tỉ lệ 1:1, mang lại cảm giác chuyên nghiệp.
-- **Upload trực tiếp:** Hệ thống tải ảnh trực tiếp lên máy chủ thông qua Multipart API.
+## ✨ Các Phân hệ Tính năng
 
-### 🔐 Bảo mật & Xác thực
-- **Bảo mật đăng ký:** Ràng buộc mật khẩu mạnh (8+ ký tự, chữ hoa, ký tự đặc biệt).
-- **Xác nhận mật khẩu:** Ngăn chặn sai sót khi đăng ký tài khoản.
-- **JWT Auth:** Hệ thống xác thực dựa trên Token bảo mật.
+### 🛒 1. Hệ thống Thương mại Điện tử (Zynk Shop)
+Hệ thống TMĐT được xây dựng theo mô hình Market-place đa người bán với các tính năng chuyên sâu:
+*   **Marketplace & Discovery**: Giao diện mua sắm Glassmorphism hiện đại, hỗ trợ duyệt sản phẩm theo danh mục, tìm kiếm và xem chi tiết sản phẩm.
+*   **Kênh Người Bán (Seller Center)**: 
+    *   Quy trình đăng ký và xét duyệt Shop bởi Admin.
+    *   Dashboard quản lý sản phẩm, tồn kho và theo dõi đơn hàng.
+*   **Giỏ hàng & Thanh toán cực nhanh**: Luồng checkout tối ưu với hình thức thanh toán COD giả lập.
+*   **Quản lý Đơn hàng**: Hệ thống cập nhật trạng thái đơn hàng thời gian thực, đồng bộ dữ liệu giữa người mua và người bán.
 
-### 🌐 Chức năng Mạng xã hội
-- **Bảng tin thông minh:** Tự động cập nhật bài viết mới nhất.
-- **Tương tác:** Thích (Like), Bình luận đa cấp (Reply), Chia sẻ.
-- **Thông báo:** Hệ thống thông báo thời gian thực về các tương tác.
-- **Tìm kiếm:** Tìm kiếm bài viết và người dùng linh hoạt.
-- **Hồ sơ cá nhân:** Tùy chỉnh Avatar, Ảnh bìa và tiểu sử (Bio).
+### 📸 2. Mạng Xã hội Tương tác
+Trải nghiệm chia sẻ nội dung được tối ưu theo phong cách hiện đại:
+*   **Multimedia Sharing**: Hỗ trợ đăng nhiều ảnh trong một bài viết với Carousel mượt mà.
+*   **Social Interactions**: Hệ thống Like, Comment đa cấp, Chia sẻ và Follow người dùng.
+*   **Kiểm duyệt Nội dung (Moderation)**: Tính năng báo cáo vi phạm và hệ thống ẩn/chặn nội dung nhạy cảm.
+*   **Thông báo (Notifications)**: Thông báo tức thời về các tương tác xã hội và cập nhật trạng thái mua sắm.
 
-### 🛠 Kỹ thuật & Hệ thống
-- **Auto-Schema Update:** Tự động phát hiện và nâng cấp cơ sở dữ liệu khi khởi động, không cần Migration thủ công.
-- **Clean Architecture:** Phân tách rõ ràng giữa Domain, Application, Infrastructure và API.
-- **Unified Server:** .NET API phục vụ trực tiếp các tệp tĩnh (HTML/JS), dễ dàng triển khai.
+### 🛡 3. Quản trị Hệ thống (Admin Dashboard)
+*   **Duyệt Cửa hàng**: Admin có quyền phê duyệt hoặc từ chối các yêu cầu mở shop.
+*   **Quản lý Người dùng & Nội dung**: Theo dõi báo cáo, xử lý vi phạm và quản lý danh sách thành viên (tự động ẩn các tài khoản quản trị để bảo mật).
+
+---
+
+## 🛠 Kiến trúc & Kỹ thuật
+
+Dự án áp dụng các tiêu chuẩn phát triển phần mềm hiện đại:
+- **Clean Architecture**: Tách biệt rõ ràng các lớp Domain, Application, Infrastructure và API.
+- **Repository Pattern**: Tối ưu việc truy xuất và xử lý dữ liệu từ Database.
+- **Auto-Schema Management**: Tự động phát hiện và nâng cấp cơ sở dữ liệu qua code SQL thủ công trong `Program.cs`, không cần migrations phức tạp.
+- **JWT Authentication**: Hệ thống xác thực và phân quyền (Admin/User/Seller) dựa trên Token bảo mật.
+- **Responsive Design**: Giao diện hiển thị tốt trên mọi thiết bị (Mobile & Desktop).
+
+---
 
 ## 🚀 Công nghệ sử dụng
 
-- **Backend:** .NET 8 Web API
-- **Database:** SQL Server, Entity Framework Core
-- **Frontend:** Vanilla HTML5, CSS3 (Modern Flexbox/Grid), Javascript (ES6+)
-- **Icons:** Font Awesome 6
-- **Fonts:** Google Fonts (Inter)
+- **Backend:** .NET 8 Web API, Entity Framework Core 8, SQL Server.
+- **Frontend:** HTML5, CSS3, Javascript ES6+, UI Kit Glassmorphism.
+- **Tools:** GitHub, Visual Studio 2022.
+
+---
 
 ## 🛠 Hướng dẫn cài đặt
 
@@ -46,17 +58,13 @@ Zynk là một nền tảng mạng xã hội hiện đại được xây dựng 
    git clone https://github.com/HaiDang-Ng22/blog-community-plantform.git
    ```
 
-2. **Cấu hình Database:**
-   Cập nhật chuỗi kết nối trong `Blog.API/appsettings.json`.
-
-3. **Chạy ứng dụng:**
+2. **Cấu hình**: Cập nhật Connection String trong `Blog.API/appsettings.json`.
+3. **Chạy ứng dụng**:
    ```bash
    cd Blog.API
    dotnet run
    ```
-
-4. **Truy cập:**
-   Mở trình duyệt và truy cập `http://localhost:7000`.
+4. **Truy cập**: `http://localhost:7000`.
 
 ---
-*Made with ❤️ for developers by Hai Dang.*
+*Dự án tâm huyết phát triển bởi Hải Đăng - Hướng tới sự hoàn thiện và chất lượng.*

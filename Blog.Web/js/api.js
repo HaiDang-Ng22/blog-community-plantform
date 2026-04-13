@@ -34,6 +34,15 @@ async function apiRequest(endpoint, options = {}) {
         }
         
         if (!response.ok) {
+            // Auto redirect to login on 401 Unauthorized
+            if (response.status === 401) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_info');
+                // Only redirect if not already on auth.html
+                if (!window.location.pathname.includes('auth.html')) {
+                    window.location.href = 'auth.html?message=session_expired';
+                }
+            }
             throw { status: response.status, message: data.message || 'Có lỗi xảy ra' };
         }
         

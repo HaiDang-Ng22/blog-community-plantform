@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chợ Zynk - Nền tảng mua sắm cộng đồng</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="css/marketplace.css?v=1.1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK</a>
+            </div>
+            <div class="nav-actions" id="nav-actions">
+                <!-- Sẽ được điền bằng common.js -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="container-wide">
+        <div class="marketplace-layout">
+            <!-- Sidebar -->
+            <aside class="market-sidebar">
+                <h3><i class="fa-solid fa-layer-group"></i> Danh mục</h3>
+                <ul class="category-list" id="category-list">
+                    <li class="category-item">
+                        <a href="#" class="category-link active" data-id="all">
+                            <i class="fa fa-border-all"></i> Tất cả
+                        </a>
+                    </li>
+                    <!-- Danh mục sẽ được load từ API -->
+                </ul>
+            </aside>
+
+            <!-- Main Marketplace -->
+            <div class="products-wrapper">
+                <div class="market-header">
+                    <h2 id="market-title">Gợi ý hôm nay</h2>
+                    <div class="market-filters">
+                        <select id="sort-filter" class="glass-select">
+                            <option value="newest">Mới nhất</option>
+                            <option value="price-asc">Giá thấp đến cao</option>
+                            <option value="price-desc">Giá cao đến thấp</option>
+                            <option value="popular">Bán chạy</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="product-grid" id="product-grid">
+                    <!-- Sản phẩm sẽ được load từ API -->
+                    <div class="skeleton" style="height: 300px;"></div>
+                    <div class="skeleton" style="height: 300px;"></div>
+                    <div class="skeleton" style="height: 300px;"></div>
+                    <div class="skeleton" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cart Floating Button -->
+    <div class="cart-float" id="cart-float" onclick="location.href='cart.html'">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span class="cart-badge" id="cart-count">0</span>
+    </div>
+
+    <!-- Modal chi tiết sản phẩm -->
+    <div id="product-modal" class="modal-overlay hidden">
+        <div class="modal-content glassmorphism" style="max-width: 800px; padding: 0; overflow: hidden;">
+            <div class="product-modal-body" id="product-modal-content">
+                <!-- Nội dung inject bởi JS -->
+            </div>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="container-wide">
+            <p>&copy; 2026 Zynk Community. Nền tảng chia sẻ & mua sắm.</p>
+        </div>
+    </footer>
+
+    <script src="js/api.js?v=1.5"></script>
+    <script src="js/common.js?v=1.5"></script>
+    <script src="js/marketplace.js?v=1.1"></script>
+</body>
+</html>

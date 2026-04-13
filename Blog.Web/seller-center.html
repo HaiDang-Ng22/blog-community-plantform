@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kênh người bán - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="css/seller.css?v=1.1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK SHOP</a>
+            </div>
+            <div class="nav-actions" id="nav-actions"></div>
+        </nav>
+    </header>
+
+    <main class="container-wide seller-layout">
+        <div class="seller-container" id="seller-content">
+            <!-- Loading state -->
+            <div style="text-align: center; padding: 4rem;">
+                <i class="fa fa-spinner fa-spin fa-2x"></i>
+                <p style="margin-top: 1rem;">Đang kiểm tra quyền truy cập...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Templates (Sẽ được inject dựa trên trạng thái người bán) -->
+    
+    <!-- 1. Template Đăng ký -->
+    <template id="tpl-registration">
+        <div class="seller-header">
+            <h1>Mở cửa hàng trên Zynk</h1>
+            <p>Bắt đầu sự nghiệp kinh doanh của bạn ngay hôm nay với cộng đồng Zynk.</p>
+        </div>
+        <form id="form-shop-apply" class="application-form">
+            <div id="msg-box" class="message-box hidden"></div>
+            <div class="input-group">
+                <label>Tên cửa hàng dự kiến</label>
+                <input type="text" id="shop-name" placeholder="Ví dụ: Zynk Mobile Store" required>
+            </div>
+            <div class="input-group">
+                <label>Mô tả shop</label>
+                <textarea id="shop-desc" rows="4" placeholder="Giới thiệu ngắn về những gì bạn định bán..." required></textarea>
+            </div>
+            <button type="submit" class="btn primary-btn">Gửi yêu cầu phê duyệt</button>
+        </form>
+    </template>
+
+    <!-- 2. Template Đang chờ duyệt -->
+    <template id="tpl-pending">
+        <div class="status-card">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <h2>Hồ sơ đang được chờ duyệt</h2>
+            <p>Admin đang xem xét hồ sơ mở cửa hàng của bạn. Chúng tôi sẽ thông báo cho bạn ngay khi có kết quả.</p>
+            <a href="index.html" class="btn secondary-btn" style="display: inline-block; margin-top: 2rem;">Quay lại trang chủ</a>
+        </div>
+    </template>
+
+    <!-- 3. Template Dashboard -->
+    <template id="tpl-dashboard">
+        <div class="seller-header" style="text-align: left;">
+            <h1>Kênh Người Bán: <span id="shop-title-display">---</span></h1>
+        </div>
+        
+        <div class="seller-dashboard">
+            <nav class="dashboard-tabs">
+                <div class="tab-link active" onclick="switchSellerTab('overview')">Tổng quan</div>
+                <div class="tab-link" onclick="switchSellerTab('products')">Sản phẩm</div>
+                <div class="tab-link" onclick="switchSellerTab('orders')">Đơn hàng</div>
+            </nav>
+
+            <!-- Overview Section -->
+            <section id="section-overview" class="dashboard-section active">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                        <h4 style="color: #64748b;">Tổng đơn hàng</h4>
+                        <div style="font-size: 2rem; font-weight: 800;" id="stat-orders">0</div>
+                    </div>
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                        <h4 style="color: #64748b;">Doanh thu (Giả lập)</h4>
+                        <div style="font-size: 2rem; font-weight: 800; color: #2563eb;" id="stat-revenue">0đ</div>
+                    </div>
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                        <h4 style="color: #64748b;">Số lượng sản phẩm</h4>
+                        <div style="font-size: 2rem; font-weight: 800;" id="stat-products">0</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Products Section -->
+            <section id="section-products" class="dashboard-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Danh sách sản phẩm</h3>
+                    <button class="btn primary-btn" style="width: auto; margin: 0;" onclick="openAddProductModal()">+ Thêm sản phẩm mới</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Giá</th>
+                            <th>Kho</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-list-body">
+                        <!-- Data inject by JS -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Orders Section -->
+            <section id="section-orders" class="dashboard-section">
+                <h3>Đơn hàng đang chờ xử lý</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID Đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Ngày đặt</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-list-body">
+                        <!-- Data inject by JS -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </template>
+
+    <!-- Modal Thêm sản phẩm -->
+    <div id="product-add-modal" class="modal-overlay hidden">
+        <div class="modal-content glassmorphism" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Đăng sản phẩm mới</h3>
+                <span onclick="closeAddProductModal()" style="cursor: pointer;"><i class="fa fa-times"></i></span>
+            </div>
+            <form id="form-add-product">
+                <div class="input-group">
+                    <label>Tên sản phẩm</label>
+                    <input type="text" id="p-name" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label>Giá bán (VND)</label>
+                        <input type="number" id="p-price" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Số lượng kho</label>
+                        <input type="number" id="p-stock" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Danh mục</label>
+                    <select id="p-category" required></select>
+                </div>
+                <div class="input-group">
+                    <label>Mô tả sản phẩm</label>
+                    <textarea id="p-desc" rows="4" required></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Hình ảnh (URL)</label>
+                    <input type="text" id="p-image" placeholder="Nhập link ảnh (hoặc dùng URL giả lập)">
+                </div>
+                <button type="submit" class="btn primary-btn">Lưu và Hiển thị</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="container-wide">
+            <p>&copy; 2026 Zynk Business Center.</p>
+        </div>
+    </footer>
+
+    <script src="js/api.js?v=1.5"></script>
+    <script src="js/common.js?v=1.5"></script>
+    <script src="js/seller.js?v=1.1"></script>
+</body>
+</html>
