@@ -12,8 +12,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const targetUserId = userId || currentUser.id || currentUser.Id;
     if (targetUserId) {
-        await loadUserProfile(targetUserId);
-        await loadUserPosts(targetUserId);
+        const profileData = await loadUserProfile(targetUserId);
+        if (profileData) {
+            await loadUserPosts(targetUserId, profileData.isPrivate, profileData.isFollowing, targetUserId === currentUser.id);
+        }
     } else {
         console.error('No target user ID found');
         document.getElementById('profile-name').textContent = 'Lỗi: Không tìm thấy người dùng';
@@ -61,10 +63,13 @@ async function loadUserProfile(userId) {
             updateFollowButton(profile.isFollowing);
             followBtn.onclick = () => toggleFollow(userId);
         }
+        
+        return profile;
     } catch (error) {
         console.error('Failed to load profile', error);
         document.getElementById('profile-name').textContent = 'Lỗi tải hồ sơ';
         document.getElementById('profile-bio').textContent = 'Có thể người dùng không tồn tại hoặc bạn cần đăng nhập lại.';
+        return null;
     }
 }
 
@@ -91,18 +96,35 @@ async function toggleFollow(userId) {
         // Refresh counts
         const followers = document.getElementById('follower-count');
         followers.textContent = parseInt(followers.textContent) + (result.isFollowing ? 1 : -1);
+        
+        // Reload page to refresh newsfeed/posts grid visibility
+        window.location.reload();
     } catch (e) {
         alert('Lỗi khi thực hiện follow');
     }
 }
 
-async function loadUserPosts(userId) {
+async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
     const grid = document.getElementById('profile-posts-grid');
     grid.innerHTML = '<div class="post-card skeleton"></div>';
 
+    // Xử lý Private Account Lockdown
+    if (!isMyProfile && isPrivate && !isFollowing) {
+        document.getElementById('post-count').textContent = '?';
+        grid.innerHTML = `
+            <div style="text-align:center; padding: 4rem 2rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); margin-top: 1rem;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #64748b; display: flex; align-items:center; justify-content:center; margin: 0 auto 1.5rem;">
+                    <i class="fa-solid fa-lock" style="font-size: 2.5rem; color: #64748b;"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Tài khoản này là riêng tư</h3>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">Theo dõi để xem ảnh và video của họ.</p>
+            </div>
+        `;
+        return;
+    }
+
     try {
-        // Nếu là mình dùng /me, nếu là người khác dùng endpoint chung (tôi sẽ tối ưu API sau)
-        // Hiện tại dùng API lấy posts theo AuthorId
+        // Dùng API chung, do Controller đã lọc quyền riêng tư
         const posts = await window.api.get(`posts`);
         const userPosts = posts.filter(p => 
             p.authorId && userId && p.authorId.toString().toLowerCase() === userId.toString().toLowerCase()
@@ -142,12 +164,16 @@ function createPostCard(post) {
                 <span class="post-author-name">${post.authorName}</span>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <span class="post-time">${formatDate(post.createdAt)}</span>
-                     ${isOwner ? `
+                     ${currentUser.id ? `
                         <div class="post-options">
                             <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)"></i>
                             <div class="options-menu hidden">
-                                <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
-                                <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+                                ${isOwner ? `
+                                    <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
+                                    <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+                                ` : `
+                                    <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
+                                `}
                             </div>
                         </div>
                     ` : ''}

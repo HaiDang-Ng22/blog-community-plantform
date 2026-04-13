@@ -14,6 +14,8 @@ public class User
     public string? Bio { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsPrivate { get; set; } = false;
+    public string Role { get; set; } = "User"; // User, Admin
 
      public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();

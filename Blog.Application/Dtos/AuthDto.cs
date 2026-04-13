@@ -19,6 +19,12 @@ public class GoogleLoginRequest
     public string IdToken { get; set; } = string.Empty;
 }
 
+public class ChangePasswordRequest
+{
+    public string OldPassword { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+}
+
 public class AuthResponse
 {
     public Guid Id { get; set; }
@@ -26,6 +32,7 @@ public class AuthResponse
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
+    public string Role { get; set; } = "User";
 }
 
 public class UserProfileResponse
@@ -39,6 +46,13 @@ public class UserProfileResponse
     public string? Bio { get; set; }
     public string Gender { get; set; } = "Other";
     public DateTime CreatedAt { get; set; }
+    public bool IsPrivate { get; set; }
+    public string Role { get; set; } = "User";
+}
+
+public class UpdatePrivacyRequest
+{
+    public bool IsPrivate { get; set; }
 }
 
 public class UpdateProfileRequest

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị hệ thống - Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .admin-layout { display: flex; gap: 2rem; margin: 2rem auto; max-width: 1200px; }
+        .admin-sidebar { flex: 0 0 260px; }
+        .admin-content { flex: 1; }
+        
+        .admin-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+        .admin-nav { display: flex; flex-direction: column; gap: 0.5rem; }
+        .admin-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: var(--text-secondary); text-decoration: none; transition: 0.2s; border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-family: inherit; font-size: 0.95rem; }
+        .admin-nav-item:hover { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+        .admin-nav-item.active { background: #6366f1; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .data-table th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        .data-table td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; vertical-align: middle; }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-user { background: #e0e7ff; color: #4338ca; }
+        .badge-admin { background: #fef3c7; color: #92400e; }
+        .badge-pending { background: #fee2e2; color: #b91c1c; }
+        .badge-resolved { background: #dcfce7; color: #166534; }
+
+        .btn-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; color: #64748b; }
+        .btn-action:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+        .btn-action.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+
+        .hidden { display: none !important; }
+        
+        /* Dark mode overrides */
+        body.dark-mode .admin-card, body.dark-mode .stat-card { background: #1e293b; border-color: #334155; }
+        body.dark-mode .data-table th { border-bottom-color: #334155; }
+        body.dark-mode .data-table td { border-bottom-color: #334155; }
+    </style>
+</head>
+
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK <span style="font-size: 0.6em; background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">ADMIN</span></a>
+            </div>
+            <div class="nav-actions" id="nav-actions"></div>
+        </nav>
+    </header>
+
+    <main class="main-content container-wide">
+        <div class="admin-layout">
+            <aside class="admin-sidebar">
+                <div class="admin-card">
+                    <div class="admin-nav">
+                        <button class="admin-nav-item active" onclick="switchAdminTab('users')">
+                            <i class="fa-solid fa-users"></i> Quản lý Người dùng
+                        </button>
+                        <button class="admin-nav-item" onclick="switchAdminTab('reports')">
+                            <i class="fa-solid fa-flag"></i> Báo cáo vi phạm
+                            <span id="report-count-badge" class="badge badge-pending hidden">0</span>
+                        </button>
+                        <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid var(--border-color);">
+                        <a href="index.html" class="admin-nav-item">
+                            <i class="fa-solid fa-arrow-left"></i> Quay lại Home
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="admin-content">
+                <!-- Users Section -->
+                <section id="section-users" class="admin-section">
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;">Danh sách người dùng</h2>
+                            <button class="btn secondary-btn" onclick="loadAdminUsers()" style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Người dùng</th>
+                                        <th>Email</th>
+                                        <th>Vai trò</th>
+                                        <th>Tham gia</th>
+                                        <th>Bài viết</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-users-list">
+                                    <!-- JS will inject rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reports Section -->
+                <section id="section-reports" class="admin-section hidden">
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;">Báo cáo nội dung</h2>
+                            <button class="btn secondary-btn" onclick="loadAdminReports()" style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Người báo cáo</th>
+                                        <th>Bài viết bị báo cáo</th>
+                                        <th>Lý do</th>
+                                        <th>Thời gian</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-reports-list">
+                                    <!-- JS will inject rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js?v=1.1"></script>
+    <script src="js/common.js?v=1.6"></script>
+    <script src="js/admin.js?v=1.1"></script>
+</body>
+
+</html>

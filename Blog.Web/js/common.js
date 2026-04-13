@@ -1,6 +1,10 @@
 // js/common.js
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Global theme initialization
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
     updateNav();
 });
 
@@ -39,6 +43,8 @@ function updateNav() {
                 <div class="user-dropdown hidden" id="user-dropdown">
                     <a href="profile.html"><i class="fa fa-user"></i> Hồ sơ cá nhân</a>
                     <a href="create-post.html"><i class="fa fa-plus-circle"></i> Đăng bài mới</a>
+                    <a href="settings.html"><i class="fa fa-cog"></i> Cài đặt</a>
+                    ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? '<a href="admin.html" style="color: #6366f1; font-weight: 600;"><i class="fa fa-user-shield"></i> Trang quản trị</a>' : ''}
                     <hr>
                     <a href="#" onclick="logout(event)"><i class="fa fa-sign-out-alt"></i> Đăng xuất</a>
                 </div>

@@ -6,18 +6,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cài đặt tài khoản - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/common.css?v=1.2">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/auth.css"> <!-- Reusing some form styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .settings-container { max-width: 600px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    <style>
+        .settings-layout { display: flex; gap: 2rem; margin: 2rem auto; max-width: 1000px; }
+        .settings-sidebar { flex: 0 0 240px; background: #fff; border-radius: 12px; padding: 1rem; height: fit-content; position: sticky; top: 80px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        .settings-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; color: #4b5563; text-decoration: none; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-size: 0.95rem; }
+        .settings-nav-item:hover { background: #f3f4f6; color: #2563eb; }
+        .settings-nav-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+        .settings-content { flex: 1; background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e5e7eb; }
+        .settings-section { display: none; }
+        .settings-section.active { display: block; }
+        .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #111827; }
+        .section-desc { color: #6b7280; font-size: 0.9rem; margin-bottom: 2rem; }
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; }
-        .preview-img { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; margin-top: 0.5rem; border: 2px solid #6366f1; }
-        .preview-cover { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-top: 0.5rem; border: 1px solid #e2e8f0; }
-        .btn-row { display: flex; gap: 1rem; margin-top: 2rem; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
+        .preview-img { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 2px solid #6366f1; }
+        .preview-cover { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .theme-card { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; border: 1px solid #e5e7eb; border-radius: 12px; margin-top: 1rem; }
+        
+        /* Dark mode support classes */
+        body.dark-mode { background-color: #0f172a; color: #f8fafc; }
+        body.dark-mode .settings-sidebar, body.dark-mode .settings-content { background: #1e293b; border-color: #334155; }
+        body.dark-mode .settings-nav-item { color: #94a3b8; }
+        body.dark-mode .settings-nav-item:hover { background: #334155; color: #38bdf8; }
+        body.dark-mode .settings-nav-item.active { background: #1e293b; border: 1px solid #38bdf8; color: #38bdf8; }
+        body.dark-mode .section-title { color: #f1f5f9; }
+        body.dark-mode .section-desc, body.dark-mode .form-group label { color: #94a3b8; }
+        body.dark-mode input, body.dark-mode textarea, body.dark-mode select { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+        
+        /* Modern Toggle Switch */
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(24px); }
     </style>
 </head>
 
@@ -32,63 +60,140 @@
     </header>
 
     <main class="main-content container-wide">
-        <div class="settings-container">
-            <h3>Cài đặt hồ sơ</h3>
-            <p style="color: #64748b; margin-bottom: 2rem; font-size: 0.9rem;">Cập nhật thông tin cá nhân và cách người khác nhìn thấy bạn.</p>
+        <div class="settings-layout">
+            <aside class="settings-sidebar">
+                <button class="settings-nav-item active" onclick="switchTab('profile')">
+                    <i class="fa-solid fa-user"></i> Hồ sơ cá nhân
+                </button>
+                <button class="settings-nav-item" onclick="switchTab('account')">
+                    <i class="fa-solid fa-shield-halved"></i> Bảo mật tài khoản
+                </button>
+                <button class="settings-nav-item" onclick="switchTab('privacy')">
+                    <i class="fa-solid fa-lock"></i> Quyền riêng tư
+                </button>
+                <button class="settings-nav-item" onclick="switchTab('interface')">
+                    <i class="fa-solid fa-palette"></i> Giao diện
+                </button>
+                <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #f3f4f6;">
+                <button class="settings-nav-item" style="color: #dc2626;" onclick="switchTab('danger')">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Vùng nguy hiểm
+                </button>
+            </aside>
 
-            <form id="settings-form">
-                <div class="form-group">
-                    <label for="set-username">Tên người dùng (ID/Handle)</label>
-                    <input type="text" id="set-username" required placeholder="@username">
-                    <small style="color: #94a3b8;">Dùng để tìm kiếm và định danh duy nhất (ví dụ: @hadang).</small>
-                </div>
+            <div class="settings-content">
+                <!-- Profile Section -->
+                <section id="section-profile" class="settings-section active">
+                    <h2 class="section-title">Hồ sơ cá nhân</h2>
+                    <p class="section-desc">Cập nhật thông tin công khai của bạn trên Zynk.</p>
+                    
+                    <form id="settings-form" style="max-width: 500px;">
+                        <div class="form-group">
+                            <label for="set-username">Tên người dùng (@username)</label>
+                            <input type="text" id="set-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="set-fullname">Họ và tên</label>
+                            <input type="text" id="set-fullname" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="set-bio">Tiểu sử</label>
+                            <textarea id="set-bio" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="set-gender">Giới tính</label>
+                            <select id="set-gender">
+                                <option value="Male">Nam</option>
+                                <option value="Female">Nữ</option>
+                                <option value="Other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ảnh đại diện</label>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <img id="avatar-preview" src="" class="preview-img">
+                                <button type="button" class="btn secondary-btn" onclick="document.getElementById('avatar-file').click()" style="width: auto;">Thay đổi</button>
+                            </div>
+                            <input type="file" id="avatar-file" accept="image/*" style="display: none;" onchange="handleProfileUpload(this, 'avatar')">
+                            <input type="hidden" id="set-avatar-url">
+                        </div>
+                        <div class="form-group">
+                            <label>Ảnh bìa</label>
+                            <img id="cover-preview" src="" class="preview-cover">
+                            <button type="button" class="btn secondary-btn" onclick="document.getElementById('cover-file').click()" style="width: auto; margin-top: 0.5rem;">Thay đổi ảnh bìa</button>
+                            <input type="file" id="cover-file" accept="image/*" style="display: none;" onchange="handleProfileUpload(this, 'cover')">
+                            <input type="hidden" id="set-cover-url">
+                        </div>
+                        <button type="submit" class="btn primary-btn" id="save-settings-btn">Lưu hồ sơ</button>
+                    </form>
+                </section>
 
-                <div class="form-group">
-                    <label for="set-fullname">Họ và tên</label>
-                    <input type="text" id="set-fullname" required>
-                </div>
+                <!-- Account Section -->
+                <section id="section-account" class="settings-section">
+                    <h2 class="section-title">Bảo mật tài khoản</h2>
+                    <p class="section-desc">Quản lý mật khẩu và đăng nhập.</p>
+                    
+                    <form id="password-form" style="max-width: 450px;">
+                        <div class="form-group">
+                            <label for="old-password">Mật khẩu hiện tại</label>
+                            <input type="password" id="old-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">Mật khẩu mới</label>
+                            <input type="password" id="new-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Xác nhận mật khẩu mới</label>
+                            <input type="password" id="confirm-password" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn">Đổi mật khẩu</button>
+                    </form>
+                </section>
 
-                <div class="form-group">
-                    <label for="set-bio">Tiểu sử</label>
-                    <textarea id="set-bio" rows="3" placeholder="Giới thiệu ngắn về bản thân..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="set-gender">Giới tính</label>
-                    <select id="set-gender">
-                        <option value="Male">Nam</option>
-                        <option value="Female">Nữ</option>
-                        <option value="Other">Khác</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Ảnh đại diện</label>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <img id="avatar-preview" src="https://via.placeholder.com/100" class="preview-img" style="margin-top:0">
-                        <button type="button" class="btn secondary-btn" onclick="document.getElementById('avatar-file').click()" style="width: auto; height: fit-content; padding: 0.5rem 1rem;">Tải ảnh đại diện</button>
+                <!-- Privacy Section -->
+                <section id="section-privacy" class="settings-section">
+                    <h2 class="section-title">Quyền riêng tư</h2>
+                    <p class="section-desc">Kiểm soát ai có thể xem bài viết của bạn.</p>
+                    
+                    <div class="theme-card">
+                        <div>
+                            <div style="font-weight: 600;">Tài khoản riêng tư</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;">Bật chế độ này để ẩn bài viết của bạn với những người chưa theo dõi.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="private-account-toggle" onchange="togglePrivateAccount()">
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <input type="file" id="avatar-file" accept="image/*" style="display: none;" onchange="handleProfileUpload(this, 'avatar')">
-                    <input type="hidden" id="set-avatar-url">
-                </div>
+                </section>
 
-                <div class="form-group">
-                    <label>Ảnh bìa</label>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <img id="cover-preview" src="https://via.placeholder.com/400x120" class="preview-cover" style="margin-top:0">
-                        <button type="button" class="btn secondary-btn" onclick="document.getElementById('cover-file').click()" style="width: auto; padding: 0.5rem 1rem;">Chọn ảnh bìa mới</button>
+                <!-- Interface Section -->
+                <section id="section-interface" class="settings-section">
+                    <h2 class="section-title">Giao diện</h2>
+                    <p class="section-desc">Cá nhân hóa trải nghiệm nhìn của bạn.</p>
+                    
+                    <div class="theme-card">
+                        <div>
+                            <div style="font-weight: 600;">Chế độ tối (Dark Mode)</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;">Bật để giao diện trở nên dịu mắt hơn.</div>
+                        </div>
+                        <button class="btn secondary-btn" onclick="toggleDarkMode()" id="dark-mode-btn" style="width: auto;">Bật chế độ tối</button>
                     </div>
-                    <input type="file" id="cover-file" accept="image/*" style="display: none;" onchange="handleProfileUpload(this, 'cover')">
-                    <input type="hidden" id="set-cover-url">
-                </div>
+                </section>
 
-                <div id="settings-msg" class="message-box hidden" style="margin-bottom: 1rem;"></div>
+                <!-- Danger Section -->
+                <section id="section-danger" class="settings-section">
+                    <h2 class="section-title" style="color: #dc2626;">Vùng nguy hiểm</h2>
+                    <p class="section-desc">Các hành động không thể hoàn tác.</p>
+                    
+                    <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 1.5rem; border-radius: 12px;">
+                        <h4 style="color: #b91c1c; margin-bottom: 0.5rem;">Xóa tài khoản vĩnh viễn</h4>
+                        <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.25rem;">Lưu ý: Sau khi xóa, tất cả bài viết, ảnh và tương tác của bạn sẽ biến mất vĩnh viễn.</p>
+                        <button class="btn primary-btn" style="background: #dc2626; border-color: #dc2626;" onclick="deleteAccount()">Xác nhận xóa tài khoản</button>
+                    </div>
+                </section>
 
-                <div class="btn-row">
-                    <button type="submit" class="btn primary-btn" id="save-settings-btn">Lưu thay đổi</button>
-                    <button type="button" class="btn secondary-btn" onclick="history.back()">Hủy</button>
-                </div>
-            </form>
+                <div id="settings-msg" class="message-box hidden" style="margin-top: 1.5rem;"></div>
+            </div>
         </div>
     </main>
 

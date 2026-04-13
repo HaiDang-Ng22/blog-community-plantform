@@ -18,10 +18,41 @@ public class AppDbContext : DbContext
     public DbSet<Follow> Follows { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<PostImage> PostImages { get; set; }
+    public DbSet<Report> Reports { get; set; }
+    public DbSet<Block> Blocks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Cấu hình Block
+        modelBuilder.Entity<Block>()
+            .HasKey(b => new { b.BlockerId, b.BlockedId });
+
+        modelBuilder.Entity<Block>()
+            .HasOne(b => b.Blocker)
+            .WithMany()
+            .HasForeignKey(b => b.BlockerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Block>()
+            .HasOne(b => b.Blocked)
+            .WithMany()
+            .HasForeignKey(b => b.BlockedId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Cấu hình Report
+        modelBuilder.Entity<Report>()
+            .HasOne(r => r.Post)
+            .WithMany()
+            .HasForeignKey(r => r.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Report>()
+            .HasOne(r => r.Reporter)
+            .WithMany()
+            .HasForeignKey(r => r.ReporterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Cấu hình PostImage
         modelBuilder.Entity<PostImage>()

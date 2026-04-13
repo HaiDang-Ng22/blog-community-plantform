@@ -9,18 +9,27 @@ window.postActions = {
 
         try {
             const result = await window.api.post(`posts/${postId}/like`);
-            const likeCountSpan = btnElement.querySelector('span');
             const heartIcon = btnElement.querySelector('i');
             
-            likeCountSpan.textContent = result.likeCount;
+            const card = btnElement.closest('.post-card');
+            if (card) {
+                const countDiv = card.querySelector('.post-likes-count');
+                if (countDiv) countDiv.textContent = `${result.likeCount} lượt thích`;
+            } else {
+                const likeCountSpan = btnElement.querySelector('span');
+                if (likeCountSpan) likeCountSpan.textContent = result.likeCount;
+            }
+
             if (result.isLiked) {
                 heartIcon.classList.remove('fa-regular');
                 heartIcon.classList.add('fa-solid');
                 heartIcon.style.color = '#EF4444';
+                btnElement.classList.add('liked');
             } else {
                 heartIcon.classList.remove('fa-solid');
                 heartIcon.classList.add('fa-regular');
                 heartIcon.style.color = '';
+                btnElement.classList.remove('liked');
             }
         } catch (error) {
             console.error('Like error:', error);
@@ -31,7 +40,8 @@ window.postActions = {
         let commentSection = cardElement.querySelector('.comment-section');
         if (!commentSection) {
             commentSection = this.createCommentSection(postId);
-            cardElement.querySelector('.post-main-col').appendChild(commentSection);
+            const contentArea = cardElement.querySelector('.post-content-area') || cardElement.querySelector('.post-main-col') || cardElement;
+            contentArea.appendChild(commentSection);
             this.loadComments(postId, commentSection);
         } else {
             commentSection.classList.toggle('hidden');
@@ -183,12 +193,193 @@ window.postActions = {
     },
 
     async deletePost(postId) {
-        if (!confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) return;
+        if (!confirm('Bạn có chắc chắn muốn xóa BÀI VIẾT này vĩnh viễn khỏi SQL không? Thao tác này không thể hoàn tác!')) return;
         try {
+            const btnDelete = document.querySelector(`.post-card[data-id="${postId}"] .options-menu .delete`);
+            if (btnDelete) btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Xóa...';
+            
             await window.api.delete(`posts/${postId}`);
-            window.location.reload();
+            
+            const card = document.querySelector(`.post-card[data-id="${postId}"]`);
+            if (card) {
+                card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => card.remove(), 400);
+            } else {
+                window.location.reload();
+            }
         } catch (error) {
             alert('Lỗi: ' + error.message);
         }
+    },
+
+    async reportPost(postId, authorId) {
+        console.log('reportPost called for:', postId, authorId);
+        
+        if (!postId) {
+            console.error('Missing postId');
+            return;
+        }
+
+        this.injectReportModal();
+        const modal = document.getElementById('report-modal');
+        
+        if (!modal) {
+            console.warn('Report modal not found, using prompt fallback');
+            const reason = prompt('Lý do báo cáo:');
+            if (reason) this._submitReport(postId, reason);
+            return;
+        }
+
+        const postIdInput = document.getElementById('report-post-id');
+        const authorIdInput = document.getElementById('report-author-id');
+        
+        if (postIdInput) postIdInput.value = postId;
+        if (authorIdInput) authorIdInput.value = authorId || '';
+        
+        modal.classList.remove('hidden');
+
+        // Reset form
+        const reportForm = document.getElementById('report-form');
+        if (reportForm) {
+            reportForm.reset();
+            const otherText = document.getElementById('report-other-text');
+            if (otherText) otherText.classList.add('hidden');
+
+            // Setup "Other" listener
+            const otherRadio = document.getElementById('reason-other-radio');
+            
+            document.querySelectorAll('input[name="report-reason"]').forEach(radio => {
+                radio.onchange = () => {
+                    if (otherRadio && otherRadio.checked) {
+                        if (otherText) otherText.classList.remove('hidden');
+                    } else {
+                        if (otherText) otherText.classList.add('hidden');
+                    }
+                };
+            });
+
+            // Form submit - using window.postActions to be safe with 'this'
+            reportForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const selectedReasonEl = reportForm.querySelector('input[name="report-reason"]:checked');
+                if (!selectedReasonEl) {
+                    alert('Vui lòng chọn một lý do.');
+                    return;
+                }
+                
+                const selectedReason = selectedReasonEl.value;
+                let finalReason = selectedReason;
+                
+                if (selectedReason === 'Khác') {
+                    const detail = otherText ? otherText.value.trim() : '';
+                    if (!detail) {
+                        alert('Vui lòng nhập lý do cụ thể.');
+                        return;
+                    }
+                    finalReason = `Khác: ${detail}`;
+                }
+
+                try {
+                    const result = await window.api.post('reports', { postId, reason: finalReason });
+                    window.postActions.closeReportModal();
+                    
+                    // Block Suggestion
+                    if (authorId && authorId !== 'undefined' && authorId !== 'null') {
+                        setTimeout(() => {
+                            if (confirm(`${result.message}\n\nBạn có muốn chặn người dùng này để không bao giờ thấy bài viết của họ nữa không?`)) {
+                                window.postActions.blockUser(authorId);
+                            }
+                        }, 500);
+                    } else {
+                        alert(result.message);
+                    }
+                } catch (error) {
+                    alert('Lỗi gửi báo cáo: ' + error.message);
+                }
+            };
+        }
+    },
+
+    closeReportModal() {
+        const modal = document.getElementById('report-modal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    async _submitReport(postId, reason) {
+        try {
+            const result = await window.api.post('reports', { postId, reason });
+            alert(result.message);
+        } catch (error) {
+            alert('Lỗi: ' + error.message);
+        }
+    },
+
+    async blockUser(authorId) {
+        if (!authorId || authorId === 'undefined') return;
+        try {
+            const result = await window.api.post(`users/${authorId}/block`);
+            alert(result.message);
+            window.location.reload();
+        } catch (error) {
+            alert('Lỗi khi chặn người dùng: ' + error.message);
+        }
+    },
+
+    injectReportModal() {
+        if (document.getElementById('report-modal')) return;
+
+        const modalHtml = `
+            <div id="report-modal" class="modal-overlay hidden">
+                <div class="modal-content report-modal-content">
+                    <div class="modal-header">
+                        <h3>Báo cáo vi phạm</h3>
+                        <button class="close-btn" onclick="closeReportModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">Chúng tôi sẽ xem xét bài viết này dựa trên lý do bạn cung cấp.</p>
+                        <form id="report-form">
+                            <input type="hidden" id="report-post-id">
+                            <input type="hidden" id="report-author-id">
+                            
+                            <div class="report-options">
+                                <label class="report-opt">
+                                    <input type="radio" name="report-reason" value="Tôi không thích nội dung này" checked>
+                                    <span>Tôi không thích nội dung này</span>
+                                </label>
+                                <label class="report-opt">
+                                    <input type="radio" name="report-reason" value="Vấn đề nhạy cảm/khiêu dâm">
+                                    <span>Vấn đề nhạy cảm/khiêu dâm</span>
+                                </label>
+                                <label class="report-opt">
+                                    <input type="radio" name="report-reason" value="Bạo lực">
+                                    <span>Bạo lực</span>
+                                </label>
+                                <label class="report-opt">
+                                    <input type="radio" name="report-reason" value="Phản động">
+                                    <span>Phản động</span>
+                                </label>
+                                <label class="report-opt">
+                                    <input type="radio" name="report-reason" value="Khác" id="reason-other-radio">
+                                    <span>Khác...</span>
+                                </label>
+                            </div>
+
+                            <textarea id="report-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin..." rows="3" style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
+                            
+                            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                                <button type="button" class="btn secondary-btn" style="width: 100%;" onclick="closeReportModal()">Hủy</button>
+                                <button type="submit" class="btn primary-btn" style="width: 100%;" id="submit-report-btn">Gửi báo cáo</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
 };
+
+// Global helpers for modal
+window.closeReportModal = () => postActions.closeReportModal();

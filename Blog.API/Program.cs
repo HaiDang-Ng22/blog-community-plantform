@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Blog.Domain.Entities;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,6 +90,8 @@ using (var scope = app.Services.CreateScope())
     // Manual schema update for existing tables
     dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'CoverImageUrl') ALTER TABLE Users ADD CoverImageUrl NVARCHAR(MAX) NULL;");
     dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'Bio') ALTER TABLE Users ADD Bio NVARCHAR(MAX) NULL;");
+    dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'IsPrivate') ALTER TABLE Users ADD IsPrivate BIT NOT NULL DEFAULT 0;");
+    dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'Role') ALTER TABLE Users ADD Role NVARCHAR(50) NOT NULL DEFAULT 'User';");
     dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Comments') AND name = 'ParentCommentId') ALTER TABLE Comments ADD ParentCommentId UNIQUEIDENTIFIER NULL;");
     
     // Create PostImages table if not exists
@@ -103,20 +106,58 @@ using (var scope = app.Services.CreateScope())
                 CONSTRAINT [FK_PostImages_Posts_PostId] FOREIGN KEY ([PostId]) REFERENCES [Posts] ([Id]) ON DELETE CASCADE
             );
         END");
+
+    // Create Reports table if not exists
+    dbContext.Database.ExecuteSqlRaw(@"
+        IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Reports]') AND type in (N'U'))
+        BEGIN
+            CREATE TABLE [Reports] (
+                [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+                [PostId] UNIQUEIDENTIFIER NOT NULL,
+                [ReporterId] UNIQUEIDENTIFIER NOT NULL,
+                [Reason] NVARCHAR(MAX) NOT NULL,
+                [CreatedAt] DATETIME2 NOT NULL,
+                [IsResolved] BIT NOT NULL DEFAULT 0,
+                CONSTRAINT [FK_Reports_Posts_PostId] FOREIGN KEY ([PostId]) REFERENCES [Posts] ([Id]) ON DELETE CASCADE,
+                CONSTRAINT [FK_Reports_Users_ReporterId] FOREIGN KEY ([ReporterId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION
+            );
+        END");
+
+    // Create Blocks table if not exists
+    dbContext.Database.ExecuteSqlRaw(@"
+        IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Blocks]') AND type in (N'U'))
+        BEGIN
+            CREATE TABLE [Blocks] (
+                [BlockerId] UNIQUEIDENTIFIER NOT NULL,
+                [BlockedId] UNIQUEIDENTIFIER NOT NULL,
+                [CreatedAt] DATETIME2 NOT NULL,
+                PRIMARY KEY ([BlockerId], [BlockedId]),
+                CONSTRAINT [FK_Blocks_Users_BlockerId] FOREIGN KEY ([BlockerId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION,
+                CONSTRAINT [FK_Blocks_Users_BlockedId] FOREIGN KEY ([BlockedId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+            );
+        END");
     
-    // Tạo sẵn 1 user giả với Id = 000000...1 để test việc lưu Post không bị lỗi khóa ngoại (Foreign Key)
-    var adminId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-    if (!dbContext.Users.Any(u => u.Id == adminId))
+    // Seed Real Admin User
+    var adminEmail = "hd813345@gmail.com";
+    var existingAdmin = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+    if (existingAdmin == null)
     {
-        dbContext.Users.Add(new Blog.Domain.Entities.User 
+        dbContext.Users.Add(new User 
         { 
-            Id = adminId, 
-            Username = "admin_test", 
-            Email = "admin@example.com",
-            PasswordHash = "hash_123456",
+            Id = Guid.NewGuid(), 
+            Username = "admin_dang", 
+            Email = adminEmail,
+            FullName = "Admin Zynk",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("D@ng0799192226"),
+            Role = "Admin",
             CreatedAt = DateTime.UtcNow
         });
-        dbContext.SaveChanges();
+        await dbContext.SaveChangesAsync();
+    }
+    else if (existingAdmin.Role != "Admin")
+    {
+        existingAdmin.Role = "Admin";
+        await dbContext.SaveChangesAsync();
     }
 }
 app.Run();

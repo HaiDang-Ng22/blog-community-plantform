@@ -63,7 +63,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
 
         var token = GenerateJwtToken(user);
-        return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl });
+        return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
     }
 
     [HttpPost("google")]
@@ -86,14 +86,15 @@ public class AuthController : ControllerBase
                     Gender = "Other",
                     PasswordHash = string.Empty, 
                     GoogleId = payload.Subject,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    Role = "User"
                 };
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
             }
 
             var token = GenerateJwtToken(user);
-            return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl });
+            return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
         }
         catch (InvalidJwtException)
         {
@@ -124,8 +125,42 @@ public class AuthController : ControllerBase
             AvatarUrl = user.AvatarUrl,
             Bio = user.Bio,
             Gender = user.Gender,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            IsPrivate = user.IsPrivate,
+            Role = user.Role
         });
+    }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst(JwtRegisteredClaimNames.Sub);
+        if (userIdClaim == null)
+            return Unauthorized(new { message = "Không xác định được người dùng" });
+
+        var userId = Guid.Parse(userIdClaim.Value);
+        var user = await _context.Users.FindAsync(userId);
+
+        if (user == null)
+            return NotFound(new { message = "Người dùng không tồn tại" });
+
+        // Verify old password
+        if (!string.IsNullOrEmpty(user.PasswordHash) && !BCrypt.Net.BCrypt.Verify(request.OldPassword, user.PasswordHash))
+            return BadRequest(new { message = "Mật khẩu cũ không chính xác." });
+
+        // Validate new password rules (8+ chars, uppercase, special)
+        if (request.NewPassword.Length < 8 || 
+            !request.NewPassword.Any(char.IsUpper) || 
+            !request.NewPassword.Any(ch => !char.IsLetterOrDigit(ch)))
+        {
+            return BadRequest(new { message = "Mật khẩu mới không thỏa mãn yêu cầu (8 ký tự, có chữ hoa và ký tự đặc biệt)." });
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Đổi mật khẩu thành công." });
     }
 
     private string GenerateJwtToken(User user)
@@ -137,6 +172,7 @@ public class AuthController : ControllerBase
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role),
             new Claim("FullName", user.FullName)
         };
 

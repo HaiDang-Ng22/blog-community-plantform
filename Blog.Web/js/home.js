@@ -49,19 +49,25 @@ function createPostCard(post) {
             <div class="author-info">
                 <a href="profile.html?id=${post.authorId}" class="author-name">${post.authorName}</a>
             </div>
-            ${isOwner ? `
+            ${currentUser.id ? `
                 <div class="post-options" style="margin-left: auto;">
                     <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
                     <div class="options-menu hidden">
-                        <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
-                        <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+                        ${isOwner ? `
+                            <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
+                            <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+                        ` : `
+                            <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
+                        `}
                     </div>
                 </div>
             ` : ''}
         </div>
 
         ${images.length > 0 ? `
-            <div class="post-media-container">
+            <div class="post-media-container" style="position:relative;">
+                ${hasMultiple ? `<button class="carousel-nav-btn left" onclick="scrollCarousel(this, -1)"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
+                
                 <div class="post-carousel" onscroll="handleCarouselScroll(this)">
                     ${images.map(url => `
                         <div class="post-carousel-item">
@@ -69,6 +75,9 @@ function createPostCard(post) {
                         </div>
                     `).join('')}
                 </div>
+                
+                ${hasMultiple ? `<button class="carousel-nav-btn right" onclick="scrollCarousel(this, 1)"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
+
                 ${hasMultiple ? `
                     <div class="carousel-dots">
                         ${images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}
@@ -102,17 +111,27 @@ function createPostCard(post) {
     return card;
 }
 
+// Global function to scroll carousel
+window.scrollCarousel = function(btn, direction) {
+    const container = btn.parentElement.querySelector('.post-carousel');
+    if (container) {
+        const width = container.offsetWidth;
+        container.scrollBy({ left: direction * width, behavior: 'smooth' });
+    }
+}
+
 // Global function to update carousel dots
 function handleCarouselScroll(carousel) {
     const scrollLeft = carousel.scrollLeft;
     const width = carousel.offsetWidth;
     const index = Math.round(scrollLeft / width);
     
-    const dots = carousel.nextElementSibling.querySelectorAll('.dot');
+    const dots = carousel.parentElement.querySelectorAll('.carousel-dots .dot');
     dots.forEach((dot, i) => {
         dot.classList.toggle('active', i === index);
     });
 }
+
 
 function toggleMenu(btn) {
     const menu = btn.nextElementSibling;

@@ -40,7 +40,36 @@ public class PostsController : ControllerBase
         var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         Guid? currentUserId = !string.IsNullOrEmpty(currentUserIdStr) ? Guid.Parse(currentUserIdStr) : null;
 
-        var postDtos = posts.Select(p => new PostDto
+        List<Guid> followingIds = new List<Guid>();
+        List<Guid> blockedIds = new List<Guid>();
+        if (currentUserId.HasValue)
+        {
+            followingIds = await _context.Follows
+                .Where(f => f.FollowerId == currentUserId.Value)
+                .Select(f => f.FollowingId)
+                .ToListAsync();
+
+            blockedIds = await _context.Blocks
+                .Where(b => b.BlockerId == currentUserId.Value)
+                .Select(b => b.BlockedId)
+                .ToListAsync();
+        }
+
+        // Bản lọc quyền riêng tư: 
+        // Lấy bài viết nếu:
+        // 1. Tác giả không trong danh sách bị chặn
+        // 2. Tác giả không Private
+        // 3. Tác giả là chính mình
+        // 4. Mình đang Follow tác giả
+        var filteredPosts = posts.Where(p => 
+            !blockedIds.Contains(p.AuthorId) && (
+                !p.Author.IsPrivate || 
+                (currentUserId.HasValue && p.AuthorId == currentUserId.Value) ||
+                (currentUserId.HasValue && followingIds.Contains(p.AuthorId))
+            )
+        ).ToList();
+
+        var postDtos = filteredPosts.Select(p => new PostDto
         {
             Id = p.Id,
             Title = p.Title,
@@ -188,11 +217,27 @@ public class PostsController : ControllerBase
         post.Title = updatePostDto.Title;
         post.Content = updatePostDto.Content;
         post.Summary = updatePostDto.Summary;
-        post.FeaturedImageUrl = updatePostDto.FeaturedImageUrl;
+        post.FeaturedImageUrl = updatePostDto.FeaturedImageUrl ?? updatePostDto.ImageUrls?.FirstOrDefault();
         post.UpdatedAt = DateTime.UtcNow;
         
+        // Remove old images
+        var existingImages = await _context.PostImages.Where(i => i.PostId == id).ToListAsync();
+        _context.PostImages.RemoveRange(existingImages);
+
+        // Add new images
+        if (updatePostDto.ImageUrls != null && updatePostDto.ImageUrls.Any())
+        {
+            var newImages = updatePostDto.ImageUrls.Select((url, index) => new PostImage
+            {
+                Id = Guid.NewGuid(),
+                PostId = id,
+                Url = url,
+                OrderIndex = index
+            });
+            await _context.PostImages.AddRangeAsync(newImages);
+        }
+
         await _postRepository.UpdateAsync(post);
-        
         return Ok(new { message = "Cập nhật thành công" });
     }
 
@@ -208,7 +253,14 @@ public class PostsController : ControllerBase
         if (post.AuthorId != userId)
             return Forbid();
         
-        await _postRepository.DeleteAsync(post);
+        // Hard-delete orphaned notifications first
+        var staledNotifications = await _context.Notifications.Where(n => n.TargetId == id).ToListAsync();
+        if (staledNotifications.Any()) {
+            _context.Notifications.RemoveRange(staledNotifications);
+        }
+
+        // Hard-delete post (cascade deletes Comments, PostLikes, PostTags, PostImages)
+        await _postRepository.DeleteAsync(post); // Calls SaveChangesAsync internally, which commits the Notifications deletion as well
         
         return Ok(new { message = "Xóa thành công" });
     }

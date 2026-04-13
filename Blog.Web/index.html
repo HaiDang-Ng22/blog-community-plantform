@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zynk - Nền tảng Chia sẻ Kiến thức</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/common.css?v=1.2">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/home.css?v=1.1">
+    <link rel="stylesheet" href="css/home.css?v=1.3">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -53,8 +53,6 @@
                 <!-- Skeleton Loading -->
                 <div class="post-card skeleton"></div>
             </div>
-    <div class="post-card skeleton"></div>
-            </div>
 
             <div id="no-posts" class="no-posts hidden">
                 <i class="fa-solid fa-wind"></i>
@@ -69,12 +67,60 @@
         </div>
     </footer>
 
+    <!-- Report Modal -->
+    <div id="report-modal" class="modal-overlay hidden">
+        <div class="modal-content report-modal-content">
+            <div class="modal-header">
+                <h3>Báo cáo vi phạm</h3>
+                <button class="close-btn" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">Chúng tôi sẽ xem xét bài viết này dựa trên lý do bạn cung cấp.</p>
+                <form id="report-form">
+                    <input type="hidden" id="report-post-id">
+                    <input type="hidden" id="report-author-id">
+                    
+                    <div class="report-options">
+                        <label class="report-opt">
+                            <input type="radio" name="report-reason" value="Tôi không thích nội dung này" checked>
+                            <span>Tôi không thích nội dung này</span>
+                        </label>
+                        <label class="report-opt">
+                            <input type="radio" name="report-reason" value="Vấn đề nhạy cảm/khiêu dâm">
+                            <span>Vấn đề nhạy cảm/khiêu dâm</span>
+                        </label>
+                        <label class="report-opt">
+                            <input type="radio" name="report-reason" value="Bạo lực">
+                            <span>Bạo lực</span>
+                        </label>
+                        <label class="report-opt">
+                            <input type="radio" name="report-reason" value="Phản động">
+                            <span>Phản động</span>
+                        </label>
+                        <label class="report-opt">
+                            <input type="radio" name="report-reason" value="Khác" id="reason-other-radio">
+                            <span>Khác...</span>
+                        </label>
+                    </div>
+
+                    <textarea id="report-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin..." rows="3" style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
+                    
+                    <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                        <button type="button" class="btn secondary-btn" style="width: 100%;" onclick="closeReportModal()">Hủy</button>
+                        <button type="submit" class="btn primary-btn" style="width: 100%;" id="submit-report-btn">Gửi báo cáo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
-    <script src="js/api.js?v=1.1"></script>
-    <script src="js/auth.js?v=1.1"></script>
-    <script src="js/common.js?v=1.1"></script>
-    <script src="js/notifications.js?v=1.1"></script>
-    <script src="js/home.js?v=1.1"></script>
+    <script src="js/api.js?v=1.4"></script>
+    <script src="js/auth.js?v=1.4"></script>
+    <script src="js/common.js?v=1.4"></script>
+    <script src="js/notifications.js?v=1.4"></script>
+    <script src="js/post-actions.js?v=1.6"></script>
+    <script src="js/home.js?v=1.6"></script>
 </body>
 
 </html>

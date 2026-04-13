@@ -64,3 +64,30 @@
 .profile-stats-row b {
     color: var(--text-primary);
 }
+
+/* ================================= */
+/* DARK MODE OVERRIDES               */
+/* ================================= */
+body.dark-mode .profile-header-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+body.dark-mode .large-avatar {
+    border-color: #1e293b;
+}
+
+body.dark-mode .profile-names h2,
+body.dark-mode .profile-stats-row b {
+    color: #f8fafc;
+}
+
+body.dark-mode .profile-names p,
+body.dark-mode .profile-bio {
+    color: #94a3b8;
+}
+
+body.dark-mode #no-posts {
+    background: #1e293b;
+    border-color: #334155;
+}

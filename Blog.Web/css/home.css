@@ -1,4 +1,17 @@
 /* css/home.css */
+
+.quick-post-section { margin-bottom: 2rem; margin-top: 2rem; }
+.quick-post-card { background: white; border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #E2E8F0; display: flex; gap: 1rem; align-items: center; max-width: 600px; margin: 0 auto; }
+.quick-post-input { flex: 1; background: #F1F5F9; border-radius: 2rem; padding: 0.8rem 1.2rem; color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
+.quick-post-input:hover { background: #E2E8F0; }
+
+.posts-grid {
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
 /* Instagram Style Post Card */
 .post-card {
     background: #fff;
@@ -6,6 +19,8 @@
     border-radius: 8px;
     margin-bottom: 2rem;
     overflow: hidden;
+    display: block; /* Overrides row flex from components.css */
+    padding: 0;     /* Overrides 1.5rem padding from components.css */
 }
 
 .post-header {
@@ -51,6 +66,29 @@
 .post-carousel::-webkit-scrollbar {
     display: none;
 }
+
+.carousel-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    color: #262626;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background 0.2s;
+}
+
+.carousel-nav-btn.left { left: 8px; }
+.carousel-nav-btn.right { right: 8px; }
+.carousel-nav-btn:hover { background: white; }
 
 .post-carousel-item {
     flex: 0 0 100%;
