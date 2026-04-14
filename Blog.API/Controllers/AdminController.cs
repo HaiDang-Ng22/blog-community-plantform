@@ -1,5 +1,6 @@
 using Blog.Domain.Entities;
 using Blog.Infrastructure.Data;
+using Blog.Application.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -200,5 +201,74 @@ public class AdminController : ControllerBase
 
         await _context.SaveChangesAsync();
         return Ok(new { message = "Đã từ chối yêu cầu mở cửa hàng." });
+    }
+
+    [HttpGet("categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        var cats = await _context.Categories
+            .OrderBy(c => c.Name)
+            .Select(c => new CategoryDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Slug = c.Slug,
+                Icon = c.Icon,
+                ParentCategoryId = c.ParentCategoryId
+            })
+            .ToListAsync();
+        return Ok(cats);
+    }
+
+    [HttpPost("categories")]
+    public async Task<IActionResult> CreateCategory([FromBody] CategoryDto dto)
+    {
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            Name = dto.Name,
+            Slug = dto.Name.ToLower().Trim().Replace(" ", "-"),
+            Icon = dto.Icon,
+            ParentCategoryId = dto.ParentCategoryId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Categories.Add(category);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã thêm danh mục thành công.", id = category.Id });
+    }
+
+    [HttpPut("categories/{id}")]
+    public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] CategoryDto dto)
+    {
+        var category = await _context.Categories.FindAsync(id);
+        if (category == null) return NotFound();
+
+        category.Name = dto.Name;
+        category.Slug = dto.Name.ToLower().Trim().Replace(" ", "-");
+        category.Icon = dto.Icon;
+        category.ParentCategoryId = dto.ParentCategoryId;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã cập nhật danh mục thành công." });
+    }
+
+    [HttpDelete("categories/{id}")]
+    public async Task<IActionResult> DeleteCategory(Guid id)
+    {
+        var category = await _context.Categories.FindAsync(id);
+        if (category == null) return NotFound();
+
+        // Check if has subcategories
+        var hasSub = await _context.Categories.AnyAsync(c => c.ParentCategoryId == id);
+        if (hasSub) return BadRequest(new { message = "Không thể xóa danh mục này vì có danh mục con." });
+
+        // Check if has products
+        var hasProducts = await _context.Products.AnyAsync(p => p.CategoryId == id);
+        if (hasProducts) return BadRequest(new { message = "Không thể xóa danh mục này vì có sản phẩm thuộc danh mục." });
+
+        _context.Categories.Remove(category);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã xóa danh mục thành công." });
     }
 }
