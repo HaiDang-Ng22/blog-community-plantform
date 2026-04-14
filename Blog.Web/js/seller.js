@@ -132,11 +132,61 @@ async function loadSellerProducts() {
     `).join('');
 }
 
+let allCategories = [];
+
 async function loadCategoriesForProduct() {
-    const select = document.getElementById('p-category');
-    const cats = await window.api.get('marketplace/categories');
-    select.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const parentSelect = document.getElementById('p-category-parent');
+    try {
+        allCategories = await window.api.get('marketplace/categories');
+        
+        // Build Level 1 (Parents)
+        parentSelect.innerHTML = '<option value="" disabled selected>Chọn danh mục chính</option>';
+        
+        const rootCats = allCategories.filter(c => !c.parentCategoryId);
+        rootCats.forEach(root => {
+            const option = document.createElement('option');
+            option.value = root.id;
+            option.textContent = root.name;
+            parentSelect.appendChild(option);
+        });
+    } catch (e) {
+        console.error('Failed to load categories', e);
+    }
 }
+
+function onParentCategoryChange() {
+    const parentId = document.getElementById('p-category-parent').value;
+    const childSelect = document.getElementById('p-category-child');
+    const hiddenInput = document.getElementById('p-category');
+
+    // Filter children
+    const children = allCategories.filter(c => c.parentCategoryId === parentId);
+    
+    if (children.length > 0) {
+        childSelect.disabled = false;
+        childSelect.innerHTML = '<option value="" disabled selected>Chọn danh mục con</option>';
+        children.forEach(child => {
+            const option = document.createElement('option');
+            option.value = child.id;
+            option.textContent = child.name;
+            childSelect.appendChild(option);
+        });
+        // Default hidden input to parent until child is selected
+        hiddenInput.value = ''; 
+    } else {
+        childSelect.disabled = true;
+        childSelect.innerHTML = '<option value="" disabled selected>Không có danh mục con</option>';
+        // If no children, the parent itself is the category
+        hiddenInput.value = parentId;
+    }
+}
+
+// Update hidden input when child category changes
+document.addEventListener('change', (e) => {
+    if (e.target.id === 'p-category-child') {
+        document.getElementById('p-category').value = e.target.value;
+    }
+});
 
 function openAddProductModal() {
     document.getElementById('product-add-modal').classList.remove('hidden');

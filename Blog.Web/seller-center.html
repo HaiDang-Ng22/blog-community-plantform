@@ -159,10 +159,21 @@
                         <input type="number" id="p-stock" required>
                     </div>
                 </div>
-                <div class="input-group">
-                    <label>Danh mục</label>
-                    <select id="p-category" required></select>
+                <div class="input-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label>Danh mục chính</label>
+                        <select id="p-category-parent" onchange="onParentCategoryChange()" required>
+                            <option value="" disabled selected>Chọn danh mục chính</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Danh mục con</label>
+                        <select id="p-category-child" required disabled>
+                            <option value="" disabled selected>Chọn danh mục con</option>
+                        </select>
+                    </div>
                 </div>
+                <input type="hidden" id="p-category" required>
                 <div class="input-group">
                     <label>Mô tả sản phẩm</label>
                     <textarea id="p-desc" rows="4" required></textarea>

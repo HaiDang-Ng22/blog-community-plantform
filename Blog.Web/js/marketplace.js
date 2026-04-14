@@ -11,25 +11,76 @@ async function loadCategories() {
     const list = document.getElementById('category-list');
     try {
         const categories = await window.api.get('marketplace/categories');
-        categories.forEach(cat => {
-            const li = document.createElement('li');
-            li.className = 'category-item';
-            li.innerHTML = `
-                <a href="#" class="category-link" data-id="${cat.id}">
-                    <i class="${cat.icon || 'fa fa-tag'}"></i> ${cat.name}
+        
+        // Build hierarchy
+        const rootCategories = categories.filter(c => !c.parentCategoryId);
+        
+        // Add "All" option if not already there
+        list.innerHTML = `
+            <li class="category-item">
+                <a href="#" class="category-link active" data-id="all">
+                    <i class="fa fa-border-all"></i> Tất cả
                 </a>
-            `;
-            li.querySelector('a').onclick = (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-                loadProducts(cat.id);
-            };
-            list.appendChild(li);
+            </li>
+        `;
+
+        rootCategories.forEach(cat => {
+            renderCategoryItem(cat, categories, list);
         });
+
+        // Initialize "All" click
+        list.querySelector('[data-id="all"]').onclick = (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            loadProducts();
+            document.getElementById('market-title').textContent = 'Gợi ý hôm nay';
+        };
+
     } catch (e) {
         console.error('Failed to load categories', e);
     }
+}
+
+function renderCategoryItem(cat, allCategories, container, level = 0) {
+    const subCategories = allCategories.filter(c => c.parentCategoryId === cat.id);
+    const li = document.createElement('li');
+    li.className = `category-item ${subCategories.length > 0 ? 'has-sub' : ''}`;
+    
+    li.innerHTML = `
+        <div class="category-row">
+            <a href="#" class="category-link" data-id="${cat.id}" style="padding-left: ${15 + level * 15}px">
+                <i class="${cat.icon || 'fa fa-tag'}"></i> ${cat.name}
+            </a>
+            ${subCategories.length > 0 ? '<i class="fa fa-chevron-down sub-toggle"></i>' : ''}
+        </div>
+        ${subCategories.length > 0 ? `<ul class="sub-category-list hidden" id="sub-${cat.id}"></ul>` : ''}
+    `;
+
+    const link = li.querySelector('.category-link');
+    link.onclick = (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        loadProducts(cat.id);
+        document.getElementById('market-title').textContent = cat.name;
+    };
+
+    if (subCategories.length > 0) {
+        const toggle = li.querySelector('.sub-toggle');
+        const subList = li.querySelector('.sub-category-list');
+        toggle.onclick = (e) => {
+            e.stopPropagation();
+            subList.classList.toggle('hidden');
+            toggle.classList.toggle('rotated');
+        };
+        
+        subCategories.forEach(sub => {
+            renderCategoryItem(sub, allCategories, subList, level + 1);
+        });
+    }
+
+    container.appendChild(li);
 }
 
 async function loadProducts(categoryId = null) {

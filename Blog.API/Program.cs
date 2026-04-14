@@ -150,6 +150,14 @@ using (var scope = app.Services.CreateScope())
             IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Categories]') AND type in (N'U'))
             BEGIN
                 CREATE TABLE [Categories] ([Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [Name] NVARCHAR(MAX) NOT NULL, [Slug] NVARCHAR(MAX) NOT NULL, [Icon] NVARCHAR(MAX) NULL, [CreatedAt] DATETIME2 NOT NULL);
+            END
+            ELSE
+            BEGIN
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Categories') AND name = 'ParentCategoryId')
+                BEGIN
+                    ALTER TABLE [Categories] ADD [ParentCategoryId] UNIQUEIDENTIFIER NULL;
+                    ALTER TABLE [Categories] ADD CONSTRAINT [FK_Categories_Categories_ParentCategoryId] FOREIGN KEY ([ParentCategoryId]) REFERENCES [Categories] ([Id]);
+                END
             END");
 
         // 2. ShopApplications
@@ -231,19 +239,10 @@ using (var scope = app.Services.CreateScope())
                 );
             END");
             
-        // --- Seed Default Categories ---
-        if (!await dbContext.Categories.AnyAsync())
+        // One-time cleanup of old hardcoded categories and associated products
+        if (await dbContext.Categories.AnyAsync(c => c.Slug == "thoi-trang"))
         {
-            var cats = new List<Category>
-            {
-                new Category { Id = Guid.NewGuid(), Name = "Thời trang", Slug = "thoi-trang", Icon = "fa fa-shirt" },
-                new Category { Id = Guid.NewGuid(), Name = "Điện thoại & Phụ kiện", Slug = "dien-thoai", Icon = "fa fa-mobile-screen" },
-                new Category { Id = Guid.NewGuid(), Name = "Đồ gia dụng", Slug = "gia-dung", Icon = "fa fa-couch" },
-                new Category { Id = Guid.NewGuid(), Name = "Làm đẹp", Slug = "lam-dep", Icon = "fa fa-sparkles" },
-                new Category { Id = Guid.NewGuid(), Name = "Thực phẩm", Slug = "thuc-pham", Icon = "fa fa-bowl-food" }
-            };
-            await dbContext.Categories.AddRangeAsync(cats);
-            await dbContext.SaveChangesAsync();
+            await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM OrderItems; DELETE FROM Orders; DELETE FROM ProductImages; DELETE FROM ProductVariants; DELETE FROM Products; DELETE FROM Categories;");
         }
     
     // Seed Real Admin User

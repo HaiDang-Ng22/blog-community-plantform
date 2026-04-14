@@ -52,9 +52,46 @@
 
 .category-link:hover, .category-link.active {
     background: var(--primary-gradient);
-    color: white;
+    color: white !important;
     transform: translateX(5px);
     box-shadow: var(--shadow-glow);
+}
+
+.category-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.category-link {
+    flex: 1;
+}
+
+.sub-toggle {
+    cursor: pointer;
+    padding: 10px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+}
+
+.sub-toggle:hover {
+    color: var(--text-primary);
+}
+
+.sub-toggle.rotated {
+    transform: rotate(180deg);
+}
+
+.sub-category-list {
+    list-style: none;
+    margin-top: 5px;
+    border-left: 1px dashed var(--border-color);
+    margin-left: 15px;
+}
+
+.hidden {
+    display: none !important;
 }
 
 /* Product Grid */

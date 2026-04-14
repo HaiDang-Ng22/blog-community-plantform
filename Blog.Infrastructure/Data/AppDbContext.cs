@@ -193,6 +193,13 @@ public class AppDbContext : DbContext
             .HasForeignKey(o => o.BuyerId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Category self-referencing relationship
+        modelBuilder.Entity<Category>()
+            .HasOne(c => c.ParentCategory)
+            .WithMany(c => c.SubCategories)
+            .HasForeignKey(c => c.ParentCategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // OrderItem
         modelBuilder.Entity<OrderItem>()
             .HasOne(oi => oi.Order)

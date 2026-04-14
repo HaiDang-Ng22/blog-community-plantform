@@ -70,6 +70,35 @@
         .post-preview-body { line-height: 1.6; color: var(--text-primary); font-size: 1.05rem; white-space: pre-wrap; }
         .clickable-title { cursor: pointer; color: #6366f1; transition: 0.2s; }
         .clickable-title:hover { text-decoration: underline; color: #4f46e5; }
+
+        /* Form & Modal Enhancements */
+        .modal-content { 
+            background: var(--glass-bg); 
+            border: var(--glass-border); 
+            border-radius: 20px; 
+            padding: 2rem; 
+            box-shadow: var(--shadow-lg); 
+            width: 90%; 
+            position: relative; 
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+        .form-control { 
+            width: 100%; 
+            padding: 0.75rem 1rem; 
+            border-radius: 12px; 
+            border: 1px solid var(--input-border); 
+            background: var(--input-bg); 
+            color: var(--text-primary); 
+            font-family: inherit; 
+            transition: 0.2s; 
+        }
+        .form-control:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+        
+        body.dark-mode .form-control { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+        body.dark-mode .modal-content { background: rgba(30, 41, 59, 0.95); }
     </style>
 </head>
 
@@ -97,6 +126,9 @@
                         </button>
                         <button class="admin-nav-item" onclick="switchAdminTab('shops')">
                             <i class="fa-solid fa-shop"></i> Quản lý Cửa hàng
+                        </button>
+                        <button class="admin-nav-item" onclick="switchAdminTab('categories')">
+                            <i class="fa-solid fa-layer-group"></i> Quản lý Danh mục
                         </button>
                         <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid var(--border-color);">
                         <a href="index.html" class="admin-nav-item">
@@ -187,13 +219,43 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- Categories Section -->
+                <section id="section-categories" class="admin-section hidden">
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;">Quản lý Danh mục Shop</h2>
+                            <button class="btn primary-btn" onclick="openCategoryModal()" style="width: auto; margin: 0;"><i class="fa-solid fa-plus"></i> Thêm Danh mục</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Icon</th>
+                                        <th>Tên danh mục</th>
+                                        <th>Danh mục cha</th>
+                                        <th>Slug</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-categories-list">
+                                    <!-- JS will inject rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </main>
 
-    <script src="js/api.js?v=1.1"></script>
-    <script src="js/common.js?v=1.6"></script>
-    <script src="js/admin.js?v=1.1"></script>
+    <script src="js/api.js?v=1.2"></script>
+    <script src="js/common.js?v=1.7"></script>
+    <script src="js/admin.js?v=1.2"></script>
+    <script src="js/admin-users.js?v=1.1"></script>
+    <script src="js/admin-reports.js?v=1.1"></script>
+    <script src="js/admin-shops.js?v=1.1"></script>
+    <script src="js/admin-categories.js?v=1.2"></script>
 
     <!-- Post Preview Modal -->
     <div id="post-preview-modal" class="modal-overlay hidden">
@@ -209,6 +271,39 @@
             </div>
             <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn secondary-btn" style="width: auto;" onclick="closePostPreview()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="category-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="category-modal-title">Thêm Danh mục mới</h3>
+                <button class="close-btn" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="category-form" onsubmit="handleCategorySubmit(event)">
+                    <input type="hidden" id="category-id">
+                    <div class="form-group">
+                        <label>Tên danh mục</label>
+                        <input type="text" id="category-name" class="form-control" required placeholder="Ví dụ: Thời trang">
+                    </div>
+                    <div class="form-group">
+                        <label>Icon (FontAwesome class)</label>
+                        <input type="text" id="category-icon" class="form-control" placeholder="Ví dụ: fa-shirt">
+                    </div>
+                    <div class="form-group">
+                        <label>Danh mục cha</label>
+                        <select id="category-parent" class="form-control">
+                            <option value="">-- Không có (Danh mục gốc) --</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn primary-btn" style="width: auto;">Lưu thay đổi</button>
+                        <button type="button" class="btn secondary-btn" style="width: auto;" onclick="closeCategoryModal()">Hủy</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

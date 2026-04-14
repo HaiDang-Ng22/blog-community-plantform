@@ -2,6 +2,7 @@ using Blog.Application.Dtos;
 using Blog.Domain.Entities;
 using Blog.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Blog.API.Controllers;
 
@@ -11,26 +12,36 @@ public class MarketplaceController : ControllerBase
 {
     private readonly IProductRepository _productRepository;
     private readonly IRepository<Category> _categoryRepository;
+    private readonly Blog.Infrastructure.Data.AppDbContext _context;
 
     public MarketplaceController(
         IProductRepository productRepository,
-        IRepository<Category> categoryRepository)
+        IRepository<Category> categoryRepository,
+        Blog.Infrastructure.Data.AppDbContext context)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
+        _context = context;
     }
 
     [HttpGet("products")]
     public async Task<IActionResult> GetProducts([FromQuery] Guid? categoryId)
     {
-        IEnumerable<Product> products;
+        List<Product> products;
         if (categoryId.HasValue)
         {
-            products = await _productRepository.GetProductsByCategoryAsync(categoryId.Value);
+            var categoryIds = await GetCategoryIdsRecursive(categoryId.Value);
+            products = await _context.Products
+                .Include(p => p.Shop)
+                .Include(p => p.Category)
+                .Where(p => categoryIds.Contains(p.CategoryId) && p.Status == ProductStatus.Active)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
         }
         else
         {
-            products = await _productRepository.GetFeaturedProductsAsync(50);
+            var featured = await _productRepository.GetFeaturedProductsAsync(50);
+            products = featured.ToList();
         }
 
         var dtos = products.Select(p => new ProductDto
@@ -46,6 +57,20 @@ public class MarketplaceController : ControllerBase
         });
 
         return Ok(dtos);
+    }
+
+    private async Task<List<Guid>> GetCategoryIdsRecursive(Guid parentId)
+    {
+        var ids = new List<Guid> { parentId };
+        var subCats = await _context.Categories
+            .Where(c => c.ParentCategoryId == parentId)
+            .ToListAsync();
+        
+        foreach (var sub in subCats)
+        {
+            ids.AddRange(await GetCategoryIdsRecursive(sub.Id));
+        }
+        return ids;
     }
 
     [HttpGet("products/{id}")]
@@ -88,7 +113,8 @@ public class MarketplaceController : ControllerBase
             Id = c.Id,
             Name = c.Name,
             Slug = c.Slug,
-            Icon = c.Icon
+            Icon = c.Icon,
+            ParentCategoryId = c.ParentCategoryId
         });
         return Ok(dtos);
     }
