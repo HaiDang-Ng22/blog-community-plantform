@@ -259,16 +259,47 @@ public class AdminController : ControllerBase
         var category = await _context.Categories.FindAsync(id);
         if (category == null) return NotFound();
 
-        // Check if has subcategories
-        var hasSub = await _context.Categories.AnyAsync(c => c.ParentCategoryId == id);
-        if (hasSub) return BadRequest(new { message = "Không thể xóa danh mục này vì có danh mục con." });
+        // Collect all descendant IDs using BFS
+        var allIdsToDelete = new List<Guid>();
+        var queue = new Queue<Guid>();
+        queue.Enqueue(id);
 
-        // Check if has products
-        var hasProducts = await _context.Products.AnyAsync(p => p.CategoryId == id);
-        if (hasProducts) return BadRequest(new { message = "Không thể xóa danh mục này vì có sản phẩm thuộc danh mục." });
+        while (queue.Count > 0)
+        {
+            var currentId = queue.Dequeue();
+            allIdsToDelete.Add(currentId);
+            var children = await _context.Categories
+                .Where(c => c.ParentCategoryId == currentId)
+                .Select(c => c.Id)
+                .ToListAsync();
+            foreach (var childId in children)
+                queue.Enqueue(childId);
+        }
 
-        _context.Categories.Remove(category);
+        // Block deletion if any category in the tree has products
+        var hasProducts = await _context.Products
+            .AnyAsync(p => allIdsToDelete.Contains(p.CategoryId));
+        if (hasProducts)
+        {
+            return BadRequest(new { message = "Không thể xóa vì có sản phẩm thuộc danh mục này hoặc danh mục con. Hãy xóa sản phẩm trước." });
+        }
+
+        // Delete leaves first (reverse BFS order = leaves first)
+        allIdsToDelete.Reverse();
+        foreach (var catId in allIdsToDelete)
+        {
+            var cat = await _context.Categories.FindAsync(catId);
+            if (cat != null) _context.Categories.Remove(cat);
+        }
+
+        var childrenCount = allIdsToDelete.Count - 1;
         await _context.SaveChangesAsync();
-        return Ok(new { message = "Đã xóa danh mục thành công." });
+        return Ok(new
+        {
+            message = childrenCount > 0
+                ? $"Đã xóa danh mục \"{category.Name}\" và {childrenCount} danh mục con."
+                : $"Đã xóa danh mục \"{category.Name}\".",
+            count = allIdsToDelete.Count
+        });
     }
 }

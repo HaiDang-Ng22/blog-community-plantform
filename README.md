@@ -67,4 +67,4 @@ Dự án áp dụng các tiêu chuẩn phát triển phần mềm hiện đại:
 4. **Truy cập**: `http://localhost:7000`.
 
 ---
-*Dự án tâm huyết phát triển bởi HaiDang.*
+*Dự án tâm huyết phát triển bởi HaiDang *
