@@ -38,8 +38,54 @@
         .btn-action.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
 
         .hidden { display: none !important; }
-        
+
+        /* =========================================
+           FOLDER DRILL-DOWN UI STYLES
+        ========================================= */
+        /* Breadcrumb */
+        .cat-breadcrumb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0.75rem 1rem; background: rgba(99,102,241,0.05); border-radius: 12px; margin-bottom: 1.25rem; border: 1px solid rgba(99,102,241,0.1); }
+        .crumb-btn { background: none; border: none; font-family: inherit; font-size: 0.9rem; font-weight: 600; color: #6366f1; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .crumb-btn:hover { background: rgba(99,102,241,0.1); }
+        .crumb-btn.active { color: var(--text-secondary); cursor: default; }
+        .crumb-btn.active:hover { background: none; }
+        .crumb-sep { color: var(--text-light); font-size: 0.7rem; }
+        .crumb-current { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); padding: 4px 10px; }
+
+        /* Grid */
+        .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+
+        /* Card */
+        .cat-card { background: var(--card-bg, white); border: 1px solid var(--border-color, #e2e8f0); border-radius: 16px; overflow: hidden; transition: 0.25s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .cat-card:hover { box-shadow: 0 8px 24px rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.3); transform: translateY(-2px); }
+        .cat-card-body { display: flex; align-items: center; gap: 14px; padding: 1rem 1rem 0.75rem; cursor: pointer; }
+        .cat-card-body:hover .cat-card-name { color: #6366f1; }
+        .cat-card-icon { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08)); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #6366f1; flex-shrink: 0; transition: 0.2s; }
+        .cat-card:hover .cat-card-icon { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15)); }
+        .cat-card-info { flex: 1; min-width: 0; }
+        .cat-card-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.2s; }
+        .cat-card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+        .cat-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+        .chip-folder { background: #e0e7ff; color: #4338ca; }
+        .chip-leaf { background: #f1f5f9; color: #64748b; }
+        .chip-slug { background: #f8fafc; color: #94a3b8; font-family: monospace; border: 1px solid #e2e8f0; }
+        .cat-card-arrow { color: #cbd5e1; font-size: 0.8rem; flex-shrink: 0; transition: 0.2s; }
+        .cat-card:hover .cat-card-arrow { color: #6366f1; transform: translateX(2px); }
+
+        /* Card actions bar */
+        .cat-card-actions { display: flex; gap: 6px; padding: 0.6rem 1rem; border-top: 1px solid var(--border-color, #f1f5f9); background: rgba(0,0,0,0.01); }
+
+        /* Empty state */
+        .cat-empty { text-align: center; padding: 3rem 1rem; }
+
         /* Dark mode overrides */
+        body.dark-mode .cat-card { background: #1e293b; border-color: #334155; }
+        body.dark-mode .cat-breadcrumb { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.15); }
+        body.dark-mode .cat-card-icon { background: rgba(99,102,241,0.15); }
+        body.dark-mode .cat-card-actions { border-color: #334155; background: rgba(0,0,0,0.1); }
+        body.dark-mode .chip-slug { background: #0f172a; border-color: #334155; }
+        body.dark-mode .chip-leaf { background: #0f172a; color: #94a3b8; }
+
+        /* Dark mode overrides (admin) */
         body.dark-mode .admin-card, body.dark-mode .stat-card { background: #1e293b; border-color: #334155; }
         body.dark-mode .data-table th { border-bottom-color: #334155; }
         body.dark-mode .data-table td { border-bottom-color: #334155; }
@@ -224,24 +270,20 @@
                 <section id="section-categories" class="admin-section hidden">
                     <div class="admin-card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700;">Quản lý Danh mục Shop</h2>
-                            <button class="btn primary-btn" onclick="openCategoryModal()" style="width: auto; margin: 0;"><i class="fa-solid fa-plus"></i> Thêm Danh mục</button>
+                            <div>
+                                <h2 style="font-size: 1.5rem; font-weight: 700;">Quản lý Danh mục Shop</h2>
+                                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">Bấm vào danh mục để xem các mục con bên trong</p>
+                            </div>
+                            <button class="btn primary-btn" onclick="openCategoryModal()" style="width: auto; margin: 0; padding: 0.6rem 1.2rem;">
+                                <i class="fa-solid fa-plus"></i> Thêm Danh mục
+                            </button>
                         </div>
-                        <div style="overflow-x: auto;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Icon</th>
-                                        <th>Tên danh mục</th>
-                                        <th>Danh mục cha</th>
-                                        <th>Slug</th>
-                                        <th>Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="admin-categories-list">
-                                    <!-- JS will inject rows -->
-                                </tbody>
-                            </table>
+                        <!-- Folder Drill-Down View -->
+                        <div id="categories-folder-view">
+                            <div class="cat-empty">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#6366f1;"></i>
+                                <p style="margin-top:1rem; color:var(--text-secondary);">Đang tải...</p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -255,7 +297,7 @@
     <script src="js/admin-users.js?v=1.1"></script>
     <script src="js/admin-reports.js?v=1.1"></script>
     <script src="js/admin-shops.js?v=1.1"></script>
-    <script src="js/admin-categories.js?v=1.2"></script>
+    <script src="js/admin-categories.js?v=2.0"></script>
 
     <!-- Post Preview Modal -->
     <div id="post-preview-modal" class="modal-overlay hidden">

@@ -139,51 +139,58 @@
 
     <!-- Modal Thêm sản phẩm -->
     <div id="product-add-modal" class="modal-overlay hidden">
-        <div class="modal-content glassmorphism" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3>Đăng sản phẩm mới</h3>
-                <span onclick="closeAddProductModal()" style="cursor: pointer;"><i class="fa fa-times"></i></span>
+        <div class="modal-content glassmorphism" style="max-width: 600px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+            <!-- Sticky header -->
+            <div class="modal-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1.2rem; font-weight: 700;">Đăng sản phẩm mới</h3>
+                <button onclick="closeAddProductModal()" style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"
+                    onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+                    <i class="fa fa-times"></i>
+                </button>
             </div>
-            <form id="form-add-product">
-                <div class="input-group">
-                    <label>Tên sản phẩm</label>
-                    <input type="text" id="p-name" required>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <!-- Scrollable body -->
+            <div style="overflow-y: auto; flex: 1; padding: 1.5rem;">
+                <form id="form-add-product">
                     <div class="input-group">
-                        <label>Giá bán (VND)</label>
-                        <input type="number" id="p-price" required>
+                        <label>Tên sản phẩm</label>
+                        <input type="text" id="p-name" required>
                     </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Giá bán (VND)</label>
+                            <input type="number" id="p-price" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Số lượng kho</label>
+                            <input type="number" id="p-stock" required>
+                        </div>
+                    </div>
+                    <!-- Dynamic cascading category selector -->
+                    <div class="input-group" id="category-cascade-wrapper">
+                        <label>Danh mục <span style="color:#6366f1; font-size:0.8rem;">(chọn đến danh mục cuối)</span></label>
+                        <div id="category-cascade-selects" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                        <div id="category-selected-path" style="margin-top: 0.5rem; font-size: 0.82rem; color: #6366f1; font-weight: 600; min-height: 1.2rem;"></div>
+                    </div>
+                    <input type="hidden" id="p-category">
                     <div class="input-group">
-                        <label>Số lượng kho</label>
-                        <input type="number" id="p-stock" required>
+                        <label>Mô tả sản phẩm</label>
+                        <textarea id="p-desc" rows="3" required></textarea>
                     </div>
-                </div>
-                <div class="input-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="input-group">
-                        <label>Danh mục chính</label>
-                        <select id="p-category-parent" onchange="onParentCategoryChange()" required>
-                            <option value="" disabled selected>Chọn danh mục chính</option>
-                        </select>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Hình ảnh (URL)</label>
+                        <input type="text" id="p-image" placeholder="Nhập link ảnh (hoặc dùng URL giả lập)">
                     </div>
-                    <div class="input-group">
-                        <label>Danh mục con</label>
-                        <select id="p-category-child" required disabled>
-                            <option value="" disabled selected>Chọn danh mục con</option>
-                        </select>
-                    </div>
-                </div>
-                <input type="hidden" id="p-category" required>
-                <div class="input-group">
-                    <label>Mô tả sản phẩm</label>
-                    <textarea id="p-desc" rows="4" required></textarea>
-                </div>
-                <div class="input-group">
-                    <label>Hình ảnh (URL)</label>
-                    <input type="text" id="p-image" placeholder="Nhập link ảnh (hoặc dùng URL giả lập)">
-                </div>
-                <button type="submit" class="btn primary-btn">Lưu và Hiển thị</button>
-            </form>
+                </form>
+            </div>
+            <!-- Sticky footer with buttons -->
+            <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
+                <button type="submit" form="form-add-product" class="btn primary-btn" style="flex: 1; margin: 0; padding: 0.75rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu và Hiển thị
+                </button>
+                <button type="button" onclick="closeAddProductModal()" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
+                    Huỷ
+                </button>
+            </div>
         </div>
     </div>
 
@@ -195,6 +202,6 @@
 
     <script src="js/api.js?v=1.5"></script>
     <script src="js/common.js?v=1.5"></script>
-    <script src="js/seller.js?v=1.1"></script>
+    <script src="js/seller.js?v=2.1"></script>
 </body>
 </html>
