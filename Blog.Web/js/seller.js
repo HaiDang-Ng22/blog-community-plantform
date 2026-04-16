@@ -107,26 +107,40 @@ function switchSellerTab(tab) {
 }
 
 // Product Management
+let _cachedProducts = [];
+
 async function loadSellerProducts() {
     const tbody = document.getElementById('product-list-body');
     const products = await window.api.get('seller/my-products');
+    _cachedProducts = products;
     
     document.getElementById('stat-products').textContent = products.length;
     
     if (products.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Chưa có sản phẩm nào.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;"><i class="fa-solid fa-box-open" style="font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>Chưa có sản phẩm nào.</td></tr>';
         return;
     }
 
     tbody.innerHTML = products.map(p => `
         <tr>
-            <td><img src="${p.featuredImageUrl || 'https://via.placeholder.com/50'}" class="prod-img-mini"></td>
-            <td style="font-weight: 600;">${p.name}</td>
-            <td>${formatCurrency(p.price)}</td>
-            <td>${p.stock}</td>
-            <td><span class="badge badge-success">Đang bán</span></td>
+            <td><img src="${p.featuredImageUrl || 'https://placehold.co/50x50/e2e8f0/94a3b8?text=?'}" class="prod-img-mini" onerror="this.src='https://placehold.co/50x50/e2e8f0/94a3b8?text=?'"></td>
+            <td style="font-weight: 600; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.name}">${p.name}</td>
+            <td style="color: #2563eb; font-weight: 600;">${formatCurrency(p.price)}</td>
             <td>
-                <button class="btn secondary-btn" style="padding: 4px 8px; width: auto;"><i class="fa fa-edit"></i></button>
+                <span style="font-weight:600; color: ${p.stock === 0 ? '#ef4444' : p.stock < 10 ? '#f59e0b' : '#10b981'};">
+                    ${p.stock}
+                </span>
+            </td>
+            <td><span class="badge ${p.stock === 0 ? 'badge-pending' : 'badge-success'}">${p.stock === 0 ? 'Hết hàng' : 'Đang bán'}</span></td>
+            <td>
+                <div style="display:flex; gap:6px;">
+                    <button class="action-pill edit" title="Chỉnh sửa" onclick="openEditProductModal('${p.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="action-pill delete" title="Xóa" onclick="confirmDeleteProduct('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
@@ -203,6 +217,12 @@ function addCascadeLevel(options, level, placeholder) {
     // Focus animation
     select.addEventListener('focus', () => select.style.borderColor = '#6366f1');
     select.addEventListener('blur', () => select.style.borderColor = 'var(--input-border,#e2e8f0)');
+
+    // Auto-select if only 1 option available
+    if (options.length === 1) {
+        select.value = options[0].id;
+        onCascadeChange(select, level);
+    }
 }
 
 /**
@@ -359,3 +379,255 @@ function getStatusBadgeClass(status) {
 function formatCurrency(val) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 }
+
+// ============================
+// Edit Product
+// ============================
+
+function openEditProductModal(productId) {
+    const product = _cachedProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    // Fill in the edit form fields
+    document.getElementById('edit-p-id').value = product.id;
+    document.getElementById('edit-p-name').value = product.name;
+    document.getElementById('edit-p-price').value = product.price;
+    document.getElementById('edit-p-stock').value = product.stock;
+    document.getElementById('edit-p-desc').value = product.description || '';
+    document.getElementById('edit-p-image').value = product.featuredImageUrl || '';
+
+    // Populate category cascade and pre-select the existing category
+    resetEditCategoryCascade(product.categoryId);
+
+    document.getElementById('product-edit-modal').classList.remove('hidden');
+}
+
+function closeEditProductModal() {
+    document.getElementById('product-edit-modal').classList.add('hidden');
+}
+
+/**
+ * Reset cascade for the edit modal and pre-select the given categoryId path.
+ */
+function resetEditCategoryCascade(preselectedCategoryId) {
+    const container = document.getElementById('edit-category-cascade-selects');
+    const pathEl = document.getElementById('edit-category-selected-path');
+    if (!container) return;
+    container.innerHTML = '';
+    if (pathEl) pathEl.textContent = '';
+    document.getElementById('edit-p-category').value = preselectedCategoryId || '';
+
+    const roots = allCategories.filter(c => !c.parentCategoryId);
+    if (roots.length > 0) {
+        addEditCascadeLevel(roots, 0, preselectedCategoryId);
+    }
+}
+
+/**
+ * Build the ancestor chain for a category (from root to the given id).
+ */
+function getCategoryAncestors(categoryId) {
+    const path = [];
+    let current = allCategories.find(c => c.id === categoryId);
+    while (current) {
+        path.unshift(current);
+        current = current.parentCategoryId
+            ? allCategories.find(c => c.id === current.parentCategoryId)
+            : null;
+    }
+    return path;
+}
+
+function addEditCascadeLevel(options, level, preselectedId) {
+    const container = document.getElementById('edit-category-cascade-selects');
+    if (!container) return;
+
+    while (container.children.length > level) {
+        container.removeChild(container.lastChild);
+    }
+
+    const labelMap = ['Chọn danh mục chính', 'Chọn danh mục con', 'Chọn danh mục con của con'];
+    const select = document.createElement('select');
+    select.className = 'cascade-select';
+    select.style.cssText = 'width:100%; padding:0.65rem 1rem; border-radius:10px; border:1px solid var(--input-border,#e2e8f0); background:var(--input-bg,#f8fafc); color:var(--text-primary,#1e293b); font-family:inherit; font-size:0.95rem; transition:0.2s; outline:none; cursor:pointer;';
+    select.dataset.level = level;
+
+    const placeholderOpt = document.createElement('option');
+    placeholderOpt.value = '';
+    placeholderOpt.disabled = true;
+    placeholderOpt.textContent = labelMap[level] || `Chọn cấp ${level + 1}`;
+    select.appendChild(placeholderOpt);
+
+    options.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        select.appendChild(opt);
+    });
+
+    select.addEventListener('change', () => onEditCascadeChange(select, level));
+    select.addEventListener('focus', () => select.style.borderColor = '#6366f1');
+    select.addEventListener('blur', () => select.style.borderColor = 'var(--input-border,#e2e8f0)');
+    container.appendChild(select);
+
+    // Auto-select if only 1 option available (no pre-selection needed)
+    if (!preselectedId && options.length === 1) {
+        select.value = options[0].id;
+        onEditCascadeChange(select, level);
+    }
+
+    // Pre-select value from ancestor chain if applicable
+    if (preselectedId) {
+        const ancestors = getCategoryAncestors(preselectedId);
+        if (ancestors[level]) {
+            select.value = ancestors[level].id;
+            // If not leaf, recurse deeper
+            const children = allCategories.filter(c => c.parentCategoryId === ancestors[level].id);
+            if (children.length > 0 && level + 1 < ancestors.length) {
+                addEditCascadeLevel(children, level + 1, preselectedId);
+            }
+            updateEditCategoryPath();
+        }
+    }
+}
+
+function onEditCascadeChange(select, level) {
+    const selectedId = select.value;
+    const container = document.getElementById('edit-category-cascade-selects');
+
+    while (container.children.length > level + 1) {
+        container.removeChild(container.lastChild);
+    }
+
+    // Always set the hidden input to current selection first
+    document.getElementById('edit-p-category').value = selectedId;
+    updateEditCategoryPath();
+
+    const children = allCategories.filter(c => c.parentCategoryId === selectedId);
+    if (children.length > 0) {
+        // Has children — user must pick deeper, so clear the hidden input
+        document.getElementById('edit-p-category').value = '';
+        addEditCascadeLevel(children, level + 1, null);
+    }
+}
+
+function updateEditCategoryPath() {
+    const container = document.getElementById('edit-category-cascade-selects');
+    const pathEl = document.getElementById('edit-category-selected-path');
+    if (!pathEl || !container) return;
+
+    const parts = [];
+    Array.from(container.querySelectorAll('select')).forEach(sel => {
+        if (sel.value) {
+            const cat = allCategories.find(c => c.id === sel.value);
+            if (cat) parts.push(cat.name);
+        }
+    });
+
+    if (parts.length > 0) {
+        pathEl.innerHTML = `<i class="fa-solid fa-location-dot" style="margin-right:4px;"></i>${parts.join(' › ')}`;
+    } else {
+        pathEl.textContent = '';
+    }
+}
+
+/**
+ * Helper: get the final selected categoryId from the edit cascade.
+ * Reads from the hidden input first, falls back to the last select's value.
+ */
+function getEditSelectedCategoryId() {
+    const hidden = document.getElementById('edit-p-category').value;
+    if (hidden) return hidden;
+
+    // Fallback: read the deepest cascade select value
+    const container = document.getElementById('edit-category-cascade-selects');
+    if (!container) return '';
+    const selects = container.querySelectorAll('select');
+    for (let i = selects.length - 1; i >= 0; i--) {
+        if (selects[i].value) {
+            // Check if this selection has children → not a leaf
+            const children = allCategories.filter(c => c.parentCategoryId === selects[i].value);
+            if (children.length === 0) {
+                return selects[i].value;
+            }
+        }
+    }
+    return '';
+}
+
+// Edit form submit — attached directly (not in DOMContentLoaded)
+const _editForm = document.getElementById('form-edit-product');
+if (_editForm) {
+    _editForm.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const productId = document.getElementById('edit-p-id').value;
+        const categoryId = getEditSelectedCategoryId();
+
+        if (!categoryId) {
+            const wrapper = document.getElementById('edit-category-cascade-wrapper');
+            if (wrapper) {
+                wrapper.style.animation = 'none';
+                wrapper.offsetHeight;
+                wrapper.style.animation = 'shake 0.3s ease';
+            }
+            const pathEl = document.getElementById('edit-category-selected-path');
+            if (pathEl) pathEl.innerHTML = '<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Vui lòng chọn đến danh mục cuối cùng!</span>';
+            return;
+        }
+
+        const data = {
+            name: document.getElementById('edit-p-name').value,
+            price: parseFloat(document.getElementById('edit-p-price').value),
+            stock: parseInt(document.getElementById('edit-p-stock').value),
+            categoryId: categoryId,
+            description: document.getElementById('edit-p-desc').value,
+            imageUrls: document.getElementById('edit-p-image').value
+                ? [document.getElementById('edit-p-image').value]
+                : []
+        };
+
+        const submitBtn = document.querySelector('button[form="form-edit-product"][type="submit"]');
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang lưu...';
+        }
+
+        try {
+            await window.api.put(`seller/products/${productId}`, data);
+            window.common?.showToast('Cập nhật sản phẩm thành công!', 'success');
+            closeEditProductModal();
+            loadSellerProducts();
+        } catch (err) {
+            window.common?.showToast('Lỗi: ' + (err.message || 'Không thể cập nhật'), 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    };
+}
+
+// ============================
+// Delete Product
+// ============================
+
+async function confirmDeleteProduct(productId, productName) {
+    // Custom confirm using a nicer approach (falls back to browser confirm)
+    const confirmed = confirm(`Bạn có chắc muốn xóa sản phẩm "${productName}" không?\nHành động này không thể hoàn tác.`);
+    if (!confirmed) return;
+
+    try {
+        await window.api.delete(`seller/products/${productId}`);
+        window.common?.showToast('Đã xóa sản phẩm thành công.', 'success');
+        loadSellerProducts();
+    } catch (err) {
+        window.common?.showToast('Lỗi: ' + (err.message || 'Không thể xóa sản phẩm'), 'error');
+    }
+}
+
+window.openEditProductModal = openEditProductModal;
+window.closeEditProductModal = closeEditProductModal;
+window.confirmDeleteProduct = confirmDeleteProduct;

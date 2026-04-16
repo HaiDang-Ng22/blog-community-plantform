@@ -6,7 +6,7 @@
     <title>Kênh người bán - Zynk Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
-    <link rel="stylesheet" href="css/seller.css?v=1.1">
+    <link rel="stylesheet" href="css/seller.css?v=2.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="home-page">
@@ -194,6 +194,64 @@
         </div>
     </div>
 
+    <!-- Modal Chỉnh sửa sản phẩm -->
+    <div id="product-edit-modal" class="modal-overlay hidden">
+        <div class="modal-content glassmorphism" style="max-width: 600px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+            <!-- Sticky header -->
+            <div class="modal-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1.2rem; font-weight: 700;"><i class="fa-solid fa-pen-to-square" style="color:#6366f1; margin-right:8px;"></i>Chỉnh sửa sản phẩm</h3>
+                <button onclick="closeEditProductModal()" style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"
+                    onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <!-- Scrollable body -->
+            <div style="overflow-y: auto; flex: 1; padding: 1.5rem;">
+                <form id="form-edit-product">
+                    <input type="hidden" id="edit-p-id">
+                    <div class="input-group">
+                        <label>Tên sản phẩm</label>
+                        <input type="text" id="edit-p-name" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Giá bán (VND)</label>
+                            <input type="number" id="edit-p-price" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Số lượng kho</label>
+                            <input type="number" id="edit-p-stock" required>
+                        </div>
+                    </div>
+                    <!-- Dynamic cascading category selector for edit -->
+                    <div class="input-group" id="edit-category-cascade-wrapper">
+                        <label>Danh mục <span style="color:#6366f1; font-size:0.8rem;">(chọn đến danh mục cuối)</span></label>
+                        <div id="edit-category-cascade-selects" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                        <div id="edit-category-selected-path" style="margin-top: 0.5rem; font-size: 0.82rem; color: #6366f1; font-weight: 600; min-height: 1.2rem;"></div>
+                    </div>
+                    <input type="hidden" id="edit-p-category">
+                    <div class="input-group">
+                        <label>Mô tả sản phẩm</label>
+                        <textarea id="edit-p-desc" rows="3" required></textarea>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Hình ảnh (URL)</label>
+                        <input type="text" id="edit-p-image" placeholder="Nhập link ảnh">
+                    </div>
+                </form>
+            </div>
+            <!-- Sticky footer with buttons -->
+            <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
+                <button type="submit" form="form-edit-product" class="btn primary-btn" style="flex: 1; margin: 0; padding: 0.75rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+                </button>
+                <button type="button" onclick="closeEditProductModal()" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
+                    Huỷ
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="main-footer">
         <div class="container-wide">
             <p>&copy; 2026 Zynk Business Center.</p>
@@ -202,6 +260,7 @@
 
     <script src="js/api.js?v=1.5"></script>
     <script src="js/common.js?v=1.5"></script>
-    <script src="js/seller.js?v=2.1"></script>
+    <script src="js/seller.js?v=3.0"></script>
 </body>
 </html>
+

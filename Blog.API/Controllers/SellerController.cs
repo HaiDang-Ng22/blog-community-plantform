@@ -118,6 +118,44 @@ public class SellerController : ControllerBase
         return Ok(products);
     }
 
+    [HttpPut("products/{id}")]
+    public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductDto dto)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return Forbid();
+
+        var product = await _productRepository.GetByIdAsync(id);
+        if (product == null) return NotFound(new { message = "Không tìm thấy sản phẩm." });
+        if (product.ShopId != shop.Id) return Forbid();
+
+        product.Name = dto.Name;
+        product.Description = dto.Description;
+        product.Price = dto.Price;
+        product.Stock = dto.Stock;
+        product.CategoryId = dto.CategoryId;
+        product.FeaturedImageUrl = dto.ImageUrls.FirstOrDefault() ?? product.FeaturedImageUrl;
+        product.UpdatedAt = DateTime.UtcNow;
+
+        await _productRepository.UpdateAsync(product);
+        return Ok(new { message = "Cập nhật sản phẩm thành công." });
+    }
+
+    [HttpDelete("products/{id}")]
+    public async Task<IActionResult> DeleteProduct(Guid id)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return Forbid();
+
+        var product = await _productRepository.GetByIdAsync(id);
+        if (product == null) return NotFound(new { message = "Không tìm thấy sản phẩm." });
+        if (product.ShopId != shop.Id) return Forbid();
+
+        await _productRepository.DeleteAsync(product);
+        return Ok(new { message = "Đã xóa sản phẩm thành công." });
+    }
+
     [HttpGet("incoming-orders")]
     public async Task<IActionResult> GetIncomingOrders()
     {

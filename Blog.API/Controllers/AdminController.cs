@@ -45,24 +45,66 @@ public class AdminController : ControllerBase
         var reports = await _context.Reports
             .Include(r => r.Reporter)
             .Include(r => r.Post)
-            .ThenInclude(p => p.Author)
-            .Select(r => new
-            {
-                r.Id,
-                r.PostId,
-                r.Reason,
-                r.CreatedAt,
-                r.IsResolved,
-                ReporterName = r.Reporter.FullName,
-                PostTitle = r.Post.Title,
-                PostContent = r.Post.Content,
-                PostImageUrl = r.Post.FeaturedImageUrl,
-                PostAuthorName = r.Post.Author.FullName,
-                PostAuthorId = r.Post.AuthorId
-            })
+                .ThenInclude(p => p.Author)
+            .Include(r => r.Post)
+                .ThenInclude(p => p.Images)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
-        return Ok(reports);
+
+        var result = reports.Select(r => new
+        {
+            r.Id,
+            r.PostId,
+            r.Reason,
+            r.CreatedAt,
+            r.IsResolved,
+            ReporterName = r.Reporter.FullName,
+            PostTitle = r.Post != null ? r.Post.Title : null,
+            PostContent = r.Post != null ? r.Post.Content : null,
+            PostImageUrl = r.Post != null ? r.Post.FeaturedImageUrl : null,
+            PostImageUrls = r.Post != null
+                ? r.Post.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
+                : new List<string>(),
+            PostAuthorName = r.Post != null ? r.Post.Author.FullName : "Không rõ",
+            PostAuthorId = r.Post != null ? r.Post.AuthorId : (Guid?)null,
+            PostAuthorIsPrivate = r.Post != null && r.Post.Author.IsPrivate
+        });
+
+        return Ok(result);
+    }
+
+    // Admin-only: get any post bypassing privacy restrictions
+    [HttpGet("posts/{id}")]
+    public async Task<IActionResult> GetPostByIdAdmin(Guid id)
+    {
+        var post = await _context.Posts
+            .Include(p => p.Author)
+            .Include(p => p.Images)
+            .Include(p => p.Comments)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (post == null) return NotFound(new { message = "Không tìm thấy bài viết" });
+
+        return Ok(new
+        {
+            post.Id,
+            post.Title,
+            post.Slug,
+            post.Content,
+            post.Summary,
+            post.FeaturedImageUrl,
+            ImageUrls = post.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
+            post.ViewCount,
+            post.LikeCount,
+            Status = post.Status.ToString(),
+            AuthorName = post.Author?.FullName ?? "Người dùng",
+            AuthorAvatarUrl = post.Author?.AvatarUrl,
+            AuthorId = post.AuthorId,
+            AuthorIsPrivate = post.Author?.IsPrivate ?? false,
+            post.CreatedAt,
+            post.PublishedAt,
+            CommentCount = post.Comments.Count
+        });
     }
 
     [HttpDelete("posts/{id}")]
