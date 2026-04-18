@@ -1,21 +1,23 @@
 /* css/common.css */
 :root {
-    --primary-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
-    --secondary-gradient: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
-    --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
-    --glass-bg: rgba(255, 255, 255, 0.92);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.5);
-    --text-primary: #1E293B;
-    --text-secondary: #64748B;
-    --text-light: #94A3B8;
-    --input-bg: #F8FAFC;
-    --input-border: #E2E8F0;
-    --input-focus: #3B82F6;
-    --shadow-sm: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-    --shadow-md: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-    --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-    --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.3);
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --primary-color: #2563EB;
+    --primary-gradient: #2563EB;
+    --secondary-gradient: #1E40AF;
+    --bg-color: #F9FAFB;
+    --bg-gradient: #F3F4F6;
+    --glass-bg: #FFFFFF;
+    --glass-border: 1px solid #E5E7EB;
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --text-light: #9CA3AF;
+    --input-bg: #FFFFFF;
+    --input-border: #D1D5DB;
+    --input-focus: #2563EB;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-glow: none;
+    --transition: all 0.2s ease-in-out;
 }
 
 * {
@@ -51,9 +53,8 @@ body {
 /* Header */
 .main-header {
     background: var(--glass-bg);
-    backdrop-filter: blur(15px);
     border-bottom: var(--glass-border);
-    padding: 1rem 0;
+    padding: 0.75rem 0;
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -75,13 +76,9 @@ body {
 .logo a {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #2563EB;
+    color: var(--primary-color);
     text-decoration: none;
-    letter-spacing: 2px;
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    letter-spacing: 1px;
 }
 
 .nav-actions {
@@ -132,10 +129,39 @@ body {
     font-size: 1.2rem;
     color: var(--text-secondary);
     transition: var(--transition);
+    margin-right: 15px;
 }
 
 .notification-wrapper:hover {
     color: #2563EB;
+}
+
+/* Nav Direct Links Desktop */
+.nav-direct-links {
+    display: flex;
+    gap: 15px;
+    margin-right: 20px;
+    align-items: center;
+}
+
+.nav-marketplace-link {
+    color: #2563eb;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nav-seller-link {
+    color: #059669;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* Header Search Redesign */
@@ -330,13 +356,12 @@ body {
     color: #475569;
 }
 
-/* Glassmorphism */
+/* Glassmorphism -> Adjusted to Flat Card */
 .glassmorphism {
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    border-radius: 2rem;
+    border-radius: 1rem;
     padding: 2rem;
-    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    box-shadow: var(--shadow-md);
     border: var(--glass-border);
 }
 
@@ -382,12 +407,12 @@ body.dark-mode {
     background: #0f172a;
     color: #f8fafc;
     /* Redefine root vars for dark mode */
-    --glass-bg: rgba(30, 41, 59, 0.95);
+    --glass-bg: #1e293b;
     --glass-border: 1px solid #334155;
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-light: #64748b;
-    --input-bg: #1e293b;
+    --input-bg: #0f172a;
     --input-border: #334155;
 }
 
@@ -572,4 +597,38 @@ body.dark-mode .report-opt {
 body.dark-mode .report-opt:hover {
     background: #334155;
     border-color: #38bdf8;
+}
+
+/* ================================= */
+/* GLOBAL RESPONSIVE DESIGN          */
+/* ================================= */
+@media (max-width: 768px) {
+    /* Core Layout */
+    body { padding: 0 !important; }
+    .container-wide { width: 100%; padding: 0 1rem; overflow-x: hidden; }
+    
+    /* Header Adjustments */
+    .main-header { padding: 0.5rem 0; }
+    .nav-actions { gap: 0.5rem; }
+    .header-search-container { display: none !important; } /* Hide bulky search on mobile */
+    .nav-direct-links { display: none !important; } /* Hide extra direct links on mobile to save space */
+    .user-name { display: none; } /* Hide Welcome text on mobile */
+    .btn-register-link { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
+    .btn-login-link { font-size: 0.85rem; }
+    .logo a { font-size: 1.25rem; }
+    
+    /* Global Elements */
+    .glassmorphism { padding: 1.5rem 1rem; border-radius: 0.75rem; }
+    .btn { padding: 0.75rem; font-size: 0.95rem; border-radius: 0.5rem; }
+    
+    /* Post Cards Adjustments to prevent overflow */
+    .post-card { flex-direction: column; gap: 0.8rem; padding: 1rem; border-radius: 0.75rem; }
+    .author-avatar-col img { width: 36px; height: 36px; }
+    .post-header { margin-bottom: 0.5rem; justify-content: flex-start; gap: 10px; }
+}
+
+@media (max-width: 480px) {
+    .modal-content.report-modal-content { width: 95%; padding: 1.5rem; margin: 1rem; }
+    .comment-input-area { flex-direction: column; }
+    .reply-input, .comment-input-area button { width: 100%; border-radius: 0.5rem; }
 }

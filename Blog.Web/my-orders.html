@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi - Zynk</title>
+    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        .tab-item {
+            padding: 1rem 1.5rem;
+            white-space: nowrap;
+            cursor: pointer;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 1rem;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: 0.2s;
+        }
+
+        .tab-item:hover {
+            color: #3b82f6;
+        }
+
+        .tab-item.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .order-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            border: var(--glass-border);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+            transition: 0.3s;
+        }
+
+        .order-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-status {
+            font-weight: 700;
+            color: #f59e0b;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .order-status.completed {
+            color: #10b981;
+        }
+
+        .order-status.cancelled {
+            color: #ef4444;
+        }
+
+        .order-status.shipped {
+            color: #3b82f6;
+        }
+
+        .order-item {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-item img {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .order-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .order-item-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .order-item-meta {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .order-item-price {
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .order-total-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ef4444;
+        }
+
+        .btn-reorder {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #3b82f6;
+            color: white;
+            border: none;
+        }
+
+        .btn-reorder:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK</a>
+            </div>
+            
+            <div id="nav-actions" class="nav-actions">
+                <!-- Sẽ được điền bằng JS -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2 style="margin-bottom: 1.5rem;">Đơn hàng của tôi</h2>
+        <div class="tabs">
+            <div class="tab-item active" data-status="ALL">Tất cả</div>
+            <div class="tab-item" data-status="Unpaid">Chờ xác nhận</div>
+            <div class="tab-item" data-status="AwaitingShipment">Chờ xác nhận</div>
+            <div class="tab-item" data-status="Shipped">Đang giao</div>
+            <div class="tab-item" data-status="Completed">Hoàn thành</div>
+            <div class="tab-item" data-status="Cancelled">Đã hủy</div>
+        </div>
+
+        <div id="orders-list">
+            <div style="text-align:center; padding: 3rem; color: #64748b;">
+                <i class="fa fa-spinner fa-spin fa-2x"></i>
+                <p style="margin-top: 1rem;">Đang tải đơn hàng...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js?v=1.0.1"></script>
+    <script src="js/common.js?v=1.0.1"></script>
+    <script src="js/my-orders.js?v=1.0.1"></script>
+</body>
+
+</html>

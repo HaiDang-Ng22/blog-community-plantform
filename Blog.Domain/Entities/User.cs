@@ -12,6 +12,7 @@ public class User
     public string? AvatarUrl { get; set; }
     public string? CoverImageUrl { get; set; }
     public string? Bio { get; set; }
+    public string? PhoneNumber { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsPrivate { get; set; } = false;
@@ -23,4 +24,5 @@ public class User
     public virtual ICollection<Follow> Followers { get; set; } = new List<Follow>();
     public virtual ICollection<Follow> Following { get; set; } = new List<Follow>();
     public virtual ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
+    public virtual ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
 }

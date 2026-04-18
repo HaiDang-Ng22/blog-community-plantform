@@ -19,6 +19,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -98,7 +99,27 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'Bio') ALTER TABLE Users ADD Bio NVARCHAR(MAX) NULL;");
     dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'IsPrivate') ALTER TABLE Users ADD IsPrivate BIT NOT NULL DEFAULT 0;");
     dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'Role') ALTER TABLE Users ADD Role NVARCHAR(50) NOT NULL DEFAULT 'User';");
+    dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'PhoneNumber') ALTER TABLE Users ADD PhoneNumber NVARCHAR(MAX) NULL;");
+    
     dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Comments') AND name = 'ParentCommentId') ALTER TABLE Comments ADD ParentCommentId UNIQUEIDENTIFIER NULL;");
+    
+    // Create UserAddresses table if not exists
+    dbContext.Database.ExecuteSqlRaw(@"
+        IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[UserAddresses]') AND type in (N'U'))
+        BEGIN
+            CREATE TABLE [UserAddresses] (
+                [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+                [UserId] UNIQUEIDENTIFIER NOT NULL,
+                [FullName] NVARCHAR(MAX) NOT NULL,
+                [PhoneNumber] NVARCHAR(MAX) NOT NULL,
+                [Province] NVARCHAR(MAX) NOT NULL,
+                [DistrictWard] NVARCHAR(MAX) NOT NULL,
+                [SpecificAddress] NVARCHAR(MAX) NOT NULL,
+                [IsDefault] BIT NOT NULL DEFAULT 0,
+                [CreatedAt] DATETIME2 NOT NULL,
+                CONSTRAINT [FK_UserAddresses_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+            );
+        END");
     
     // Create PostImages table if not exists
     dbContext.Database.ExecuteSqlRaw(@"
@@ -223,9 +244,27 @@ using (var scope = app.Services.CreateScope())
             BEGIN
                 CREATE TABLE [Orders] (
                     [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [BuyerId] UNIQUEIDENTIFIER NOT NULL, [TotalAmount] DECIMAL(18,2) NOT NULL, [Status] INT NOT NULL DEFAULT 0, 
-                    [PaymentMethod] NVARCHAR(50) NOT NULL DEFAULT 'COD', [ShippingAddress] NVARCHAR(MAX) NOT NULL, [CustomerNote] NVARCHAR(MAX) NULL, [CreatedAt] DATETIME2 NOT NULL, [UpdatedAt] DATETIME2 NULL,
+                    [PaymentMethod] NVARCHAR(50) NOT NULL DEFAULT 'COD', 
+                    [CustomerName] NVARCHAR(MAX) NOT NULL DEFAULT '',
+                    [PhoneNumber] NVARCHAR(MAX) NOT NULL DEFAULT '',
+                    [Province] NVARCHAR(MAX) NOT NULL DEFAULT '',
+                    [DistrictWard] NVARCHAR(MAX) NOT NULL DEFAULT '',
+                    [SpecificAddress] NVARCHAR(MAX) NOT NULL DEFAULT '',
+                    [ShippingAddress] NVARCHAR(MAX) NOT NULL, 
+                    [CustomerNote] NVARCHAR(MAX) NULL, [CreatedAt] DATETIME2 NOT NULL, [UpdatedAt] DATETIME2 NULL,
                     CONSTRAINT [FK_Orders_Users_BuyerId] FOREIGN KEY ([BuyerId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION
                 );
+            END
+            ELSE
+            BEGIN
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Orders') AND name = 'CustomerName')
+                BEGIN
+                    ALTER TABLE [Orders] ADD [CustomerName] NVARCHAR(MAX) NOT NULL DEFAULT '';
+                    ALTER TABLE [Orders] ADD [PhoneNumber] NVARCHAR(MAX) NOT NULL DEFAULT '';
+                    ALTER TABLE [Orders] ADD [Province] NVARCHAR(MAX) NOT NULL DEFAULT '';
+                    ALTER TABLE [Orders] ADD [DistrictWard] NVARCHAR(MAX) NOT NULL DEFAULT '';
+                    ALTER TABLE [Orders] ADD [SpecificAddress] NVARCHAR(MAX) NOT NULL DEFAULT '';
+                END
             END");
 
         // 8. OrderItems

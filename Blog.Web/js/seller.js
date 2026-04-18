@@ -335,45 +335,161 @@ document.getElementById('form-add-product').onsubmit = async (e) => {
 
 // Order Management
 async function loadIncomingOrders() {
-    const tbody = document.getElementById('order-list-body');
-    const orders = await window.api.get('seller/incoming-orders');
-    
-    document.getElementById('stat-orders').textContent = orders.length;
-    const revenue = orders.filter(o => o.status === 'Completed').reduce((acc, o) => acc + o.totalAmount, 0);
-    document.getElementById('stat-revenue').textContent = formatCurrency(revenue);
+    const container = document.getElementById('order-list-container');
+    if (!container) return;
 
-    if (orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Chưa có đơn hàng nào.</td></tr>';
-        return;
+    try {
+        const orders = await window.api.get('seller/incoming-orders');
+        
+        // Update stats
+        if (document.getElementById('stat-orders')) document.getElementById('stat-orders').textContent = orders.length;
+        const revenue = orders.filter(o => (o.status || o.Status) === 'Completed').reduce((acc, o) => acc + (o.totalAmount || o.TotalAmount), 0);
+        if (document.getElementById('stat-revenue')) document.getElementById('stat-revenue').textContent = formatCurrency(revenue);
+
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 4rem; background: rgba(255,255,255,0.5); border-radius: 1.5rem; border: 1px dashed #e2e8f0;">
+                    <i class="fa fa-box-open" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; display: block;"></i>
+                    <p style="color: #64748b; font-weight: 500;">Chưa có đơn hàng nào cần xử lý.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = orders.map(o => {
+            const rawStatus = (o.status || o.Status);
+            const s = rawStatus.toLowerCase();
+            const items = o.items || o.Items || [];
+            
+            // Limit items to show in summary
+            const displayedItems = items.slice(0, 2);
+            const remainingCount = items.length - displayedItems.length;
+
+            return `
+                <div class="order-premium-card">
+                    <div class="order-info">
+                        <div class="order-id-label">Mã đơn: #${(o.id || o.Id).substring(0, 8).toUpperCase()}</div>
+                        <div class="customer-info">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(o.customerName || 'Zynk User')}&background=random" class="customer-avatar">
+                            <div>
+                                <div class="customer-name">${o.customerName || 'Khách hàng Zynk'}</div>
+                                <div class="customer-phone">${o.phoneNumber || 'Không có SĐT'}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <span class="status-badge ${s}">${getStatusText(rawStatus)}</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 0.5rem;">
+                                <i class="fa fa-clock"></i> ${new Date(o.createdAt || o.CreatedAt).toLocaleDateString('vi-VN')}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="order-items-summary">
+                        ${displayedItems.map(item => `
+                            <div class="order-item-inline">
+                                <img src="${item.productImageUrl || 'https://placehold.co/44'}" alt="product">
+                                <div class="item-txt">${item.productName || 'Sản phẩm'}</div>
+                                <div style="font-size: 0.75rem; color: #94a3b8;">x${item.quantity}</div>
+                            </div>
+                        `).join('')}
+                        ${remainingCount > 0 ? `<div style="font-size: 0.75rem; color: #3b82f6; font-weight: 600;">+ ${remainingCount} sản phẩm khác</div>` : ''}
+                    </div>
+
+                    <div class="order-price-summary">
+                        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem;">Tổng thanh toán</div>
+                        <div class="total-price-highlight">${formatCurrency(o.totalAmount || o.TotalAmount)}</div>
+                        
+                        <div class="order-card-actions" style="margin-top: 1rem;">
+                            ${getActionButtons(o.id || o.Id, rawStatus, o.paymentMethod || o.PaymentMethod)}
+                            <button class="btn-premium detail" onclick="window.location.href='seller-order-detail.html?id=${o.id || o.Id}'">
+                                <i class="fa fa-eye"></i> Chi tiết
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Lỗi tải đơn hàng:', e);
+        container.innerHTML = `<div style="color:red; text-align:center; padding:2rem;">Lỗi kết nối: ${e.message}</div>`;
+    }
+}
+
+function getStatusText(status) {
+    if (!status) return '---';
+    const s = status.toString().toLowerCase();
+    
+    if (s === 'unpaid') return 'Chờ xác nhận';
+    if (s === 'awaitingshipment') return 'Chờ vận chuyển';
+    if (s === 'awaitingcollection') return 'Chờ lấy hàng';
+    if (s === 'intransit') return 'Đang giao hàng';
+    if (s === 'delivered') return 'Đã giao hàng';
+    if (s === 'completed') return 'Hoàn thành';
+    if (s === 'cancelled') return 'Đã hủy';
+    if (s === 'returned') return 'Trả hàng/Hoàn tiền';
+    
+    // Legacy/fallback mapping
+    if (s === 'pendingpayment') return 'Chờ xác nhận';
+    if (s === 'toship' || s === 'preparing') return 'Chờ vận chuyển';
+    if (s === 'shipped' || s === 'shipping') return 'Đang giao hàng';
+    
+    return status;
+}
+function getActionButtons(id, status, paymentMethod) {
+    if (!status) return '';
+    const s = status.toString().toLowerCase();
+
+    // 1. Chờ xác nhận (Unpaid)
+    if (s === 'unpaid' || s === 'pendingpayment') {
+        if (paymentMethod === 'COD') {
+            return `<button class="btn-premium confirm" style="background:#6366f1;" onclick="updateOrderStatus('${id}', 'AwaitingShipment')">Xác nhận đơn</button>`;
+        }
+        return `<div style="padding: 10px; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 0.75rem; font-weight: 600; text-align: center;">Chờ xác nhận</div>`;
     }
 
-    tbody.innerHTML = orders.map(o => `
-        <tr>
-            <td>#${o.id.substring(0, 8)}</td>
-            <td>Khách hàng Zynk</td>
-            <td style="font-weight: 700;">${formatCurrency(o.totalAmount)}</td>
-            <td>${new Date(o.createdAt).toLocaleDateString()}</td>
-            <td><span class="badge ${getStatusBadgeClass(o.status)}">${o.status}</span></td>
-            <td style="display: flex; gap: 5px;">
-                <button class="btn primary-btn" style="padding: 4px 8px; width: auto; font-size: 0.7rem;" onclick="updateOrderStatus('${o.id}', 'Completed')">Xong</button>
-            </td>
-        </tr>
-    `).join('');
+    // 2. Chờ vận chuyển (Seller prepares)
+    if (s === 'awaitingshipment' || s === 'toship') {
+        return `<button class="btn-premium confirm" onclick="updateOrderStatus('${id}', 'AwaitingCollection')">Chuẩn bị hàng</button>`;
+    }
+
+    // 3. Chờ lấy hàng (Handover to logistics)
+    if (s === 'awaitingcollection') {
+        return `<button class="btn-premium confirm" style="background:#2563eb;" onclick="updateOrderStatus('${id}', 'InTransit')">Giao cho ĐVVC</button>`;
+    }
+
+    // 4. Đang giao hàng
+    if (s === 'intransit' || s === 'shipped' || s === 'shipping') {
+        return `<button class="btn-premium confirm" style="background:#10b981;" onclick="updateOrderStatus('${id}', 'Delivered')">Đã giao hàng</button>`;
+    }
+
+    return '';
 }
 
 async function updateOrderStatus(id, status) {
+    const statusText = getStatusText(status);
+    if (!confirm(`Bạn muốn chuyển trạng thái đơn hàng sang "${statusText}"?`)) return;
     try {
-        await window.api.patch(`orders/${id}/status`, status);
+        await window.api.patch(`orders/${id}/status`, { status: status });
+        if (window.common?.showToast) window.common.showToast('Đã cập nhật trạng thái', 'success');
         loadIncomingOrders();
     } catch (e) {
-        alert('Lỗi cập nhật trạng thái');
+        console.error('Update error:', e);
+        alert('Lỗi cập nhật trạng thái: ' + (e.message || 'Cập nhật thất bại'));
     }
 }
 
 function getStatusBadgeClass(status) {
-    if (status === 'Pending') return 'badge-warning';
-    if (status === 'Completed') return 'badge-success';
-    return 'badge-warning';
+    if (!status) return '';
+    const s = status.toString().toLowerCase();
+    if (s === 'unpaid' || s === 'pendingpayment') return 'badge-secondary';
+    if (s === 'awaitingshipment') return 'badge-warning';
+    if (s === 'awaitingcollection') return 'badge-info';
+    if (s === 'intransit') return 'badge-primary';
+    if (s === 'delivered') return 'badge-success';
+    if (s === 'completed') return 'badge-success';
+    if (s === 'cancelled') return 'badge-danger';
+    if (s === 'returned') return 'badge-dark';
+    return '';
 }
 
 function formatCurrency(val) {

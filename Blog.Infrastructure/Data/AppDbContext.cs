@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Tag> Tags { get; set; }
@@ -148,6 +149,13 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.ActorId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Cấu hình UserAddress
+        modelBuilder.Entity<UserAddress>()
+            .HasOne(ua => ua.User)
+            .WithMany(u => u.Addresses)
+            .HasForeignKey(ua => ua.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // --- Shopping Configurations ---
         
