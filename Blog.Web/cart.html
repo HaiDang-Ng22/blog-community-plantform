@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .cart-layout { max-width: 800px; margin: 3rem auto; }
+        .cart-layout { max-width: 1000px; margin: 3rem auto; display: grid; grid-template-columns: 1fr 400px; gap: 2rem; align-items: start; }
+        @media (max-width: 900px) { .cart-layout { grid-template-columns: 1fr; } }
         .cart-card { background: var(--glass-bg); backdrop-filter: blur(10px); border-radius: 1.5rem; border: var(--glass-border); padding: 2rem; box-shadow: var(--shadow-md); }
         .cart-item { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border-color); }
         .cart-item img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; }
@@ -16,8 +17,21 @@
         .cart-item-info h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
         .cart-price { font-weight: 700; color: #2563eb; }
         .cart-qty { font-size: 0.9rem; color: #64748b; }
-        .cart-summary { margin-top: 2rem; text-align: right; }
-        .cart-total { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; }
+        .cart-total { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; justify-content: space-between; }
+        
+        .checkout-box { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: var(--shadow-sm); border: 1px solid #e2e8f0; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; outline: none; background: #f8fafc; font-family: inherit; }
+        
+        .payment-methods { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+        .payment-label { display: flex; align-items: center; gap: 10px; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 0.75rem; cursor: pointer; transition: 0.2s; }
+        .payment-label:hover { border-color: #3b82f6; background: #eff6ff; }
+        .payment-label input { width: auto; margin: 0; }
+        
+        .saved-address-card { border: 1px solid #cbd5e1; padding: 1rem; border-radius: 0.75rem; cursor: pointer; margin-bottom: 0.75rem; }
+        .saved-address-card.selected { border-color: #3b82f6; background: #eff6ff; }
+        .btn-toggle-saved { font-size: 0.9rem; color: #3b82f6; cursor: pointer; display: inline-block; margin-bottom: 1rem; text-decoration: underline; font-weight: 600; }
     </style>
 </head>
 <body class="home-page">
@@ -34,22 +48,99 @@
             <div id="cart-list">
                 <!-- Data from JS -->
             </div>
-            <div class="cart-summary" id="cart-summary">
-                <div class="cart-total">Tổng cộng: <span id="total-price">0đ</span></div>
-                <div class="input-group" style="text-align: left;">
-                    <label>Địa chỉ nhận hàng</label>
-                    <input type="text" id="ship-address" placeholder="Số nhà, đường, phường, quận..." required>
-                </div>
-                <button class="btn primary-btn" style="width: auto;" onclick="checkout()">Thanh toán COD</button>
+        </div>
+
+        <div class="checkout-box" id="checkout-section">
+            <div class="cart-total">
+                <span>Tổng cộng:</span>
+                <span id="total-price" style="color: #ef4444;">0đ</span>
             </div>
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
+            
+            <h3 style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                Thông tin nhận hàng
+                <span id="btn-show-saved" class="btn-toggle-saved hidden" onclick="toggleSavedAddresses()"><i class="fa-solid fa-address-book"></i> Địa chỉ đã lưu</span>
+            </h3>
+
+            <div id="saved-addresses-list" class="hidden" style="margin-bottom: 1.5rem;">
+                <!-- Rendered from JS -->
+            </div>
+
+            <div id="new-address-form">
+                <div class="form-group">
+                    <label>Họ và tên</label>
+                    <input type="text" id="ship-name" placeholder="Ví dụ: Nguyễn Văn A" required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="tel" id="ship-phone" placeholder="09xxxxxxxx" required>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Tỉnh / Thành phố</label>
+                        <select id="ship-province" onchange="loadDistricts()" required>
+                            <option value="">Chọn Tỉnh/Thành</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quận / Huyện</label>
+                        <select id="ship-district" required disabled>
+                            <option value="">Chọn Quận/Huyện</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Địa chỉ cụ thể</label>
+                    <input type="text" id="ship-specific" placeholder="Số nhà, Tên đường, Tòa nhà..." required>
+                </div>
+                
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: #64748b;">
+                    <input type="checkbox" id="save-address-cb" checked>Lưu thông tin địa chỉ này cho lần sau
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label>Ghi chú đơn hàng (Tùy chọn)</label>
+                <textarea id="ship-note" rows="2" placeholder="Giao giờ hành chính, gọi trước khi giao..."></textarea>
+            </div>
+
+            <h3 style="margin: 2rem 0 1rem;">Phương thức thanh toán</h3>
+            <div class="payment-methods">
+                <label class="payment-label">
+                    <input type="radio" name="payment_method" value="COD" checked>
+                    <i class="fa-solid fa-money-bill-wave" style="color: #10b981; font-size: 1.2rem;"></i>
+                    Thanh toán khi nhận hàng (COD)
+                </label>
+                <label class="payment-label">
+                    <input type="radio" name="payment_method" value="BANK">
+                    <i class="fa-solid fa-credit-card" style="color: #3b82f6; font-size: 1.2rem;"></i>
+                    Thẻ ngân hàng / Chuyển khoản
+                </label>
+            </div>
+
+            <button class="btn primary-btn" style="width: 100%; margin-top: 2rem; padding: 1rem; font-size: 1.1rem; border-radius: 1rem;" onclick="checkout()">
+                Đặt hàng ngay
+            </button>
         </div>
     </main>
 
     <script src="js/api.js?v=1.5"></script>
     <script src="js/common.js?v=1.5"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        let provincesData = [];
+        let savedAddresses = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
             renderCart();
+            await loadSavedAddresses();
+            await fetchProvinces();
+            
+            // Pre-fill user info if available
+            const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+            if (userInfo.fullName) document.getElementById('ship-name').value = userInfo.fullName;
+            if (userInfo.phoneNumber) document.getElementById('ship-phone').value = userInfo.phoneNumber;
         });
 
         function renderCart() {
@@ -58,7 +149,7 @@
             
             if (cart.length === 0) {
                 list.innerHTML = '<div style="text-align:center; padding: 3rem;">Giỏ hàng trống.</div>';
-                document.getElementById('cart-summary').style.display = 'none';
+                document.getElementById('checkout-section').style.display = 'none';
                 return;
             }
 
@@ -89,24 +180,145 @@
             if (window.updateCartBadge) window.updateCartBadge();
         }
 
+        async function loadSavedAddresses() {
+            try {
+                savedAddresses = await window.api.get('orders/my-addresses');
+                if (savedAddresses.length > 0) {
+                    document.getElementById('btn-show-saved').classList.remove('hidden');
+                    const html = savedAddresses.map(a => `
+                        <div class="saved-address-card" onclick="selectSavedAddress('${a.id}')" id="addr-card-${a.id}">
+                            <div style="font-weight: 600; margin-bottom: 4px;">${a.fullName} - ${a.phoneNumber} ${a.isDefault ? '<span class="badge badge-success" style="font-size:0.7rem; padding: 2px 6px;">Mặc định</span>' : ''}</div>
+                            <div style="font-size: 0.9rem; color: #64748b;">${a.specificAddress}, ${a.districtWard}, ${a.province}</div>
+                        </div>
+                    `).join('');
+                    document.getElementById('saved-addresses-list').innerHTML = html;
+                    
+                    // Auto select default
+                    const defaultAddr = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
+                    if (defaultAddr) selectSavedAddress(defaultAddr.id);
+                }
+            } catch (e) {
+                console.log('No saved addresses or not logged in');
+            }
+        }
+
+        function toggleSavedAddresses() {
+            const list = document.getElementById('saved-addresses-list');
+            list.classList.toggle('hidden');
+        }
+
+        function selectSavedAddress(id) {
+            document.querySelectorAll('.saved-address-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById('addr-card-' + id).classList.add('selected');
+            
+            const addr = savedAddresses.find(a => a.id === id);
+            if (addr) {
+                document.getElementById('ship-name').value = addr.fullName;
+                document.getElementById('ship-phone').value = addr.phoneNumber;
+                document.getElementById('ship-specific').value = addr.specificAddress;
+                
+                // Set province and district (Simulated since matching exactly depends on open-api structure)
+                // In a perfect system we'd bind codes. Here we just set the text if it matches, or hide the dropdowns
+                document.getElementById('save-address-cb').checked = false; 
+                // We'll rely on specific text when submitting if these selects are not perfectly matched
+            }
+        }
+
+        async function fetchProvinces() {
+            try {
+                const res = await fetch('https://provinces.open-api.vn/api/?depth=2');
+                provincesData = await res.json();
+                const provinceSelect = document.getElementById('ship-province');
+                provincesData.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.code;
+                    opt.textContent = p.name;
+                    provinceSelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.error("Lỗi tải API tỉnh thành: ", e);
+            }
+        }
+
+        function loadDistricts() {
+            const provinceCode = document.getElementById('ship-province').value;
+            const districtSelect = document.getElementById('ship-district');
+            districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+            
+            if (!provinceCode) {
+                districtSelect.disabled = true;
+                return;
+            }
+            
+            const province = provincesData.find(p => p.code == provinceCode);
+            if (province && province.districts) {
+                province.districts.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.name; // Use name directly for DB
+                    opt.textContent = d.name;
+                    districtSelect.appendChild(opt);
+                });
+                districtSelect.disabled = false;
+            }
+        }
+
         async function checkout() {
-            const address = document.getElementById('ship-address').value;
-            if (!address) return alert('Vui lòng nhập địa chỉ');
+            const name = document.getElementById('ship-name').value;
+            const phone = document.getElementById('ship-phone').value;
+            const specific = document.getElementById('ship-specific').value;
+            
+            let provinceText = "";
+            let districtText = document.getElementById('ship-district').value;
+            
+            const provSel = document.getElementById('ship-province');
+            if (provSel.selectedIndex > 0) {
+                provinceText = provSel.options[provSel.selectedIndex].text;
+            }
+
+            if (!name || !phone || !specific) {
+                return window.common?.showToast ? window.common.showToast('Vui lòng điền đủ thông tin nhận hàng', 'error') : alert('Vui lòng nhập đủ thông tin');
+            }
+
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+            const saveAddress = document.getElementById('save-address-cb').checked;
+            const note = document.getElementById('ship-note').value;
 
             const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
             
+            const fullAddress = `${specific}, ${districtText}, ${provinceText}`.replace(/, ,/g, ',');
+
             const data = {
-                shippingAddress: address,
+                customerName: name,
+                phoneNumber: phone,
+                province: provinceText,
+                districtWard: districtText,
+                specificAddress: specific,
+                shippingAddress: fullAddress, // legacy
+                paymentMethod: paymentMethod,
+                saveAddress: saveAddress,
+                customerNote: note,
                 items: cart.map(i => ({ productId: i.id, quantity: i.qty }))
             };
 
+            const btn = document.querySelector('button[onclick="checkout()"]');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang xử lý...';
+            btn.disabled = true;
+
             try {
                 await window.api.post('orders/checkout', data);
-                alert('Đặt hàng thành công! Đơn hàng đang được chuẩn bị.');
+                if (window.common?.showToast) window.common.showToast('Đặt hàng thành công!', 'success');
+                else alert('Đặt hàng thành công!');
+                
                 localStorage.removeItem('zynk_cart');
-                window.location.href = 'profile.html'; // Or orders history
+                setTimeout(() => {
+                    window.location.href = 'my-orders.html';
+                }, 1500);
             } catch (e) {
-                alert('Lỗi đặt hàng: ' + e.message);
+                if (window.common?.showToast) window.common.showToast('Lỗi đặt hàng: ' + e.message, 'error');
+                else alert('Lỗi đặt hàng: ' + e.message);
+                btn.innerHTML = orig;
+                btn.disabled = false;
             }
         }
     </script>

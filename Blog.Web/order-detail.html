@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .detail-container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        
+        /* Stepper UI */
+        .stepper-card { background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 1.5rem; border: var(--glass-border); padding: 2.5rem 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm); }
+        .stepper { display: flex; justify-content: space-between; position: relative; max-width: 800px; margin: 0 auto; }
+        .stepper::before { content: ""; position: absolute; top: 15px; left: 0; width: 100%; height: 4px; background: #e2e8f0; z-index: 1; }
+        .step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 20%; }
+        .step-icon { width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 4px solid #e2e8f0; margin-bottom: 0.75rem; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #94a3b8; }
+        .step-label { font-size: 0.85rem; font-weight: 600; color: #94a3b8; text-align: center; }
+        
+        .step.completed .step-icon { background: #10b981; border-color: #10b981; color: white; }
+        .step.active .step-icon { border-color: #3b82f6; color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+        .step.completed .step-label { color: #10b981; }
+        .step.active .step-label { color: #3b82f6; font-weight: 700; }
+        
+        /* Layout Grid */
+        .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+        .card { background: var(--glass-bg); backdrop-filter: blur(10px); border-radius: 1rem; border: var(--glass-border); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
+        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+        
+        /* Address Section */
+        .address-info { line-height: 1.6; }
+        .name-phone { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem; }
+        .address-text { color: #64748b; font-size: 0.95rem; }
+        .btn-edit-address { position: absolute; top: 1.5rem; right: 1.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #3b82f6; background: rgba(59, 130, 246, 0.1); border: none; cursor: pointer; transition: 0.2s; }
+        .btn-edit-address:hover { background: rgba(59, 130, 246, 0.2); }
+        
+        /* Items List */
+        .order-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .order-item:last-child { border-bottom: none; }
+        .item-img { width: 80px; height: 80px; border-radius: 0.75rem; object-fit: cover; }
+        .item-details { flex: 1; }
+        .item-name { font-weight: 600; margin-bottom: 0.25rem; }
+        .item-meta { font-size: 0.85rem; color: #94a3b8; }
+        .item-price-qty { display: flex; justify-content: space-between; margin-top: 0.5rem; font-weight: 600; }
+        
+        /* Summary Card */
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; color: #64748b; }
+        .summary-row.total { border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; color: #ef4444; font-size: 1.25rem; font-weight: 800; }
+        
+        /* Actions */
+        .main-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+        .btn-cancel { width: 100%; padding: 0.75rem; border-radius: 0.75rem; font-weight: 700; background: #fff; border: 1px solid #ef4444; color: #ef4444; cursor: pointer; transition: 0.2s; }
+        .btn-cancel:hover { background: #fef2f2; }
+        .btn-back { display: inline-flex; align-items: center; gap: 0.5rem; color: #64748b; text-decoration: none; font-weight: 600; margin-bottom: 1.5rem; transition: 0.2s; }
+        .btn-back:hover { color: #334155; transform: translateX(-4px); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; border-radius: 1.5rem; width: 95%; max-width: 500px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .hidden { display: none; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .detail-grid { grid-template-columns: 1fr; }
+            .stepper::before { display: none; }
+            .stepper { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .step { flex-direction: row; width: 100%; gap: 1rem; }
+            .step-icon { margin-bottom: 0; }
+        }
+    </style>
+</head>
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html">ZYNK</a>
+            </div>
+            
+            <div class="nav-actions" id="nav-actions">
+                <!-- Sẽ được điền bằng JS -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="detail-container">
+        <a href="my-orders.html" class="btn-back"><i class="fa fa-arrow-left"></i> Quay lại đơn hàng của tôi</a>
+
+        <div id="order-loading" style="text-align: center; padding: 4rem;">
+            <i class="fa fa-spinner fa-spin fa-2x"></i>
+            <p style="margin-top: 1rem; color: #64748b;">Đang tải thông tin đơn hàng...</p>
+        </div>
+
+        <div id="order-content" class="hidden">
+            <!-- Stepper Card -->
+            <div class="stepper-card">
+                <div class="stepper" id="order-stepper">
+                    <div class="step" data-status="Unpaid">
+                        <div class="step-icon">1</div>
+                        <div class="step-label">Đặt hàng</div>
+                    </div>
+                    <div class="step" data-status="AwaitingShipment">
+                        <div class="step-icon">2</div>
+                        <div class="step-label">Chuẩn bị hồ sơ</div>
+                    </div>
+                    <div class="step" data-status="AwaitingCollection">
+                        <div class="step-icon">3</div>
+                        <div class="step-label">Đang lấy hàng</div>
+                    </div>
+                    <div class="step" data-status="InTransit">
+                        <div class="step-icon">4</div>
+                        <div class="step-label">Đang giao</div>
+                    </div>
+                    <div class="step" data-status="Completed">
+                        <div class="step-icon">5</div>
+                        <div class="step-label">Thành công</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <!-- Left Column -->
+                <div class="detail-left">
+                    <div class="card">
+                        <h3 class="card-title"><i class="fa fa-map-marker-alt" style="color: #ef4444;"></i> Địa chỉ nhận hàng</h3>
+                        <div class="address-info" id="address-display">
+                            <!-- JS Inject -->
+                        </div>
+                        <button class="btn-edit-address hidden" id="btn-show-edit-address" onclick="openAddressModal()">Thay đổi</button>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title"><i class="fa fa-shopping-bag" style="color: #3b82f6;"></i> Danh sách sản phẩm</h3>
+                        <div id="items-list">
+                            <!-- JS Inject -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="detail-right">
+                    <div class="card">
+                        <h3 class="card-title"><i class="fa fa-receipt" style="color: #10b981;"></i> Thanh toán</h3>
+                        <div class="summary-info">
+                            <div class="summary-row"><span>Tổng tiền hàng</span> <span id="sum-subtotal">0đ</span></div>
+                            <div class="summary-row"><span>Phí vận chuyển</span> <span>Miễn phí</span></div>
+                            <div class="summary-row"><span>Giảm giá</span> <span>-0đ</span></div>
+                            <div class="summary-row total"><span>Tổng thanh toán</span> <span id="sum-total">0đ</span></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title"><i class="fa fa-info-circle" style="color: #64748b;"></i> Thông tin đơn hàng</h3>
+                        <div style="font-size: 0.9rem; color: #64748b; line-height: 1.8;">
+                            <div>Mã đơn hàng: <strong id="order-id-full" style="color: #334155;">-</strong></div>
+                            <div>Thời gian đặt: <span id="order-time">-</span></div>
+                            <div>Phương thức: <span id="order-payment-method">-</span></div>
+                        </div>
+                    </div>
+
+                    <div class="main-actions" id="buyer-actions">
+                        <button class="btn-cancel hidden" id="btn-cancel-order" onclick="cancelOrder()">Hủy đơn hàng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Thay đổi địa chỉ -->
+    <div id="address-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 1.5rem;">Cập nhật địa chỉ giao hàng</h3>
+            <form id="form-edit-address">
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Họ và tên</label>
+                    <input type="text" id="edit-name" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Số điện thoại</label>
+                    <input type="text" id="edit-phone" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Tỉnh/Thành phố</label>
+                    <input type="text" id="edit-province" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Quận/Huyện - Phường/Xã</label>
+                    <input type="text" id="edit-dist-ward" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Địa chỉ cụ thể</label>
+                    <input type="text" id="edit-specific" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn primary-btn" style="flex: 1; margin: 0;">Lưu thay đổi</button>
+                    <button type="button" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0 1.5rem;" onclick="closeAddressModal()">Đóng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js?v=1.0.3"></script>
+    <script src="js/common.js?v=1.0.3"></script>
+    <script src="js/order-detail.js?v=1.0.3"></script>
+</body>
+</html>

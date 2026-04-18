@@ -69,4 +69,14 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<Order?> GetOrderDetailAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+            .Include(o => o.Items)
+                .ThenInclude(i => i.Variant)
+            .FirstOrDefaultAsync(o => o.Id == id);
+    }
 }
