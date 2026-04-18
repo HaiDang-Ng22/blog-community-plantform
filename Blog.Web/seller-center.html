@@ -117,22 +117,15 @@
 
             <!-- Orders Section -->
             <section id="section-orders" class="dashboard-section">
-                <h3>Đơn hàng đang chờ xử lý</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>ID Đơn</th>
-                            <th>Khách hàng</th>
-                            <th>Tổng tiền</th>
-                            <th>Ngày đặt</th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="order-list-body">
-                        <!-- Data inject by JS -->
-                    </tbody>
-                </table>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Quản lý đơn hàng</h3>
+                    <div style="font-size: 0.85rem; color: #64748b;">
+                        Hiển thị các đơn hàng gần nhất
+                    </div>
+                </div>
+                <div id="order-list-container">
+                    <!-- Premium cards will be injected here by JS -->
+                </div>
             </section>
         </div>
     </template>
@@ -258,9 +251,10 @@
         </div>
     </footer>
 
-    <script src="js/api.js?v=1.5"></script>
-    <script src="js/common.js?v=1.5"></script>
-    <script src="js/seller.js?v=3.0"></script>
+    <link rel="stylesheet" href="css/common.css?v=1.0.2">
+    <link rel="stylesheet" href="css/seller.css?v=1.0.2">
+    <script src="js/api.js?v=1.0.2"></script>
+    <script src="js/common.js?v=1.0.2"></script>
+    <script src="js/seller.js?v=1.0.2"></script>
 </body>
 </html>
-

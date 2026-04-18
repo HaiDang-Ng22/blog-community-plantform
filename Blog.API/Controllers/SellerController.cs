@@ -164,6 +164,30 @@ public class SellerController : ControllerBase
         if (shop == null) return Forbid();
 
         var orders = await _orderRepository.GetOrdersByShopIdAsync(shop.Id);
-        return Ok(orders);
+        
+        var dtos = orders.Select(o => new OrderDto
+        {
+            Id = o.Id,
+            TotalAmount = o.TotalAmount,
+            Status = o.Status.ToString(),
+            PaymentMethod = o.PaymentMethod,
+            CustomerName = o.CustomerName,
+            PhoneNumber = o.PhoneNumber,
+            CreatedAt = o.CreatedAt,
+            ShippingAddress = o.ShippingAddress,
+            Items = o.Items.Select(i => new OrderItemDto
+            {
+                Id = i.Id,
+                ProductId = i.ProductId,
+                VariantId = i.VariantId,
+                ProductName = i.Product.Name,
+                VariantName = i.Variant?.Name,
+                ProductImageUrl = i.Product.FeaturedImageUrl,
+                UnitPrice = i.UnitPrice,
+                Quantity = i.Quantity
+            }).ToList()
+        });
+
+        return Ok(dtos);
     }
 }
