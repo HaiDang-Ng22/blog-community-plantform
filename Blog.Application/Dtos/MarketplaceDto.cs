@@ -85,14 +85,31 @@ public class OrderDto
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public string PaymentMethod { get; set; } = string.Empty;
-    public string ShippingAddress { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string ShippingAddress { get; set; } = string.Empty; // Holds combined address
+    public string Province { get; set; } = string.Empty;
+    public string DistrictWard { get; set; } = string.Empty;
+    public string SpecificAddress { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public List<OrderItemDto> Items { get; set; } = new();
+}
+
+public class UpdateOrderAddressDto
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string Province { get; set; } = string.Empty;
+    public string DistrictWard { get; set; } = string.Empty;
+    public string SpecificAddress { get; set; } = string.Empty;
+    public string ShippingAddress { get; set; } = string.Empty;
 }
 
 public class OrderItemDto
 {
     public Guid Id { get; set; }
+    public Guid ProductId { get; set; }
+    public Guid? VariantId { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public string? VariantName { get; set; }
     public int Quantity { get; set; }
@@ -102,7 +119,14 @@ public class OrderItemDto
 
 public class CreateOrderDto
 {
+    public string CustomerName { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string Province { get; set; } = string.Empty;
+    public string DistrictWard { get; set; } = string.Empty;
+    public string SpecificAddress { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
+    public string PaymentMethod { get; set; } = "COD";
+    public bool SaveAddress { get; set; }
     public string? CustomerNote { get; set; }
     public List<CreateOrderItemDto> Items { get; set; } = new();
 }

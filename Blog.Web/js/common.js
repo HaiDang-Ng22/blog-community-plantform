@@ -17,10 +17,10 @@ function updateNav() {
 
     if (token && userInfo && userInfo !== 'null') {
         const userName = userInfo.fullName || userInfo.username || 'Người dùng';
-        const userAvatar = (userInfo.avatarUrl && userInfo.avatarUrl !== 'null') 
-            ? userInfo.avatarUrl 
+        const userAvatar = (userInfo.avatarUrl && userInfo.avatarUrl !== 'null')
+            ? userInfo.avatarUrl
             : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random&color=fff`;
-        
+
         navActions.innerHTML = `
             <div class="header-search-container">
                 <div class="search-bar">
@@ -28,7 +28,7 @@ function updateNav() {
                     <button id="header-search-btn"><i class="fa fa-search"></i></button>
                 </div>
             </div>
-            <div class="notification-wrapper" id="noti-trigger" style="margin-right: 15px;">
+            <div class="notification-wrapper" id="noti-trigger">
                 <i class="fa-solid fa-bell"></i>
                 <span class="noti-badge hidden" id="noti-count">0</span>
                 <div class="noti-dropdown hidden" id="noti-dropdown">
@@ -37,22 +37,23 @@ function updateNav() {
                     <div class="noti-footer"><a href="#" id="mark-all-read">Đánh dấu tất cả đã đọc</a></div>
                 </div>
             </div>
-            <div class="nav-direct-links" style="display: flex; gap: 15px; margin-right: 20px; align-items: center;">
-                <a href="marketplace.html" style="color: #2563eb; font-weight: 700; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+            <div class="nav-direct-links">
+                <a href="marketplace.html" class="nav-marketplace-link">
                     <i class="fa-solid fa-bag-shopping"></i> Mua sắm
                 </a>
                 ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `
-                <a href="seller-center.html" style="color: #059669; font-weight: 700; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                <a href="seller-center.html" class="nav-seller-link">
                     <i class="fa-solid fa-store"></i> Kênh người bán
                 </a>
                 ` : ''}
             </div>
             <div class="user-menu" id="user-menu-trigger">
                 <span class="user-name">Chào, ${userName}</span>
-                <img src="${userAvatar}" alt="Avatar" class="mini-avatar" onerror="this.src='https://via.placeholder.com/40'">
+                <img src="${userAvatar}" alt="Avatar" class="mini-avatar header-avatar" onerror="this.src='https://via.placeholder.com/40'">
                 <div class="user-dropdown hidden" id="user-dropdown">
                     <a href="profile.html"><i class="fa fa-user"></i> Hồ sơ cá nhân</a>
                     <a href="marketplace.html" style="color: #2563eb; font-weight: 600;"><i class="fa fa-shopping-bag"></i> Mua sắm (Chợ)</a>
+                    <a href="my-orders.html" style="color: #f59e0b; font-weight: 600;"><i class="fa fa-box-open"></i> Đơn mua của tôi</a>
                     ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `
                     <a href="seller-center.html" style="color: #059669; font-weight: 600;"><i class="fa fa-shop"></i> Kênh người bán</a>
                     ` : ''}

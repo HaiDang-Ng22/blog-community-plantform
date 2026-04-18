@@ -91,3 +91,200 @@ body.dark-mode #no-posts {
     background: #1e293b;
     border-color: #334155;
 }
+
+/* Custom Post Card for Profile */
+#profile-posts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-post-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px); /* Glassmorphism */
+    border-radius: 1rem;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.profile-post-card .card-header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.profile-post-card .user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.profile-post-card .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-post-card .meta h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.profile-post-card .meta span {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.profile-post-card .icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.profile-post-card .icon-btn:hover {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+}
+
+.profile-post-card .card-content {
+    padding: 0 1.25rem 1rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.profile-post-card .card-media {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Firefox */
+    background: #f1f5f9;
+}
+
+.profile-post-card .card-media::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+
+.profile-post-card .card-media img {
+    flex: 0 0 100%;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    max-height: 600px;
+    object-fit: cover;
+    scroll-snap-align: center;
+    display: block;
+}
+
+.profile-post-card .card-footer {
+    padding: 1rem 1.25rem;
+    display: flex;
+    gap: 1.5rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.profile-post-card .action-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.profile-post-card .action-btn:hover {
+    color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.profile-post-card .action-btn.liked {
+    color: #ef4444;
+}
+
+.profile-post-card .post-options {
+    position: relative;
+}
+
+.profile-post-card .dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.profile-post-card .dropdown-menu button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.profile-post-card .dropdown-menu button:hover {
+    background: #f8fafc;
+}
+
+.profile-post-card .dropdown-menu button.delete {
+    color: #ef4444;
+}
+
+/* Dark mode overrides for profile posts */
+body.dark-mode .profile-post-card {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(51, 65, 85, 0.8);
+}
+body.dark-mode .profile-post-card .icon-btn:hover {
+    background-color: #334155;
+    color: #f8fafc;
+}
+body.dark-mode .profile-post-card .card-media {
+    background: #0f172a;
+}
+body.dark-mode .profile-post-card .card-footer {
+    border-top-color: rgba(51, 65, 85, 0.5);
+}
+body.dark-mode .profile-post-card .dropdown-menu {
+    background: #1e293b;
+    border-color: #334155;
+}
+body.dark-mode .profile-post-card .dropdown-menu button {
+    color: #f8fafc;
+}
+body.dark-mode .profile-post-card .dropdown-menu button:hover {
+    background: #0f172a;
+}
