@@ -157,16 +157,18 @@ public class OrdersController : ControllerBase
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
     {
-        var order = await _orderRepository.GetByIdAsync(id);
+        var order = await _orderRepository.GetOrderDetailAsync(id);
         if (order == null) return NotFound();
 
-        // Check if user is either the buyer (can cancel if Pending) 
-        // or the seller (can update Preparing/Shipping/Completed)
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
-        // This is a simplified check. Real app would need to verify if user owns the shop that has products in this order.
-        // For CV purposes, we'll implement a reasonable check.
-        
+        // Authorization check
+        bool isBuyer = order.BuyerId == userId;
+        var userShop = await _shopRepository.GetByUserIdAsync(userId);
+        bool isSeller = userShop != null && order.Items.Any(i => i.Product != null && i.Product.ShopId == userShop.Id);
+
+        if (!isBuyer && !isSeller) return Forbid();
+
         if (string.IsNullOrEmpty(request.Status))
         {
             return BadRequest(new { message = "Trạng thái không được để trống" });
@@ -174,8 +176,17 @@ public class OrdersController : ControllerBase
         
         if (Enum.TryParse<OrderStatus>(request.Status, true, out var newStatus))
         {
-            // Transition logic validation (Optional but good)
-            // For now, allow all transitions for the seller as requested to fix the "stuck" issue.
+            // Transition logic validation
+            if (isBuyer && !isSeller)
+            {
+                if (newStatus != OrderStatus.Cancelled)
+                    return BadRequest(new { message = "Người mua chỉ có thể yêu cầu hủy đơn hàng." });
+                
+                if (order.Status != OrderStatus.Unpaid && order.Status != OrderStatus.AwaitingShipment)
+                    return BadRequest(new { message = "Không thể hủy đơn hàng sau khi đã bắt đầu vận chuyển." });
+            }
+
+            // Simplified transition for MVP
             order.Status = newStatus;
             order.UpdatedAt = DateTime.UtcNow;
             await _orderRepository.UpdateAsync(order);
@@ -196,15 +207,6 @@ public class OrdersController : ControllerBase
         
         if (order == null) return NotFound();
         
-        // Defensive check: if Items are somehow not loaded correctly by the repository, load them explicitly
-        if (order.Items == null || order.Items.Count == 0)
-        {
-            order.Items = await _context.OrderItems
-                .Where(i => i.OrderId == order.Id)
-                .Include(i => i.Product)
-                .Include(i => i.Variant)
-                .ToListAsync();
-        }
         
         // Authorization: Buyer OR Shop Owner of at least one product in the order
         bool isBuyer = order.BuyerId == userId;
