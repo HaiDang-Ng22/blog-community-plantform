@@ -4,6 +4,7 @@ using Blog.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace Blog.API.Controllers;
 
@@ -17,19 +18,22 @@ public class OrdersController : ControllerBase
     private readonly IRepository<ProductVariant> _variantRepository;
     private readonly IRepository<UserAddress> _addressRepository;
     private readonly IShopRepository _shopRepository;
+    private readonly Blog.Infrastructure.Data.AppDbContext _context;
 
     public OrdersController(
         IOrderRepository orderRepository,
         IProductRepository productRepository,
         IRepository<ProductVariant> variantRepository,
         IRepository<UserAddress> addressRepository,
-        IShopRepository shopRepository)
+        IShopRepository shopRepository,
+        Blog.Infrastructure.Data.AppDbContext context)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
         _variantRepository = variantRepository;
         _addressRepository = addressRepository;
         _shopRepository = shopRepository;
+        _context = context;
     }
 
     [HttpPost("checkout")]

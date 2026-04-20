@@ -200,21 +200,6 @@ textarea {
 .badge-danger { background: #FEE2E2; color: #991b1b; }
 .badge-pending { background: #FEE2E2; color: #991b1b; }
 
-/* Status Badges */
-.status-badge {
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-.status-badge.unpaid { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
-.status-badge.awaitingshipment { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
-.status-badge.awaitingcollection { background: #fdf4ff; color: #a21caf; border: 1px solid #f5d0fe; }
-.status-badge.intransit { background: #ecfeff; color: #0e7490; border: 1px solid #cffafe; }
-.status-badge.delivered { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
-.status-badge.completed { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
-.status-badge.cancelled { background: #fef2f2; color: #b91c1c; border: 1px solid #fee2e2; }
 
 /* Premium Order Cards */
 .order-premium-card {
@@ -407,10 +392,83 @@ body.dark-mode .action-pill.delete:hover {
     color: #fff;
 }
 
-/* Responsive */
+
+/* Order Status Tabs */
+.order-tabs-wrapper {
+    margin-bottom: 1.5rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+.order-status-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.5rem;
+    scrollbar-width: none; /* Firefox */
+}
+
+.order-status-tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.order-tab {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.order-tab:hover {
+    color: #3b82f6;
+    background: #eff6ff;
+}
+
+.order-tab.active {
+    color: #3b82f6;
+    background: #eff6ff;
+    border-bottom-color: #3b82f6;
+}
+
+/* Glassmorphism Search Bar */
+.order-search-bar.glassmorphism {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.search-input-group input:focus {
+    border-color: #3b82f6 !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .seller-container { padding: 1.5rem; }
-    .seller-header h1 { font-size: 1.8rem; }
-    .stat-grid { grid-template-columns: 1fr !important; }
+    .order-status-tabs {
+        padding-bottom: 5px;
+    }
+    .order-premium-card {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .order-price-summary {
+        text-align: left;
+        border-top: 1px dashed #e2e8f0;
+        padding-top: 1rem;
+    }
+    .order-card-actions {
+        flex-direction: row;
+    }
+    .order-card-actions button {
+        flex: 1;
+    }
 }
 

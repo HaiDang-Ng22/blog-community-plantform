@@ -24,6 +24,9 @@ public class Product
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    public string? VariantGroupName1 { get; set; }
+    public string? VariantGroupName2 { get; set; }
+
     public virtual Shop Shop { get; set; } = null!;
     public virtual Category Category { get; set; } = null!;
     public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();

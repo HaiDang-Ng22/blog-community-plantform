@@ -20,4 +20,5 @@ public interface IOrderRepository : IRepository<Order>
     Task<IEnumerable<Order>> GetOrdersByBuyerIdAsync(Guid buyerId);
     Task<IEnumerable<Order>> GetOrdersByShopIdAsync(Guid shopId);
     Task<Order?> GetOrderDetailAsync(Guid id);
+    Task<IEnumerable<Order>> SearchOrdersAsync(Guid shopId, string? status = null, string? keyword = null);
 }

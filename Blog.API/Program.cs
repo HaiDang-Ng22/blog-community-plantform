@@ -18,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
@@ -233,8 +234,53 @@ using (var scope = app.Services.CreateScope())
             IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[ProductVariants]') AND type in (N'U'))
             BEGIN
                 CREATE TABLE [ProductVariants] (
-                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [ProductId] UNIQUEIDENTIFIER NOT NULL, [Name] NVARCHAR(MAX) NOT NULL, [PriceOverride] DECIMAL(18,2) NOT NULL, [Stock] INT NOT NULL,
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, [ProductId] UNIQUEIDENTIFIER NOT NULL, [Name] NVARCHAR(MAX) NOT NULL, 
+                    [Color] NVARCHAR(MAX) NULL, [Size] NVARCHAR(MAX) NULL, [ImageUrl] NVARCHAR(MAX) NULL,
+                    [PriceOverride] DECIMAL(18,2) NOT NULL, [Stock] INT NOT NULL,
                     CONSTRAINT [FK_ProductVariants_Products_ProductId] FOREIGN KEY ([ProductId]) REFERENCES [Products] ([Id]) ON DELETE CASCADE
+                );
+            END
+            ELSE
+            BEGIN
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('ProductVariants') AND name = 'Color')
+                BEGIN
+                    ALTER TABLE [ProductVariants] ADD [Color] NVARCHAR(MAX) NULL;
+                    ALTER TABLE [ProductVariants] ADD [Size] NVARCHAR(MAX) NULL;
+                    ALTER TABLE [ProductVariants] ADD [ImageUrl] NVARCHAR(MAX) NULL;
+                END
+            END");
+
+        // 6b. Products - Extra Columns
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Products]') AND type in (N'U'))
+            BEGIN
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Products') AND name = 'VariantGroupName1')
+                BEGIN
+                    ALTER TABLE [Products] ADD [VariantGroupName1] NVARCHAR(MAX) NULL;
+                    ALTER TABLE [Products] ADD [VariantGroupName2] NVARCHAR(MAX) NULL;
+                END
+            END");
+
+        // 6c. ProductReviews & ProductReviewImages
+        dbContext.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[ProductReviews]') AND type in (N'U'))
+            BEGIN
+                CREATE TABLE [ProductReviews] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+                    [ProductId] UNIQUEIDENTIFIER NOT NULL,
+                    [UserId] UNIQUEIDENTIFIER NOT NULL,
+                    [Rating] INT NOT NULL,
+                    [Comment] NVARCHAR(MAX) NULL,
+                    [CreatedAt] DATETIME2 NOT NULL,
+                    CONSTRAINT [FK_ProductReviews_Products_ProductId] FOREIGN KEY ([ProductId]) REFERENCES [Products] ([Id]) ON DELETE CASCADE,
+                    CONSTRAINT [FK_ProductReviews_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION
+                );
+
+                CREATE TABLE [ProductReviewImages] (
+                    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+                    [ProductReviewId] UNIQUEIDENTIFIER NOT NULL,
+                    [Url] NVARCHAR(MAX) NOT NULL,
+                    CONSTRAINT [FK_ReviewImages_Reviews_ReviewId] FOREIGN KEY ([ProductReviewId]) REFERENCES [ProductReviews] ([Id]) ON DELETE CASCADE
                 );
             END");
 
@@ -278,11 +324,8 @@ using (var scope = app.Services.CreateScope())
                 );
             END");
             
-        // One-time cleanup of old hardcoded categories and associated products
-        if (await dbContext.Categories.AnyAsync(c => c.Slug == "thoi-trang"))
-        {
-            await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM OrderItems; DELETE FROM Orders; DELETE FROM ProductImages; DELETE FROM ProductVariants; DELETE FROM Products; DELETE FROM Categories;");
-        }
+        // Seed initial data
+        await DbInitializer.InitializeAsync(dbContext);
     
     // Seed Real Admin User
     var adminEmail = "hd813345@gmail.com";
