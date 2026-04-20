@@ -95,11 +95,23 @@ public class SellerController : ControllerBase
             Stock = dto.Stock,
             FeaturedImageUrl = dto.ImageUrls.FirstOrDefault(),
             CreatedAt = DateTime.UtcNow,
+            VariantGroupName1 = dto.VariantGroupName1,
+            VariantGroupName2 = dto.VariantGroupName2,
             Images = dto.ImageUrls.Select((url, index) => new ProductImage
             {
                 Id = Guid.NewGuid(),
                 Url = url,
                 OrderIndex = index
+            }).ToList(),
+            Variants = dto.Variants.Select(v => new ProductVariant
+            {
+                Id = Guid.NewGuid(),
+                Name = v.Name,
+                Color = v.Color,
+                Size = v.Size,
+                ImageUrl = v.ImageUrl,
+                PriceOverride = v.PriceOverride,
+                Stock = v.Stock
             }).ToList()
         };
 
@@ -135,7 +147,33 @@ public class SellerController : ControllerBase
         product.Stock = dto.Stock;
         product.CategoryId = dto.CategoryId;
         product.FeaturedImageUrl = dto.ImageUrls.FirstOrDefault() ?? product.FeaturedImageUrl;
+        product.VariantGroupName1 = dto.VariantGroupName1;
+        product.VariantGroupName2 = dto.VariantGroupName2;
         product.UpdatedAt = DateTime.UtcNow;
+
+        // Update Images
+        product.Images.Clear();
+        product.Images = dto.ImageUrls.Select((url, index) => new ProductImage
+        {
+            Id = Guid.NewGuid(),
+            ProductId = id,
+            Url = url,
+            OrderIndex = index
+        }).ToList();
+
+        // Update Variants
+        product.Variants.Clear();
+        product.Variants = dto.Variants.Select(v => new ProductVariant
+        {
+            Id = Guid.NewGuid(),
+            ProductId = id,
+            Name = v.Name,
+            Color = v.Color,
+            Size = v.Size,
+            ImageUrl = v.ImageUrl,
+            PriceOverride = v.PriceOverride,
+            Stock = v.Stock
+        }).ToList();
 
         await _productRepository.UpdateAsync(product);
         return Ok(new { message = "Cập nhật sản phẩm thành công." });
@@ -157,13 +195,13 @@ public class SellerController : ControllerBase
     }
 
     [HttpGet("incoming-orders")]
-    public async Task<IActionResult> GetIncomingOrders()
+    public async Task<IActionResult> GetIncomingOrders([FromQuery] string? status = null, [FromQuery] string? keyword = null)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
-        var orders = await _orderRepository.GetOrdersByShopIdAsync(shop.Id);
+        var orders = await _orderRepository.SearchOrdersAsync(shop.Id, status, keyword);
         
         var dtos = orders.Select(o => new OrderDto
         {

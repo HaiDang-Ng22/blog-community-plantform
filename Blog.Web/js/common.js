@@ -163,8 +163,14 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// Utility to format currency (VND)
+function formatCurrency(val) {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+}
+
 // Export to global scope
 window.common = {
     formatDate,
-    showToast
+    showToast,
+    formatCurrency
 };

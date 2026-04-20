@@ -46,14 +46,45 @@ public class ProductDto
     public string CategoryName { get; set; } = string.Empty;
     public double Rating { get; set; }
     public int SalesCount { get; set; }
+    public string? VariantGroupName1 { get; set; }
+    public string? VariantGroupName2 { get; set; }
     public List<string> ImageUrls { get; set; } = new();
+    public List<ProductReviewDto> RecentReviews { get; set; } = new();
     public List<ProductVariantDto> Variants { get; set; } = new();
+}
+
+public class ProductReviewDto
+{
+    public Guid Id { get; set; }
+    public string UserName { get; set; } = string.Empty;
+    public string? UserAvatar { get; set; }
+    public int Rating { get; set; }
+    public string? Comment { get; set; }
+    public List<string> ImageUrls { get; set; } = new();
+    public DateTime CreatedAt { get; set; }
+}
+
+public class ProductReviewStatsDto
+{
+    public double AverageRating { get; set; }
+    public int TotalReviews { get; set; }
+    public Dictionary<int, int> StarCounts { get; set; } = new();
+}
+
+public class CreateProductReviewDto
+{
+    public int Rating { get; set; }
+    public string? Comment { get; set; }
+    public List<string> ImageUrls { get; set; } = new();
 }
 
 public class ProductVariantDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string? Color { get; set; }
+    public string? Size { get; set; }
+    public string? ImageUrl { get; set; }
     public decimal PriceOverride { get; set; }
     public int Stock { get; set; }
 }
@@ -65,7 +96,20 @@ public class CreateProductDto
     public int Stock { get; set; }
     public string Description { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
+    public string? VariantGroupName1 { get; set; }
+    public string? VariantGroupName2 { get; set; }
     public List<string> ImageUrls { get; set; } = new();
+    public List<CreateProductVariantDto> Variants { get; set; } = new();
+}
+
+public class CreateProductVariantDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Color { get; set; }
+    public string? Size { get; set; }
+    public string? ImageUrl { get; set; }
+    public decimal PriceOverride { get; set; }
+    public int Stock { get; set; }
 }
 
 public class UpdateProductDto
@@ -75,7 +119,10 @@ public class UpdateProductDto
     public int Stock { get; set; }
     public string Description { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
+    public string? VariantGroupName1 { get; set; }
+    public string? VariantGroupName2 { get; set; }
     public List<string> ImageUrls { get; set; } = new();
+    public List<CreateProductVariantDto> Variants { get; set; } = new();
 }
 
 // Order DTOs

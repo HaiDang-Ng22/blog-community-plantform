@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="css/seller.css?v=2.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body class="home-page">
     <header class="main-header">
         <nav class="nav-container container-wide">
@@ -30,7 +32,7 @@
     </main>
 
     <!-- Templates (Sẽ được inject dựa trên trạng thái người bán) -->
-    
+
     <!-- 1. Template Đăng ký -->
     <template id="tpl-registration">
         <div class="seller-header">
@@ -45,7 +47,8 @@
             </div>
             <div class="input-group">
                 <label>Mô tả shop</label>
-                <textarea id="shop-desc" rows="4" placeholder="Giới thiệu ngắn về những gì bạn định bán..." required></textarea>
+                <textarea id="shop-desc" rows="4" placeholder="Giới thiệu ngắn về những gì bạn định bán..."
+                    required></textarea>
             </div>
             <button type="submit" class="btn primary-btn">Gửi yêu cầu phê duyệt</button>
         </form>
@@ -57,7 +60,8 @@
             <i class="fa-solid fa-clock-rotate-left"></i>
             <h2>Hồ sơ đang được chờ duyệt</h2>
             <p>Admin đang xem xét hồ sơ mở cửa hàng của bạn. Chúng tôi sẽ thông báo cho bạn ngay khi có kết quả.</p>
-            <a href="index.html" class="btn secondary-btn" style="display: inline-block; margin-top: 2rem;">Quay lại trang chủ</a>
+            <a href="index.html" class="btn secondary-btn" style="display: inline-block; margin-top: 2rem;">Quay lại
+                trang chủ</a>
         </div>
     </template>
 
@@ -66,7 +70,7 @@
         <div class="seller-header" style="text-align: left;">
             <h1>Kênh Người Bán: <span id="shop-title-display">---</span></h1>
         </div>
-        
+
         <div class="seller-dashboard">
             <nav class="dashboard-tabs">
                 <div class="tab-link active" onclick="switchSellerTab('overview')">Tổng quan</div>
@@ -96,7 +100,8 @@
             <section id="section-products" class="dashboard-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3>Danh sách sản phẩm</h3>
-                    <button class="btn primary-btn" style="width: auto; margin: 0;" onclick="openAddProductModal()">+ Thêm sản phẩm mới</button>
+                    <button class="btn primary-btn" style="width: auto; margin: 0;" onclick="openAddProductModal()">+
+                        Thêm sản phẩm mới</button>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -117,12 +122,37 @@
 
             <!-- Orders Section -->
             <section id="section-orders" class="dashboard-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div class="orders-header-row" style="margin-bottom: 1.5rem;">
                     <h3>Quản lý đơn hàng</h3>
                     <div style="font-size: 0.85rem; color: #64748b;">
-                        Hiển thị các đơn hàng gần nhất
+                        Quản lý và xử lý các đơn hàng của bạn
                     </div>
                 </div>
+
+                <!-- Status Filter Tabs -->
+                <div class="order-tabs-wrapper">
+                    <nav class="order-status-tabs" id="order-status-tabs">
+                        <div class="order-tab active" data-status="All">Tất cả</div>
+                        <div class="order-tab" data-status="Unpaid">Chờ xác nhận</div>
+                        <div class="order-tab" data-status="AwaitingShipment">Chờ giao</div>
+                        <div class="order-tab" data-status="InTransit">Đang giao</div>
+                        <div class="order-tab" data-status="Completed">Hoàn thành</div>
+                        <div class="order-tab" data-status="Cancelled">Đã hủy</div>
+                    </nav>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="order-search-bar glassmorphism" style="margin-bottom: 2rem; padding: 1rem; border-radius: 12px; display: flex; gap: 1rem; align-items: center;">
+                    <div class="search-input-group" style="flex: 1; position: relative;">
+                        <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                        <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng, Tên hoặc SĐT khách hàng..." 
+                            style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.8rem; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; font-size: 0.9rem; outline: none; transition: 0.2s;">
+                    </div>
+                    <button class="btn primary-btn" onclick="applyOrderFilters()" style="width: auto; margin: 0; padding: 0.75rem 1.5rem; height: 100%;">
+                        Tìm kiếm
+                    </button>
+                </div>
+
                 <div id="order-list-container">
                     <!-- Premium cards will be injected here by JS -->
                 </div>
@@ -132,11 +162,14 @@
 
     <!-- Modal Thêm sản phẩm -->
     <div id="product-add-modal" class="modal-overlay hidden">
-        <div class="modal-content glassmorphism" style="max-width: 600px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+        <div class="modal-content glassmorphism"
+            style="max-width: 600px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
             <!-- Sticky header -->
-            <div class="modal-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+            <div class="modal-header"
+                style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-size: 1.2rem; font-weight: 700;">Đăng sản phẩm mới</h3>
-                <button onclick="closeAddProductModal()" style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"
+                <button onclick="closeAddProductModal()"
+                    style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"
                     onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
                     <i class="fa fa-times"></i>
                 </button>
@@ -160,27 +193,64 @@
                     </div>
                     <!-- Dynamic cascading category selector -->
                     <div class="input-group" id="category-cascade-wrapper">
-                        <label>Danh mục <span style="color:#6366f1; font-size:0.8rem;">(chọn đến danh mục cuối)</span></label>
-                        <div id="category-cascade-selects" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-                        <div id="category-selected-path" style="margin-top: 0.5rem; font-size: 0.82rem; color: #6366f1; font-weight: 600; min-height: 1.2rem;"></div>
+                        <label>Danh mục <span style="color:#6366f1; font-size:0.8rem;">(chọn đến danh mục
+                                cuối)</span></label>
+                        <div id="category-cascade-selects" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        </div>
+                        <div id="category-selected-path"
+                            style="margin-top: 0.5rem; font-size: 0.82rem; color: #6366f1; font-weight: 600; min-height: 1.2rem;">
+                        </div>
                     </div>
                     <input type="hidden" id="p-category">
                     <div class="input-group">
                         <label>Mô tả sản phẩm</label>
                         <textarea id="p-desc" rows="3" required></textarea>
                     </div>
-                    <div class="input-group" style="margin-bottom: 0;">
-                        <label>Hình ảnh (URL)</label>
-                        <input type="text" id="p-image" placeholder="Nhập link ảnh (hoặc dùng URL giả lập)">
+                    <div class="input-group">
+                        <label>Hình ảnh sản phẩm (Link ảnh hoặc tải lên)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <textarea id="p-images" rows="2" placeholder="https://link1.jpg, https://link2.jpg..." style="flex: 1;"></textarea>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <button type="button" class="btn" onclick="document.getElementById('p-upload').click()" style="width: auto; padding: 0.5rem; background: #eff6ff; color: #3b82f6; border: 1px solid #dbeafe; font-size: 0.8rem;">
+                                    <i class="fa fa-upload"></i> Tải ảnh
+                                </button>
+                                <input type="file" id="p-upload" hidden accept="image/*" onchange="handleImageUpload(this, 'p-images')">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="variant-config-box" style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <h4 style="margin-bottom: 1rem;"><i class="fa fa-list-check"></i> Cấu hình Phân loại (Tùy chọn)</h4>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label>Tên nhóm 1 (VD: Màu sắc)</label>
+                                <input type="text" id="p-variant-group1" placeholder="Màu sắc">
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label>Tên nhóm 2 (VD: Dung lượng)</label>
+                                <input type="text" id="p-variant-group2" placeholder="Dung lượng">
+                            </div>
+                        </div>
+
+                        <div id="variant-list-container" style="margin-top: 1rem;">
+                            <!-- Variant rows will be added here -->
+                        </div>
+                        <button type="button" class="btn secondary-btn" onclick="addNewVariantRow()" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 1rem;">
+                            <i class="fa fa-plus"></i> Thêm phân loại
+                        </button>
                     </div>
                 </form>
             </div>
             <!-- Sticky footer with buttons -->
-            <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
-                <button type="submit" form="form-add-product" class="btn primary-btn" style="flex: 1; margin: 0; padding: 0.75rem;">
+            <div
+                style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
+                <button type="submit" form="form-add-product" class="btn primary-btn"
+                    style="flex: 1; margin: 0; padding: 0.75rem;">
                     <i class="fa-solid fa-floppy-disk"></i> Lưu và Hiển thị
                 </button>
-                <button type="button" onclick="closeAddProductModal()" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
+                <button type="button" onclick="closeAddProductModal()" class="btn secondary-btn"
+                    style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
                     Huỷ
                 </button>
             </div>
@@ -189,11 +259,15 @@
 
     <!-- Modal Chỉnh sửa sản phẩm -->
     <div id="product-edit-modal" class="modal-overlay hidden">
-        <div class="modal-content glassmorphism" style="max-width: 600px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+        <div class="modal-content glassmorphism"
+            style="max-width: 600px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
             <!-- Sticky header -->
-            <div class="modal-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="font-size: 1.2rem; font-weight: 700;"><i class="fa-solid fa-pen-to-square" style="color:#6366f1; margin-right:8px;"></i>Chỉnh sửa sản phẩm</h3>
-                <button onclick="closeEditProductModal()" style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"
+            <div class="modal-header"
+                style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1.2rem; font-weight: 700;"><i class="fa-solid fa-pen-to-square"
+                        style="color:#6366f1; margin-right:8px;"></i>Chỉnh sửa sản phẩm</h3>
+                <button onclick="closeEditProductModal()"
+                    style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"
                     onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
                     <i class="fa fa-times"></i>
                 </button>
@@ -218,27 +292,64 @@
                     </div>
                     <!-- Dynamic cascading category selector for edit -->
                     <div class="input-group" id="edit-category-cascade-wrapper">
-                        <label>Danh mục <span style="color:#6366f1; font-size:0.8rem;">(chọn đến danh mục cuối)</span></label>
-                        <div id="edit-category-cascade-selects" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-                        <div id="edit-category-selected-path" style="margin-top: 0.5rem; font-size: 0.82rem; color: #6366f1; font-weight: 600; min-height: 1.2rem;"></div>
+                        <label>Danh mục <span style="color:#6366f1; font-size:0.8rem;">(chọn đến danh mục
+                                cuối)</span></label>
+                        <div id="edit-category-cascade-selects"
+                            style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                        <div id="edit-category-selected-path"
+                            style="margin-top: 0.5rem; font-size: 0.82rem; color: #6366f1; font-weight: 600; min-height: 1.2rem;">
+                        </div>
                     </div>
                     <input type="hidden" id="edit-p-category">
                     <div class="input-group">
                         <label>Mô tả sản phẩm</label>
                         <textarea id="edit-p-desc" rows="3" required></textarea>
                     </div>
-                    <div class="input-group" style="margin-bottom: 0;">
-                        <label>Hình ảnh (URL)</label>
-                        <input type="text" id="edit-p-image" placeholder="Nhập link ảnh">
+                    <div class="input-group">
+                        <label>Hình ảnh sản phẩm (Link ảnh hoặc tải lên)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <textarea id="edit-p-images" rows="2" placeholder="https://link1.jpg, https://link2.jpg..." style="flex: 1;"></textarea>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <button type="button" class="btn" onclick="document.getElementById('edit-p-upload').click()" style="width: auto; padding: 0.5rem; background: #eff6ff; color: #3b82f6; border: 1px solid #dbeafe; font-size: 0.8rem;">
+                                    <i class="fa fa-upload"></i> Tải ảnh
+                                </button>
+                                <input type="file" id="edit-p-upload" hidden accept="image/*" onchange="handleImageUpload(this, 'edit-p-images')">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="variant-config-box" style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <h4 style="margin-bottom: 1rem;"><i class="fa fa-list-check"></i> Cấu hình Phân loại (Tùy chọn)</h4>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label>Tên nhóm 1</label>
+                                <input type="text" id="edit-p-variant-group1">
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label>Tên nhóm 2</label>
+                                <input type="text" id="edit-p-variant-group2">
+                            </div>
+                        </div>
+
+                        <div id="edit-variant-list-container" style="margin-top: 1rem;">
+                            <!-- Variant rows will be added here -->
+                        </div>
+                        <button type="button" class="btn secondary-btn" onclick="addNewVariantRow(true)" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 1rem;">
+                            <i class="fa fa-plus"></i> Thêm phân loại
+                        </button>
                     </div>
                 </form>
             </div>
             <!-- Sticky footer with buttons -->
-            <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
-                <button type="submit" form="form-edit-product" class="btn primary-btn" style="flex: 1; margin: 0; padding: 0.75rem;">
+            <div
+                style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
+                <button type="submit" form="form-edit-product" class="btn primary-btn"
+                    style="flex: 1; margin: 0; padding: 0.75rem;">
                     <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
                 </button>
-                <button type="button" onclick="closeEditProductModal()" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
+                <button type="button" onclick="closeEditProductModal()" class="btn secondary-btn"
+                    style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
                     Huỷ
                 </button>
             </div>
@@ -257,4 +368,5 @@
     <script src="js/common.js?v=1.0.2"></script>
     <script src="js/seller.js?v=1.0.2"></script>
 </body>
+
 </html>

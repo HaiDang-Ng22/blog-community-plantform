@@ -79,4 +79,41 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
                 .ThenInclude(i => i.Variant)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
+
+    public async Task<IEnumerable<Order>> SearchOrdersAsync(Guid shopId, string? status = null, string? keyword = null)
+    {
+        var query = _dbSet
+            .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+            .Where(o => o.Items.Any(i => i.Product.ShopId == shopId));
+
+        if (!string.IsNullOrEmpty(status) && status != "All")
+        {
+            if (Enum.TryParse<OrderStatus>(status, true, out var statusEnum))
+            {
+                // Treat "Completed" as including both Delivered and Completed orders
+                if (statusEnum == OrderStatus.Completed)
+                {
+                    query = query.Where(o => o.Status == OrderStatus.Completed || o.Status == OrderStatus.Delivered);
+                }
+                else
+                {
+                    query = query.Where(o => o.Status == statusEnum);
+                }
+            }
+        }
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            var k = keyword.ToLower();
+            query = query.Where(o => 
+                o.Id.ToString().Contains(k) || 
+                o.CustomerName.ToLower().Contains(k) || 
+                o.PhoneNumber.Contains(k));
+        }
+
+        return await query
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
 }
