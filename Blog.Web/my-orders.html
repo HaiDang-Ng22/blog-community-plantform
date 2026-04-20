@@ -85,6 +85,34 @@
             color: #3b82f6;
         }
 
+        /* Status badge styles */
+        .status-badge { display: inline-block; border-radius: 6px; padding: 4px 10px; font-size: 0.78rem; font-weight: 700; }
+        .status-badge.unpaid { background: #fef3c7; color: #d97706; }
+        .status-badge.awaitingshipment { background: #e0f2fe; color: #0369a1; }
+        .status-badge.awaitingcollection { background: #ede9fe; color: #7c3aed; }
+        .status-badge.intransit { background: #dbeafe; color: #1d4ed8; }
+        .status-badge.delivered { background: #d1fae5; color: #065f46; }
+        .status-badge.completed { background: #d1fae5; color: #059669; }
+        .status-badge.cancelled { background: #fee2e2; color: #dc2626; }
+        .status-badge.returned { background: #fce7f3; color: #be185d; }
+
+        /* Banner đánh giá */
+        .review-banner {
+            background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+            border: 1.5px solid #fcd34d;
+            border-radius: 0.75rem;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+            animation: pulse-yellow 2s ease-in-out infinite;
+        }
+        @keyframes pulse-yellow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.3); }
+            50% { box-shadow: 0 0 0 6px rgba(251,191,36,0); }
+        }
+
         .order-item {
             display: flex;
             gap: 1rem;
@@ -188,6 +216,7 @@
                 <div class="tab-item" data-status="Unpaid">Chờ xác nhận</div>
                 <div class="tab-item" data-status="AwaitingShipment">Chờ giao</div>
                 <div class="tab-item" data-status="InTransit">Đang giao</div>
+                <div class="tab-item" data-status="Delivered">Đã giao hàng</div>
                 <div class="tab-item" data-status="Completed">Hoàn thành</div>
                 <div class="tab-item" data-status="Cancelled">Đã hủy</div>
             </div>

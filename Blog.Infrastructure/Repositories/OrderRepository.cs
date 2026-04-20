@@ -91,7 +91,8 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
         {
             if (Enum.TryParse<OrderStatus>(status, true, out var statusEnum))
             {
-                // Treat "Completed" as including both Delivered and Completed orders
+                // When filtering by Completed, also include Delivered orders
+                // since "Delivered" is effectively a completed/finished state
                 if (statusEnum == OrderStatus.Completed)
                 {
                     query = query.Where(o => o.Status == OrderStatus.Completed || o.Status == OrderStatus.Delivered);
