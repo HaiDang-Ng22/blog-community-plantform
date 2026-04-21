@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tìm kiếm - Zynk</title>
+    <title data-i18n="search_title">Tìm kiếm - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="css/components.css">
@@ -25,29 +26,31 @@
     </style>
 </head>
 
-<body class="home-page">
+<body class="home-page" data-i18n-title="search_title">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html">ZYNK</a>
+                <a href="index.html">
+                    <div class="zynk-logo-clean logo-header"></div>
+                </a>
             </div>
             <div class="nav-actions" id="nav-actions"></div>
         </nav>
     </header>
 
     <main class="main-content container-wide">
-        <h3 id="search-title">Đang tìm kiếm...</h3>
+        <h3 id="search-title" data-i18n="searching">Đang tìm kiếm...</h3>
         
         <div class="search-results-container">
             <!-- Người dùng -->
             <section class="search-section">
-                <h2>Người dùng</h2>
+                <h2 data-i18n="users_section">Người dùng</h2>
                 <div id="users-results-list"></div>
             </section>
 
             <!-- Bài viết -->
             <section class="search-section">
-                <h2>Bài viết</h2>
+                <h2 data-i18n="posts_section">Bài viết</h2>
                 <div id="posts-results-list"></div>
             </section>
         </div>

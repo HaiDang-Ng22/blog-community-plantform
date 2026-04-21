@@ -10,8 +10,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
         const darkBtn = document.getElementById('dark-mode-btn');
-        if (darkBtn) darkBtn.textContent = 'Tắt chế độ tối';
+        if (darkBtn) darkBtn.textContent = window.t('dark_mode_off') || 'Tắt chế độ tối';
     }
+
+    // Initialize Language UI
+    syncLanguageUI();
+    window.addEventListener('languageChanged', (e) => {
+        syncLanguageUI();
+        window.common.showToast(window.t('lang_applied'));
+    });
 
     await loadCurrentSettings();
 
@@ -57,8 +64,15 @@ function toggleDarkMode() {
 
     const darkBtn = document.getElementById('dark-mode-btn');
     if (darkBtn) {
-        darkBtn.textContent = isDark ? 'Tắt chế độ tối' : 'Bật chế độ tối';
+        darkBtn.textContent = isDark ? (window.t('dark_mode_off') || 'Tắt chế độ tối') : (window.t('dark_mode_on') || 'Bật chế độ tối');
     }
+}
+
+function syncLanguageUI() {
+    const currentLang = localStorage.getItem('zynk_lang') || 'vi';
+    document.querySelectorAll('.lang-check').forEach(check => check.classList.add('hidden'));
+    const currentCheck = document.getElementById(`lang-check-${currentLang}`);
+    if (currentCheck) currentCheck.classList.remove('hidden');
 }
 
 // Profile Logic
@@ -95,10 +109,10 @@ async function togglePrivateAccount() {
 
     try {
         const result = await window.api.put('users/me/privacy', { isPrivate: isPrivate });
-        showStatus(result.message || 'Cập nhật quyền riêng tư thành công!', 'success');
+        showStatus(result.message || window.t('privacy_updated_success'), 'success');
     } catch (error) {
-        toggle.checked = !isPrivate; // Hoàn tác thao tác nếu lỗi
-        showStatus('Lỗi: ' + error.message, 'error');
+        toggle.checked = !isPrivate;
+        showStatus(window.t('error') + ': ' + error.message, 'error');
     }
 }
 
@@ -126,9 +140,9 @@ async function saveSettings() {
         userInfo.username = data.username;
         localStorage.setItem('user_info', JSON.stringify(userInfo));
 
-        showStatus('Cập nhật hồ sơ thành công!', 'success');
+        showStatus(window.t('profile_updated_success') || 'Cập nhật hồ sơ thành công!', 'success');
     } catch (error) {
-        showStatus(error.message || 'Cập nhật thất bại.', 'error');
+        showStatus(error.message || window.t('update_failed'), 'error');
     } finally {
         btn.disabled = false;
     }
@@ -150,10 +164,10 @@ async function changePassword() {
             oldPassword: oldPwd,
             newPassword: newPwd
         });
-        showStatus('Đổi mật khẩu thành công!', 'success');
+        showStatus(window.t('password_changed_success') || 'Đổi mật khẩu thành công!', 'success');
         document.getElementById('password-form').reset();
     } catch (error) {
-        showStatus(error.message || 'Đổi mật khẩu thất bại.', 'error');
+        showStatus(error.message || window.t('password_change_failed'), 'error');
     }
 }
 

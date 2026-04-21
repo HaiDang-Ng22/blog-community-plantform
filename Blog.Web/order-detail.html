@@ -2,8 +2,9 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết đơn hàng - Zynk</title>
+    <title data-i18n="order_detail_title">Chi tiết đơn hàng - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -121,15 +122,15 @@
                 <!-- Left Column -->
                 <div class="detail-left">
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-map-marker-alt" style="color: #ef4444;"></i> Địa chỉ nhận hàng</h3>
+                        <h3 class="card-title"><i class="fa fa-map-marker-alt" style="color: #ef4444;"></i> <span data-i18n="shipping_address">Địa chỉ nhận hàng</span></h3>
                         <div class="address-info" id="address-display">
                             <!-- JS Inject -->
                         </div>
-                        <button class="btn-edit-address hidden" id="btn-show-edit-address" onclick="openAddressModal()">Thay đổi</button>
+                        <button class="btn-edit-address hidden" id="btn-show-edit-address" onclick="openAddressModal()" data-i18n="change">Thay đổi</button>
                     </div>
 
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-shopping-bag" style="color: #3b82f6;"></i> Danh sách sản phẩm</h3>
+                        <h3 class="card-title"><i class="fa fa-shopping-bag" style="color: #3b82f6;"></i> <span data-i18n="items_list">Danh sách sản phẩm</span></h3>
                         <div id="items-list">
                             <!-- JS Inject -->
                         </div>
@@ -139,21 +140,21 @@
                 <!-- Right Column -->
                 <div class="detail-right">
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-receipt" style="color: #10b981;"></i> Thanh toán</h3>
+                        <h3 class="card-title"><i class="fa fa-receipt" style="color: #10b981;"></i> <span data-i18n="payment_info_title">Thanh toán</span></h3>
                         <div class="summary-info">
-                            <div class="summary-row"><span>Tổng tiền hàng</span> <span id="sum-subtotal">0đ</span></div>
-                            <div class="summary-row"><span>Phí vận chuyển</span> <span>Miễn phí</span></div>
-                            <div class="summary-row"><span>Giảm giá</span> <span>-0đ</span></div>
-                            <div class="summary-row total"><span>Tổng thanh toán</span> <span id="sum-total">0đ</span></div>
+                            <div class="summary-row"><span data-i18n="subtotal">Tổng tiền hàng</span> <span id="sum-subtotal">0đ</span></div>
+                            <div class="summary-row"><span data-i18n="shipping_fee">Phí vận chuyển</span> <span data-i18n="free">Miễn phí</span></div>
+                            <div class="summary-row"><span data-i18n="discount">Giảm giá</span> <span>-0đ</span></div>
+                            <div class="summary-row total"><span data-i18n="total_payment">Tổng thanh toán</span> <span id="sum-total">0đ</span></div>
                         </div>
                     </div>
 
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-info-circle" style="color: #64748b;"></i> Thông tin đơn hàng</h3>
+                        <h3 class="card-title"><i class="fa fa-info-circle" style="color: #64748b;"></i> <span data-i18n="order_info_title">Thông tin đơn hàng</span></h3>
                         <div style="font-size: 0.9rem; color: #64748b; line-height: 1.8;">
-                            <div>Mã đơn hàng: <strong id="order-id-full" style="color: #334155;">-</strong></div>
-                            <div>Thời gian đặt: <span id="order-time">-</span></div>
-                            <div>Phương thức: <span id="order-payment-method">-</span></div>
+                            <div><span data-i18n="order_id_label">Mã đơn hàng</span>: <strong id="order-id-full" style="color: #334155;">-</strong></div>
+                            <div><span data-i18n="order_time_label">Thời gian đặt</span>: <span id="order-time">-</span></div>
+                            <div><span data-i18n="payment_method_label">Phương thức</span>: <span id="order-payment-method">-</span></div>
                         </div>
                     </div>
 

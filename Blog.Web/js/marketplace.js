@@ -1,5 +1,6 @@
 /* js/marketplace.js */
 document.addEventListener('DOMContentLoaded', () => {
+    setupSearch();
     loadCategories();
     loadProducts();
     updateCartBadge();
@@ -519,6 +520,7 @@ function addToCart(id, name) {
     let cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
     const cartItemId = selectedVariantId ? `${id}-${selectedVariantId}` : id;
     const variantName = selectedVariantId ? document.querySelector('.variant-btn.active').textContent.trim() : null;
+    const shopName = window._currentProduct ? window._currentProduct.shopName : 'Shop Zynk';
 
     const existing = cart.find(i => i.cartItemId === cartItemId);
     if (existing) {
@@ -529,6 +531,7 @@ function addToCart(id, name) {
             cartItemId, 
             variantId: selectedVariantId,
             variantName,
+            shopName,
             name, 
             price, 
             img, 
@@ -546,4 +549,171 @@ function buyNow(id) {
     // Add to cart and redirect
     addToCart(id, document.querySelector('.modal-title').textContent);
     location.href = 'cart.html';
+}
+
+// --- Search & Sort Logic ---
+function setupSearch() {
+    const searchInput = document.getElementById('market-search-input');
+    const clearBtn = document.getElementById('search-clear-btn');
+    const suggestions = document.getElementById('search-suggestions');
+    let searchTimeout = null;
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        if (val.length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+            suggestions.classList.remove('active');
+        }
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            if (val.length >= 2) {
+                showSuggestions(val);
+            } else {
+                suggestions.classList.remove('active');
+            }
+        }, 300);
+    });
+
+    // Hide suggestions on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#market-search-wrap')) {
+            suggestions.classList.remove('active');
+        }
+    });
+
+    // Handle enter key
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            executeSearch();
+        }
+    });
+}
+
+function clearSearch() {
+    const searchInput = document.getElementById('market-search-input');
+    const clearBtn = document.getElementById('search-clear-btn');
+    const suggestions = document.getElementById('search-suggestions');
+    
+    searchInput.value = '';
+    clearBtn.classList.add('hidden');
+    suggestions.classList.remove('active');
+    
+    document.getElementById('market-title').textContent = 'Gợi ý hôm nay';
+    loadProducts(); 
+}
+
+async function showSuggestions(keyword) {
+    const suggestions = document.getElementById('search-suggestions');
+    try {
+        const allProds = await window.api.get('marketplace/products');
+        
+        const kw = keyword.toLowerCase();
+        const filtered = allProds.filter(p => 
+            p.name.toLowerCase().includes(kw) || 
+            (p.shopName && p.shopName.toLowerCase().includes(kw))
+        );
+
+        if (filtered.length === 0) {
+            suggestions.innerHTML = '<div style="padding: 15px; color: #64748b; text-align: center;">Không tìm thấy kết quả</div>';
+        } else {
+            const top5 = filtered.slice(0, 5);
+            suggestions.innerHTML = top5.map(p => `
+                <div class="suggestion-item" onclick="selectSuggestion('${p.id}')">
+                    <img src="${p.featuredImageUrl || 'https://via.placeholder.com/40'}" alt="${p.name}">
+                    <div class="suggestion-info">
+                        <span class="suggestion-title">${p.name.length > 60 ? p.name.substring(0,60)+'...' : p.name}</span>
+                        <span class="suggestion-price">${window.common.formatCurrency ? window.common.formatCurrency(p.price) : formatCurrency(p.price)}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (filtered.length > 5) {
+                suggestions.innerHTML += `
+                    <div class="suggestion-item" style="justify-content: center; color: #3b82f6; font-weight: 600;" onclick="executeSearch('${keyword}')">
+                        Xem tất cả ${filtered.length} kết quả
+                    </div>
+                `;
+            }
+        }
+        suggestions.classList.add('active');
+    } catch (e) {
+        console.error('Failed to load suggestions:', e);
+    }
+}
+
+function selectSuggestion(productId) {
+    document.getElementById('search-suggestions').classList.remove('active');
+    openProductModal(productId);
+}
+
+function executeSearch(kw = null) {
+    const searchInput = document.getElementById('market-search-input');
+    const keyword = kw || searchInput.value.trim();
+    if (!keyword) return;
+
+    searchInput.value = keyword;
+    document.getElementById('search-clear-btn').classList.remove('hidden');
+    document.getElementById('search-suggestions').classList.remove('active');
+    
+    // De-activate categories
+    document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+
+    searchProducts(keyword);
+}
+
+async function searchProducts(keyword) {
+    const grid = document.getElementById('product-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="skeleton" style="height: 300px; grid-column: span 1 / -1;"></div>'.repeat(4);
+    document.getElementById('market-title').textContent = `Kết quả tìm kiếm cho "${keyword}"`;
+
+    try {
+        const url = `marketplace/products?search=${encodeURIComponent(keyword)}`;
+        let results = await window.api.get(url).catch(() => null);
+        
+        if (!results || results.length > 0 && Array.isArray(results) === false) {
+             // fallback to local filter if API doesn't support search param properly
+             const allProds = await window.api.get('marketplace/products');
+             const kw = keyword.toLowerCase();
+             results = allProds.filter(p => 
+                 p.name.toLowerCase().includes(kw) || 
+                 (p.shopName && p.shopName.toLowerCase().includes(kw))
+             );
+        }
+        
+        // If API returns all elements because it ignores "search", filter locally
+        const kw = keyword.toLowerCase();
+        currentProducts = results.filter(p => 
+            p.name.toLowerCase().includes(kw) || 
+            (p.shopName && p.shopName.toLowerCase().includes(kw))
+        );
+
+        renderProducts(currentProducts);
+    } catch (e) {
+        console.error('Failed to search products:', e);
+        grid.innerHTML = '<div class="no-posts">Lỗi khi tìm kiếm.</div>';
+    }
+}
+
+function searchByTag(tag) {
+    executeSearch(tag);
+}
+
+function handleSort() {
+    const val = document.getElementById('sort-filter').value;
+    if (!currentProducts || currentProducts.length === 0) return;
+    
+    let sorted = [...currentProducts];
+    if (val === 'price-asc') sorted.sort((a,b) => a.price - b.price);
+    else if (val === 'price-desc') sorted.sort((a,b) => b.price - a.price);
+    else if (val === 'popular') sorted.sort((a,b) => (b.salesCount || 0) - (a.salesCount || 0));
+    else if (val === 'newest') sorted.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    renderProducts(sorted);
 }

@@ -2,8 +2,9 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết đơn hàng - Kênh Người Bán</title>
+    <title data-i18n="seller_order_detail_title">Chi tiết đơn hàng - Kênh Người Bán</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.6">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -55,7 +56,7 @@
         .hidden { display: none; }
     </style>
 </head>
-<body class="home-page">
+<body class="home-page" data-i18n-title="seller_order_detail_title">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
@@ -69,11 +70,11 @@
     </header>
 
     <main class="detail-container">
-        <a href="seller-center.html" class="btn-back"><i class="fa fa-arrow-left"></i> Quay lại Kênh người bán</a>
+        <a href="seller-center.html" class="btn-back"><i class="fa fa-arrow-left"></i> <span data-i18n="back_to_seller_center">Quay lại Kênh người bán</span></a>
 
         <div id="order-loading" style="text-align: center; padding: 4rem;">
             <i class="fa fa-spinner fa-spin fa-2x"></i>
-            <p style="margin-top: 1rem; color: #64748b;">Đang tải chi tiết đơn hàng cho người bán...</p>
+            <p style="margin-top: 1rem; color: #64748b;" data-i18n="seller_loading_order">Đang tải chi tiết đơn hàng cho người bán...</p>
         </div>
 
         <div id="order-content" class="hidden">
@@ -82,19 +83,19 @@
                 <div class="stepper" id="order-stepper">
                     <div class="step" data-status="AwaitingShipment">
                         <div class="step-icon">1</div>
-                        <div class="step-label">Chờ xác nhận</div>
+                        <div class="step-label" data-i18n="status_pending">Chờ xác nhận</div>
                     </div>
                     <div class="step" data-status="AwaitingCollection">
                         <div class="step-icon">2</div>
-                        <div class="step-label">Chuẩn bị hàng</div>
+                        <div class="step-label" data-i18n="status_awaiting">Chuẩn bị hàng</div>
                     </div>
                     <div class="step" data-status="InTransit">
                         <div class="step-icon">3</div>
-                        <div class="step-label">Đang giao</div>
+                        <div class="step-label" data-i18n="status_delivering">Đang giao</div>
                     </div>
                     <div class="step" data-status="Completed">
                         <div class="step-icon">4</div>
-                        <div class="step-label">Thành công</div>
+                        <div class="step-label" data-i18n="status_completed">Thành công</div>
                     </div>
                 </div>
             </div>
@@ -103,14 +104,14 @@
                 <!-- Left Column -->
                 <div class="detail-left">
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-user" style="color: #3b82f6;"></i> Thông tin người mua</h3>
-                        <div class="info-row"><span class="info-label">Tên khách hàng</span> <span class="info-value" id="disp-customer-name">-</span></div>
-                        <div class="info-row"><span class="info-label">Số điện thoại</span> <span class="info-value" id="disp-phone">-</span></div>
-                        <div class="info-row"><span class="info-label">Địa chỉ nhận hàng</span> <span class="info-value" id="disp-address" style="max-width: 60%;">-</span></div>
+                        <h3 class="card-title"><i class="fa fa-user" style="color: #3b82f6;"></i> <span data-i18n="buyer_info">Thông tin người mua</span></h3>
+                        <div class="info-row"><span class="info-label" data-i18n="customer_name">Tên khách hàng</span> <span class="info-value" id="disp-customer-name">-</span></div>
+                        <div class="info-row"><span class="info-label" data-i18n="phone_number">Số điện thoại</span> <span class="info-value" id="disp-phone">-</span></div>
+                        <div class="info-row"><span class="info-label" data-i18n="shipping_address">Địa chỉ nhận hàng</span> <span class="info-value" id="disp-address" style="max-width: 60%;">-</span></div>
                     </div>
 
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-shopping-bag" style="color: #10b981;"></i> Sản phẩm cần đóng gói</h3>
+                        <h3 class="card-title"><i class="fa fa-shopping-bag" style="color: #10b981;"></i> <span data-i18n="pack_items">Sản phẩm cần đóng gói</span></h3>
                         <div id="seller-items-list">
                             <!-- JS Inject -->
                         </div>
@@ -144,8 +145,10 @@
         </div>
     </main>
 
-    <script src="js/api.js?v=1.0.4"></script>
-    <script src="js/common.js?v=1.0.4"></script>
-    <script src="js/seller-order-detail.js?v=1.0.4"></script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script src="js/seller-order-detail.js?v=2.0"></script>
 </body>
 </html>

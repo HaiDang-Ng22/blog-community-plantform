@@ -3,19 +3,22 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sửa bài viết - Zynk</title>
+    <title data-i18n="edit_post_title">Sửa bài viết - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="css/auth.css?v=1.5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="home-page">
+<body class="home-page" data-i18n-title="edit_post_title">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html">ZYNK</a>
+                <a href="index.html">
+                    <div class="zynk-logo-clean logo-header"></div>
+                </a>
             </div>
             
             <div class="nav-actions" id="nav-actions">
@@ -26,28 +29,28 @@
 
     <main class="main-content container-wide" style="max-width: 680px;">
         <div class="create-post-container glassmorphism" style="margin-top: 2rem;">
-            <h2><i class="fa-solid fa-pen-to-square"></i> Cập nhật bài viết</h2>
+            <h2 data-i18n="update_post_title"><i class="fa-solid fa-pen-to-square"></i> Cập nhật bài viết</h2>
             <div id="message-box" class="message-box hidden"></div>
             
             <form id="form-edit-post">
                 <div class="input-group">
-                    <label for="post-title" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tiêu đề</label>
-                    <input type="text" id="post-title" placeholder="Nhập tiêu đề ấn tượng..." required>
+                    <label for="post-title" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" data-i18n="post_title_label">Tiêu đề</label>
+                    <input type="text" id="post-title" placeholder="Nhập tiêu đề ấn tượng..." data-i18n="post_title_placeholder" required>
                 </div>
 
                 <div class="input-group">
-                    <label for="post-summary" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tóm tắt (Ngắn gọn)</label>
-                    <input type="text" id="post-summary" placeholder="Một vài dòng giới thiệu về bài viết...">
+                    <label for="post-summary" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" data-i18n="post_summary_label">Tóm tắt (Ngắn gọn)</label>
+                    <input type="text" id="post-summary" placeholder="Một vài dòng giới thiệu về bài viết..." data-i18n="post_summary_placeholder">
                 </div>
 
                 <div class="input-group">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Hình ảnh bài viết (Có thể chọn nhiều)</label>
-                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">Lưu ý: Nếu bạn tải lên hình ảnh mới, toàn bộ hình ảnh cũ sẽ bị thay thế.</p>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;" data-i18n="post_images_label">Hình ảnh bài viết (Có thể chọn nhiều)</label>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;" data-i18n="post_images_warning">Lưu ý: Nếu bạn tải lên hình ảnh mới, toàn bộ hình ảnh cũ sẽ bị thay thế.</p>
                     <div style="display: flex; gap: 1rem; align-items: center;">
                         <button type="button" class="btn secondary-btn" onclick="document.getElementById('post-image-file').click()" style="width: auto; padding: 0.6rem 1.2rem; margin: 0;">
-                            <i class="fa-solid fa-images"></i> Chọn ảnh mới tải lên
+                            <i class="fa-solid fa-images"></i> <span data-i18n="post_images_btn_edit">Chọn ảnh mới tải lên</span>
                         </button>
-                        <span id="file-name" style="font-size: 0.8rem; color: var(--text-secondary);">Giữ nguyên ảnh cũ</span>
+                        <span id="file-name" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="keep_old_images">Giữ nguyên ảnh cũ</span>
                     </div>
                     <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;" onchange="handleMultipleImageUpload(this)">
                     <div id="image-urls-container"></div> <!-- Container cho hidden inputs -->
@@ -58,13 +61,13 @@
                 </div>
 
                 <div class="input-group">
-                    <label for="post-content" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Nội dung</label>
-                    <textarea id="post-content" rows="8" placeholder="Bạn muốn chia sẻ điều gì với cộng đồng?" required style="width: 100%; padding: 1rem; border-radius: 1rem; border: 2px solid var(--input-border); font-family: inherit; resize: vertical;"></textarea>
+                    <label for="post-content" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" data-i18n="post_content_label">Nội dung</label>
+                    <textarea id="post-content" rows="8" placeholder="Bạn muốn chia sẻ điều gì với cộng đồng?" data-i18n="post_content_placeholder" required style="width: 100%; padding: 1rem; border-radius: 1rem; border: 2px solid var(--input-border); font-family: inherit; resize: vertical;"></textarea>
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button type="button" class="btn secondary-btn" onclick="window.history.back()" style="margin-top: 0; background: #E2E8F0; color: #475569;">Hủy</button>
-                    <button type="submit" class="btn primary-btn" style="margin-top: 0;">Lưu thay đổi</button>
+                    <button type="button" class="btn secondary-btn" onclick="window.history.back()" style="margin-top: 0; background: #E2E8F0; color: #475569;" data-i18n="cancel">Hủy</button>
+                    <button type="submit" class="btn primary-btn" style="margin-top: 0;" data-i18n="save_changes">Lưu thay đổi</button>
                 </div>
             </form>
         </div>
@@ -72,14 +75,16 @@
 
     <footer class="main-footer">
         <div class="container-wide">
-            <p>&copy; 2026 Zynk Community.</p>
+            <p data-i18n="footer_copy">&copy; 2026 Zynk Community. Made with LV for developers.</p>
         </div>
     </footer>
 
     <!-- Scripts -->
-    <script src="js/api.js?v=1.4"></script>
-    <script src="js/common.js?v=1.5"></script>
-    <script src="js/edit-post.js?v=1.4"></script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script src="js/edit-post.js?v=2.0"></script>
 </body>
 
 </html>

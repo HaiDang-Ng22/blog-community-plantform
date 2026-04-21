@@ -3,19 +3,23 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh người bán - Zynk Shop</title>
+    <title data-i18n="seller_center">Kênh người bán - Zynk Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="css/seller.css?v=2.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="home-page">
+<body class="home-page" data-i18n-title="seller_center">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html">ZYNK SHOP</a>
+                <a href="index.html">
+                    <div class="zynk-logo-clean logo-header"></div>
+                    <span style="font-size: 0.6em; background: #22c55e; color: white; padding: 2px 8px; border-radius: 6px; font-weight: 800; margin-left: 10px;">SELLER</span>
+                </a>
             </div>
             <div class="nav-actions" id="nav-actions"></div>
         </nav>
@@ -26,7 +30,7 @@
             <!-- Loading state -->
             <div style="text-align: center; padding: 4rem;">
                 <i class="fa fa-spinner fa-spin fa-2x"></i>
-                <p style="margin-top: 1rem;">Đang kiểm tra quyền truy cập...</p>
+                <p style="margin-top: 1rem;" data-i18n="loading">Đang kiểm tra quyền truy cập...</p>
             </div>
         </div>
     </main>
@@ -36,8 +40,8 @@
     <!-- 1. Template Đăng ký -->
     <template id="tpl-registration">
         <div class="seller-header">
-            <h1>Mở cửa hàng trên Zynk</h1>
-            <p>Bắt đầu sự nghiệp kinh doanh của bạn ngay hôm nay với cộng đồng Zynk.</p>
+            <h1 data-i18n="open_shop_title">Mở cửa hàng trên Zynk</h1>
+            <p data-i18n="open_shop_desc">Bắt đầu sự nghiệp kinh doanh của bạn ngay hôm nay với cộng đồng Zynk.</p>
         </div>
         <form id="form-shop-apply" class="application-form">
             <div id="msg-box" class="message-box hidden"></div>
@@ -346,10 +350,10 @@
                 style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
                 <button type="submit" form="form-edit-product" class="btn primary-btn"
                     style="flex: 1; margin: 0; padding: 0.75rem;">
-                    <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+                    <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="save_changes">Lưu thay đổi</span>
                 </button>
                 <button type="button" onclick="closeEditProductModal()" class="btn secondary-btn"
-                    style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
+                    style="width: auto; margin: 0; padding: 0.75rem 1.25rem;" data-i18n="cancel">
                     Huỷ
                 </button>
             </div>
@@ -364,9 +368,11 @@
 
     <link rel="stylesheet" href="css/common.css?v=1.0.2">
     <link rel="stylesheet" href="css/seller.css?v=1.0.2">
-    <script src="js/api.js?v=1.0.2"></script>
-    <script src="js/common.js?v=1.0.2"></script>
-    <script src="js/seller.js?v=1.0.2"></script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script src="js/seller.js?v=2.0"></script>
 </body>
 
 </html>
