@@ -4,20 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác thực - Zynk</title>
+    <title data-i18n="auth_title">Xác thực - Zynk</title>
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="css/auth.css?v=1.5">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
-<body class="auth-page">
+<body class="auth-page" data-i18n-title="auth_title">
     <div class="auth-wrapper">
         <!-- Left Panel: Branding & Dynamic Background -->
         <div class="auth-left">
             <div class="auth-brand">
-                <h1>ZYNK.</h1>
-                <p>Nền tảng mạng xã hội kết nối, chia sẻ kiến thức số 1 dành cho cộng đồng yêu công nghệ và sáng tạo.</p>
+                <div class="auth-main-logo"></div>
+                <p data-i18n="auth_slogan">Nền tảng mạng xã hội kết nối, chia sẻ kiến thức số 1 dành cho cộng đồng yêu công nghệ và sáng tạo.</p>
             </div>
         </div>
 
@@ -25,25 +26,30 @@
         <div class="auth-right">
             <div class="auth-box">
                 <div class="auth-box-header">
-                    <a href="index.html">ZYNK</a>
+                    <a href="index.html">
+                        <div class="auth-box-logo"></div>
+                    </a>
                 </div>
 
                 <div class="tabs">
-                    <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">Đăng Nhập</button>
-                    <button id="tab-register" class="tab-btn" onclick="switchTab('register')">Đăng Ký</button>
+                    <button id="tab-login" class="tab-btn active" onclick="switchTab('login')" data-i18n="login">Đăng Nhập</button>
+                    <button id="tab-register" class="tab-btn" onclick="switchTab('register')" data-i18n="register">Đăng Ký</button>
                 </div>
 
                 <div id="message-box" class="message-box hidden"></div>
 
                 <form id="form-login" class="auth-form active">
-                    <h2>Chào mừng trở lại!</h2>
+                    <h2 data-i18n="auth_welcome">Chào mừng trở lại!</h2>
                     <div class="input-group">
                         <input type="email" id="login-email" placeholder="Email của bạn" required>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group password-group">
                         <input type="password" id="login-password" placeholder="Mật khẩu" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('login-password', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
                     </div>
-                    <button type="submit" class="btn primary-btn">Đăng nhập ngay</button>
+                    <button type="submit" class="btn primary-btn" data-i18n="login">Đăng nhập ngay</button>
 
                     <div class="divider">
                         <span>Hoặc tiếp tục với</span>
@@ -72,11 +78,17 @@
                     <div class="input-group">
                         <input type="email" id="reg-email" placeholder="Email của bạn" required>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group password-group">
                         <input type="password" id="reg-password" placeholder="Mật khẩu (Gồm chữ hoa, chữ thường và số)" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('reg-password', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group password-group">
                         <input type="password" id="reg-confirm-password" placeholder="Xác nhận mật khẩu" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('reg-confirm-password', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
                     </div>
                     <button type="submit" class="btn primary-btn">Tạo tài khoản</button>
                     
@@ -87,8 +99,11 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/api.js?v=1.4"></script>
-    <script src="js/auth.js?v=1.4"></script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script src="js/auth.js?v=2.1"></script>
 </body>
 
 </html>

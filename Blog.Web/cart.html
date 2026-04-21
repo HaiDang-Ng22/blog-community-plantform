@@ -2,8 +2,9 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giỏ hàng - Zynk Shop</title>
+    <title data-i18n="cart_title">Giỏ hàng - Zynk Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,13 +12,19 @@
         .cart-layout { max-width: 1000px; margin: 3rem auto; display: grid; grid-template-columns: 1fr 400px; gap: 2rem; align-items: start; }
         @media (max-width: 900px) { .cart-layout { grid-template-columns: 1fr; } }
         .cart-card { background: var(--glass-bg); backdrop-filter: blur(10px); border-radius: 1.5rem; border: var(--glass-border); padding: 2rem; box-shadow: var(--shadow-md); }
-        .cart-item { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border-color); }
+        .cart-item { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; border-bottom: 1px solid #e2e8f0; }
+        .cart-item:last-child { border-bottom: none; }
         .cart-item img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; }
         .cart-item-info { flex: 1; }
         .cart-item-info h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
         .cart-price { font-weight: 700; color: #2563eb; }
         .cart-qty { font-size: 0.9rem; color: #64748b; }
         .cart-total { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; justify-content: space-between; }
+        
+        .cart-shop-group { margin-bottom: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #cbd5e1; overflow: hidden; }
+        .cart-shop-header { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; font-weight: 700; background: #f8fafc; font-size:1.05rem; }
+        .checkbox-custom { width: 20px; height: 20px; cursor: pointer; accent-color: #3b82f6; border-radius: 4px; }
+        .cart-select-all { display: flex; align-items: center; gap: 10px; padding: 1rem 0 1.5rem; font-weight: 600; color: #475569; }
         
         .checkout-box { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: var(--shadow-sm); border: 1px solid #e2e8f0; }
         .form-group { margin-bottom: 1rem; }
@@ -34,17 +41,21 @@
         .btn-toggle-saved { font-size: 0.9rem; color: #3b82f6; cursor: pointer; display: inline-block; margin-bottom: 1rem; text-decoration: underline; font-weight: 600; }
     </style>
 </head>
-<body class="home-page">
+<body class="home-page" data-i18n-title="cart_title">
     <header class="main-header">
         <nav class="nav-container container-wide">
-            <div class="logo"><a href="index.html">ZYNK</a></div>
+            <div class="logo">
+                <a href="index.html">
+                    <div class="zynk-logo-clean logo-header"></div>
+                </a>
+            </div>
             <div class="nav-actions" id="nav-actions"></div>
         </nav>
     </header>
 
     <main class="container-wide cart-layout">
         <div class="cart-card">
-            <h2 style="margin-bottom: 1.5rem;"><i class="fa fa-shopping-cart"></i> Giỏ hàng của bạn</h2>
+            <h2 style="margin-bottom: 1.5rem;"><i class="fa fa-shopping-cart"></i> <span data-i18n="cart_title">Giỏ hàng của bạn</span></h2>
             <div id="cart-list">
                 <!-- Data from JS -->
             </div>
@@ -152,22 +163,102 @@
                 document.getElementById('checkout-section').style.display = 'none';
                 return;
             }
+            document.getElementById('checkout-section').style.display = 'block';
 
-            let total = 0;
-            list.innerHTML = cart.map((item, index) => {
-                total += item.price * item.qty;
-                return `
-                    <div class="cart-item">
-                        <img src="${item.img || 'https://via.placeholder.com/80'}">
-                        <div class="cart-item-info">
-                            <h4>${item.name}</h4>
-                            <div class="cart-qty">Số lượng: ${item.qty}</div>
+            // Group by shopName
+            const grouped = {};
+            cart.forEach((item, index) => {
+                const shop = item.shopName || 'Shop Zynk';
+                if (!grouped[shop]) grouped[shop] = [];
+                grouped[shop].push({ ...item, originalIndex: index });
+            });
+
+            let html = `
+                <div class="cart-select-all">
+                    <input type="checkbox" id="check-all-global" class="checkbox-custom" checked onchange="toggleAllGlobal(this)">
+                    <label for="check-all-global" style="cursor: pointer;">Chọn tất cả (${cart.length})</label>
+                </div>
+            `;
+
+            for (const [shop, items] of Object.entries(grouped)) {
+                html += `
+                    <div class="cart-shop-group">
+                        <div class="cart-shop-header">
+                            <input type="checkbox" class="checkbox-custom shop-cb" data-shop="${shop}" checked onchange="toggleShop('${shop}', this)">
+                            <i class="fa fa-shop" style="color: #64748b;"></i> ${shop}
                         </div>
-                        <div class="cart-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.qty)}</div>
-                        <button class="btn-action danger" onclick="removeFromCart(${index})"><i class="fa fa-trash"></i></button>
+                        <div class="cart-shop-items">
+                `;
+                
+                items.forEach(item => {
+                    html += `
+                        <div class="cart-item">
+                            <input type="checkbox" class="checkbox-custom item-cb shop-${shop.replace(/\s+/g, '-')}" data-index="${item.originalIndex}" data-shop="${shop}" checked onchange="toggleItem('${shop}')">
+                            <img src="${item.img || 'https://via.placeholder.com/80'}">
+                            <div class="cart-item-info">
+                                <h4>${item.name}</h4>
+                                ${item.variantName ? `<div style="font-size:0.85rem; color:#64748b; margin-bottom:5px;">Loại: ${item.variantName}</div>` : ''}
+                                <div class="cart-qty">Số lượng: ${item.qty}</div>
+                            </div>
+                            <div class="cart-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.qty)}</div>
+                            <button class="btn-action danger" onclick="removeFromCart(${item.originalIndex})"><i class="fa fa-trash"></i></button>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
                     </div>
                 `;
-            }).join('');
+            }
+
+            list.innerHTML = html;
+            updateTotalPrice();
+        }
+
+        // --- Selection Logic ---
+        function toggleAllGlobal(checkbox) {
+            const isChecked = checkbox.checked;
+            document.querySelectorAll('.item-cb, .shop-cb').forEach(cb => cb.checked = isChecked);
+            updateTotalPrice();
+        }
+
+        function toggleShop(shop, checkbox) {
+            const isChecked = checkbox.checked;
+            document.querySelectorAll(`.item-cb.shop-${shop.replace(/\s+/g, '-')}`).forEach(cb => cb.checked = isChecked);
+            syncGlobalCheck();
+            updateTotalPrice();
+        }
+
+        function toggleItem(shop) {
+            const shopItems = document.querySelectorAll(`.item-cb.shop-${shop.replace(/\s+/g, '-')}`);
+            const shopCb = document.querySelector(`.shop-cb[data-shop="${shop}"]`);
+            
+            const allChecked = Array.from(shopItems).every(cb => cb.checked);
+            if (shopCb) shopCb.checked = allChecked;
+            
+            syncGlobalCheck();
+            updateTotalPrice();
+        }
+
+        function syncGlobalCheck() {
+            const allItems = document.querySelectorAll('.item-cb');
+            const globalCb = document.getElementById('check-all-global');
+            if (globalCb && allItems.length > 0) {
+                globalCb.checked = Array.from(allItems).every(cb => cb.checked);
+            }
+        }
+
+        function updateTotalPrice() {
+            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+            const checkedBoxes = document.querySelectorAll('.item-cb:checked');
+            
+            let total = 0;
+            checkedBoxes.forEach(cb => {
+                const idx = parseInt(cb.getAttribute('data-index'));
+                const item = cart[idx];
+                if (item) total += item.price * item.qty;
+            });
 
             document.getElementById('total-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
         }
@@ -284,6 +375,20 @@
             const note = document.getElementById('ship-note').value;
 
             const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+            const checkedBoxes = document.querySelectorAll('.item-cb:checked');
+            
+            if (checkedBoxes.length === 0) {
+                return window.common?.showToast ? window.common.showToast('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán', 'error') : alert('Vui lòng chọn ít nhất 1 sản phẩm');
+            }
+
+            const itemsToBuy = [];
+            const indicesToRemove = [];
+            
+            checkedBoxes.forEach(cb => {
+                const idx = parseInt(cb.getAttribute('data-index'));
+                itemsToBuy.push({ productId: cart[idx].id, quantity: cart[idx].qty });
+                indicesToRemove.push(idx);
+            });
             
             const fullAddress = `${specific}, ${districtText}, ${provinceText}`.replace(/, ,/g, ',');
 
@@ -297,7 +402,7 @@
                 paymentMethod: paymentMethod,
                 saveAddress: saveAddress,
                 customerNote: note,
-                items: cart.map(i => ({ productId: i.id, quantity: i.qty }))
+                items: itemsToBuy
             };
 
             const btn = document.querySelector('button[onclick="checkout()"]');
@@ -310,7 +415,10 @@
                 if (window.common?.showToast) window.common.showToast('Đặt hàng thành công!', 'success');
                 else alert('Đặt hàng thành công!');
                 
-                localStorage.removeItem('zynk_cart');
+                // Only remove the bought items from cart
+                const newCart = cart.filter((_, idx) => !indicesToRemove.includes(idx));
+                localStorage.setItem('zynk_cart', JSON.stringify(newCart));
+                
                 setTimeout(() => {
                     window.location.href = 'my-orders.html';
                 }, 1500);
@@ -322,5 +430,9 @@
             }
         }
     </script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
 </body>
 </html>

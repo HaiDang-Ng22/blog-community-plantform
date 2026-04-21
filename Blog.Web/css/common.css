@@ -1,7 +1,8 @@
 /* css/common.css */
 :root {
-    --primary-color: #2563EB;
-    --primary-gradient: #2563EB;
+    --primary-color: #000000;
+    --primary-blue: #2563EB;
+    --primary-gradient: linear-gradient(135deg, #000000 0%, #333333 100%);
     --secondary-gradient: #1E40AF;
     --bg-color: #F9FAFB;
     --bg-gradient: #F3F4F6;
@@ -12,10 +13,10 @@
     --text-light: #9CA3AF;
     --input-bg: #FFFFFF;
     --input-border: #D1D5DB;
-    --input-focus: #2563EB;
+    --input-focus: #000000;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 15px -1px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
     --shadow-glow: none;
     --transition: all 0.2s ease-in-out;
 }
@@ -92,11 +93,33 @@ body {
 }
 
 .logo a {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
     text-decoration: none;
-    letter-spacing: 1px;
+}
+
+.zynk-logo-clean {
+    display: block;
+    background-color: #000000;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    transition: var(--transition);
+}
+
+.logo-header {
+    width: 90px;
+    height: 50px;
+    -webkit-mask-image: url('../assets/logo.png');
+    mask-image: url('../assets/logo.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+    flex-shrink: 0;
 }
 
 .nav-actions {

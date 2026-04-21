@@ -134,7 +134,6 @@ async function handleMultipleImageUpload(input) {
             hiddenInput.value = data.url;
             container.appendChild(hiddenInput);
 
-            // Cập nhật preview
             document.getElementById(wrapId).innerHTML = `
                 <img src="${data.url}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px;">
             `;

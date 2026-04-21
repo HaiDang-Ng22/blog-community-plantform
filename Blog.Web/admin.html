@@ -3,156 +3,550 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản trị hệ thống - Zynk</title>
+    <title data-i18n="admin_dashboard">Quản trị hệ thống - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .admin-layout { display: flex; gap: 2rem; margin: 2rem auto; max-width: 1200px; }
-        .admin-sidebar { flex: 0 0 260px; }
-        .admin-content { flex: 1; }
-        
-        .admin-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
-        .admin-nav { display: flex; flex-direction: column; gap: 0.5rem; }
-        .admin-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: var(--text-secondary); text-decoration: none; transition: 0.2s; border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-family: inherit; font-size: 0.95rem; }
-        .admin-nav-item:hover { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
-        .admin-nav-item.active { background: #6366f1; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .admin-layout {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem; }
-        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
-        
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        .data-table th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
-        .data-table td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; vertical-align: middle; }
-        
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-        .badge-user { background: #e0e7ff; color: #4338ca; }
-        .badge-admin { background: #fef3c7; color: #92400e; }
-        .badge-pending { background: #fee2e2; color: #b91c1c; }
-        .badge-resolved { background: #dcfce7; color: #166534; }
+        .admin-sidebar {
+            flex: 0 0 260px;
+        }
 
-        .btn-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; color: #64748b; }
-        .btn-action:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
-        .btn-action.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+        .admin-content {
+            flex: 1;
+        }
 
-        .hidden { display: none !important; }
+        .admin-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .admin-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .admin-nav-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+        }
+
+        .admin-nav-item.active {
+            background: #6366f1;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #f1f5f9;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-user {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .badge-admin {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-pending {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-resolved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #64748b;
+        }
+
+        .btn-action:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .btn-action.danger:hover {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+
+        .hidden {
+            display: none !important;
+        }
 
         /* =========================================
            FOLDER DRILL-DOWN UI STYLES
         ========================================= */
         /* Breadcrumb */
-        .cat-breadcrumb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0.75rem 1rem; background: rgba(99,102,241,0.05); border-radius: 12px; margin-bottom: 1.25rem; border: 1px solid rgba(99,102,241,0.1); }
-        .crumb-btn { background: none; border: none; font-family: inherit; font-size: 0.9rem; font-weight: 600; color: #6366f1; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
-        .crumb-btn:hover { background: rgba(99,102,241,0.1); }
-        .crumb-btn.active { color: var(--text-secondary); cursor: default; }
-        .crumb-btn.active:hover { background: none; }
-        .crumb-sep { color: var(--text-light); font-size: 0.7rem; }
-        .crumb-current { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); padding: 4px 10px; }
+        .cat-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .crumb-btn {
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6366f1;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 8px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .crumb-btn:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .crumb-btn.active {
+            color: var(--text-secondary);
+            cursor: default;
+        }
+
+        .crumb-btn.active:hover {
+            background: none;
+        }
+
+        .crumb-sep {
+            color: var(--text-light);
+            font-size: 0.7rem;
+        }
+
+        .crumb-current {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            padding: 4px 10px;
+        }
 
         /* Grid */
-        .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .cat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
 
         /* Card */
-        .cat-card { background: var(--card-bg, white); border: 1px solid var(--border-color, #e2e8f0); border-radius: 16px; overflow: hidden; transition: 0.25s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .cat-card:hover { box-shadow: 0 8px 24px rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.3); transform: translateY(-2px); }
-        .cat-card-body { display: flex; align-items: center; gap: 14px; padding: 1rem 1rem 0.75rem; cursor: pointer; }
-        .cat-card-body:hover .cat-card-name { color: #6366f1; }
-        .cat-card-icon { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08)); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #6366f1; flex-shrink: 0; transition: 0.2s; }
-        .cat-card:hover .cat-card-icon { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15)); }
-        .cat-card-info { flex: 1; min-width: 0; }
-        .cat-card-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.2s; }
-        .cat-card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
-        .cat-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
-        .chip-folder { background: #e0e7ff; color: #4338ca; }
-        .chip-leaf { background: #f1f5f9; color: #64748b; }
-        .chip-slug { background: #f8fafc; color: #94a3b8; font-family: monospace; border: 1px solid #e2e8f0; }
-        .cat-card-arrow { color: #cbd5e1; font-size: 0.8rem; flex-shrink: 0; transition: 0.2s; }
-        .cat-card:hover .cat-card-arrow { color: #6366f1; transform: translateX(2px); }
+        .cat-card {
+            background: var(--card-bg, white);
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: 0.25s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .cat-card:hover {
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .cat-card-body {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 1rem 1rem 0.75rem;
+            cursor: pointer;
+        }
+
+        .cat-card-body:hover .cat-card-name {
+            color: #6366f1;
+        }
+
+        .cat-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #6366f1;
+            flex-shrink: 0;
+            transition: 0.2s;
+        }
+
+        .cat-card:hover .cat-card-icon {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15));
+        }
+
+        .cat-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cat-card-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: 0.2s;
+        }
+
+        .cat-card-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .cat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .chip-folder {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .chip-leaf {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .chip-slug {
+            background: #f8fafc;
+            color: #94a3b8;
+            font-family: monospace;
+            border: 1px solid #e2e8f0;
+        }
+
+        .cat-card-arrow {
+            color: #cbd5e1;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            transition: 0.2s;
+        }
+
+        .cat-card:hover .cat-card-arrow {
+            color: #6366f1;
+            transform: translateX(2px);
+        }
 
         /* Card actions bar */
-        .cat-card-actions { display: flex; gap: 6px; padding: 0.6rem 1rem; border-top: 1px solid var(--border-color, #f1f5f9); background: rgba(0,0,0,0.01); }
+        .cat-card-actions {
+            display: flex;
+            gap: 6px;
+            padding: 0.6rem 1rem;
+            border-top: 1px solid var(--border-color, #f1f5f9);
+            background: rgba(0, 0, 0, 0.01);
+        }
 
         /* Empty state */
-        .cat-empty { text-align: center; padding: 3rem 1rem; }
+        .cat-empty {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
 
         /* Dark mode overrides */
-        body.dark-mode .cat-card { background: #1e293b; border-color: #334155; }
-        body.dark-mode .cat-breadcrumb { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.15); }
-        body.dark-mode .cat-card-icon { background: rgba(99,102,241,0.15); }
-        body.dark-mode .cat-card-actions { border-color: #334155; background: rgba(0,0,0,0.1); }
-        body.dark-mode .chip-slug { background: #0f172a; border-color: #334155; }
-        body.dark-mode .chip-leaf { background: #0f172a; color: #94a3b8; }
+        body.dark-mode .cat-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .cat-breadcrumb {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.15);
+        }
+
+        body.dark-mode .cat-card-icon {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        body.dark-mode .cat-card-actions {
+            border-color: #334155;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .chip-slug {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        body.dark-mode .chip-leaf {
+            background: #0f172a;
+            color: #94a3b8;
+        }
 
         /* Dark mode overrides (admin) */
-        body.dark-mode .admin-card, body.dark-mode .stat-card { background: #1e293b; border-color: #334155; }
-        body.dark-mode .data-table th { border-bottom-color: #334155; }
-        body.dark-mode .data-table td { border-bottom-color: #334155; }
+        body.dark-mode .admin-card,
+        body.dark-mode .stat-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .data-table th {
+            border-bottom-color: #334155;
+        }
+
+        body.dark-mode .data-table td {
+            border-bottom-color: #334155;
+        }
 
         /* Post Preview Modal Styles */
-        .preview-modal-content { 
-            background: var(--glass-bg); 
-            border: var(--glass-border); 
-            border-radius: 20px; 
-            padding: 0; /* Changed to handle header/body/footer padding separately */
-            box-shadow: var(--shadow-lg); 
-            max-width: 800px; 
-            width: 90%; 
-            max-height: 90vh; 
-            overflow: hidden; 
+        .preview-modal-content {
+            background: var(--glass-bg);
+            border: var(--glass-border);
+            border-radius: 20px;
+            padding: 0;
+            /* Changed to handle header/body/footer padding separately */
+            box-shadow: var(--shadow-lg);
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             position: relative;
         }
-        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
-        .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
-        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.02); }
-        
-        .post-preview-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-        .post-preview-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
-        .post-preview-meta { color: var(--text-secondary); font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
-        .post-preview-image { width: 100%; border-radius: 12px; margin: 1.5rem 0; object-fit: cover; max-height: 400px; }
-        .post-preview-body { line-height: 1.6; color: var(--text-primary); font-size: 1.05rem; white-space: pre-wrap; }
-        .clickable-title { cursor: pointer; color: #6366f1; transition: 0.2s; }
-        .clickable-title:hover { text-decoration: underline; color: #4f46e5; }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .post-preview-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .post-preview-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .post-preview-meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .post-preview-image {
+            width: 100%;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            object-fit: cover;
+            max-height: 400px;
+        }
+
+        .post-preview-body {
+            line-height: 1.6;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            white-space: pre-wrap;
+        }
+
+        .clickable-title {
+            cursor: pointer;
+            color: #6366f1;
+            transition: 0.2s;
+        }
+
+        .clickable-title:hover {
+            text-decoration: underline;
+            color: #4f46e5;
+        }
 
         /* Form & Modal Enhancements */
-        .modal-content { 
-            background: var(--glass-bg); 
-            border: var(--glass-border); 
-            border-radius: 20px; 
-            padding: 2rem; 
-            box-shadow: var(--shadow-lg); 
-            width: 90%; 
-            position: relative; 
+        .modal-content {
+            background: var(--glass-bg);
+            border: var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            width: 90%;
+            position: relative;
             backdrop-filter: blur(10px);
         }
-        
-        .form-group { margin-bottom: 1.25rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
-        .form-control { 
-            width: 100%; 
-            padding: 0.75rem 1rem; 
-            border-radius: 12px; 
-            border: 1px solid var(--input-border); 
-            background: var(--input-bg); 
-            color: var(--text-primary); 
-            font-family: inherit; 
-            transition: 0.2s; 
+
+        .form-group {
+            margin-bottom: 1.25rem;
         }
-        .form-control:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
-        
-        body.dark-mode .form-control { background: #0f172a; border-color: #334155; color: #f1f5f9; }
-        body.dark-mode .modal-content { background: rgba(30, 41, 59, 0.95); }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        body.dark-mode .form-control {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .modal-content {
+            background: rgba(30, 41, 59, 0.95);
+        }
     </style>
 </head>
 
-<body class="home-page">
+<body class="home-page" data-i18n-title="admin_dashboard">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html">ZYNK <span style="font-size: 0.6em; background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">ADMIN</span></a>
+                <a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                    <div class="zynk-logo-clean logo-header"></div>
+                    <span style="font-size: 0.6em; background: #ef4444; color: white; padding: 2px 8px; border-radius: 6px; font-weight: 800;">ADMIN</span>
+                </a>
             </div>
             <div class="nav-actions" id="nav-actions"></div>
         </nav>
@@ -163,21 +557,21 @@
             <aside class="admin-sidebar">
                 <div class="admin-card">
                     <div class="admin-nav">
-                        <button class="admin-nav-item active" onclick="switchAdminTab('users')">
+                        <button class="admin-nav-item active" onclick="switchAdminTab('users')" data-i18n="manage_users">
                             <i class="fa-solid fa-users"></i> Quản lý Người dùng
                         </button>
                         <button class="admin-nav-item" onclick="switchAdminTab('reports')">
-                            <i class="fa-solid fa-flag"></i> Báo cáo vi phạm
+                            <i class="fa-solid fa-flag"></i> <span data-i18n="violation_reports">Báo cáo vi phạm</span>
                             <span id="report-count-badge" class="badge badge-pending hidden">0</span>
                         </button>
-                        <button class="admin-nav-item" onclick="switchAdminTab('shops')">
+                        <button class="admin-nav-item" onclick="switchAdminTab('shops')" data-i18n="manage_shops">
                             <i class="fa-solid fa-shop"></i> Quản lý Cửa hàng
                         </button>
-                        <button class="admin-nav-item" onclick="switchAdminTab('categories')">
+                        <button class="admin-nav-item" onclick="switchAdminTab('categories')" data-i18n="manage_categories">
                             <i class="fa-solid fa-layer-group"></i> Quản lý Danh mục
                         </button>
                         <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid var(--border-color);">
-                        <a href="index.html" class="admin-nav-item">
+                        <a href="index.html" class="admin-nav-item" data-i18n="back_home">
                             <i class="fa-solid fa-arrow-left"></i> Quay lại Home
                         </a>
                     </div>
@@ -188,20 +582,22 @@
                 <!-- Users Section -->
                 <section id="section-users" class="admin-section">
                     <div class="admin-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700;">Danh sách người dùng</h2>
-                            <button class="btn secondary-btn" onclick="loadAdminUsers()" style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;" data-i18n="users_list">Danh sách người dùng</h2>
+                            <button class="btn secondary-btn" onclick="loadAdminUsers()"
+                                style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> <span data-i18n="refresh">Làm mới</span></button>
                         </div>
                         <div style="overflow-x: auto;">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Người dùng</th>
-                                        <th>Email</th>
-                                        <th>Vai trò</th>
-                                        <th>Tham gia</th>
-                                        <th>Bài viết</th>
-                                        <th>Thao tác</th>
+                                        <th data-i18n="user">Người dùng</th>
+                                        <th data-i18n="email_label">Email</th>
+                                        <th data-i18n="role_label">Vai trò</th>
+                                        <th data-i18n="joined_label">Tham gia</th>
+                                        <th data-i18n="posts_label">Bài viết</th>
+                                        <th data-i18n="actions_label">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-users-list">
@@ -215,20 +611,22 @@
                 <!-- Reports Section -->
                 <section id="section-reports" class="admin-section hidden">
                     <div class="admin-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700;">Báo cáo nội dung</h2>
-                            <button class="btn secondary-btn" onclick="loadAdminReports()" style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;" data-i18n="violation_reports">Báo cáo nội dung</h2>
+                            <button class="btn secondary-btn" onclick="loadAdminReports()"
+                                style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> <span data-i18n="refresh">Làm mới</span></button>
                         </div>
                         <div style="overflow-x: auto;">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Người báo cáo</th>
-                                        <th>Bài viết bị báo cáo</th>
-                                        <th>Lý do</th>
-                                        <th>Thời gian</th>
-                                        <th>Trạng thái</th>
-                                        <th>Thao tác</th>
+                                        <th data-i18n="reporter">Người báo cáo</th>
+                                        <th data-i18n="reported_post">Bài viết bị báo cáo</th>
+                                        <th data-i18n="reason">Lý do</th>
+                                        <th data-i18n="time_label">Thời gian</th>
+                                        <th data-i18n="status">Trạng thái</th>
+                                        <th data-i18n="actions_label">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-reports-list">
@@ -242,20 +640,22 @@
                 <!-- Shops Section -->
                 <section id="section-shops" class="admin-section hidden">
                     <div class="admin-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700;">Yêu cầu mở Cửa hàng</h2>
-                            <button class="btn secondary-btn" onclick="loadAdminShopApps()" style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;" data-i18n="manage_shops">Yêu cầu mở Cửa hàng</h2>
+                            <button class="btn secondary-btn" onclick="loadAdminShopApps()"
+                                style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> <span data-i18n="refresh">Làm mới</span></button>
                         </div>
                         <div style="overflow-x: auto;">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Người đăng ký</th>
-                                        <th>Tên Shop</th>
-                                        <th>Mô tả</th>
-                                        <th>Ngày gửi</th>
-                                        <th>Trạng thái</th>
-                                        <th>Thao tác</th>
+                                        <th data-i18n="applicant">Người đăng ký</th>
+                                        <th data-i18n="shop_name">Tên Shop</th>
+                                        <th data-i18n="description">Mô tả</th>
+                                        <th data-i18n="request_date">Ngày gửi</th>
+                                        <th data-i18n="status">Trạng thái</th>
+                                        <th data-i18n="actions_label">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-shops-list">
@@ -269,20 +669,23 @@
                 <!-- Categories Section -->
                 <section id="section-categories" class="admin-section hidden">
                     <div class="admin-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <div>
-                                <h2 style="font-size: 1.5rem; font-weight: 700;">Quản lý Danh mục Shop</h2>
-                                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">Bấm vào danh mục để xem các mục con bên trong</p>
+                                <h2 style="font-size: 1.5rem; font-weight: 700;" data-i18n="manage_categories">Quản lý Danh mục Shop</h2>
+                                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;" data-i18n="categories_desc_admin">Bấm vào danh
+                                    mục để xem các mục con bên trong</p>
                             </div>
-                            <button class="btn primary-btn" onclick="openCategoryModal()" style="width: auto; margin: 0; padding: 0.6rem 1.2rem;">
-                                <i class="fa-solid fa-plus"></i> Thêm Danh mục
+                            <button class="btn primary-btn" onclick="openCategoryModal()"
+                                style="width: auto; margin: 0; padding: 0.6rem 1.2rem;">
+                                <i class="fa-solid fa-plus"></i> <span data-i18n="add_category">Thêm Danh mục</span>
                             </button>
                         </div>
                         <!-- Folder Drill-Down View -->
                         <div id="categories-folder-view">
                             <div class="cat-empty">
                                 <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#6366f1;"></i>
-                                <p style="margin-top:1rem; color:var(--text-secondary);">Đang tải...</p>
+                                <p style="margin-top:1rem; color:var(--text-secondary);" data-i18n="loading">Đang tải...</p>
                             </div>
                         </div>
                     </div>
@@ -291,12 +694,14 @@
         </div>
     </main>
 
-    <script src="js/api.js?v=1.2"></script>
-    <script src="js/common.js?v=1.5"></script>
-    <script src="js/admin.js?v=1.2"></script>
-    <script src="js/admin-users.js?v=1.1"></script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script src="js/admin.js?v=2.0"></script>
+    <script src="js/admin-users.js?v=2.0"></script>
     <script src="js/admin-reports.js?v=2.0"></script>
-    <script src="js/admin-shops.js?v=1.1"></script>
+    <script src="js/admin-shops.js?v=2.0"></script>
     <script src="js/admin-categories.js?v=2.0"></script>
 
     <!-- Post Preview Modal -->
@@ -311,7 +716,8 @@
                     <!-- Content will be injected by JS -->
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+            <div class="modal-footer"
+                style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn secondary-btn" style="width: auto;" onclick="closePostPreview()">Đóng</button>
             </div>
         </div>
@@ -328,22 +734,24 @@
                 <form id="category-form" onsubmit="handleCategorySubmit(event)">
                     <input type="hidden" id="category-id">
                     <div class="form-group">
-                        <label>Tên danh mục</label>
-                        <input type="text" id="category-name" class="form-control" required placeholder="Ví dụ: Thời trang">
+                        <label data-i18n="category_name_label">Tên danh mục</label>
+                        <input type="text" id="category-name" class="form-control" required
+                            placeholder="Ví dụ: Thời trang" data-i18n-placeholder="category_name_placeholder">
                     </div>
                     <div class="form-group">
-                        <label>Icon (FontAwesome class)</label>
-                        <input type="text" id="category-icon" class="form-control" placeholder="Ví dụ: fa-shirt">
+                        <label data-i18n="category_icon_label">Icon (FontAwesome class)</label>
+                        <input type="text" id="category-icon" class="form-control" placeholder="Ví dụ: fa-shirt" data-i18n-placeholder="category_icon_placeholder">
                     </div>
                     <div class="form-group">
-                        <label>Danh mục cha</label>
+                        <label data-i18n="parent_category_label">Danh mục cha</label>
                         <select id="category-parent" class="form-control">
-                            <option value="">-- Không có (Danh mục gốc) --</option>
+                            <option value="" data-i18n="none_root">-- Không có (Danh mục gốc) --</option>
                         </select>
                     </div>
                     <div style="margin-top: 20px; display: flex; gap: 10px;">
-                        <button type="submit" class="btn primary-btn" style="width: auto;">Lưu thay đổi</button>
-                        <button type="button" class="btn secondary-btn" style="width: auto;" onclick="closeCategoryModal()">Hủy</button>
+                        <button type="submit" class="btn primary-btn" style="width: auto;" data-i18n="save_changes">Lưu thay đổi</button>
+                        <button type="button" class="btn secondary-btn" style="width: auto;"
+                            onclick="closeCategoryModal()" data-i18n="cancel">Hủy</button>
                     </div>
                 </form>
             </div>

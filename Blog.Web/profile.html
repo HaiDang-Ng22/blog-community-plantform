@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hồ sơ cá nhân - Zynk</title>
+    <title data-i18n="profile">Hồ sơ cá nhân - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="css/components.css">
@@ -13,11 +14,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="home-page">
+<body class="home-page" data-i18n-title="profile">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html">ZYNK</a>
+                <a href="index.html">
+                    <div class="zynk-logo-clean logo-header"></div>
+                </a>
             </div>
             
             <div class="nav-actions" id="nav-actions">
@@ -36,26 +39,26 @@
                         <img src="https://ui-avatars.com/api/?name=User&background=random" id="profile-avatar" class="large-avatar" alt="Avatar">
                     </div>
                     <div class="profile-names">
-                        <h2 id="profile-name">Đang tải...</h2>
+                        <h2 id="profile-name" data-i18n="loading">Đang tải...</h2>
                         <p id="profile-username">@loading</p>
                     </div>
                     <div class="profile-bio" id="profile-bio">
                         Đây là nơi chia sẻ những suy nghĩ và câu chuyện của tôi.
                     </div>
                     <div class="profile-stats-row">
-                        <span><b id="post-count">0</b> Bài viết</span>
-                        <span><b id="follower-count">0</b> Người theo dõi</span>
-                        <span><b id="following-count">0</b> Đang theo dõi</span>
+                        <span><b id="post-count">0</b> <span data-i18n="posts_label">Bài viết</span></span>
+                        <span><b id="follower-count">0</b> <span data-i18n="followers_label">Người theo dõi</span></span>
+                        <span><b id="following-count">0</b> <span data-i18n="following_label">Đang theo dõi</span></span>
                     </div>
                     <div style="margin-top: 1.5rem;">
-                        <button id="follow-btn" class="btn primary-btn" style="width: auto; padding: 0.6rem 2rem;">Theo dõi</button>
+                        <button id="follow-btn" class="btn primary-btn" style="width: auto; padding: 0.6rem 2rem;" data-i18n="follow">Theo dõi</button>
                     </div>
                 </div>
             </div>
 
             <!-- User Timeline -->
             <div class="section-title">
-                <h3>Bài đăng của tôi</h3>
+                <h3 data-i18n="my_posts">Bài đăng của tôi</h3>
             </div>
 
             <div id="profile-posts-grid" class="posts-grid">
@@ -65,24 +68,26 @@
 
             <div id="no-posts" class="no-posts hidden">
                 <i class="fa-solid fa-note-sticky"></i>
-                <p>Bạn chưa có bài đăng nào.</p>
-                <button class="btn primary-btn" onclick="window.location.href='create-post.html'" style="width: auto; padding: 0.6rem 2rem; margin-top: 1rem;">Đăng bài ngay</button>
+                <p data-i18n="no_posts_user">Bạn chưa có bài đăng nào.</p>
+                <button class="btn primary-btn" onclick="window.location.href='create-post.html'" style="width: auto; padding: 0.6rem 2rem; margin-top: 1rem;" data-i18n="post_now">Đăng bài ngay</button>
             </div>
         </div>
     </main>
 
     <footer class="main-footer">
         <div class="container-wide">
-            <p>&copy; 2026 Zynk Community.</p>
+            <p data-i18n="footer_copy">&copy; 2026 Zynk Community.</p>
         </div>
     </footer>
 
     <!-- Scripts -->
-    <script src="js/api.js?v=1.7"></script>
-    <script src="js/common.js?v=1.5"></script>
-    <script src="js/post-actions.js?v=1.7"></script>
-    <script src="js/notifications.js?v=1.7"></script>
-    <script src="js/profile.js?v=1.7"></script>
+    <script src="js/api.js?v=2.1"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script src="js/post-actions.js?v=1.3"></script>
+    <script src="js/notifications.js?v=1.1"></script>
+    <script src="js/profile.js?v=2.0"></script>
 </body>
 
 </html>

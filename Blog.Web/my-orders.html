@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đơn hàng của tôi - Zynk</title>
+    <title data-i18n="my_orders">Đơn hàng của tôi - Zynk</title>
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -180,11 +181,13 @@
     </style>
 </head>
 
-<body class="home-page">
+<body class="home-page" data-i18n-title="my_orders">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html">ZYNK</a>
+                <a href="index.html">
+                    <div class="zynk-logo-clean logo-header"></div>
+                </a>
             </div>
             
             <div id="nav-actions" class="nav-actions">
@@ -195,30 +198,30 @@
 
     <main class="container">
         <div class="orders-header" style="margin-bottom: 2rem;">
-            <h2 style="font-size: 1.8rem; font-weight: 800; color: #1e293b;">Đơn hàng của tôi</h2>
-            <p style="color: #64748b; font-size: 0.95rem;">Theo dõi và quản lý lịch sử mua sắm của bạn</p>
+            <h2 style="font-size: 1.8rem; font-weight: 800; color: #1e293b;" data-i18n="my_orders">Đơn hàng của tôi</h2>
+            <p style="color: #64748b; font-size: 0.95rem;" data-i18n="orders_desc">Theo dõi và quản lý lịch sử mua sắm của bạn</p>
         </div>
 
         <!-- Search Bar -->
         <div class="search-section" style="margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; display: flex; gap: 1rem;">
             <div style="flex: 1; position: relative;">
                 <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
-                <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng hoặc Tên sản phẩm..." 
+                <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng hoặc Tên sản phẩm..." data-i18n="order_search_placeholder"
                     style="width: 100%; padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; outline: none; transition: 0.2s;">
             </div>
-            <button class="btn-reorder" onclick="applyBuyerSearch()" style="width: auto; padding: 0 2rem; margin: 0;">Tìm đơn hàng</button>
+            <button class="btn-reorder" onclick="applyBuyerSearch()" style="width: auto; padding: 0 2rem; margin: 0;"><span data-i18n="find_order">Tìm đơn hàng</span></button>
         </div>
 
         <!-- Status Filter Tabs -->
         <div class="tabs-container" style="background: #fff; border-radius: 1rem; padding: 4px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
             <div class="tabs" style="border-bottom: none; margin-bottom: 0;">
-                <div class="tab-item active" data-status="ALL">Tất cả</div>
-                <div class="tab-item" data-status="Unpaid">Chờ xác nhận</div>
-                <div class="tab-item" data-status="AwaitingShipment">Chờ giao</div>
-                <div class="tab-item" data-status="InTransit">Đang giao</div>
-                <div class="tab-item" data-status="Delivered">Đã giao hàng</div>
-                <div class="tab-item" data-status="Completed">Hoàn thành</div>
-                <div class="tab-item" data-status="Cancelled">Đã hủy</div>
+                <div class="tab-item active" data-status="ALL" data-i18n="status_all">Tất cả</div>
+                <div class="tab-item" data-status="Unpaid" data-i18n="status_pending">Chờ xác nhận</div>
+                <div class="tab-item" data-status="AwaitingShipment" data-i18n="status_awaiting">Chờ giao</div>
+                <div class="tab-item" data-status="InTransit" data-i18n="status_delivering">Đang giao</div>
+                <div class="tab-item" data-status="Delivered" data-i18n="status_delivered">Đã giao hàng</div>
+                <div class="tab-item" data-status="Completed" data-i18n="status_completed">Hoàn thành</div>
+                <div class="tab-item" data-status="Cancelled" data-i18n="status_cancelled">Đã hủy</div>
             </div>
         </div>
 
@@ -227,9 +230,11 @@
         </div>
     </main>
 
-    <script src="js/api.js?v=1.0.1"></script>
-    <script src="js/common.js?v=1.0.1"></script>
-    <script src="js/my-orders.js?v=1.0.1"></script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script src="js/my-orders.js?v=2.0"></script>
 </body>
 
 </html>

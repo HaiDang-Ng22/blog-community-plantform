@@ -3,66 +3,308 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cài đặt tài khoản - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/auth.css"> 
+    <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .settings-layout { display: flex; gap: 2rem; margin: 2rem auto; max-width: 1000px; }
-        .settings-sidebar { flex: 0 0 240px; background: #fff; border-radius: 12px; padding: 1rem; height: fit-content; position: sticky; top: 80px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
-        .settings-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; color: #4b5563; text-decoration: none; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-size: 0.95rem; }
-        .settings-nav-item:hover { background: #f3f4f6; color: #2563eb; }
-        .settings-nav-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
-        .settings-content { flex: 1; background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e5e7eb; }
-        .settings-section { display: none; }
-        .settings-section.active { display: block; }
-        .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #111827; }
-        .section-desc { color: #6b7280; font-size: 0.9rem; margin-bottom: 2rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
-        .preview-img { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 2px solid #6366f1; }
-        .preview-cover { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; }
-        .theme-card { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; border: 1px solid #e5e7eb; border-radius: 12px; margin-top: 1rem; }
-        
+        .settings-layout {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem auto;
+            max-width: 1000px;
+        }
+
+        .settings-sidebar {
+            flex: 0 0 240px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 1rem;
+            height: fit-content;
+            position: sticky;
+            top: 80px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        .settings-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #4b5563;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .settings-nav-item:hover {
+            background: #f3f4f6;
+            color: #2563eb;
+        }
+
+        .settings-nav-item.active {
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .settings-content {
+            flex: 1;
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .settings-section {
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .section-desc {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .preview-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #6366f1;
+        }
+
+        .preview-cover {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .theme-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
         /* Dark mode support classes */
-        body.dark-mode { background-color: #0f172a; color: #f8fafc; }
-        body.dark-mode .settings-sidebar, body.dark-mode .settings-content { background: #1e293b; border-color: #334155; }
-        body.dark-mode .settings-nav-item { color: #94a3b8; }
-        body.dark-mode .settings-nav-item:hover { background: #334155; color: #38bdf8; }
-        body.dark-mode .settings-nav-item.active { background: #1e293b; border: 1px solid #38bdf8; color: #38bdf8; }
-        body.dark-mode .section-title, body.dark-mode h4, body.dark-mode .theme-card div div:first-child { color: #f1f5f9 !important; }
-        body.dark-mode .section-desc, body.dark-mode .form-group label { color: #94a3b8; }
-        body.dark-mode input, body.dark-mode textarea, body.dark-mode select { background: #0f172a; border-color: #334155; color: #f1f5f9; }
-        body.dark-mode .theme-card { border-color: #334155; }
-        
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        body.dark-mode .settings-sidebar,
+        body.dark-mode .settings-content {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .settings-nav-item {
+            color: #94a3b8;
+        }
+
+        body.dark-mode .settings-nav-item:hover {
+            background: #334155;
+            color: #38bdf8;
+        }
+
+        body.dark-mode .settings-nav-item.active {
+            background: #1e293b;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+        }
+
+        body.dark-mode .section-title,
+        body.dark-mode h4,
+        body.dark-mode .theme-card div div:first-child {
+            color: #f1f5f9 !important;
+        }
+
+        body.dark-mode .section-desc,
+        body.dark-mode .form-group label {
+            color: #94a3b8;
+        }
+
+        body.dark-mode input,
+        body.dark-mode textarea,
+        body.dark-mode select {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .theme-card {
+            border-color: #334155;
+        }
+
         /* Modern Toggle Switch */
-        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #3b82f6; }
-        input:checked + .slider:before { transform: translateX(24px); }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .settings-layout { flex-direction: column; gap: 1rem; margin: 1rem auto; padding: 0 1rem; }
-            .settings-sidebar { position: static; width: auto; flex: none; display: flex; overflow-x: auto; padding: 0.5rem; gap: 0.5rem; border: 1px solid #e5e7eb; box-shadow: none; scrollbar-width: none; -ms-overflow-style: none; }
-            body.dark-mode .settings-sidebar { border-color: #334155; }
-            .settings-sidebar::-webkit-scrollbar { display: none; }
-            .settings-nav-item { width: auto; flex: 0 0 auto; white-space: nowrap; padding: 8px 16px; font-size: 0.9rem; border-radius: 20px; }
-            body.dark-mode .settings-nav-item.active { border-color: #38bdf8; }
-            .settings-sidebar hr { display: none; }
-            .settings-content { padding: 1.5rem 1rem; }
+            .settings-layout {
+                flex-direction: column;
+                gap: 1rem;
+                margin: 1rem auto;
+                padding: 0 1rem;
+            }
+
+            .settings-sidebar {
+                position: static;
+                width: auto;
+                flex: none;
+                display: flex;
+                overflow-x: auto;
+                padding: 0.5rem;
+                gap: 0.5rem;
+                border: 1px solid #e5e7eb;
+                box-shadow: none;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            body.dark-mode .settings-sidebar {
+                border-color: #334155;
+            }
+
+            .settings-sidebar::-webkit-scrollbar {
+                display: none;
+            }
+
+            .settings-nav-item {
+                width: auto;
+                flex: 0 0 auto;
+                white-space: nowrap;
+                padding: 8px 16px;
+                font-size: 0.9rem;
+                border-radius: 20px;
+            }
+
+            body.dark-mode .settings-nav-item.active {
+                border-color: #38bdf8;
+            }
+
+            .settings-sidebar hr {
+                display: none;
+            }
+
+            .settings-content {
+                padding: 1.5rem 1rem;
+            }
         }
+
         @media (max-width: 480px) {
-            .theme-card { flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 1rem; }
-            .theme-card > label.toggle-switch { align-self: flex-start; margin-top: 0.5rem; }
-            .preview-cover { height: 120px; }
-            .section-title { font-size: 1.3rem; }
+            .theme-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+                padding: 1rem;
+            }
+
+            .theme-card>label.toggle-switch {
+                align-self: flex-start;
+                margin-top: 0.5rem;
+            }
+
+            .preview-cover {
+                height: 120px;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
         }
     </style>
 </head>
@@ -71,7 +313,9 @@
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html">ZYNK</a>
+                <a href="index.html">
+                    <div class="zynk-logo-clean logo-header"></div>
+                </a>
             </div>
             <div class="nav-actions" id="nav-actions"></div>
         </nav>
@@ -93,10 +337,13 @@
                     <i class="fa-solid fa-bell"></i> Thông báo
                 </button>
                 <button class="settings-nav-item" onclick="switchTab('marketplace')">
-                    <i class="fa-solid fa-shop"></i> Bán hàng
+                    <i class="fa-solid fa-shop"></i> <span data-i18n="tab_marketplace">Bán hàng</span>
                 </button>
                 <button class="settings-nav-item" onclick="switchTab('interface')">
-                    <i class="fa-solid fa-palette"></i> Giao diện
+                    <i class="fa-solid fa-palette"></i> <span data-i18n="tab_interface">Giao diện</span>
+                </button>
+                <button class="settings-nav-item" onclick="switchTab('language')">
+                    <i class="fa-solid fa-globe"></i> <span data-i18n="tab_language">Ngôn ngữ</span>
                 </button>
                 <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #f3f4f6;">
                 <button class="settings-nav-item" style="color: #dc2626;" onclick="switchTab('danger')">
@@ -109,7 +356,7 @@
                 <section id="section-profile" class="settings-section active">
                     <h2 class="section-title">Hồ sơ cá nhân</h2>
                     <p class="section-desc">Cập nhật thông tin công khai của bạn trên Zynk.</p>
-                    
+
                     <form id="settings-form" style="max-width: 500px;">
                         <div class="form-group">
                             <label for="set-username">Tên người dùng (@username)</label>
@@ -135,16 +382,22 @@
                             <label>Ảnh đại diện</label>
                             <div style="display: flex; gap: 1rem; align-items: center;">
                                 <img id="avatar-preview" src="" class="preview-img">
-                                <button type="button" class="btn secondary-btn" onclick="document.getElementById('avatar-file').click()" style="width: auto;">Thay đổi</button>
+                                <button type="button" class="btn secondary-btn"
+                                    onclick="document.getElementById('avatar-file').click()" style="width: auto;">Thay
+                                    đổi</button>
                             </div>
-                            <input type="file" id="avatar-file" accept="image/*" style="display: none;" onchange="handleProfileUpload(this, 'avatar')">
+                            <input type="file" id="avatar-file" accept="image/*" style="display: none;"
+                                onchange="handleProfileUpload(this, 'avatar')">
                             <input type="hidden" id="set-avatar-url">
                         </div>
                         <div class="form-group">
                             <label>Ảnh bìa</label>
                             <img id="cover-preview" src="" class="preview-cover">
-                            <button type="button" class="btn secondary-btn" onclick="document.getElementById('cover-file').click()" style="width: auto; margin-top: 0.5rem;">Thay đổi ảnh bìa</button>
-                            <input type="file" id="cover-file" accept="image/*" style="display: none;" onchange="handleProfileUpload(this, 'cover')">
+                            <button type="button" class="btn secondary-btn"
+                                onclick="document.getElementById('cover-file').click()"
+                                style="width: auto; margin-top: 0.5rem;">Thay đổi ảnh bìa</button>
+                            <input type="file" id="cover-file" accept="image/*" style="display: none;"
+                                onchange="handleProfileUpload(this, 'cover')">
                             <input type="hidden" id="set-cover-url">
                         </div>
                         <button type="submit" class="btn primary-btn" id="save-settings-btn">Lưu hồ sơ</button>
@@ -155,7 +408,7 @@
                 <section id="section-account" class="settings-section">
                     <h2 class="section-title">Bảo mật tài khoản</h2>
                     <p class="section-desc">Quản lý mật khẩu và đăng nhập.</p>
-                    
+
                     <form id="password-form" style="max-width: 450px;">
                         <div class="form-group">
                             <label for="old-password">Mật khẩu hiện tại</label>
@@ -173,14 +426,15 @@
                     </form>
                 </section>
 
-                 <section id="section-privacy" class="settings-section">
+                <section id="section-privacy" class="settings-section">
                     <h2 class="section-title">Quyền riêng tư</h2>
                     <p class="section-desc">Kiểm soát ai có thể xem bài viết và tương tác với bạn.</p>
-                    
+
                     <div class="theme-card">
                         <div>
                             <div style="font-weight: 600;">Tài khoản riêng tư</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Bật chế độ này để ẩn bài viết của bạn với những người chưa theo dõi.</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;">Bật chế độ này để ẩn bài viết của bạn với
+                                những người chưa theo dõi.</div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="private-account-toggle" onchange="togglePrivateAccount()">
@@ -191,10 +445,12 @@
                     <div class="theme-card">
                         <div>
                             <div style="font-weight: 600;">Trạng thái hoạt động</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Cho phép người khác thấy khi bạn đang online (dấu chấm xanh).</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;">Cho phép người khác thấy khi bạn đang
+                                online (dấu chấm xanh).</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="active-status-toggle" checked onchange="showStatus('Đã cập nhật Trạng thái hoạt động!', 'success')">
+                            <input type="checkbox" id="active-status-toggle" checked
+                                onchange="showStatus('Đã cập nhật Trạng thái hoạt động!', 'success')">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -203,7 +459,8 @@
                         <h4 style="margin-bottom: 0.5rem; color: var(--text-color, #374151);">Giới hạn tương tác</h4>
                         <div class="form-group">
                             <label for="who-can-message">Ai có thể nhắn tin cho bạn?</label>
-                            <select id="who-can-message" onchange="showStatus('Đã cập nhật quyền nhắn tin!', 'success')">
+                            <select id="who-can-message"
+                                onchange="showStatus('Đã cập nhật quyền nhắn tin!', 'success')">
                                 <option value="everyone">Mọi người</option>
                                 <option value="followers">Chỉ người theo dõi</option>
                                 <option value="nobody">Không ai</option>
@@ -213,8 +470,10 @@
 
                     <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
                         <h4 style="margin-bottom: 0.5rem; color: var(--text-color, #111827);">Danh sách bị chặn</h4>
-                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">Những người dùng bạn đã chặn sẽ không thể xem hồ sơ hoặc liên hệ với bạn.</p>
-                        <button class="btn secondary-btn" style="width: auto;" onclick="alert('Tính năng này sẽ hiển thị danh sách block.')">
+                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">Những người dùng bạn đã chặn
+                            sẽ không thể xem hồ sơ hoặc liên hệ với bạn.</p>
+                        <button class="btn secondary-btn" style="width: auto;"
+                            onclick="alert('Tính năng này sẽ hiển thị danh sách block.')">
                             <i class="fa-solid fa-user-slash"></i> Quản lý danh sách chặn
                         </button>
                     </div>
@@ -224,14 +483,16 @@
                 <section id="section-notifications" class="settings-section">
                     <h2 class="section-title">Thông báo</h2>
                     <p class="section-desc">Cấu hình cách bạn nhận thông báo từ hệ thống.</p>
-                    
+
                     <div class="theme-card">
                         <div>
                             <div style="font-weight: 600;">Thông báo đẩy (Web Push)</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Nhận thông báo trực tiếp trên web hoặc điện thoại.</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;">Nhận thông báo trực tiếp trên web hoặc điện
+                                thoại.</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="push-notification-toggle" checked onchange="showStatus('Đã cập nhật cài đặt thông báo đẩy!', 'success')">
+                            <input type="checkbox" id="push-notification-toggle" checked
+                                onchange="showStatus('Đã cập nhật cài đặt thông báo đẩy!', 'success')">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -242,18 +503,21 @@
                             <div style="font-size: 0.85rem; color: #6b7280;">Nhận email thông báo hằng tuần.</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="email-notification-toggle" onchange="showStatus('Đã cập nhật cài đặt thông báo email!', 'success')">
+                            <input type="checkbox" id="email-notification-toggle"
+                                onchange="showStatus('Đã cập nhật cài đặt thông báo email!', 'success')">
                             <span class="slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="theme-card">
                         <div>
                             <div style="font-weight: 600;">Thông báo đơn hàng Marketplace</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Bao gồm tin nhắn mua hàng, thay đổi trạng thái đơn.</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;">Bao gồm tin nhắn mua hàng, thay đổi trạng
+                                thái đơn.</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="marketplace-notification-toggle" checked onchange="showStatus('Đã cập nhật cài đặt thông báo đơn hàng!', 'success')">
+                            <input type="checkbox" id="marketplace-notification-toggle" checked
+                                onchange="showStatus('Đã cập nhật cài đặt thông báo đơn hàng!', 'success')">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -264,27 +528,32 @@
                     <h2 class="section-title">Cài đặt Bán hàng</h2>
                     <p class="section-desc">Quản lý và thiết lập thông tin kinh doanh trên Marketplace.</p>
 
-                    <form id="marketplace-form" style="max-width: 500px;" onsubmit="event.preventDefault(); showStatus('Cập nhật thiết lập bán hàng thành công!', 'success');">
+                    <form id="marketplace-form" style="max-width: 500px;"
+                        onsubmit="event.preventDefault(); showStatus('Cập nhật thiết lập bán hàng thành công!', 'success');">
                         <div class="form-group">
                             <label for="set-shop-name">Tên cửa hàng / Tên người bán</label>
                             <input type="text" id="set-shop-name" placeholder="Ví dụ: Cửa hàng của tôi">
                         </div>
                         <div class="form-group">
                             <label for="set-delivery-address">Địa chỉ lấy/giao hàng mặc định</label>
-                            <textarea id="set-delivery-address" rows="3" placeholder="Nhập địa chỉ đầy đủ để người mua hoặc shipper dễ tìm kiếm..."></textarea>
+                            <textarea id="set-delivery-address" rows="3"
+                                placeholder="Nhập địa chỉ đầy đủ để người mua hoặc shipper dễ tìm kiếm..."></textarea>
                         </div>
                         <div class="theme-card" style="margin-bottom: 1.5rem; margin-top: 0">
                             <div>
                                 <div style="font-weight: 600;">Tin nhắn trả lời tự động</div>
-                                <div style="font-size: 0.85rem; color: #6b7280;">Tự động gửi tin nhắn mẫu khi khách hàng bắt đầu chat.</div>
+                                <div style="font-size: 0.85rem; color: #6b7280;">Tự động gửi tin nhắn mẫu khi khách hàng
+                                    bắt đầu chat.</div>
                             </div>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="auto-reply-toggle" onchange="document.getElementById('auto-reply-box').style.display = this.checked ? 'block' : 'none'">
+                                <input type="checkbox" id="auto-reply-toggle"
+                                    onchange="document.getElementById('auto-reply-box').style.display = this.checked ? 'block' : 'none'">
                                 <span class="slider"></span>
                             </label>
                         </div>
                         <div class="form-group" id="auto-reply-box" style="display: none;">
-                            <textarea id="set-auto-reply" rows="2" placeholder="Xin chào! Chúng tôi có thể giúp gì cho bạn?"></textarea>
+                            <textarea id="set-auto-reply" rows="2"
+                                placeholder="Xin chào! Chúng tôi có thể giúp gì cho bạn?"></textarea>
                         </div>
                         <button type="submit" class="btn primary-btn">Lưu thiết lập Marketplace</button>
                     </form>
@@ -294,13 +563,55 @@
                 <section id="section-interface" class="settings-section">
                     <h2 class="section-title">Giao diện</h2>
                     <p class="section-desc">Cá nhân hóa trải nghiệm nhìn của bạn.</p>
-                    
+
                     <div class="theme-card">
                         <div>
                             <div style="font-weight: 600;">Chế độ tối (Dark Mode)</div>
                             <div style="font-size: 0.85rem; color: #6b7280;">Bật để giao diện trở nên dịu mắt hơn.</div>
                         </div>
-                        <button class="btn secondary-btn" onclick="toggleDarkMode()" id="dark-mode-btn" style="width: auto;">Bật chế độ tối</button>
+                        <button class="btn secondary-btn" onclick="toggleDarkMode()" id="dark-mode-btn"
+                            style="width: auto;">Bật chế độ tối</button>
+                    </div>
+                </section>
+
+                <!-- Language Section -->
+                <section id="section-language" class="settings-section">
+                    <h2 class="section-title" data-i18n="lang_section_title">Ngôn ngữ hệ thống</h2>
+                    <p class="section-desc" data-i18n="lang_section_desc">Chọn ngôn ngữ hiển thị bạn mong muốn.</p>
+
+                    <div class="theme-options">
+                        <div class="theme-card" onclick="window.changeLanguage('vi')">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-size: 2rem;">🇻🇳</span>
+                                <div style="flex:1">
+                                    <div style="font-weight: 600;">Tiếng Việt</div>
+                                    <div style="font-size: 0.8rem; color: #64748b;">Mặc định</div>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-circle-check lang-check" id="lang-check-vi"></i>
+                        </div>
+                        
+                        <div class="theme-card" onclick="window.changeLanguage('en')">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-size: 2rem;">🇺🇸</span>
+                                <div style="flex:1">
+                                    <div style="font-weight: 600;">English</div>
+                                    <div style="font-size: 0.8rem; color: #64748b;">International</div>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-circle-check lang-check hidden" id="lang-check-en"></i>
+                        </div>
+
+                        <div class="theme-card" onclick="window.changeLanguage('ja')">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-size: 2rem;">🇯🇵</span>
+                                <div style="flex:1">
+                                    <div style="font-weight: 600;">日本語</div>
+                                    <div style="font-size: 0.8rem; color: #64748b;">Japanese</div>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-circle-check lang-check hidden" id="lang-check-ja"></i>
+                        </div>
                     </div>
                 </section>
 
@@ -308,11 +619,13 @@
                 <section id="section-danger" class="settings-section">
                     <h2 class="section-title" style="color: #dc2626;">Vùng nguy hiểm</h2>
                     <p class="section-desc">Các hành động không thể hoàn tác.</p>
-                    
+
                     <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 1.5rem; border-radius: 12px;">
                         <h4 style="color: #b91c1c; margin-bottom: 0.5rem;">Xóa tài khoản vĩnh viễn</h4>
-                        <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.25rem;">Lưu ý: Sau khi xóa, tất cả bài viết, ảnh và tương tác của bạn sẽ biến mất vĩnh viễn.</p>
-                        <button class="btn primary-btn" style="background: #dc2626; border-color: #dc2626;" onclick="deleteAccount()">Xác nhận xóa tài khoản</button>
+                        <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.25rem;">Lưu ý: Sau khi xóa, tất cả
+                            bài viết, ảnh và tương tác của bạn sẽ biến mất vĩnh viễn.</p>
+                        <button class="btn primary-btn" style="background: #dc2626; border-color: #dc2626;"
+                            onclick="deleteAccount()">Xác nhận xóa tài khoản</button>
                     </div>
                 </section>
 
@@ -322,6 +635,8 @@
     </main>
 
     <script src="js/api.js?v=1.1"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/common.js?v=1.5"></script>
     <script src="js/settings.js?v=1.1"></script>
 </body>
