@@ -9,7 +9,7 @@ var builder = new ConfigurationBuilder()
 
 var services = new ServiceCollection();
 services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.GetConnectionString("DefaultConnection")));
 
 var provider = services.BuildServiceProvider();
 using var scope = provider.CreateScope();
