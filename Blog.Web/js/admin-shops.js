@@ -21,13 +21,13 @@ async function loadAdminShopApps() {
                 <td style="font-weight:600;">${app.shopName}</td>
                 <td style="font-size:0.85rem; color:#64748b;">${app.description}</td>
                 <td>${new Date(app.createdAt).toLocaleDateString()}</td>
-                <td><span class="badge ${getShopStatusBadgeClass(app.status)}">${app.status === 1 ? 'Approved' : (app.status === 0 ? 'Pending' : 'Rejected')}</span></td>
+                <td><span class="badge ${getShopStatusBadgeClass(app.status)}">${app.status === 1 || app.status === 'Approved' ? 'Approved' : (app.status === 0 || app.status === 'Pending' ? 'Pending' : 'Rejected')}</span></td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        ${app.status === 0 ? `
+                        ${app.status === 0 || app.status === 'Pending' ? `
                             <button class="btn-action" style="color:#10b981; border-color:#10b981;" title="Duyệt" onclick="approveShop('${app.id}')"><i class="fa fa-check"></i></button>
                             <button class="btn-action danger" title="Từ chối" onclick="rejectShop('${app.id}')"><i class="fa fa-times"></i></button>
-                        ` : (app.status === 1 ? '<i class="fa fa-check-double" style="color:#10b981;"></i>' : '<i class="fa fa-times-circle" style="color:#ef4444;"></i>')}
+                        ` : (app.status === 1 || app.status === 'Approved' ? '<i class="fa fa-check-double" style="color:#10b981;"></i>' : '<i class="fa fa-times-circle" style="color:#ef4444;"></i>')}
                     </div>
                 </td>
             `;
