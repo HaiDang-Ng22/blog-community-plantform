@@ -157,6 +157,33 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { isBlocked = true, message = "Đã chặn người dùng này." });
     }
+
+    [HttpGet("me/blocked")]
+    [Authorize]
+    public async Task<IActionResult> GetBlockedUsers()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+        var userId = Guid.Parse(userIdStr);
+
+        var blockedUsers = await _context.Blocks
+            .Where(b => b.BlockerId == userId)
+            .Include(b => b.Blocked)
+            .Select(b => new
+            {
+                b.Blocked.Id,
+                b.Blocked.FullName,
+                b.Blocked.Username,
+                b.Blocked.AvatarUrl,
+                b.CreatedAt
+            })
+            .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync();
+
+        return Ok(blockedUsers);
+    }
+
     
     [HttpPut("profile")]
     [Authorize]

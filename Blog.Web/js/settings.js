@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     await loadCurrentSettings();
+    await loadBlockedUsers();
 
     // Profile Form
     const profileForm = document.getElementById('settings-form');
@@ -52,6 +53,9 @@ function switchTab(tabName) {
         sec.classList.remove('active');
     });
     document.getElementById(`section-${tabName}`).classList.add('active');
+
+    // Load blocked list when switching to privacy tab
+    if (tabName === 'privacy') loadBlockedUsers();
 
     // Smooth scrolling to top of content
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -221,4 +225,107 @@ function showStatus(text, type) {
     msg.className = `message-box ${type}`;
     msg.classList.remove('hidden');
     setTimeout(() => msg.classList.add('hidden'), 3000);
+}
+
+// =============================================
+// BLOCKED USERS
+// =============================================
+async function loadBlockedUsers() {
+    const container = document.getElementById('blocked-users-list');
+    if (!container) return;
+
+    try {
+        const list = await window.api.get('users/me/blocked');
+
+        if (!list || list.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding: 2rem; color:#94a3b8; font-size:0.9rem;">
+                    <i class="fa-solid fa-user-check" style="font-size:2rem; display:block; margin-bottom:0.5rem; color:#d1d5db;"></i>
+                    Bạn chưa chặn ai cả.
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = list.map(u => {
+            const avatar = u.avatarUrl && u.avatarUrl !== 'null'
+                ? u.avatarUrl
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || u.username)}&background=random&color=fff`;
+            return `
+            <div id="blocked-row-${u.id}" style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                margin-bottom: 8px;
+                background: #fff;
+            ">
+                <img src="${avatar}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:1px solid #e5e7eb;"
+                    onerror="this.src='https://ui-avatars.com/api/?name=U&background=random&color=fff'">
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:600; font-size:0.95rem; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.fullName || 'Người dùng'}</div>
+                    <div style="font-size:0.8rem; color:#6b7280;">@${u.username}</div>
+                </div>
+                <button
+                    onclick="unblockUser('${u.id}', this)"
+                    style="
+                        padding: 7px 16px;
+                        background: #fff;
+                        color: #ef4444;
+                        border: 1.5px solid #ef4444;
+                        border-radius: 8px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        white-space: nowrap;
+                    "
+                    onmouseover="this.style.background='#fef2f2'"
+                    onmouseout="this.style.background='#fff'"
+                >
+                    <i class="fa-solid fa-lock-open" style="margin-right:4px;"></i>Bỏ chặn
+                </button>
+            </div>`;
+        }).join('');
+
+    } catch (err) {
+        container.innerHTML = `<div style="color:#ef4444; font-size:0.85rem; padding:0.5rem;">Không thể tải danh sách chặn.</div>`;
+        console.error('loadBlockedUsers error:', err);
+    }
+}
+
+async function unblockUser(userId, btn) {
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+        await window.api.post(`users/${userId}/block`);
+
+        // Xóa dòng người dùng khỏi danh sách với animation
+        const row = document.getElementById(`blocked-row-${userId}`);
+        if (row) {
+            row.style.transition = 'opacity 0.3s, transform 0.3s';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            setTimeout(() => {
+                row.remove();
+                // Nếu danh sách trống sau khi xóa thì hiển thị thông báo
+                const container = document.getElementById('blocked-users-list');
+                if (container && container.children.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding: 2rem; color:#94a3b8; font-size:0.9rem;">
+                            <i class="fa-solid fa-user-check" style="font-size:2rem; display:block; margin-bottom:0.5rem; color:#d1d5db;"></i>
+                            Bạn chưa chặn ai cả.
+                        </div>`;
+                }
+            }, 300);
+        }
+        showStatus('Đã bỏ chặn tài khoản này.', 'success');
+    } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        showStatus('Lỗi khi bỏ chặn: ' + err.message, 'error');
+    }
 }
