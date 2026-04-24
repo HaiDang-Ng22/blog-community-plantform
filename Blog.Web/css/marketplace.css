@@ -1,4 +1,4 @@
-/* css/marketplace.css */
+﻿/* css/marketplace.css */
 .marketplace-layout {
     display: grid;
     grid-template-columns: 240px 1fr;
@@ -675,45 +675,134 @@
 
 .hot-tag i { margin-right: 4px; }
 .hot-tag:hover { background: #fce7f3; transform: translateY(-2px); }
- @ m e d i a   ( m a x - w i d t h :   7 6 8 p x )   { 
-         . m a r k e t p l a c e - l a y o u t   { 
-                 g r i d - t e m p l a t e - c o l u m n s :   1 f r ; 
-                 g a p :   1 r e m ; 
-                 m a r g i n :   1 r e m   a u t o ; 
-         } 
-         . m a r k e t - s i d e b a r   { 
-                 p o s i t i o n :   s t a t i c ; 
-                 w i d t h :   1 0 0 % ; 
-                 m a r g i n - b o t t o m :   1 r e m ; 
-                 p a d d i n g :   1 r e m ; 
-         } 
-         . c a t e g o r y - l i s t   { 
-                 d i s p l a y :   f l e x ; 
-                 o v e r f l o w - x :   a u t o ; 
-                 g a p :   0 . 5 r e m ; 
-                 p a d d i n g - b o t t o m :   0 . 5 r e m ; 
-         } 
-         . c a t e g o r y - i t e m   { 
-                 m a r g i n - b o t t o m :   0 ; 
-                 f l e x - s h r i n k :   0 ; 
-         } 
-         . c a t e g o r y - r o w   { 
-                 b a c k g r o u n d :   # f 8 f a f c ; 
-                 b o r d e r - r a d i u s :   2 0 p x ; 
-         } 
-         . c a t e g o r y - l i n k   { 
-                 p a d d i n g :   6 p x   1 2 p x ; 
-                 w h i t e - s p a c e :   n o w r a p ; 
-         } 
-         . m a r k e t - n a v   { 
-                 f l e x - w r a p :   w r a p ; 
-                 g a p :   0 . 5 r e m ; 
-         } 
-         . m a r k e t - s e a r c h - w r a p   { 
-                 o r d e r :   3 ; 
-                 w i d t h :   1 0 0 % ; 
-                 m a x - w i d t h :   1 0 0 % ; 
-                 m a r g i n :   0 ; 
-         } 
- }  
- 
+
+/* ============================================= */
+/* MARKETPLACE RESPONSIVE - MOBILE FIRST         */
+/* ============================================= */
+@media (max-width: 768px) {
+    /* Stack layout vertically */
+    .marketplace-layout {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin: 0.75rem 0;
+    }
+
+    /* Sidebar becomes horizontal scrolling chip bar */
+    .market-sidebar {
+        position: static;
+        width: 100%;
+        border-radius: 12px;
+        padding: 0.75rem;
+        margin-bottom: 0;
+    }
+
+    .market-sidebar h3 {
+        display: none;
+    }
+
+    .category-list {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 0.5rem;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .category-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .category-item {
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .sub-category-list {
+        display: none;
+    }
+
+    .category-row {
+        border-radius: 20px;
+        background: #f1f5f9;
+    }
+
+    .category-link {
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        border-radius: 20px;
+        gap: 6px;
+    }
+
+    .sub-toggle {
+        display: none;
+    }
+
+    /* Market nav search bar - full width */
+    .market-nav {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .market-search-wrap {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    /* Product grid - 2 columns on mobile */
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .product-info {
+        padding: 0.75rem;
+    }
+
+    .product-name {
+        font-size: 0.85rem;
+        height: auto;
+        -webkit-line-clamp: 2;
+    }
+
+    .product-price {
+        font-size: 0.95rem;
+    }
+
+    /* Market header title + filters */
+    .market-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .market-filters {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .hot-tags {
+        flex-wrap: wrap;
+    }
+
+    .glass-select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .market-header h2 {
+        font-size: 1.1rem;
+    }
+}
