@@ -1,5 +1,20 @@
 // js/api.js
-const API_BASE_URL = window.location.origin + '/api';
+
+// Cấu hình URL của Backend API.
+// Khi chạy ở localhost, gọi đến server .NET (cổng 5142).
+// Khi deploy Frontend lên Render, thay 'YOUR_BACKEND_URL' bằng URL thực tế của Backend (ví dụ: 'https://api.ten-ban.onrender.com')
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// 👇👇👇 NẾU BẠN DEPLOY BACKEND Ở ĐÂU, HÃY ĐIỀN URL VÀO ĐÂY 👇👇👇
+const PRODUCTION_BACKEND_URL = 'https://YOUR_BACKEND_URL.onrender.com'; 
+
+// Xác định API_BASE_URL
+const API_BASE_URL = IS_LOCAL 
+    ? 'http://localhost:5142/api' 
+    : (PRODUCTION_BACKEND_URL !== 'https://YOUR_BACKEND_URL.onrender.com' 
+        ? `${PRODUCTION_BACKEND_URL}/api` 
+        : `${window.location.origin}/api`); // Mặc định về origin nếu chưa cấu hình
+
 
 /**
  * Helper function for making API requests
@@ -75,8 +90,20 @@ window.api = {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Lỗi khi tải ảnh lên');
+            let errorMsg = `Lỗi ${response.status}: Không thể tải ảnh lên.`;
+            try {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const errorData = await response.json();
+                    errorMsg = errorData.message || errorMsg;
+                } else {
+                    const textData = await response.text();
+                    console.error("Upload error response:", textData);
+                }
+            } catch (e) {
+                console.error("Could not parse error response", e);
+            }
+            throw new Error(errorMsg);
         }
         return await response.json();
     }
