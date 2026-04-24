@@ -946,3 +946,34 @@ body.dark-mode .lang-mini-dropdown div:hover {
  } 
   
  
+/* ============================================= */
+/* GLOBAL DROPDOWN Z-INDEX FIX (All Pages)       */
+/* ============================================= */
+.main-header {
+    overflow: visible !important;
+    z-index: 9000 !important;
+}
+.nav-container,
+.nav-actions,
+.header-tools {
+    overflow: visible !important;
+    position: relative;
+}
+.user-menu {
+    z-index: 9001 !important;
+}
+.user-dropdown {
+    z-index: 9999 !important;
+}
+.notification-wrapper {
+    z-index: 9001 !important;
+}
+.noti-dropdown {
+    z-index: 9999 !important;
+}
+.lang-switcher-wrapper {
+    z-index: 9001 !important;
+}
+.lang-mini-dropdown {
+    z-index: 9999 !important;
+}
