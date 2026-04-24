@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 
 namespace Blog.API.Controllers;
 
@@ -6,11 +8,19 @@ namespace Blog.API.Controllers;
 [Route("api/upload")]
 public class UploadController : ControllerBase
 {
-    private readonly IWebHostEnvironment _environment;
+    private readonly IConfiguration _configuration;
+    private readonly Cloudinary _cloudinary;
 
-    public UploadController(IWebHostEnvironment environment)
+    public UploadController(IConfiguration configuration)
     {
-        _environment = environment;
+        _configuration = configuration;
+
+        var cloudName = _configuration["CloudinarySettings:CloudName"];
+        var apiKey = _configuration["CloudinarySettings:ApiKey"];
+        var apiSecret = _configuration["CloudinarySettings:ApiSecret"];
+
+        var account = new Account(cloudName, apiKey, apiSecret);
+        _cloudinary = new Cloudinary(account);
     }
 
     [HttpPost]
@@ -28,22 +38,33 @@ public class UploadController : ControllerBase
         if (!allowedExtensions.Contains(extension))
             return BadRequest("Định dạng tập tin không hỗ trợ.");
 
-        // Đường dẫn tải lên: e:\Social\Blog.Web\uploads
-        // Do Program.cs đang phục vụ Blog.Web là static files, ta lưu vào đó để truy cập dễ dàng
-        var webPath = Path.Combine(_environment.ContentRootPath, "..", "Blog.Web", "uploads");
-        
-        if (!Directory.Exists(webPath))
-            Directory.CreateDirectory(webPath);
-
-        var fileName = $"{Guid.NewGuid()}{extension}";
-        var filePath = Path.Combine(webPath, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        try
         {
-            await file.CopyToAsync(stream);
-        }
+            using var stream = file.OpenReadStream();
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = "zynk_uploads",
+                UseFilename = true,
+                UniqueFilename = true,
+                Overwrite = false
+            };
 
-        // Trả về URL tương đối để frontend sử dụng
-        return Ok(new { url = $"/uploads/{fileName}" });
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+            if (uploadResult.Error != null)
+            {
+                Console.WriteLine($"Cloudinary Error: {uploadResult.Error.Message}");
+                return StatusCode(500, new { message = "Lỗi khi tải ảnh lên Cloudinary." });
+            }
+
+            // Trả về URL bảo mật (HTTPS) từ Cloudinary để frontend sử dụng
+            return Ok(new { url = uploadResult.SecureUrl.ToString() });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception during upload: {ex.Message}");
+            return StatusCode(500, new { message = "Lỗi hệ thống khi tải ảnh." });
+        }
     }
 }
