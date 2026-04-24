@@ -12,6 +12,17 @@
     <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Fix lang dropdown being obscured */
+        .main-header { overflow: visible !important; }
+        .nav-actions { overflow: visible !important; }
+        .lang-switcher-wrapper { z-index: 10001 !important; }
+        .lang-mini-dropdown { z-index: 10002 !important; }
+        .notification-wrapper { z-index: 10001 !important; }
+        .noti-dropdown { z-index: 10002 !important; }
+        .user-menu { z-index: 10001 !important; }
+        .user-dropdown { z-index: 10002 !important; }
+    </style>
+    <style>
         .settings-layout {
             display: flex;
             gap: 2rem;
@@ -469,13 +480,17 @@
                     </div>
 
                     <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
-                        <h4 style="margin-bottom: 0.5rem; color: var(--text-color, #111827);">Danh sách bị chặn</h4>
-                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">Những người dùng bạn đã chặn
-                            sẽ không thể xem hồ sơ hoặc liên hệ với bạn.</p>
-                        <button class="btn secondary-btn" style="width: auto;"
-                            onclick="alert('Tính năng này sẽ hiển thị danh sách block.')">
-                            <i class="fa-solid fa-user-slash"></i> Quản lý danh sách chặn
-                        </button>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-color, #111827);">
+                            <i class="fa-solid fa-user-slash" style="color:#ef4444; margin-right:6px;"></i>
+                            Danh sách tài khoản đã chặn
+                        </h4>
+                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">Những người dùng bạn đã chặn sẽ không thể xem hồ sơ hoặc liên hệ với bạn.</p>
+                        <div id="blocked-users-list">
+                            <div style="text-align:center; padding: 1.5rem; color:#94a3b8; font-size:0.9rem;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>
+                                Đang tải...
+                            </div>
+                        </div>
                     </div>
                 </section>
 
