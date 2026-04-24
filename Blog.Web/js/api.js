@@ -6,13 +6,13 @@
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // 👇👇👇 NẾU BẠN DEPLOY BACKEND Ở ĐÂU, HÃY ĐIỀN URL VÀO ĐÂY 👇👇👇
-const PRODUCTION_BACKEND_URL = 'https://YOUR_BACKEND_URL.onrender.com'; 
+const PRODUCTION_BACKEND_URL = 'https://blog-community-plantform.onrender.com';
 
 // Xác định API_BASE_URL
-const API_BASE_URL = IS_LOCAL 
-    ? 'http://localhost:5142/api' 
-    : (PRODUCTION_BACKEND_URL !== 'https://YOUR_BACKEND_URL.onrender.com' 
-        ? `${PRODUCTION_BACKEND_URL}/api` 
+const API_BASE_URL = IS_LOCAL
+    ? 'http://localhost:7000/api'
+    : (PRODUCTION_BACKEND_URL !== 'https://blog-community-plantform.onrender.com'
+        ? `${PRODUCTION_BACKEND_URL}/api`
         : `${window.location.origin}/api`); // Mặc định về origin nếu chưa cấu hình
 
 
@@ -23,21 +23,21 @@ const API_BASE_URL = IS_LOCAL
  */
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}/${endpoint}`;
-    
+
     // Auto-add Content-Type and Authorization header if available
     const token = localStorage.getItem('auth_token');
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers
     };
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
     try {
         const response = await fetch(url, { ...options, headers });
-        
+
         // Handle non-JSON response (e.g., 500 error page or 404 text)
         const contentType = response.headers.get("content-type");
         let data;
@@ -47,7 +47,7 @@ async function apiRequest(endpoint, options = {}) {
             const text = await response.text();
             data = { message: text || `Error ${response.status}: ${response.statusText}` };
         }
-        
+
         if (!response.ok) {
             // Auto redirect to login on 401 Unauthorized
             if (response.status === 401) {
@@ -60,7 +60,7 @@ async function apiRequest(endpoint, options = {}) {
             }
             throw { status: response.status, message: data.message || 'Có lỗi xảy ra' };
         }
-        
+
         return data;
     } catch (error) {
         console.error(`API Error (${endpoint}):`, error);
@@ -78,7 +78,7 @@ window.api = {
     uploadImage: async (file) => {
         const formData = new FormData();
         formData.append('file', file);
-        
+
         const token = localStorage.getItem('auth_token');
         const headers = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
