@@ -51,8 +51,12 @@ window.postActions = {
     createCommentSection(postId) {
         const section = document.createElement('div');
         section.className = 'comment-section';
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const userAvatar = userInfo.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.fullName || 'User')}`;
+        
         section.innerHTML = `
             <div class="comment-input-area">
+                <img src="${userAvatar}" class="mini-avatar" style="width: 32px; height: 32px; border-radius: 50%;">
                 <input type="text" placeholder="Viết bình luận..." class="reply-input">
                 <button onclick="postActions.sendComment('${postId}', this)">Gửi</button>
             </div>
@@ -96,18 +100,18 @@ window.postActions = {
         const isMyComment = currentUser.id === comment.authorId;
         
         div.innerHTML = `
-            <img src="${comment.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + comment.authorName}" class="mini-avatar">
+            <img src="${comment.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.authorName)}" class="mini-avatar">
             <div class="comment-content-box">
-                <div class="comment-header-row">
-                    <span class="comment-author">${comment.authorName}</span>
-                    <span class="comment-time">${formatDate(comment.createdAt)}</span>
+                <div class="comment-text" style="word-break: break-word;">
+                    <a href="profile.html?id=${comment.authorId}" class="comment-author">${comment.authorName}</a>
+                    ${window.common.autoLink(comment.content)}
                 </div>
-                <p class="comment-text">${comment.content}</p>
                 <div class="comment-actions">
+                    <span class="comment-time">${formatDate(comment.createdAt)}</span>
                     <button class="action-link" onclick="window.postActions.showReplyInput('${postId}', '${comment.id}', this)">Trả lời</button>
                     ${isMyComment ? `<button class="action-link delete" onclick="window.postActions.deleteComment('${postId}', '${comment.id}')">Xóa</button>` : ''}
                 </div>
-                <div class="replies-container" id="replies-${comment.id}">
+                <div class="replies-container" id="replies-${comment.id}" style="margin-top: 10px;">
                     ${(comment.replies || []).map(r => this.renderCommentItem(r, postId).outerHTML).join('')}
                 </div>
             </div>

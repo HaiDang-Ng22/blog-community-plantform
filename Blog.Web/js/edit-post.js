@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const userName = userInfo.fullName || userInfo.username || 'User';
+    const userAvatar = userInfo.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`;
+    document.getElementById('user-name-mini').textContent = userName;
+    document.getElementById('user-avatar-mini').src = userAvatar;
+
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
     if (!postId) {
@@ -34,7 +40,6 @@ async function loadPostData(postId) {
         document.getElementById('post-content').value = post.content || '';
 
         // Hiển thị trước ảnh cũ
-        const imageGrid = document.getElementById('image-preview-grid');
         const container = document.getElementById('image-urls-container');
         
         let imagesToLoad = [];
@@ -45,24 +50,17 @@ async function loadPostData(postId) {
         }
 
         if (imagesToLoad.length > 0) {
-            imageGrid.classList.remove('hidden');
-            imagesToLoad.forEach((url, i) => {
-                // Hiển thị preview
-                const imgWrap = document.createElement('div');
-                imgWrap.style.position = 'relative';
-                imgWrap.innerHTML = `
-                    <img src="${url}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px;">
-                `;
-                imageGrid.appendChild(imgWrap);
-
-                // Hidden input (giữ lại data cũ)
+            imagesToLoad.forEach(url => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
-                input.name = 'original-image-url';
+                input.className = 'post-image-url-hidden';
                 input.value = url;
                 container.appendChild(input);
             });
+            renderPreviews();
             document.getElementById('file-name').textContent = window.t('loaded_original_images').replace('{count}', imagesToLoad.length);
+        } else {
+            document.getElementById('image-empty-state').classList.remove('hidden');
         }
 
     } catch (error) {
@@ -72,83 +70,137 @@ async function loadPostData(postId) {
 }
 
 async function handleMultipleImageUpload(input) {
-    const files = input.files;
-    if (!files || files.length === 0) return;
-
-    if (files.length > 5) {
-        alert(window.t('max_images_reached'));
-        input.value = '';
-        return;
-    }
+    const files = Array.from(input.files);
+    if (files.length === 0) return;
 
     const container = document.getElementById('image-urls-container');
-    const imageGrid = document.getElementById('image-preview-grid');
+    const previewGrid = document.getElementById('image-preview-grid');
     const fileNameSpan = document.getElementById('file-name');
-
-    // Xóa trắng dữ liệu ảnh cũ
-    container.innerHTML = '';
-    imageGrid.innerHTML = '';
-    imageGrid.classList.remove('hidden');
-    
-    // Đánh dấu người dùng đã tải ảnh mới
-    isNewImagesUploaded = true;
+    const addMoreBtn = document.getElementById('btn-add-more-images');
 
     fileNameSpan.textContent = window.t('uploading_images').replace('{count}', files.length);
-    
-    // Upload từng file
-    let uploadedCount = 0;
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        // Placeholder cho preview
-        const wrapId = `preview-${Date.now()}-${i}`;
-        const imgWrap = document.createElement('div');
-        imgWrap.id = wrapId;
-        imgWrap.style.position = 'relative';
-        imgWrap.innerHTML = `
-            <div style="width: 100%; aspect-ratio: 1; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                <i class="fa-solid fa-spinner fa-spin" style="color: #94a3b8;"></i>
-            </div>
-        `;
-        imageGrid.appendChild(imgWrap);
+    previewGrid.classList.remove('hidden');
+    document.getElementById('image-empty-state').classList.add('hidden');
+    addMoreBtn.classList.remove('hidden');
 
+    for (const file of files) {
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            const result = await window.api.uploadImage(file);
             
-            const response = await fetch('http://localhost:5246/api/upload', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                },
-                body: formData
-            });
-            
-            if (!response.ok) throw new Error('Upload failed');
-            const data = await response.json();
-            
-            // Cập nhật thẻ ẩn
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
-            hiddenInput.name = 'uploaded-image-url';
-            hiddenInput.value = data.url;
+            hiddenInput.className = 'post-image-url-hidden';
+            hiddenInput.value = result.url;
             container.appendChild(hiddenInput);
 
-            document.getElementById(wrapId).innerHTML = `
-                <img src="${data.url}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px;">
-            `;
-            uploadedCount++;
+            renderPreviews();
         } catch (error) {
             console.error('Error uploading:', error);
-            document.getElementById(wrapId).innerHTML = `
-                <div style="width: 100%; aspect-ratio: 1; background: #fee2e2; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 0.8rem; text-align: center;">
-                    ${window.t('upload_error')}
-                </div>
-            `;
+            alert(`Lỗi khi tải ảnh ${file.name}: ${error.message}`);
         }
     }
     
-    fileNameSpan.textContent = window.t('upload_success_count').replace('{count}', uploadedCount);
+    input.value = '';
+    fileNameSpan.textContent = `Đã tải xong. Tổng cộng ${container.children.length} ảnh.`;
+}
+
+function renderPreviews() {
+    const previewGrid = document.getElementById('image-preview-grid');
+    const urlsContainer = document.getElementById('image-urls-container');
+    const imageUrls = Array.from(urlsContainer.querySelectorAll('.post-image-url-hidden')).map(input => input.value);
+    const addMoreBtn = document.getElementById('btn-add-more-images');
+    const dotsContainer = document.getElementById('carousel-dots');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    if (imageUrls.length === 0) {
+        previewGrid.classList.add('hidden');
+        document.getElementById('image-empty-state').classList.remove('hidden');
+        addMoreBtn.classList.add('hidden');
+        dotsContainer.classList.add('hidden');
+        prevBtn.classList.add('hidden');
+        nextBtn.classList.add('hidden');
+        return;
+    }
+
+    previewGrid.classList.remove('hidden');
+    document.getElementById('image-empty-state').classList.add('hidden');
+    addMoreBtn.classList.remove('hidden');
+
+    // Show navigation/dots if more than 1 image
+    if (imageUrls.length > 1) {
+        dotsContainer.classList.remove('hidden');
+        prevBtn.classList.remove('hidden');
+        nextBtn.classList.remove('hidden');
+    } else {
+        dotsContainer.classList.add('hidden');
+        prevBtn.classList.add('hidden');
+        nextBtn.classList.add('hidden');
+    }
+
+    previewGrid.innerHTML = '';
+    dotsContainer.innerHTML = '';
+
+    imageUrls.forEach((url, index) => {
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'preview-item';
+
+        previewDiv.innerHTML = `
+            <img src="${url}">
+            <button type="button" class="remove-photo-btn" onclick="removeImage('${url}')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+        previewGrid.appendChild(previewDiv);
+
+        // Add dot
+        const dot = document.createElement('div');
+        dot.className = 'carousel-dot' + (index === 0 ? ' active' : '');
+        dotsContainer.appendChild(dot);
+    });
+
+    // Reset scroll to start
+    previewGrid.scrollLeft = 0;
+}
+
+function updateCarouselUI(container) {
+    const dots = document.getElementById('carousel-dots').children;
+    const index = Math.round(container.scrollLeft / container.clientWidth);
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    // Update dots
+    for (let i = 0; i < dots.length; i++) {
+        if (i === index) {
+            dots[i].classList.add('active');
+        } else {
+            dots[i].classList.remove('active');
+        }
+    }
+
+    // Update arrows visibility
+    prevBtn.style.opacity = index === 0 ? '0.3' : '1';
+    prevBtn.style.pointerEvents = index === 0 ? 'none' : 'auto';
+    nextBtn.style.opacity = index === dots.length - 1 ? '0.3' : '1';
+    nextBtn.style.pointerEvents = index === dots.length - 1 ? 'none' : 'auto';
+}
+
+function scrollCarousel(direction) {
+    const container = document.getElementById('image-preview-grid');
+    container.scrollBy({ left: direction * container.clientWidth, behavior: 'smooth' });
+}
+
+function removeImage(url) {
+    const urlsContainer = document.getElementById('image-urls-container');
+    const inputs = Array.from(urlsContainer.querySelectorAll('.post-image-url-hidden'));
+    const inputToDelete = inputs.find(input => input.value === url);
+    
+    if (inputToDelete) {
+        inputToDelete.remove();
+        renderPreviews();
+        const count = urlsContainer.children.length;
+        document.getElementById('file-name').textContent = count > 0 ? `Đã cập nhật. Tổng cộng ${count} ảnh.` : '';
+    }
 }
 
 async function handleEditSubmit(e, postId) {
@@ -158,14 +210,12 @@ async function handleEditSubmit(e, postId) {
     const msgBox = document.getElementById('message-box');
     
     // Lấy link ảnh từ hidden inputs
-    // Tùy thuộc vào isNewImagesUploaded, ta lấymảng input nào
-    const selector = isNewImagesUploaded ? 'input[name="uploaded-image-url"]' : 'input[name="original-image-url"]';
-    const inputs = document.querySelectorAll(selector);
+    const inputs = document.querySelectorAll('.post-image-url-hidden');
     const imageUrls = Array.from(inputs).map(input => input.value);
     
     const postData = {
-        title: document.getElementById('post-title').value.trim(),
-        summary: document.getElementById('post-summary').value.trim(),
+        title: document.getElementById('post-title').value.trim() || '',
+        summary: document.getElementById('post-summary').value.trim() || '',
         content: document.getElementById('post-content').value.trim(),
         imageUrls: imageUrls
     };

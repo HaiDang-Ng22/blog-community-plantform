@@ -11,6 +11,14 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
     {
     }
 
+    public override async Task<Product?> GetByIdAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(p => p.Images)
+            .Include(p => p.Variants)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
     public async Task<IEnumerable<Product>> GetProductsByShopIdAsync(Guid shopId)
     {
         return await _dbSet

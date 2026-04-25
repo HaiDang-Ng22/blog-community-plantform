@@ -133,26 +133,41 @@ public class PostsController : ControllerBase
         if (userIdClaim == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
+        var postId = Guid.NewGuid();
         var userId = Guid.Parse(userIdClaim.Value);
 
-        // Tạo slug từ title
-        var slug = createPostDto.Title
+        // Improved slug generation - Version 2 (Robust Fix)
+        var titleForSlug = string.IsNullOrWhiteSpace(createPostDto.Title) || createPostDto.Title == "Post"
+            ? (!string.IsNullOrWhiteSpace(createPostDto.Content) 
+                ? (createPostDto.Content.Length > 50 ? createPostDto.Content.Substring(0, 50) : createPostDto.Content)
+                : "post")
+            : createPostDto.Title;
+
+        var cleanSlug = titleForSlug
             .ToLower()
             .Replace(" ", "-")
             .Replace("đ", "d")
             .Replace("Đ", "d");
         
+        // Remove special characters and ensure it's not empty
+        cleanSlug = new string(cleanSlug.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray()).Trim('-');
+        if (string.IsNullOrWhiteSpace(cleanSlug)) cleanSlug = "post";
+
+        // Always append 8 chars of Guid to ensure uniqueness
+        var finalSlug = $"{cleanSlug}-{postId.ToString().Substring(0, 8)}";
+        
         var post = new Post
         {
-            Id = Guid.NewGuid(),
-            Title = createPostDto.Title,
-            Slug = slug,
+            Id = postId,
+            Title = createPostDto.Title ?? "Post",
+            Slug = finalSlug,
             Content = createPostDto.Content,
             Summary = createPostDto.Summary,
             FeaturedImageUrl = createPostDto.ImageUrls.FirstOrDefault() ?? createPostDto.FeaturedImageUrl,
             Status = PostStatus.Published,
             AuthorId = userId,
             CreatedAt = DateTime.UtcNow,
+            PublishedAt = DateTime.UtcNow,
             Images = createPostDto.ImageUrls.Select((url, index) => new PostImage
             {
                 Id = Guid.NewGuid(),

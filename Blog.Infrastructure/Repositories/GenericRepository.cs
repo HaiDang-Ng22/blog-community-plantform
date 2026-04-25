@@ -16,7 +16,7 @@ public class GenericRepository<T> : IRepository<T> where T : class
         _dbSet = context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id)
+    public virtual async Task<T?> GetByIdAsync(Guid id)
         => await _dbSet.FindAsync(id);
 
     public async Task<IEnumerable<T>> GetAllAsync()
@@ -34,7 +34,13 @@ public class GenericRepository<T> : IRepository<T> where T : class
 
     public async Task UpdateAsync(T entity)
     {
-        _dbSet.Update(entity);
+        // If entity is already tracked, SaveChangesAsync is enough.
+        // If it's not tracked (detached), we might need to attach it, 
+        // but for the current flow (Edit Product), it's always tracked.
+        if (_context.Entry(entity).State == EntityState.Detached)
+        {
+            _dbSet.Update(entity);
+        }
         await _context.SaveChangesAsync();
     }
 
