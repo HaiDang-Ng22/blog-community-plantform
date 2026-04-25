@@ -4,11 +4,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const query = urlParams.get('q');
     
     if (!query) {
-        document.getElementById('search-title').textContent = 'Vui lòng nhập từ khóa tìm kiếm';
+        document.getElementById('search-title').textContent = window.t('search_query_empty');
         return;
     }
 
-    document.getElementById('search-title').textContent = `Kết quả tìm kiếm cho: "${query}"`;
+    document.getElementById('search-title').textContent = `${window.t('search_results_for')} "${query}"`;
     await performSearch(query);
 });
 
@@ -22,7 +22,7 @@ async function performSearch(query) {
         // Render Users
         usersList.innerHTML = '';
         if (results.users.length === 0) {
-            usersList.innerHTML = '<div class="no-results"><i class="fa-solid fa-user-slash"></i> Không tìm thấy người dùng nào.</div>';
+            usersList.innerHTML = `<div class="no-results"><i class="fa-solid fa-user-slash"></i> ${window.t('no_users_found')}</div>`;
         } else {
             results.users.forEach(user => {
                 const card = document.createElement('div');
@@ -46,7 +46,7 @@ async function performSearch(query) {
         // Render Posts
         postsList.innerHTML = '';
         if (results.posts.length === 0) {
-            postsList.innerHTML = '<div class="no-results"><i class="fa-solid fa-file-circle-xmark"></i> Không tìm thấy bài viết nào.</div>';
+            postsList.innerHTML = `<div class="no-results"><i class="fa-solid fa-file-circle-xmark"></i> ${window.t('no_posts_found')}</div>`;
         } else {
             results.posts.forEach(post => {
                 const card = document.createElement('div');
@@ -56,7 +56,7 @@ async function performSearch(query) {
                 card.innerHTML = `
                     <div class="user-result-info">
                         <h4>${post.title}</h4>
-                        <p>Bởi ${post.authorName} • ${new Date(post.createdAt).toLocaleDateString('vi-VN')}</p>
+                        <p>${window.t('by_author')} ${post.authorName} • ${new Date(post.createdAt).toLocaleDateString()}</p>
                         ${post.summary ? `<p>${post.summary}</p>` : ''}
                     </div>
                 `;

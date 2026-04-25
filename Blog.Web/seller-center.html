@@ -46,15 +46,15 @@
         <form id="form-shop-apply" class="application-form">
             <div id="msg-box" class="message-box hidden"></div>
             <div class="input-group">
-                <label>Tên cửa hàng dự kiến</label>
-                <input type="text" id="shop-name" placeholder="Ví dụ: Zynk Mobile Store" required>
+                <label data-i18n="shop_name_label">Tên cửa hàng dự kiến</label>
+                <input type="text" id="shop-name" placeholder="Ví dụ: Zynk Mobile Store" data-i18n="shop_name_placeholder" required>
             </div>
             <div class="input-group">
-                <label>Mô tả shop</label>
-                <textarea id="shop-desc" rows="4" placeholder="Giới thiệu ngắn về những gì bạn định bán..."
+                <label data-i18n="shop_desc_label">Mô tả shop</label>
+                <textarea id="shop-desc" rows="4" placeholder="Giới thiệu ngắn về những gì bạn định bán..." data-i18n="shop_desc_placeholder"
                     required></textarea>
             </div>
-            <button type="submit" class="btn primary-btn">Gửi yêu cầu phê duyệt</button>
+            <button type="submit" class="btn primary-btn" data-i18n="submit_apply">Gửi yêu cầu phê duyệt</button>
         </form>
     </template>
 
@@ -62,9 +62,9 @@
     <template id="tpl-pending">
         <div class="status-card">
             <i class="fa-solid fa-clock-rotate-left"></i>
-            <h2>Hồ sơ đang được chờ duyệt</h2>
-            <p>Admin đang xem xét hồ sơ mở cửa hàng của bạn. Chúng tôi sẽ thông báo cho bạn ngay khi có kết quả.</p>
-            <a href="index.html" class="btn secondary-btn" style="display: inline-block; margin-top: 2rem;">Quay lại
+            <h2 data-i18n="pending_approval_title">Hồ sơ đang được chờ duyệt</h2>
+            <p data-i18n="pending_approval_desc">Admin đang xem xét hồ sơ mở cửa hàng của bạn. Chúng tôi sẽ thông báo cho bạn ngay khi có kết quả.</p>
+            <a href="index.html" class="btn secondary-btn" style="display: inline-block; margin-top: 2rem;" data-i18n="back_to_home">Quay lại
                 trang chủ</a>
         </div>
     </template>
@@ -72,29 +72,29 @@
     <!-- 3. Template Dashboard -->
     <template id="tpl-dashboard">
         <div class="seller-header" style="text-align: left;">
-            <h1>Kênh Người Bán: <span id="shop-title-display">---</span></h1>
+            <h1><span data-i18n="seller_center_title">Kênh Người Bán</span>: <span id="shop-title-display">---</span></h1>
         </div>
 
         <div class="seller-dashboard">
             <nav class="dashboard-tabs">
-                <div class="tab-link active" onclick="switchSellerTab('overview')">Tổng quan</div>
-                <div class="tab-link" onclick="switchSellerTab('products')">Sản phẩm</div>
-                <div class="tab-link" onclick="switchSellerTab('orders')">Đơn hàng</div>
+                <div class="tab-link active" onclick="switchSellerTab('overview')" data-i18n="overview">Tổng quan</div>
+                <div class="tab-link" onclick="switchSellerTab('products')" data-i18n="products">Sản phẩm</div>
+                <div class="tab-link" onclick="switchSellerTab('orders')" data-i18n="orders">Đơn hàng</div>
             </nav>
 
             <!-- Overview Section -->
             <section id="section-overview" class="dashboard-section active">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
                     <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                        <h4 style="color: #64748b;">Tổng đơn hàng</h4>
+                        <h4 style="color: #64748b;" data-i18n="total_orders">Tổng đơn hàng</h4>
                         <div style="font-size: 2rem; font-weight: 800;" id="stat-orders">0</div>
                     </div>
                     <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                        <h4 style="color: #64748b;">Doanh thu (Giả lập)</h4>
+                        <h4 style="color: #64748b;" data-i18n="revenue_est">Doanh thu (Giả lập)</h4>
                         <div style="font-size: 2rem; font-weight: 800; color: #2563eb;" id="stat-revenue">0đ</div>
                     </div>
                     <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                        <h4 style="color: #64748b;">Số lượng sản phẩm</h4>
+                        <h4 style="color: #64748b;" data-i18n="total_products">Số lượng sản phẩm</h4>
                         <div style="font-size: 2rem; font-weight: 800;" id="stat-products">0</div>
                     </div>
                 </div>
@@ -103,19 +103,19 @@
             <!-- Products Section -->
             <section id="section-products" class="dashboard-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3>Danh sách sản phẩm</h3>
-                    <button class="btn primary-btn" style="width: auto; margin: 0;" onclick="openAddProductModal()">+
+                    <h3 data-i18n="product_list">Danh sách sản phẩm</h3>
+                    <button class="btn primary-btn" style="width: auto; margin: 0;" onclick="openAddProductModal()" data-i18n="add_new_product">+
                         Thêm sản phẩm mới</button>
                 </div>
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Ảnh</th>
-                            <th>Tên sản phẩm</th>
-                            <th>Giá</th>
-                            <th>Kho</th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
+                            <th data-i18n="th_image">Ảnh</th>
+                            <th data-i18n="th_name">Tên sản phẩm</th>
+                            <th data-i18n="th_price">Giá</th>
+                            <th data-i18n="th_stock">Kho</th>
+                            <th data-i18n="th_status">Trạng thái</th>
+                            <th data-i18n="th_actions">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody id="product-list-body">
@@ -127,8 +127,8 @@
             <!-- Orders Section -->
             <section id="section-orders" class="dashboard-section">
                 <div class="orders-header-row" style="margin-bottom: 1.5rem;">
-                    <h3>Quản lý đơn hàng</h3>
-                    <div style="font-size: 0.85rem; color: #64748b;">
+                    <h3 data-i18n="manage_orders">Quản lý đơn hàng</h3>
+                    <div style="font-size: 0.85rem; color: #64748b;" data-i18n="manage_orders_desc">
                         Quản lý và xử lý các đơn hàng của bạn
                     </div>
                 </div>
@@ -136,12 +136,12 @@
                 <!-- Status Filter Tabs -->
                 <div class="order-tabs-wrapper">
                     <nav class="order-status-tabs" id="order-status-tabs">
-                        <div class="order-tab active" data-status="All">Tất cả</div>
-                        <div class="order-tab" data-status="Unpaid">Chờ xác nhận</div>
-                        <div class="order-tab" data-status="AwaitingShipment">Chờ giao</div>
-                        <div class="order-tab" data-status="InTransit">Đang giao</div>
-                        <div class="order-tab" data-status="Completed">Hoàn thành</div>
-                        <div class="order-tab" data-status="Cancelled">Đã hủy</div>
+                        <div class="order-tab active" data-status="All" data-i18n="status_all">Tất cả</div>
+                        <div class="order-tab" data-status="Unpaid" data-i18n="status_unpaid">Chờ xác nhận</div>
+                        <div class="order-tab" data-status="AwaitingShipment" data-i18n="status_awaiting">Chờ giao</div>
+                        <div class="order-tab" data-status="InTransit" data-i18n="status_delivering">Đang giao</div>
+                        <div class="order-tab" data-status="Completed" data-i18n="status_completed">Hoàn thành</div>
+                        <div class="order-tab" data-status="Cancelled" data-i18n="status_cancelled">Đã hủy</div>
                     </nav>
                 </div>
 
@@ -149,10 +149,10 @@
                 <div class="order-search-bar glassmorphism" style="margin-bottom: 2rem; padding: 1rem; border-radius: 12px; display: flex; gap: 1rem; align-items: center;">
                     <div class="search-input-group" style="flex: 1; position: relative;">
                         <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
-                        <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng, Tên hoặc SĐT khách hàng..." 
+                        <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng, Tên hoặc SĐT khách hàng..." data-i18n="order_search_placeholder_full"
                             style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.8rem; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; font-size: 0.9rem; outline: none; transition: 0.2s;">
                     </div>
-                    <button class="btn primary-btn" onclick="applyOrderFilters()" style="width: auto; margin: 0; padding: 0.75rem 1.5rem; height: 100%;">
+                    <button class="btn primary-btn" onclick="applyOrderFilters()" style="width: auto; margin: 0; padding: 0.75rem 1.5rem; height: 100%;" data-i18n="search">
                         Tìm kiếm
                     </button>
                 </div>
@@ -171,7 +171,7 @@
             <!-- Sticky header -->
             <div class="modal-header"
                 style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="font-size: 1.2rem; font-weight: 700;">Đăng sản phẩm mới</h3>
+                <h3 style="font-size: 1.2rem; font-weight: 700;" data-i18n="add_product_title">Đăng sản phẩm mới</h3>
                 <button onclick="closeAddProductModal()"
                     style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"
                     onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
@@ -224,7 +224,7 @@
                     </div>
 
                     <div class="variant-config-box" style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <h4 style="margin-bottom: 1rem;"><i class="fa fa-list-check"></i> Cấu hình Phân loại (Tùy chọn)</h4>
+                        <h4 style="margin-bottom: 1rem;" data-i18n="variant_config"><i class="fa fa-list-check"></i> Cấu hình Phân loại (Tùy chọn)</h4>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                             <div class="input-group" style="margin-bottom: 0;">
@@ -240,7 +240,7 @@
                         <div id="variant-list-container" style="margin-top: 1rem;">
                             <!-- Variant rows will be added here -->
                         </div>
-                        <button type="button" class="btn secondary-btn" onclick="addNewVariantRow()" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 1rem;">
+                        <button type="button" class="btn secondary-btn" onclick="addNewVariantRow()" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 1rem;" data-i18n="add_variant">
                             <i class="fa fa-plus"></i> Thêm phân loại
                         </button>
                     </div>
@@ -250,11 +250,11 @@
             <div
                 style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; gap: 0.75rem; background: var(--glass-bg, white);">
                 <button type="submit" form="form-add-product" class="btn primary-btn"
-                    style="flex: 1; margin: 0; padding: 0.75rem;">
+                    style="flex: 1; margin: 0; padding: 0.75rem;" data-i18n="save_and_show">
                     <i class="fa-solid fa-floppy-disk"></i> Lưu và Hiển thị
                 </button>
                 <button type="button" onclick="closeAddProductModal()" class="btn secondary-btn"
-                    style="width: auto; margin: 0; padding: 0.75rem 1.25rem;">
+                    style="width: auto; margin: 0; padding: 0.75rem 1.25rem;" data-i18n="cancel">
                     Huỷ
                 </button>
             </div>
@@ -268,7 +268,7 @@
             <!-- Sticky header -->
             <div class="modal-header"
                 style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="font-size: 1.2rem; font-weight: 700;"><i class="fa-solid fa-pen-to-square"
+                <h3 style="font-size: 1.2rem; font-weight: 700;" data-i18n="edit_product_title"><i class="fa-solid fa-pen-to-square"
                         style="color:#6366f1; margin-right:8px;"></i>Chỉnh sửa sản phẩm</h3>
                 <button onclick="closeEditProductModal()"
                     style="background:none; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; transition:0.2s;"

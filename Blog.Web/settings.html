@@ -336,19 +336,19 @@
         <div class="settings-layout">
             <aside class="settings-sidebar">
                 <button class="settings-nav-item active" onclick="switchTab('profile')">
-                    <i class="fa-solid fa-user"></i> Hồ sơ cá nhân
+                    <i class="fa-solid fa-user"></i> <span data-i18n="tab_profile">Hồ sơ cá nhân</span>
                 </button>
                 <button class="settings-nav-item" onclick="switchTab('account')">
-                    <i class="fa-solid fa-shield-halved"></i> Bảo mật tài khoản
+                    <i class="fa-solid fa-shield-halved"></i> <span data-i18n="tab_account">Bảo mật tài khoản</span>
                 </button>
                 <button class="settings-nav-item" onclick="switchTab('privacy')">
-                    <i class="fa-solid fa-lock"></i> Quyền riêng tư
+                    <i class="fa-solid fa-lock"></i> <span data-i18n="tab_privacy">Quyền riêng tư</span>
                 </button>
                 <button class="settings-nav-item" onclick="switchTab('notifications')">
-                    <i class="fa-solid fa-bell"></i> Thông báo
+                    <i class="fa-solid fa-bell"></i> <span data-i18n="tab_notifications">Thông báo</span>
                 </button>
-                <button class="settings-nav-item" onclick="switchTab('marketplace')">
-                    <i class="fa-solid fa-shop"></i> <span data-i18n="tab_marketplace">Bán hàng</span>
+                <button id="tab-marketplace-btn" class="settings-nav-item" onclick="switchTab('marketplace')">
+                    <i class="fa-solid fa-shop"></i> <span id="tab-marketplace-label" data-i18n="register_seller">Đăng ký bán hàng</span>
                 </button>
                 <button class="settings-nav-item" onclick="switchTab('interface')">
                     <i class="fa-solid fa-palette"></i> <span data-i18n="tab_interface">Giao diện</span>
@@ -358,43 +358,43 @@
                 </button>
                 <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #f3f4f6;">
                 <button class="settings-nav-item" style="color: #dc2626;" onclick="switchTab('danger')">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Vùng nguy hiểm
+                    <i class="fa-solid fa-triangle-exclamation"></i> <span data-i18n="tab_danger">Vùng nguy hiểm</span>
                 </button>
             </aside>
 
             <div class="settings-content">
                 <!-- Profile Section -->
                 <section id="section-profile" class="settings-section active">
-                    <h2 class="section-title">Hồ sơ cá nhân</h2>
-                    <p class="section-desc">Cập nhật thông tin công khai của bạn trên Zynk.</p>
+                    <h2 class="section-title" data-i18n="settings_profile_title">Hồ sơ cá nhân</h2>
+                    <p class="section-desc" data-i18n="settings_profile_desc">Cập nhật thông tin công khai của bạn trên Zynk.</p>
 
                     <form id="settings-form" style="max-width: 500px;">
                         <div class="form-group">
-                            <label for="set-username">Tên người dùng (@username)</label>
+                            <label for="set-username" data-i18n="username_label">Tên người dùng (@username)</label>
                             <input type="text" id="set-username" required>
                         </div>
                         <div class="form-group">
-                            <label for="set-fullname">Họ và tên</label>
+                            <label for="set-fullname" data-i18n="fullname_label">Họ và tên</label>
                             <input type="text" id="set-fullname" required>
                         </div>
                         <div class="form-group">
-                            <label for="set-bio">Tiểu sử</label>
+                            <label for="set-bio" data-i18n="bio_label">Tiểu sử</label>
                             <textarea id="set-bio" rows="3"></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="set-gender">Giới tính</label>
+                            <label for="set-gender" data-i18n="gender_label">Giới tính</label>
                             <select id="set-gender">
-                                <option value="Male">Nam</option>
-                                <option value="Female">Nữ</option>
-                                <option value="Other">Khác</option>
+                                <option value="Male" data-i18n="gender_male">Nam</option>
+                                <option value="Female" data-i18n="gender_female">Nữ</option>
+                                <option value="Other" data-i18n="gender_other">Khác</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Ảnh đại diện</label>
+                            <label data-i18n="avatar_label">Ảnh đại diện</label>
                             <div style="display: flex; gap: 1rem; align-items: center;">
                                 <img id="avatar-preview" src="" class="preview-img">
                                 <button type="button" class="btn secondary-btn"
-                                    onclick="document.getElementById('avatar-file').click()" style="width: auto;">Thay
+                                    onclick="document.getElementById('avatar-file').click()" style="width: auto;" data-i18n="change_btn">Thay
                                     đổi</button>
                             </div>
                             <input type="file" id="avatar-file" accept="image/*" style="display: none;"
@@ -402,49 +402,49 @@
                             <input type="hidden" id="set-avatar-url">
                         </div>
                         <div class="form-group">
-                            <label>Ảnh bìa</label>
+                            <label data-i18n="cover_label">Ảnh bìa</label>
                             <img id="cover-preview" src="" class="preview-cover">
                             <button type="button" class="btn secondary-btn"
                                 onclick="document.getElementById('cover-file').click()"
-                                style="width: auto; margin-top: 0.5rem;">Thay đổi ảnh bìa</button>
+                                style="width: auto; margin-top: 0.5rem;" data-i18n="change_cover_btn">Thay đổi ảnh bìa</button>
                             <input type="file" id="cover-file" accept="image/*" style="display: none;"
                                 onchange="handleProfileUpload(this, 'cover')">
                             <input type="hidden" id="set-cover-url">
                         </div>
-                        <button type="submit" class="btn primary-btn" id="save-settings-btn">Lưu hồ sơ</button>
+                        <button type="submit" class="btn primary-btn" id="save-settings-btn" data-i18n="save_profile_btn">Lưu hồ sơ</button>
                     </form>
                 </section>
 
                 <!-- Account Section -->
                 <section id="section-account" class="settings-section">
-                    <h2 class="section-title">Bảo mật tài khoản</h2>
-                    <p class="section-desc">Quản lý mật khẩu và đăng nhập.</p>
+                    <h2 class="section-title" data-i18n="settings_account_title">Bảo mật tài khoản</h2>
+                    <p class="section-desc" data-i18n="account_desc">Quản lý mật khẩu và đăng nhập.</p>
 
                     <form id="password-form" style="max-width: 450px;">
                         <div class="form-group">
-                            <label for="old-password">Mật khẩu hiện tại</label>
+                            <label for="old-password" data-i18n="old_password_label">Mật khẩu hiện tại</label>
                             <input type="password" id="old-password" required>
                         </div>
                         <div class="form-group">
-                            <label for="new-password">Mật khẩu mới</label>
+                            <label for="new-password" data-i18n="new_password_label">Mật khẩu mới</label>
                             <input type="password" id="new-password" required>
                         </div>
                         <div class="form-group">
-                            <label for="confirm-password">Xác nhận mật khẩu mới</label>
+                            <label for="confirm-password" data-i18n="confirm_password_label">Xác nhận mật khẩu mới</label>
                             <input type="password" id="confirm-password" required>
                         </div>
-                        <button type="submit" class="btn primary-btn">Đổi mật khẩu</button>
+                        <button type="submit" class="btn primary-btn" data-i18n="change_password_btn">Đổi mật khẩu</button>
                     </form>
                 </section>
 
                 <section id="section-privacy" class="settings-section">
-                    <h2 class="section-title">Quyền riêng tư</h2>
-                    <p class="section-desc">Kiểm soát ai có thể xem bài viết và tương tác với bạn.</p>
+                    <h2 class="section-title" data-i18n="settings_privacy_title">Quyền riêng tư</h2>
+                    <p class="section-desc" data-i18n="privacy_desc">Kiểm soát ai có thể xem bài viết và tương tác với bạn.</p>
 
                     <div class="theme-card">
                         <div>
-                            <div style="font-weight: 600;">Tài khoản riêng tư</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Bật chế độ này để ẩn bài viết của bạn với
+                            <div style="font-weight: 600;" data-i18n="private_account">Tài khoản riêng tư</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="private_account_desc">Bật chế độ này để ẩn bài viết của bạn với
                                 những người chưa theo dõi.</div>
                         </div>
                         <label class="toggle-switch">
@@ -455,8 +455,8 @@
 
                     <div class="theme-card">
                         <div>
-                            <div style="font-weight: 600;">Trạng thái hoạt động</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Cho phép người khác thấy khi bạn đang
+                            <div style="font-weight: 600;" data-i18n="active_status">Trạng thái hoạt động</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="active_status_desc">Cho phép người khác thấy khi bạn đang
                                 online (dấu chấm xanh).</div>
                         </div>
                         <label class="toggle-switch">
@@ -467,14 +467,14 @@
                     </div>
 
                     <div style="margin-top: 1.5rem;">
-                        <h4 style="margin-bottom: 0.5rem; color: var(--text-color, #374151);">Giới hạn tương tác</h4>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-color, #374151);" data-i18n="interaction_limits">Giới hạn tương tác</h4>
                         <div class="form-group">
-                            <label for="who-can-message">Ai có thể nhắn tin cho bạn?</label>
+                            <label for="who-can-message" data-i18n="who_can_message">Ai có thể nhắn tin cho bạn?</label>
                             <select id="who-can-message"
                                 onchange="showStatus('Đã cập nhật quyền nhắn tin!', 'success')">
-                                <option value="everyone">Mọi người</option>
-                                <option value="followers">Chỉ người theo dõi</option>
-                                <option value="nobody">Không ai</option>
+                                <option value="everyone" data-i18n="everyone">Mọi người</option>
+                                <option value="followers" data-i18n="only_followers">Chỉ người theo dõi</option>
+                                <option value="nobody" data-i18n="nobody">Không ai</option>
                             </select>
                         </div>
                     </div>
@@ -482,9 +482,9 @@
                     <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
                         <h4 style="margin-bottom: 0.5rem; color: var(--text-color, #111827);">
                             <i class="fa-solid fa-user-slash" style="color:#ef4444; margin-right:6px;"></i>
-                            Danh sách tài khoản đã chặn
+                            <span data-i18n="blocked_users">Danh sách tài khoản đã chặn</span>
                         </h4>
-                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">Những người dùng bạn đã chặn sẽ không thể xem hồ sơ hoặc liên hệ với bạn.</p>
+                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;" data-i18n="blocked_users_desc">Những người dùng bạn đã chặn sẽ không thể xem hồ sơ hoặc liên hệ với bạn.</p>
                         <div id="blocked-users-list">
                             <div style="text-align:center; padding: 1.5rem; color:#94a3b8; font-size:0.9rem;">
                                 <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>
@@ -496,13 +496,13 @@
 
                 <!-- Notifications Section -->
                 <section id="section-notifications" class="settings-section">
-                    <h2 class="section-title">Thông báo</h2>
-                    <p class="section-desc">Cấu hình cách bạn nhận thông báo từ hệ thống.</p>
+                    <h2 class="section-title" data-i18n="settings_notifications_title">Thông báo</h2>
+                    <p class="section-desc" data-i18n="notifications_desc">Cấu hình cách bạn nhận thông báo từ hệ thống.</p>
 
                     <div class="theme-card">
                         <div>
-                            <div style="font-weight: 600;">Thông báo đẩy (Web Push)</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Nhận thông báo trực tiếp trên web hoặc điện
+                            <div style="font-weight: 600;" data-i18n="push_notification">Thông báo đẩy (Web Push)</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="push_notification_desc">Nhận thông báo trực tiếp trên web hoặc điện
                                 thoại.</div>
                         </div>
                         <label class="toggle-switch">
@@ -514,8 +514,8 @@
 
                     <div class="theme-card">
                         <div>
-                            <div style="font-weight: 600;">Thông báo qua Email</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Nhận email thông báo hằng tuần.</div>
+                            <div style="font-weight: 600;" data-i18n="email_notification">Thông báo qua Email</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="email_notification_desc">Nhận email thông báo hằng tuần.</div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="email-notification-toggle"
@@ -526,8 +526,8 @@
 
                     <div class="theme-card">
                         <div>
-                            <div style="font-weight: 600;">Thông báo đơn hàng Marketplace</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Bao gồm tin nhắn mua hàng, thay đổi trạng
+                            <div style="font-weight: 600;" data-i18n="marketplace_notification">Thông báo đơn hàng Marketplace</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="marketplace_notification_desc">Bao gồm tin nhắn mua hàng, thay đổi trạng
                                 thái đơn.</div>
                         </div>
                         <label class="toggle-switch">
@@ -538,51 +538,23 @@
                     </div>
                 </section>
 
-                <!-- Marketplace Section -->
+                <!-- Marketplace Section — nội dung được inject động bởi settings.js -->
                 <section id="section-marketplace" class="settings-section">
-                    <h2 class="section-title">Cài đặt Bán hàng</h2>
-                    <p class="section-desc">Quản lý và thiết lập thông tin kinh doanh trên Marketplace.</p>
-
-                    <form id="marketplace-form" style="max-width: 500px;"
-                        onsubmit="event.preventDefault(); showStatus('Cập nhật thiết lập bán hàng thành công!', 'success');">
-                        <div class="form-group">
-                            <label for="set-shop-name">Tên cửa hàng / Tên người bán</label>
-                            <input type="text" id="set-shop-name" placeholder="Ví dụ: Cửa hàng của tôi">
-                        </div>
-                        <div class="form-group">
-                            <label for="set-delivery-address">Địa chỉ lấy/giao hàng mặc định</label>
-                            <textarea id="set-delivery-address" rows="3"
-                                placeholder="Nhập địa chỉ đầy đủ để người mua hoặc shipper dễ tìm kiếm..."></textarea>
-                        </div>
-                        <div class="theme-card" style="margin-bottom: 1.5rem; margin-top: 0">
-                            <div>
-                                <div style="font-weight: 600;">Tin nhắn trả lời tự động</div>
-                                <div style="font-size: 0.85rem; color: #6b7280;">Tự động gửi tin nhắn mẫu khi khách hàng
-                                    bắt đầu chat.</div>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="auto-reply-toggle"
-                                    onchange="document.getElementById('auto-reply-box').style.display = this.checked ? 'block' : 'none'">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="form-group" id="auto-reply-box" style="display: none;">
-                            <textarea id="set-auto-reply" rows="2"
-                                placeholder="Xin chào! Chúng tôi có thể giúp gì cho bạn?"></textarea>
-                        </div>
-                        <button type="submit" class="btn primary-btn">Lưu thiết lập Marketplace</button>
-                    </form>
+                    <div style="text-align:center; padding: 2rem; color:#94a3b8;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>
+                        <span data-i18n="loading">Đang tải...</span>
+                    </div>
                 </section>
 
                 <!-- Interface Section -->
                 <section id="section-interface" class="settings-section">
-                    <h2 class="section-title">Giao diện</h2>
-                    <p class="section-desc">Cá nhân hóa trải nghiệm nhìn của bạn.</p>
+                    <h2 class="section-title" data-i18n="settings_interface_title">Giao diện</h2>
+                    <p class="section-desc" data-i18n="interface_desc">Cá nhân hóa trải nghiệm nhìn của bạn.</p>
 
                     <div class="theme-card">
                         <div>
-                            <div style="font-weight: 600;">Chế độ tối (Dark Mode)</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;">Bật để giao diện trở nên dịu mắt hơn.</div>
+                            <div style="font-weight: 600;" data-i18n="dark_mode">Chế độ tối (Dark Mode)</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="dark_mode_desc">Bật để giao diện trở nên dịu mắt hơn.</div>
                         </div>
                         <button class="btn secondary-btn" onclick="toggleDarkMode()" id="dark-mode-btn"
                             style="width: auto;">Bật chế độ tối</button>
@@ -632,15 +604,15 @@
 
                 <!-- Danger Section -->
                 <section id="section-danger" class="settings-section">
-                    <h2 class="section-title" style="color: #dc2626;">Vùng nguy hiểm</h2>
-                    <p class="section-desc">Các hành động không thể hoàn tác.</p>
+                    <h2 class="section-title" style="color: #dc2626;" data-i18n="settings_danger_title">Vùng nguy hiểm</h2>
+                    <p class="section-desc" data-i18n="danger_desc">Các hành động không thể hoàn tác.</p>
 
                     <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 1.5rem; border-radius: 12px;">
-                        <h4 style="color: #b91c1c; margin-bottom: 0.5rem;">Xóa tài khoản vĩnh viễn</h4>
-                        <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.25rem;">Lưu ý: Sau khi xóa, tất cả
+                        <h4 style="color: #b91c1c; margin-bottom: 0.5rem;" data-i18n="delete_account">Xóa tài khoản vĩnh viễn</h4>
+                        <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.25rem;" data-i18n="delete_account_desc">Lưu ý: Sau khi xóa, tất cả
                             bài viết, ảnh và tương tác của bạn sẽ biến mất vĩnh viễn.</p>
                         <button class="btn primary-btn" style="background: #dc2626; border-color: #dc2626;"
-                            onclick="deleteAccount()">Xác nhận xóa tài khoản</button>
+                            onclick="deleteAccount()" data-i18n="confirm_delete_account">Xác nhận xóa tài khoản</button>
                     </div>
                 </section>
 

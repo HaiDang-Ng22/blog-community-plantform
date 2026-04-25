@@ -1,14 +1,39 @@
 // js/common.js
 
-document.addEventListener('DOMContentLoaded', () => {
+// Cache seller status in memory for the page session
+window._userHasShop = false;
+
+async function checkSellerStatus() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return false;
+    // Use sessionStorage cache to avoid repeated API calls within same page session
+    const cached = sessionStorage.getItem('zynk_has_shop');
+    if (cached !== null) {
+        window._userHasShop = cached === 'true';
+        return window._userHasShop;
+    }
+    try {
+        const resp = await fetch(API_BASE_URL + '/seller/my-shop', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        window._userHasShop = resp.ok;
+        sessionStorage.setItem('zynk_has_shop', String(window._userHasShop));
+    } catch {
+        window._userHasShop = false;
+    }
+    return window._userHasShop;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
     // Global theme initialization
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
     }
+    await checkSellerStatus();
     updateNav();
 });
 
-function updateNav() {
+async function updateNav() {
     const navActions = document.getElementById('nav-actions');
     if (!navActions) return;
 
@@ -58,7 +83,7 @@ function updateNav() {
                 <a href="marketplace.html" class="nav-marketplace-link">
                     <i class="fa-solid fa-bag-shopping"></i> <span data-i18n="shopping">${window.t('shopping')}</span>
                 </a>
-                ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `
+                ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin' && window._userHasShop) ? `
                 <a href="seller-center.html" class="nav-seller-link">
                     <i class="fa-solid fa-store"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span>
                 </a>
@@ -72,7 +97,7 @@ function updateNav() {
                     <a href="profile.html"><i class="fa fa-user"></i> <span data-i18n="profile">${window.t('profile')}</span></a>
                     <a href="marketplace.html" style="color: #2563eb; font-weight: 600;"><i class="fa fa-shopping-bag"></i> <span data-i18n="marketplace">${window.t('marketplace')}</span></a>
                     <a href="my-orders.html" style="color: #f59e0b; font-weight: 600;"><i class="fa-solid fa-box-open"></i> <span data-i18n="my_orders">${window.t('my_orders')}</span></a>
-                    ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `
+                    ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin' && window._userHasShop) ? `
                     <a href="seller-center.html" style="color: #059669; font-weight: 600;"><i class="fa fa-shop"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span></a>
                     ` : ''}
                     <hr>

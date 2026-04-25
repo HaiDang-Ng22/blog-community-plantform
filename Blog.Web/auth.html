@@ -41,10 +41,10 @@
                 <form id="form-login" class="auth-form active">
                     <h2 data-i18n="auth_welcome">Chào mừng trở lại!</h2>
                     <div class="input-group">
-                        <input type="email" id="login-email" placeholder="Email của bạn" required>
+                        <input type="email" id="login-email" placeholder="Email của bạn" data-i18n="email_placeholder" required>
                     </div>
                     <div class="input-group password-group">
-                        <input type="password" id="login-password" placeholder="Mật khẩu" required>
+                        <input type="password" id="login-password" placeholder="Mật khẩu" data-i18n="password_placeholder" required>
                         <button type="button" class="password-toggle" onclick="togglePassword('login-password', this)">
                             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
@@ -52,47 +52,47 @@
                     <button type="submit" class="btn primary-btn" data-i18n="login">Đăng nhập ngay</button>
 
                     <div class="divider">
-                        <span>Hoặc tiếp tục với</span>
+                        <span data-i18n="or_continue_with">Hoặc tiếp tục với</span>
                     </div>
 
                     <div class="google-wrapper">
                         <div id="googleButton" class="google-btn"></div>
                     </div>
                     
-                    <a href="index.html" class="back-link">← Quay lại trang chủ</a>
+                    <a href="index.html" class="back-link" data-i18n="back_to_home">← Quay lại trang chủ</a>
                 </form>
 
                 <form id="form-register" class="auth-form hidden">
-                    <h2>Tạo tài khoản mới</h2>
+                    <h2 data-i18n="create_account">Tạo tài khoản mới</h2>
                     <div class="input-group">
-                        <input type="text" id="reg-fullname" placeholder="Họ và Tên" required>
+                        <input type="text" id="reg-fullname" placeholder="Họ và Tên" data-i18n="fullname_placeholder" required>
                     </div>
                     <div class="input-group">
                         <select id="reg-gender" required>
-                            <option value="" disabled selected>Chọn giới tính</option>
-                            <option value="Male">Nam</option>
-                            <option value="Female">Nữ</option>
-                            <option value="Other">Khác</option>
+                            <option value="" disabled selected data-i18n="select_gender">Chọn giới tính</option>
+                            <option value="Male" data-i18n="gender_male">Nam</option>
+                            <option value="Female" data-i18n="gender_female">Nữ</option>
+                            <option value="Other" data-i18n="gender_other">Khác</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <input type="email" id="reg-email" placeholder="Email của bạn" required>
+                        <input type="email" id="reg-email" placeholder="Email của bạn" data-i18n="email_placeholder" required>
                     </div>
                     <div class="input-group password-group">
-                        <input type="password" id="reg-password" placeholder="Mật khẩu (Gồm chữ hoa, chữ thường và số)" required>
+                        <input type="password" id="reg-password" placeholder="Mật khẩu (Gồm chữ hoa, chữ thường và số)" data-i18n="password_req_placeholder" required>
                         <button type="button" class="password-toggle" onclick="togglePassword('reg-password', this)">
                             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
                     </div>
                     <div class="input-group password-group">
-                        <input type="password" id="reg-confirm-password" placeholder="Xác nhận mật khẩu" required>
+                        <input type="password" id="reg-confirm-password" placeholder="Xác nhận mật khẩu" data-i18n="confirm_password_placeholder" required>
                         <button type="button" class="password-toggle" onclick="togglePassword('reg-confirm-password', this)">
                             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
                     </div>
-                    <button type="submit" class="btn primary-btn">Tạo tài khoản</button>
+                    <button type="submit" class="btn primary-btn" data-i18n="create_account_btn">Tạo tài khoản</button>
                     
-                    <a href="index.html" class="back-link">← Quay lại trang chủ</a>
+                    <a href="index.html" class="back-link" data-i18n="back_to_home">← Quay lại trang chủ</a>
                 </form>
             </div>
         </div>

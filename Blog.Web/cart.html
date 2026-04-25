@@ -63,14 +63,14 @@
 
         <div class="checkout-box" id="checkout-section">
             <div class="cart-total">
-                <span>Tổng cộng:</span>
+                <span data-i18n="total_label">Tổng cộng:</span>
                 <span id="total-price" style="color: #ef4444;">0đ</span>
             </div>
             <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
             
             <h3 style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                Thông tin nhận hàng
-                <span id="btn-show-saved" class="btn-toggle-saved hidden" onclick="toggleSavedAddresses()"><i class="fa-solid fa-address-book"></i> Địa chỉ đã lưu</span>
+                <span data-i18n="shipping_info_title">Thông tin nhận hàng</span>
+                <span id="btn-show-saved" class="btn-toggle-saved hidden" onclick="toggleSavedAddresses()"><i class="fa-solid fa-address-book"></i> <span data-i18n="saved_addresses">Địa chỉ đã lưu</span></span>
             </h3>
 
             <div id="saved-addresses-list" class="hidden" style="margin-bottom: 1.5rem;">
@@ -79,59 +79,59 @@
 
             <div id="new-address-form">
                 <div class="form-group">
-                    <label>Họ và tên</label>
-                    <input type="text" id="ship-name" placeholder="Ví dụ: Nguyễn Văn A" required>
+                    <label data-i18n="full_name">Họ và tên</label>
+                    <input type="text" id="ship-name" placeholder="Ví dụ: Nguyễn Văn A" data-i18n-placeholder="full_name_placeholder" required>
                 </div>
                 <div class="form-group">
-                    <label>Số điện thoại</label>
-                    <input type="tel" id="ship-phone" placeholder="09xxxxxxxx" required>
+                    <label data-i18n="phone_number">Số điện thoại</label>
+                    <input type="tel" id="ship-phone" placeholder="09xxxxxxxx" data-i18n-placeholder="phone_placeholder" required>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
-                        <label>Tỉnh / Thành phố</label>
+                        <label data-i18n="province_label">Tỉnh / Thành phố</label>
                         <select id="ship-province" onchange="loadDistricts()" required>
-                            <option value="">Chọn Tỉnh/Thành</option>
+                            <option value="" data-i18n="select_province">Chọn Tỉnh/Thành</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Quận / Huyện</label>
+                        <label data-i18n="district_label">Quận / Huyện</label>
                         <select id="ship-district" required disabled>
-                            <option value="">Chọn Quận/Huyện</option>
+                            <option value="" data-i18n="select_district">Chọn Quận/Huyện</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Địa chỉ cụ thể</label>
-                    <input type="text" id="ship-specific" placeholder="Số nhà, Tên đường, Tòa nhà..." required>
+                    <label data-i18n="specific_address_label">Địa chỉ cụ thể</label>
+                    <input type="text" id="ship-specific" placeholder="Số nhà, Tên đường, Tòa nhà..." data-i18n-placeholder="specific_address_placeholder" required>
                 </div>
                 
                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: #64748b;">
-                    <input type="checkbox" id="save-address-cb" checked>Lưu thông tin địa chỉ này cho lần sau
+                    <input type="checkbox" id="save-address-cb" checked><span data-i18n="save_address_future">Lưu thông tin địa chỉ này cho lần sau</span>
                 </label>
             </div>
 
             <div class="form-group" style="margin-top: 1rem;">
-                <label>Ghi chú đơn hàng (Tùy chọn)</label>
-                <textarea id="ship-note" rows="2" placeholder="Giao giờ hành chính, gọi trước khi giao..."></textarea>
+                <label data-i18n="order_note_optional">Ghi chú đơn hàng (Tùy chọn)</label>
+                <textarea id="ship-note" rows="2" placeholder="Giao giờ hành chính, gọi trước khi giao..." data-i18n-placeholder="order_note_placeholder"></textarea>
             </div>
 
-            <h3 style="margin: 2rem 0 1rem;">Phương thức thanh toán</h3>
+            <h3 style="margin: 2rem 0 1rem;" data-i18n="payment_method_title">Phương thức thanh toán</h3>
             <div class="payment-methods">
                 <label class="payment-label">
                     <input type="radio" name="payment_method" value="COD" checked>
                     <i class="fa-solid fa-money-bill-wave" style="color: #10b981; font-size: 1.2rem;"></i>
-                    Thanh toán khi nhận hàng (COD)
+                    <span data-i18n="payment_cod">Thanh toán khi nhận hàng (COD)</span>
                 </label>
                 <label class="payment-label">
                     <input type="radio" name="payment_method" value="BANK">
                     <i class="fa-solid fa-credit-card" style="color: #3b82f6; font-size: 1.2rem;"></i>
-                    Thẻ ngân hàng / Chuyển khoản
+                    <span data-i18n="payment_bank">Thẻ ngân hàng / Chuyển khoản</span>
                 </label>
             </div>
 
-            <button class="btn primary-btn" style="width: 100%; margin-top: 2rem; padding: 1rem; font-size: 1.1rem; border-radius: 1rem;" onclick="checkout()">
+            <button class="btn primary-btn" style="width: 100%; margin-top: 2rem; padding: 1rem; font-size: 1.1rem; border-radius: 1rem;" onclick="checkout()" data-i18n="order_now">
                 Đặt hàng ngay
             </button>
         </div>
@@ -159,7 +159,7 @@
             const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
             
             if (cart.length === 0) {
-                list.innerHTML = '<div style="text-align:center; padding: 3rem;">Giỏ hàng trống.</div>';
+                list.innerHTML = `<div style="text-align:center; padding: 3rem;">${window.t('empty_cart')}</div>`;
                 document.getElementById('checkout-section').style.display = 'none';
                 return;
             }
@@ -176,7 +176,7 @@
             let html = `
                 <div class="cart-select-all">
                     <input type="checkbox" id="check-all-global" class="checkbox-custom" checked onchange="toggleAllGlobal(this)">
-                    <label for="check-all-global" style="cursor: pointer;">Chọn tất cả (${cart.length})</label>
+                    <label for="check-all-global" style="cursor: pointer;">${window.t('select_all')} (${cart.length})</label>
                 </div>
             `;
 
@@ -197,8 +197,8 @@
                             <img src="${item.img || 'https://via.placeholder.com/80'}">
                             <div class="cart-item-info">
                                 <h4>${item.name}</h4>
-                                ${item.variantName ? `<div style="font-size:0.85rem; color:#64748b; margin-bottom:5px;">Loại: ${item.variantName}</div>` : ''}
-                                <div class="cart-qty">Số lượng: ${item.qty}</div>
+                                ${item.variantName ? `<div style="font-size:0.85rem; color:#64748b; margin-bottom:5px;">${window.t('type_label') || 'Loại'}: ${item.variantName}</div>` : ''}
+                                <div class="cart-qty">${window.t('quantity_label') || 'Số lượng'}: ${item.qty}</div>
                             </div>
                             <div class="cart-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.qty)}</div>
                             <button class="btn-action danger" onclick="removeFromCart(${item.originalIndex})"><i class="fa fa-trash"></i></button>
@@ -278,7 +278,7 @@
                     document.getElementById('btn-show-saved').classList.remove('hidden');
                     const html = savedAddresses.map(a => `
                         <div class="saved-address-card" onclick="selectSavedAddress('${a.id}')" id="addr-card-${a.id}">
-                            <div style="font-weight: 600; margin-bottom: 4px;">${a.fullName} - ${a.phoneNumber} ${a.isDefault ? '<span class="badge badge-success" style="font-size:0.7rem; padding: 2px 6px;">Mặc định</span>' : ''}</div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">${a.fullName} - ${a.phoneNumber} ${a.isDefault ? `<span class="badge badge-success" style="font-size:0.7rem; padding: 2px 6px;">${window.t('default_label') || 'Mặc định'}</span>` : ''}</div>
                             <div style="font-size: 0.9rem; color: #64748b;">${a.specificAddress}, ${a.districtWard}, ${a.province}</div>
                         </div>
                     `).join('');
@@ -407,7 +407,7 @@
 
             const btn = document.querySelector('button[onclick="checkout()"]');
             const orig = btn.innerHTML;
-            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang xử lý...';
+            btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> ${window.t('processing')}`;
             btn.disabled = true;
 
             try {
