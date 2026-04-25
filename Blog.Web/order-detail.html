@@ -84,11 +84,11 @@
     </header>
 
     <main class="detail-container">
-        <a href="my-orders.html" class="btn-back"><i class="fa fa-arrow-left"></i> Quay lại đơn hàng của tôi</a>
+        <a href="my-orders.html" class="btn-back"><i class="fa fa-arrow-left"></i> <span data-i18n="back_to_my_orders">Quay lại đơn hàng của tôi</span></a>
 
         <div id="order-loading" style="text-align: center; padding: 4rem;">
             <i class="fa fa-spinner fa-spin fa-2x"></i>
-            <p style="margin-top: 1rem; color: #64748b;">Đang tải thông tin đơn hàng...</p>
+            <p style="margin-top: 1rem; color: #64748b;" data-i18n="loading_order_info">Đang tải thông tin đơn hàng...</p>
         </div>
 
         <div id="order-content" class="hidden">
@@ -97,23 +97,23 @@
                 <div class="stepper" id="order-stepper">
                     <div class="step" data-status="Unpaid">
                         <div class="step-icon">1</div>
-                        <div class="step-label">Đặt hàng thành công</div>
+                        <div class="step-label" data-i18n="order_success">Đặt hàng thành công</div>
                     </div>
                     <div class="step" data-status="AwaitingShipment">
                         <div class="step-icon">2</div>
-                        <div class="step-label">Chờ xác nhận</div>
+                        <div class="step-label" data-i18n="status_pending">Chờ xác nhận</div>
                     </div>
                     <div class="step" data-status="AwaitingCollection">
                         <div class="step-icon">3</div>
-                        <div class="step-label">Đang chuẩn bị hàng</div>
+                        <div class="step-label" data-i18n="preparing_items">Đang chuẩn bị hàng</div>
                     </div>
                     <div class="step" data-status="InTransit">
                         <div class="step-icon">4</div>
-                        <div class="step-label">Đang giao hàng</div>
+                        <div class="step-label" data-i18n="delivering">Đang giao hàng</div>
                     </div>
                     <div class="step" data-status="Completed">
                         <div class="step-icon">5</div>
-                        <div class="step-label">Đã nhận hàng</div>
+                        <div class="step-label" data-i18n="received">Đã nhận hàng</div>
                     </div>
                 </div>
             </div>
@@ -159,7 +159,7 @@
                     </div>
 
                     <div class="main-actions" id="buyer-actions">
-                        <button class="btn-cancel hidden" id="btn-cancel-order" onclick="cancelOrder()">Hủy đơn hàng</button>
+                        <button class="btn-cancel hidden" id="btn-cancel-order" onclick="cancelOrder()" data-i18n="cancel_order">Hủy đơn hàng</button>
                     </div>
                 </div>
             </div>
@@ -169,31 +169,31 @@
     <!-- Modal Thay đổi địa chỉ -->
     <div id="address-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3 style="margin-bottom: 1.5rem;">Cập nhật địa chỉ giao hàng</h3>
+            <h3 style="margin-bottom: 1.5rem;" data-i18n="update_address_title">Cập nhật địa chỉ giao hàng</h3>
             <form id="form-edit-address">
                 <div class="input-group" style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Họ và tên</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;" data-i18n="full_name">Họ và tên</label>
                     <input type="text" id="edit-name" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
                 </div>
                 <div class="input-group" style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Số điện thoại</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;" data-i18n="phone_number">Số điện thoại</label>
                     <input type="text" id="edit-phone" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
                 </div>
                 <div class="input-group" style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Tỉnh/Thành phố</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;" data-i18n="province_label">Tỉnh/Thành phố</label>
                     <input type="text" id="edit-province" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
                 </div>
                 <div class="input-group" style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Quận/Huyện - Phường/Xã</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;" data-i18n="dist_ward_label">Quận/Huyện - Phường/Xã</label>
                     <input type="text" id="edit-dist-ward" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
                 </div>
                 <div class="input-group" style="margin-bottom: 1.5rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Địa chỉ cụ thể</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;" data-i18n="specific_address_label">Địa chỉ cụ thể</label>
                     <input type="text" id="edit-specific" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;" required>
                 </div>
                 <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn primary-btn" style="flex: 1; margin: 0;">Lưu thay đổi</button>
-                    <button type="button" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0 1.5rem;" onclick="closeAddressModal()">Đóng</button>
+                    <button type="submit" class="btn primary-btn" style="flex: 1; margin: 0;" data-i18n="save_changes">Lưu thay đổi</button>
+                    <button type="button" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0 1.5rem;" onclick="closeAddressModal()" data-i18n="close">Đóng</button>
                 </div>
             </form>
         </div>

@@ -121,15 +121,15 @@
                 <!-- Right Column -->
                 <div class="detail-right">
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-receipt" style="color: #f59e0b;"></i> Thông tin thanh toán</h3>
-                        <div class="info-row"><span class="info-label">Tổng tiền</span> <span class="info-value" id="disp-total-amount" style="color: #ef4444; font-size: 1.1rem;">0đ</span></div>
-                        <div class="info-row"><span class="info-label">Phương thức</span> <span class="info-value" id="disp-payment-method">-</span></div>
+                        <h3 class="card-title"><i class="fa fa-receipt" style="color: #f59e0b;"></i> <span data-i18n="payment_info">Thông tin thanh toán</span></h3>
+                        <div class="info-row"><span class="info-label" data-i18n="total_amount">Tổng tiền</span> <span class="info-value" id="disp-total-amount" style="color: #ef4444; font-size: 1.1rem;">0đ</span></div>
+                        <div class="info-row"><span class="info-label" data-i18n="payment_method">Phương thức</span> <span class="info-value" id="disp-payment-method">-</span></div>
                     </div>
 
                     <div class="card">
-                        <h3 class="card-title"><i class="fa fa-cog" style="color: #64748b;"></i> Xử lý đơn hàng</h3>
+                        <h3 class="card-title"><i class="fa fa-cog" style="color: #64748b;"></i> <span data-i18n="order_processing">Xử lý đơn hàng</span></h3>
                         <div id="order-status-desc" style="margin-bottom: 1rem; font-size: 0.9rem; color: #64748b;">
-                            Trạng thái hiện tại: <strong id="current-status-text">-</strong>
+                            <span data-i18n="current_status">Trạng thái hiện tại:</span> <strong id="current-status-text">-</strong>
                         </div>
                         <div class="action-bar" id="seller-actions-container">
                             <!-- JS Inject Actions -->
@@ -137,8 +137,8 @@
                     </div>
                     
                     <div class="card" style="font-size: 0.85rem; color: #94a3b8;">
-                        <div>Mã đơn hàng: <strong id="disp-order-id" style="color: #64748b;">-</strong></div>
-                        <div>Ngày đặt: <span id="disp-order-date">-</span></div>
+                        <div><span data-i18n="order_id_label">Mã đơn hàng:</span> <strong id="disp-order-id" style="color: #64748b;">-</strong></div>
+                        <div><span data-i18n="order_date_label">Ngày đặt:</span> <span id="disp-order-date">-</span></div>
                     </div>
                 </div>
             </div>

@@ -66,19 +66,19 @@
             <!-- Main Marketplace -->
             <div class="products-wrapper">
                 <div class="market-header">
-                    <h2 id="market-title">Gợi ý hôm nay</h2>
+                    <h2 id="market-title" data-i18n="market_suggestions">Gợi ý hôm nay</h2>
                     <div class="market-filters">
                         <!-- Hot Search Tags -->
                         <div class="hot-tags" id="hot-tags">
-                            <span class="hot-tag" onclick="searchByTag('giày')"><i class="fa fa-fire"></i> Giày</span>
-                            <span class="hot-tag" onclick="searchByTag('áo')"><i class="fa fa-fire"></i> Áo</span>
-                            <span class="hot-tag" onclick="searchByTag('túi')"><i class="fa fa-fire"></i> Túi xách</span>
+                            <span class="hot-tag" onclick="searchByTag('giày')"><i class="fa fa-fire"></i> <span data-i18n="tag_shoes">Giày</span></span>
+                            <span class="hot-tag" onclick="searchByTag('áo')"><i class="fa fa-fire"></i> <span data-i18n="tag_shirts">Áo</span></span>
+                            <span class="hot-tag" onclick="searchByTag('túi')"><i class="fa fa-fire"></i> <span data-i18n="tag_bags">Túi xách</span></span>
                         </div>
                         <select id="sort-filter" class="glass-select" onchange="handleSort()">
-                            <option value="newest">Mới nhất</option>
-                            <option value="price-asc">Giá thấp đến cao</option>
-                            <option value="price-desc">Giá cao đến thấp</option>
-                            <option value="popular">Bán chạy</option>
+                            <option value="newest" data-i18n="latest">Mới nhất</option>
+                            <option value="price-asc" data-i18n="price_low_high">Giá thấp đến cao</option>
+                            <option value="price-desc" data-i18n="price_high_low">Giá cao đến thấp</option>
+                            <option value="popular" data-i18n="best_seller">Bán chạy</option>
                         </select>
                     </div>
                 </div>
@@ -111,7 +111,7 @@
 
     <footer class="main-footer">
         <div class="container-wide">
-            <p data-i18n="footer_copy">&copy; 2026 Zynk Community. Nền tảng chia sẻ & mua sắm.</p>
+            <p>&copy; 2026 Zynk Community. <span data-i18n="footer_desc">Nền tảng chia sẻ & mua sắm.</span></p>
         </div>
     </footer>
 

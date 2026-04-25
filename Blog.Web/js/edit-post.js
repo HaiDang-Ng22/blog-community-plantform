@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
     if (!postId) {
-        alert('Không tìm thấy ID bài viết!');
+        alert(window.t('post_id_not_found'));
         window.location.href = 'index.html';
         return;
     }
@@ -24,7 +24,7 @@ async function loadPostData(postId) {
     try {
         const post = await window.api.get(`posts/${postId}`);
         if (!post) {
-            alert('Không tải được dữ liệu bài viết.');
+            alert(window.t('load_post_failed'));
             return;
         }
 
@@ -62,7 +62,7 @@ async function loadPostData(postId) {
                 input.value = url;
                 container.appendChild(input);
             });
-            document.getElementById('file-name').textContent = `Đã tải ${imagesToLoad.length} ảnh ban đầu.`;
+            document.getElementById('file-name').textContent = window.t('loaded_original_images').replace('{count}', imagesToLoad.length);
         }
 
     } catch (error) {
@@ -76,7 +76,7 @@ async function handleMultipleImageUpload(input) {
     if (!files || files.length === 0) return;
 
     if (files.length > 5) {
-        alert('Chỉ được chọn tối đa 5 ảnh!');
+        alert(window.t('max_images_reached'));
         input.value = '';
         return;
     }
@@ -93,7 +93,7 @@ async function handleMultipleImageUpload(input) {
     // Đánh dấu người dùng đã tải ảnh mới
     isNewImagesUploaded = true;
 
-    fileNameSpan.textContent = `Đang tải lên ${files.length} ảnh...`;
+    fileNameSpan.textContent = window.t('uploading_images').replace('{count}', files.length);
     
     // Upload từng file
     let uploadedCount = 0;
@@ -142,13 +142,13 @@ async function handleMultipleImageUpload(input) {
             console.error('Error uploading:', error);
             document.getElementById(wrapId).innerHTML = `
                 <div style="width: 100%; aspect-ratio: 1; background: #fee2e2; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 0.8rem; text-align: center;">
-                    Lỗi tải
+                    ${window.t('upload_error')}
                 </div>
             `;
         }
     }
     
-    fileNameSpan.textContent = `Đã chọn và tải xong ${uploadedCount} ảnh mới.`;
+    fileNameSpan.textContent = window.t('upload_success_count').replace('{count}', uploadedCount);
 }
 
 async function handleEditSubmit(e, postId) {
@@ -171,12 +171,12 @@ async function handleEditSubmit(e, postId) {
     };
 
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải...';
+    submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${window.t('processing')}`;
 
     try {
         const result = await window.api.put(`posts/${postId}`, postData);
         msgBox.className = 'message-box success';
-        msgBox.innerHTML = result.message || 'Cập nhật thành công!';
+        msgBox.innerHTML = result.message || window.t('update_success');
         
         // Quay về trang cũ
         setTimeout(() => {
@@ -186,6 +186,6 @@ async function handleEditSubmit(e, postId) {
         msgBox.className = 'message-box error';
         msgBox.innerHTML = error.message;
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Lưu thay đổi';
+        submitBtn.innerHTML = window.t('save_changes');
     }
 }
