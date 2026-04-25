@@ -188,7 +188,7 @@ async function openProductModal(productId) {
                     <div class="modal-price" id="display-price">${window.common.formatCurrency(p.price)}</div>
                     
                     <div class="modal-scroll-area">
-                        <p class="modal-desc" style="white-space: pre-wrap; margin-bottom: 2rem;">${p.description}</p>
+                        <p class="modal-desc" style="white-space: pre-wrap; margin-bottom: 2rem; word-break: break-word;">${window.common.autoLink(p.description)}</p>
                         
                         ${group1 && options1.length > 0 ? `
                             <div class="variant-section">

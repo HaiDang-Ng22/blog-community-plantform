@@ -58,6 +58,31 @@ async function loadNotifications() {
             return;
         }
 
+        // Admin extra notifications (Reports)
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        if (userInfo.role === 'Admin' || userInfo.Role === 'Admin') {
+            try {
+                const reports = await window.api.get('admin/reports');
+                const pendingReports = reports.filter(r => !r.isResolved);
+                pendingReports.forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'noti-item unread report-noti';
+                    item.style.borderLeft = '4px solid #ef4444';
+                    item.innerHTML = `
+                        <div class="noti-avatar" style="display:flex; align-items:center; justify-content:center; background:#fee2e2; color:#ef4444;">
+                            <i class="fa-solid fa-flag"></i>
+                        </div>
+                        <div class="noti-content">
+                            <strong>${r.reporterName}</strong> đã báo cáo vi phạm: <em>${r.reason}</em>
+                            <div class="noti-time">${formatTime(r.createdAt)}</div>
+                        </div>
+                    `;
+                    item.onclick = () => window.location.href = 'admin.html';
+                    list.appendChild(item);
+                });
+            } catch (e) { console.warn('Failed to load admin reports for notifications'); }
+        }
+
         notis.forEach(n => {
             const item = document.createElement('div');
             item.className = `noti-item ${n.isRead ? '' : 'unread'}`;
@@ -76,8 +101,21 @@ async function loadNotifications() {
                     await window.api.post(`notifications/${n.id}/read`);
                     checkUnreadCount();
                 }
-                if (n.targetId) {
-                    // Logic redirect based on type
+                
+                // Logic redirect based on type
+                if (n.type === 'Like' || n.type === 'Comment') {
+                    window.location.href = `index.html#post-${n.targetId}`;
+                } else if (n.type === 'NewOrder' || n.type === 'OrderCancelled') {
+                    // Nếu là người bán (hoặc tùy thuộc vào message) thì qua kênh người bán
+                    if (n.message.toLowerCase().includes('đơn hàng mới') || n.message.toLowerCase().includes('hủy đơn')) {
+                        window.location.href = `seller-center.html`;
+                    } else {
+                        window.location.href = `my-orders.html`;
+                    }
+                } else if (n.type === 'Report' || n.type === 'Complaint') {
+                    window.location.href = `admin.html`;
+                } else if (n.targetId) {
+                    // Fallback
                     window.location.href = `index.html#post-${n.targetId}`;
                 }
             };

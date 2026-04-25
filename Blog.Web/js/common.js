@@ -47,6 +47,10 @@ async function updateNav() {
             ? userInfo.avatarUrl
             : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random&color=fff`;
 
+        // Update home page avatar if present
+        const homeAvatar = document.getElementById('current-user-avatar');
+        if (homeAvatar) homeAvatar.src = userAvatar;
+
         const langFlags = { 'vi': '🇻🇳', 'en': '🇺🇸', 'ja': '🇯🇵' };
         const currentFlag = langFlags[currentLang] || '🇻🇳';
 
@@ -91,7 +95,7 @@ async function updateNav() {
             </div>
 
             <div class="user-menu" id="user-menu-trigger">
-                <span class="user-name">${window.t('greeting')}${userName}</span>
+                <span class="user-name">${userName}</span>
                 <img src="${userAvatar}" alt="Avatar" class="mini-avatar header-avatar" onerror="this.src='https://via.placeholder.com/40'">
                 <div class="user-dropdown hidden" id="user-dropdown">
                     <a href="profile.html"><i class="fa fa-user"></i> <span data-i18n="profile">${window.t('profile')}</span></a>
@@ -242,9 +246,25 @@ window.addEventListener('languageChanged', () => {
     updateNav();
 });
 
+// Utility to auto-link URLs in text
+function autoLink(text) {
+    if (!text) return '';
+    
+    // Regex to match URLs (http, https)
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    // We should be careful to escape HTML first if the text is raw, 
+    // but in Zynk we often insert as innerHTML, so we just replace the links.
+    // Assuming the text is already safe or will be safely rendered.
+    return text.replace(urlRegex, function(url) {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;">${url}</a>`;
+    });
+}
+
 // Export to global scope
 window.common = {
     formatDate,
     showToast,
-    formatCurrency
+    formatCurrency,
+    autoLink
 };

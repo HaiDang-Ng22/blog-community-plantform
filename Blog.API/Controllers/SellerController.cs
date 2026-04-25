@@ -1,8 +1,10 @@
 using Blog.Application.Dtos;
 using Blog.Domain.Entities;
 using Blog.Domain.Interfaces;
+using Blog.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace Blog.API.Controllers;
@@ -17,19 +19,22 @@ public class SellerController : ControllerBase
     private readonly IProductRepository _productRepository;
     private readonly IRepository<ProductImage> _imageRepository;
     private readonly IOrderRepository _orderRepository;
+    private readonly AppDbContext _context;
 
     public SellerController(
         IShopRepository shopRepository,
         IRepository<ShopApplication> appRepository,
         IProductRepository productRepository,
         IRepository<ProductImage> imageRepository,
-        IOrderRepository orderRepository)
+        IOrderRepository orderRepository,
+        AppDbContext context)
     {
         _shopRepository = shopRepository;
         _appRepository = appRepository;
         _productRepository = productRepository;
         _imageRepository = imageRepository;
         _orderRepository = orderRepository;
+        _context = context;
     }
 
     [HttpPost("apply")]
@@ -137,8 +142,14 @@ public class SellerController : ControllerBase
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
+        Console.WriteLine($"[DEBUG] Updating Product ID: {id}");
         var product = await _productRepository.GetByIdAsync(id);
-        if (product == null) return NotFound(new { message = "Không tìm thấy sản phẩm." });
+        if (product == null) {
+            Console.WriteLine($"[DEBUG] Product {id} not found.");
+            return NotFound(new { message = "Không tìm thấy sản phẩm." });
+        }
+        
+        Console.WriteLine($"[DEBUG] Found Product: {product.Name}. ShopId: {product.ShopId}. State: {_context.Entry(product).State}");
         if (product.ShopId != shop.Id) return Forbid();
 
         product.Name = dto.Name;
@@ -151,32 +162,75 @@ public class SellerController : ControllerBase
         product.VariantGroupName2 = dto.VariantGroupName2;
         product.UpdatedAt = DateTime.UtcNow;
 
-        // Update Images
-        product.Images.Clear();
-        product.Images = dto.ImageUrls.Select((url, index) => new ProductImage
-        {
-            Id = Guid.NewGuid(),
-            ProductId = id,
-            Url = url,
-            OrderIndex = index
-        }).ToList();
+        // Update Images (Differential Update to preserve IDs)
+        var newImageUrls = dto.ImageUrls.Where(u => !string.IsNullOrEmpty(u)).ToList();
+        var imagesToRemove = product.Images.Where(i => !newImageUrls.Contains(i.Url)).ToList();
+        foreach (var img in imagesToRemove) product.Images.Remove(img);
 
-        // Update Variants
-        product.Variants.Clear();
-        product.Variants = dto.Variants.Select(v => new ProductVariant
+        foreach (var url in newImageUrls)
         {
-            Id = Guid.NewGuid(),
-            ProductId = id,
-            Name = v.Name,
-            Color = v.Color,
-            Size = v.Size,
-            ImageUrl = v.ImageUrl,
-            PriceOverride = v.PriceOverride,
-            Stock = v.Stock
-        }).ToList();
+            if (!product.Images.Any(i => i.Url == url))
+            {
+                product.Images.Add(new ProductImage { Id = Guid.NewGuid(), ProductId = id, Url = url });
+            }
+        }
 
-        await _productRepository.UpdateAsync(product);
-        return Ok(new { message = "Cập nhật sản phẩm thành công." });
+        // Update Variants (Differential Update by Name)
+        var existingVariants = product.Variants.ToList();
+        var newVariants = dto.Variants.ToList();
+
+        foreach (var existing in existingVariants)
+        {
+            var matchedDto = newVariants.FirstOrDefault(v => v.Name == existing.Name);
+            if (matchedDto != null)
+            {
+                // Update existing variant properties
+                existing.Color = matchedDto.Color;
+                existing.Size = matchedDto.Size;
+                existing.ImageUrl = matchedDto.ImageUrl;
+                existing.PriceOverride = matchedDto.PriceOverride;
+                existing.Stock = matchedDto.Stock;
+                newVariants.Remove(matchedDto); // Mark as handled
+            }
+            else
+            {
+                // Remove missing variant
+                product.Variants.Remove(existing);
+            }
+        }
+
+        // Add genuinely new variants
+        foreach (var v in newVariants)
+        {
+            product.Variants.Add(new ProductVariant
+            {
+                Id = Guid.NewGuid(),
+                ProductId = id,
+                Name = v.Name,
+                Color = v.Color,
+                Size = v.Size,
+                ImageUrl = v.ImageUrl,
+                PriceOverride = v.PriceOverride,
+                Stock = v.Stock
+            });
+        }
+
+        try
+        {
+            await _productRepository.UpdateAsync(product);
+            return Ok(new { message = "Cập nhật sản phẩm thành công." });
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            return StatusCode(500, new { 
+                message = $"Lỗi cập nhật: Bản ghi có thể đã bị xóa hoặc thay đổi. Chi tiết: {ex.Message}"
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Update failed: {ex.Message}");
+            return StatusCode(500, new { message = $"Lỗi hệ thống: {ex.Message}" });
+        }
     }
 
     [HttpDelete("products/{id}")]

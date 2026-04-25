@@ -175,6 +175,18 @@ async function loadCategoriesForProduct() {
 }
 
 // Category Cascade Logic
+function getCategoryPath(id) {
+    if (!id) return [];
+    const path = [];
+    let current = allCategories.find(c => c.id.toLowerCase() === id.toLowerCase());
+    while (current) {
+        path.unshift(current);
+        if (!current.parentCategoryId) break;
+        current = allCategories.find(c => c.id.toLowerCase() === current.parentCategoryId.toLowerCase());
+    }
+    return path;
+}
+
 function resetCategoryCascade() {
     const container = document.getElementById('category-cascade-selects');
     if (!container) return;
@@ -186,7 +198,7 @@ function resetCategoryCascade() {
     if (roots.length > 0) addCascadeLevel(roots, 0, 'category-cascade-selects', 'p-category', 'category-selected-path');
 }
 
-function addCascadeLevel(options, level, containerId, hiddenInputId, pathId) {
+function addCascadeLevel(options, level, containerId, hiddenInputId, pathId, preSelectedPath = []) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -198,6 +210,11 @@ function addCascadeLevel(options, level, containerId, hiddenInputId, pathId) {
     select.className = 'cascade-select';
     select.innerHTML = `<option value="" disabled selected>Chọn danh mục cấp ${level + 1}</option>` + 
         options.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+    // Pre-selection logic
+    if (preSelectedPath && preSelectedPath[level]) {
+        select.value = preSelectedPath[level].id;
+    }
 
     select.onchange = () => {
         const val = select.value;
@@ -212,7 +229,17 @@ function addCascadeLevel(options, level, containerId, hiddenInputId, pathId) {
         }
         updateCategoryPath(containerId, pathId);
     };
+
     container.appendChild(select);
+
+    // If pre-selected, trigger next level automatically
+    if (preSelectedPath && preSelectedPath[level]) {
+        const val = select.value;
+        const children = allCategories.filter(c => c.parentCategoryId === val);
+        if (children.length > 0) {
+            addCascadeLevel(children, level + 1, containerId, hiddenInputId, pathId, preSelectedPath);
+        }
+    }
 }
 
 function updateCategoryPath(containerId, pathId) {
@@ -324,20 +351,29 @@ function openEditProductModal(id) {
     document.getElementById('edit-p-price').value = p.price;
     document.getElementById('edit-p-stock').value = p.stock;
     document.getElementById('edit-p-desc').value = p.description;
-    document.getElementById('edit-p-images').value = p.imageUrls ? p.imageUrls.join(', ') : '';
+    
+    // Handle images: could be imageUrls (if using DTO) or images (if entity)
+    let imageUrls = [];
+    if (p.imageUrls) {
+        imageUrls = p.imageUrls;
+    } else if (p.images) {
+        imageUrls = p.images.map(img => typeof img === 'string' ? img : img.url);
+    }
+    document.getElementById('edit-p-images').value = imageUrls.join(', ');
     document.getElementById('edit-p-variant-group1').value = p.variantGroupName1 || '';
     document.getElementById('edit-p-variant-group2').value = p.variantGroupName2 || '';
 
     fillVariants('edit-variant-list-container', p.variants || []);
     
-    // Category pre-selection (simplified for now)
+    // Category pre-selection
     document.getElementById('edit-p-category').value = p.categoryId;
+    const path = getCategoryPath(p.categoryId);
+    const roots = allCategories.filter(c => !c.parentCategoryId);
+    
     const container = document.getElementById('edit-category-cascade-selects');
-    container.innerHTML = '<p style="font-size:0.8rem; color:#64748b;">Chạm vào đây nếu muốn đổi danh mục</p>';
-    container.onclick = () => {
-        const roots = allCategories.filter(c => !c.parentCategoryId);
-        addCascadeLevel(roots, 0, 'edit-category-cascade-selects', 'edit-p-category', 'edit-category-selected-path');
-    };
+    container.innerHTML = '';
+    addCascadeLevel(roots, 0, 'edit-category-cascade-selects', 'edit-p-category', 'edit-category-selected-path', path);
+    updateCategoryPath('edit-category-cascade-selects', 'edit-category-selected-path');
 
     document.getElementById('product-edit-modal').classList.remove('hidden');
 }

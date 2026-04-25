@@ -18,7 +18,7 @@ public class PostRepository : GenericRepository<Post>, IPostRepository
             .Include(p => p.PostLikes)
             .Include(p => p.Comments)
             .Include(p => p.Images)
-            .OrderByDescending(p => p.PublishedAt)
+            .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
 

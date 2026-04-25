@@ -138,6 +138,10 @@ async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
         }
 
         document.getElementById('post-count').textContent = userPosts.length;
+        
+        // Sắp xếp bài viết mới nhất lên đầu
+        userPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
         userPosts.forEach(post => {
             grid.appendChild(createPostCard(post));
         });
@@ -161,71 +165,122 @@ function createPostCard(post) {
     const images = post.imageUrls && post.imageUrls.length > 0 ? post.imageUrls : (post.featuredImageUrl ? [post.featuredImageUrl] : []);
     const hasMultiple = images.length > 1;
 
-    card.innerHTML = `
-        <div class="post-header">
-            <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + post.authorName}" class="mini-avatar" alt="Avatar">
-            <div class="author-info">
-                <a href="profile.html?id=${post.authorId}" class="author-name">${post.authorName}</a>
-            </div>
-            ${currentUser.id ? `
-                <div class="post-options" style="margin-left: auto;">
-                    <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
-                    <div class="options-menu hidden">
-                        ${isOwner ? `
-                            <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
-                            <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-                        ` : `
-                            <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
-                        `}
+    const hasImages = images.length > 0;
+    if (!hasImages) {
+        // Threads Style: Avatar on left, content on right
+        card.classList.add('threads-style');
+        card.innerHTML = `
+            <div class="threads-container" style="display: flex; gap: 12px; padding: 12px;">
+                <div class="threads-left" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + post.authorName}" class="mini-avatar" alt="Avatar" style="width: 44px; height: 44px;">
+                    <div class="threads-line" style="flex: 1; width: 2px; background: #efefef; border-radius: 1px;"></div>
+                </div>
+                <div class="threads-right" style="flex: 1;">
+                    <div class="post-header" style="padding: 0; margin-bottom: 4px; border: none; display: flex; justify-content: space-between; align-items: center;">
+                        <div class="author-info">
+                            <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 700; font-size: 0.95rem;">${post.authorName}</a>
+                            <span class="post-time" style="margin-left: 8px; color: #8e8e8e; font-size: 0.85rem;">${formatDate(post.createdAt)}</span>
+                        </div>
+                        ${currentUser.id ? `
+                            <div class="post-options">
+                                <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
+                                <div class="options-menu hidden">
+                                    ${isOwner ? `
+                                        <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
+                                        <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+                                    ` : `
+                                        <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
+                                    `}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="post-content" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 12px;">
+                        ${post.content}
+                    </div>
+                    <div class="post-actions" style="padding: 0; gap: 16px;">
+                        <button class="action-btn ${post.isLikedByMe ? 'liked' : ''}" onclick="postActions.toggleLike('${post.id}', this)" style="padding: 0; font-size: 1.2rem;">
+                            <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                        </button>
+                        <button class="action-btn" onclick="postActions.toggleComments('${post.id}', this.closest('.post-card'))" style="padding: 0; font-size: 1.2rem;">
+                            <i class="fa-regular fa-comment"></i>
+                        </button>
+                        <button class="action-btn" style="padding: 0; font-size: 1.2rem;">
+                            <i class="fa-regular fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="post-stats" style="margin-top: 8px; font-size: 0.85rem; color: #8e8e8e;">
+                        <span class="post-likes-count">${post.likeCount} lượt thích</span>
                     </div>
                 </div>
-            ` : ''}
-        </div>
+            </div>
+        `;
+    } else {
+        // Instagram Style: Header, Large Media, Actions, Caption
+        card.classList.add('instagram-style');
+        card.innerHTML = `
+            <div class="post-header" style="padding: 12px; border-bottom: none;">
+                <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + post.authorName}" class="mini-avatar" alt="Avatar" style="width: 32px; height: 32px;">
+                <div class="author-info">
+                    <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 600; font-size: 0.9rem;">${post.authorName}</a>
+                </div>
+                ${currentUser.id ? `
+                    <div class="post-options" style="margin-left: auto;">
+                        <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
+                        <div class="options-menu hidden">
+                            ${isOwner ? `
+                                <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
+                                <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+                            ` : `
+                                <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
+                            `}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
 
-        ${images.length > 0 ? `
-            <div class="post-media-container" style="position:relative;">
-                ${hasMultiple ? `<button class="carousel-nav-btn left" onclick="window.scrollCarousel(this, -1)"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
+            <div class="post-media-container" style="position:relative; background: #fafafa; min-height: 300px; display: flex; align-items: center;">
+                ${hasMultiple ? `<button class="carousel-nav-btn left" onclick="scrollCarousel(this, -1)"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
                 
-                <div class="post-carousel" onscroll="window.handleCarouselScroll(this)">
+                <div class="post-carousel" onscroll="handleCarouselScroll(this)">
                     ${images.map(url => `
                         <div class="post-carousel-item">
-                            <img src="${url}" alt="Post Image" loading="lazy">
+                            <img src="${url}" alt="Post Image" loading="lazy" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
                         </div>
                     `).join('')}
                 </div>
                 
-                ${hasMultiple ? `<button class="carousel-nav-btn right" onclick="window.scrollCarousel(this, 1)"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
-
+                ${hasMultiple ? `<button class="carousel-nav-btn right" onclick="scrollCarousel(this, 1)"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
+ 
                 ${hasMultiple ? `
                     <div class="carousel-dots">
                         ${images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}
                     </div>
                 ` : ''}
             </div>
-        ` : ''}
 
-        <div class="post-actions">
-            <button class="action-btn ${post.isLikedByMe ? 'liked' : ''}" onclick="postActions.toggleLike('${post.id}', this)">
-                <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-            </button>
-            <button class="action-btn" onclick="postActions.toggleComments('${post.id}', this.closest('.post-card'))">
-                <i class="fa-regular fa-comment"></i>
-            </button>
-            <button class="action-btn">
-                <i class="fa-regular fa-paper-plane"></i>
-            </button>
-        </div>
-
-        <div class="post-content-area">
-            <div class="post-likes-count">${post.likeCount} lượt thích</div>
-            <div class="post-caption">
-                <span class="author-name">${post.authorName}</span>
-                <span class="post-title" style="font-weight:600; display:block; margin: 4px 0;">${post.title}</span>
-                ${post.content}
+            <div class="post-actions" style="padding: 12px 12px 8px; gap: 16px;">
+                <button class="action-btn ${post.isLikedByMe ? 'liked' : ''}" onclick="postActions.toggleLike('${post.id}', this)" style="padding: 0; font-size: 1.4rem;">
+                    <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                </button>
+                <button class="action-btn" onclick="postActions.toggleComments('${post.id}', this.closest('.post-card'))" style="padding: 0; font-size: 1.4rem;">
+                    <i class="fa-regular fa-comment"></i>
+                </button>
+                <button class="action-btn" style="padding: 0; font-size: 1.4rem;">
+                    <i class="fa-regular fa-paper-plane"></i>
+                </button>
             </div>
-            <div class="post-time">${formatDate(post.createdAt)}</div>
-        </div>
-    `;
+
+            <div class="post-content-area" style="padding: 0 12px 12px;">
+                <div class="post-likes-count" style="font-weight: 700; font-size: 0.9rem; margin-bottom: 6px;">${post.likeCount} lượt thích</div>
+                <div class="post-caption" style="font-size: 0.9rem; line-height: 1.4;">
+                    <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 700; margin-right: 6px; text-decoration: none; color: inherit;">${post.authorName}</a>
+                    ${post.content}
+                </div>
+                <div class="post-time" style="margin-top: 6px; font-size: 0.75rem; color: #8e8e8e; text-transform: uppercase;">${formatDate(post.createdAt)}</div>
+            </div>
+        `;
+    }
     return card;
 }
 
