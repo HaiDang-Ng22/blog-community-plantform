@@ -147,7 +147,7 @@ async function openProductModal(productId) {
 
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    content.innerHTML = '<div style="padding: 2rem; text-align: center;"><i class="fa fa-spinner fa-spin"></i> Đang tải chi tiết sản phẩm...</div>';
+    content.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: #64748b;"><i class="fa fa-spinner fa-spin fa-2x"></i><p style="margin-top:1rem;">Đang tải sản phẩm...</p></div>';
 
     try {
         const p = await window.api.get(`marketplace/products/${productId}`);
@@ -267,10 +267,18 @@ let selAttr2 = null;
 let selectedVariantId = null;
 
 function closeModal() {
-    document.getElementById('product-modal').classList.add('hidden');
+    const modal = document.getElementById('product-modal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
     selAttr1 = null;
     selAttr2 = null;
     selectedVariantId = null;
+}
+
+function handleModalOverlayClick(e) {
+    if (e.target === document.getElementById('product-modal')) {
+        closeModal();
+    }
 }
 
 function changeQty(n) {
