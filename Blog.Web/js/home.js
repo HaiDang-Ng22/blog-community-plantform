@@ -26,6 +26,22 @@ async function loadPosts() {
         posts.forEach(post => {
             grid.appendChild(createPostCard(post));
         });
+
+        // Handle hash navigation for notifications
+        if (window.location.hash && window.location.hash.startsWith('#post-')) {
+            const targetId = window.location.hash.substring(1); // remove '#'
+            setTimeout(() => {
+                const targetEl = document.getElementById(targetId);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetEl.style.transition = 'box-shadow 0.5s ease-in-out';
+                    targetEl.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.5)';
+                    setTimeout(() => {
+                        targetEl.style.boxShadow = '';
+                    }, 2000);
+                }
+            }, 500); // Wait for DOM layout
+        }
     } catch (error) {
         grid.innerHTML = `<p class="error">Không thể tải bài viết: ${error.message}</p>`;
     }
@@ -35,6 +51,7 @@ function createPostCard(post) {
     const card = document.createElement('div');
     card.className = 'post-card animate-up';
     card.dataset.id = post.id;
+    card.id = `post-${post.id}`;
 
     const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
     const isOwner = currentUser.id === post.authorId;

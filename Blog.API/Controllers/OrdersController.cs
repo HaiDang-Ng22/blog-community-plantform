@@ -114,10 +114,31 @@ public class OrdersController : ControllerBase
             product.Stock -= itemDto.Quantity;
             product.SalesCount += itemDto.Quantity;
             await _productRepository.UpdateAsync(product);
+            
+            // Keep track of shop ID for notification
+            if (product.ShopId != Guid.Empty && !order.Items.Any(i => i.Id != orderItem.Id && i.Product?.ShopId == product.ShopId))
+            {
+                var shop = await _shopRepository.GetByIdAsync(product.ShopId);
+                if (shop != null)
+                {
+                    var noti = new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        ReceiverId = shop.UserId,
+                        ActorId = userId,
+                        Type = "NewOrder",
+                        TargetId = order.Id,
+                        Message = "đã đặt một đơn hàng mới từ shop của bạn.",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Notifications.Add(noti);
+                }
+            }
         }
 
         order.TotalAmount = total;
         await _orderRepository.AddAsync(order);
+        await _context.SaveChangesAsync();
 
         return Ok(new { message = "Đặt hàng thành công", orderId = order.Id });
     }
@@ -194,10 +215,67 @@ public class OrdersController : ControllerBase
             order.Status = newStatus;
             order.UpdatedAt = DateTime.UtcNow;
             await _orderRepository.UpdateAsync(order);
-            return Ok(new { message = $"Đã chuyển trạng thái sang: {newStatus}" });
+
+            // Generate Notifications
+            if (isBuyer && !isSeller && newStatus == OrderStatus.Cancelled)
+            {
+                // Buyer cancelled -> Notify Seller
+                var shopId = order.Items.FirstOrDefault()?.Product?.ShopId;
+                if (shopId.HasValue)
+                {
+                    var shop = await _shopRepository.GetByIdAsync(shopId.Value);
+                    if (shop != null)
+                    {
+                        var noti = new Notification
+                        {
+                            Id = Guid.NewGuid(),
+                            ReceiverId = shop.UserId,
+                            ActorId = userId,
+                            Type = "OrderCancelled",
+                            TargetId = order.Id,
+                            Message = "đã hủy đơn hàng.",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.Notifications.Add(noti);
+                    }
+                }
+            }
+            else if (isSeller && !isBuyer)
+            {
+                // Seller updated status -> Notify Buyer
+                var noti = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    ReceiverId = order.BuyerId,
+                    ActorId = userId, // Seller user ID
+                    Type = "OrderStatusUpdated",
+                    TargetId = order.Id,
+                    Message = $"đã cập nhật đơn hàng thành: {GetStatusDisplayName(newStatus)}",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Notifications.Add(noti);
+            }
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Đã chuyển trạng thái sang: {GetStatusDisplayName(newStatus)}" });
         }
 
-        return BadRequest(new { message = $"Trạng thái '{request.Status}' không hợp lệ. Các trạng thái hợp lệ: {string.Join(", ", Enum.GetNames<OrderStatus>())}" });
+        return BadRequest(new { message = $"Trạng thái '{request.Status}' không hợp lệ." });
+    }
+
+    private string GetStatusDisplayName(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Unpaid => "Chờ thanh toán",
+            OrderStatus.AwaitingShipment => "Chờ lấy hàng",
+            OrderStatus.Packed => "Đã đóng gói",
+            OrderStatus.Shipped => "Đang giao",
+            OrderStatus.Delivered => "Đã giao hàng",
+            OrderStatus.Completed => "Hoàn thành",
+            OrderStatus.Cancelled => "Đã hủy",
+            _ => status.ToString()
+        };
     }
 
     [HttpGet("{id}")]

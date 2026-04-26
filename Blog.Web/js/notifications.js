@@ -106,12 +106,9 @@ async function loadNotifications() {
                 if (n.type === 'Like' || n.type === 'Comment') {
                     window.location.href = `index.html#post-${n.targetId}`;
                 } else if (n.type === 'NewOrder' || n.type === 'OrderCancelled') {
-                    // Nếu là người bán (hoặc tùy thuộc vào message) thì qua kênh người bán
-                    if (n.message.toLowerCase().includes('đơn hàng mới') || n.message.toLowerCase().includes('hủy đơn')) {
-                        window.location.href = `seller-center.html`;
-                    } else {
-                        window.location.href = `my-orders.html`;
-                    }
+                    window.location.href = `seller-order-detail.html?id=${n.targetId}`;
+                } else if (n.type === 'OrderStatusUpdated') {
+                    window.location.href = `order-detail.html?id=${n.targetId}`;
                 } else if (n.type === 'Report' || n.type === 'Complaint') {
                     window.location.href = `admin.html`;
                 } else if (n.targetId) {
