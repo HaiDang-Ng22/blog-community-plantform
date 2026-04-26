@@ -94,8 +94,8 @@ function updateStepper(status) {
     const statusOrder = ['unpaid', 'awaitingshipment', 'awaitingcollection', 'intransit', 'completed'];
     let currentIndex = statusOrder.indexOf(s);
     
-    // If status is Delivered, we map it to InTransit for the stepper as the last active stage before completed
-    if (s === 'delivered') currentIndex = 3;
+    // If status is Delivered, we map it to Completed for the stepper as both show "Đã giao hàng"
+    if (s === 'delivered') currentIndex = 4;
     if (s === 'cancelled' || s === 'returned') {
         // Handle cancelled/returned visually if needed
         document.getElementById('order-stepper').innerHTML = `

@@ -25,24 +25,62 @@ public class MarketplaceController : ControllerBase
     }
 
     [HttpGet("products")]
-    public async Task<IActionResult> GetProducts([FromQuery] Guid? categoryId)
+    public async Task<IActionResult> GetProducts(
+        [FromQuery] Guid? categoryId,
+        [FromQuery] string? keyword,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] string? sortBy)
     {
-        List<Product> products;
+        var query = _context.Products
+            .Include(p => p.Shop)
+            .Include(p => p.Category)
+            .Where(p => p.Status == ProductStatus.Active);
+
+        // 1. Filter by categoryId (hierarchical)
         if (categoryId.HasValue)
         {
             var categoryIds = await GetCategoryIdsRecursive(categoryId.Value);
-            products = await _context.Products
-                .Include(p => p.Shop)
-                .Include(p => p.Category)
-                .Where(p => categoryIds.Contains(p.CategoryId) && p.Status == ProductStatus.Active)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            query = query.Where(p => categoryIds.Contains(p.CategoryId));
         }
-        else
+
+        // 2. Filter by keyword (Name, Description, or Category Name)
+        if (!string.IsNullOrWhiteSpace(keyword))
         {
-            var featured = await _productRepository.GetFeaturedProductsAsync(50);
-            products = featured.ToList();
+            var kw = keyword.ToLower();
+            
+            // Find categories matching keyword to include their products
+            var matchingCats = await _context.Categories
+                .Where(c => c.Name.ToLower().Contains(kw))
+                .ToListAsync();
+            
+            var allMatchingCatIds = new List<Guid>();
+            foreach(var cat in matchingCats)
+            {
+                allMatchingCatIds.AddRange(await GetCategoryIdsRecursive(cat.Id));
+            }
+            allMatchingCatIds = allMatchingCatIds.Distinct().ToList();
+
+            query = query.Where(p => p.Name.ToLower().Contains(kw) || 
+                                    p.Description.ToLower().Contains(kw) || 
+                                    allMatchingCatIds.Contains(p.CategoryId));
         }
+
+        // 3. Filter by Price
+        if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice.Value);
+        if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
+
+        // 4. Sorting
+        switch (sortBy?.ToLower())
+        {
+            case "price_asc": query = query.OrderBy(p => p.Price); break;
+            case "price_desc": query = query.OrderByDescending(p => p.Price); break;
+            case "rating_desc": query = query.OrderByDescending(p => p.Rating); break;
+            case "sales_desc": query = query.OrderByDescending(p => p.SalesCount); break;
+            default: query = query.OrderByDescending(p => p.CreatedAt); break;
+        }
+
+        var products = await query.ToListAsync();
 
         var dtos = products.Select(p => new ProductDto
         {

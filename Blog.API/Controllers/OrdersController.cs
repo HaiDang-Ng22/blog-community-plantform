@@ -268,12 +268,13 @@ public class OrdersController : ControllerBase
         return status switch
         {
             OrderStatus.Unpaid => "Chờ thanh toán",
-            OrderStatus.AwaitingShipment => "Chờ lấy hàng",
-            OrderStatus.Packed => "Đã đóng gói",
-            OrderStatus.Shipped => "Đang giao",
+            OrderStatus.AwaitingShipment => "Chờ vận chuyển",
+            OrderStatus.AwaitingCollection => "Chờ lấy hàng",
+            OrderStatus.InTransit => "Đang giao",
             OrderStatus.Delivered => "Đã giao hàng",
             OrderStatus.Completed => "Hoàn thành",
             OrderStatus.Cancelled => "Đã hủy",
+            OrderStatus.Returned => "Trả hàng/Hoàn tiền",
             _ => status.ToString()
         };
     }

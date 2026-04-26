@@ -103,12 +103,6 @@ function renderOrderCard(o) {
 
     // ---- Action Buttons ----
     let actionBtns = '';
-    if (s === 'delivered') {
-        actionBtns = `<button class="btn-confirm-recv" onclick="event.stopPropagation(); confirmOrder('${o.id}')"
-            style="background:#10b981; color: white; border: none; padding: 0.6rem 1.4rem; border-radius: 0.5rem; font-weight: 700; cursor:pointer; font-size:0.9rem;">
-            <i class="fa fa-check"></i> Đã nhận hàng
-        </button>`;
-    }
     if (s === 'completed' || s === 'cancelled') {
         const itemsData = encodeURIComponent(JSON.stringify(o.items));
         actionBtns += `<button class="btn-reorder" onclick="event.stopPropagation(); reorder('${o.id}', '${itemsData}')"
@@ -118,7 +112,9 @@ function renderOrderCard(o) {
     }
 
     // ---- Review Banner (only for "delivered" status) ----
-    const reviewBanner = s === 'delivered' ? `
+    const reviewedOrders = JSON.parse(localStorage.getItem('reviewed_orders') || '[]');
+    const isReviewed = reviewedOrders.includes(o.id);
+    const reviewBanner = (s === 'delivered' || s === 'completed') && !isReviewed ? `
         <div class="review-banner" onclick="event.stopPropagation(); openReviewForOrder('${o.id}')">
             <i class="fa-solid fa-star" style="color:#f59e0b; font-size:1.5rem; flex-shrink:0;"></i>
             <div style="flex:1;">
@@ -162,38 +158,21 @@ function renderOrderCard(o) {
 // ========= STATUS LABELS =========
 function getStatusLabel(s) {
     const labels = {
-        'unpaid':              'Chờ xác nhận',
-        'awaitingshipment':    'Chờ lấy hàng',
-        'awaitingcollection':  'Đang chuẩn bị',
-        'intransit':           'Đang giao hàng',
-        'delivered':           '📦 Đã giao hàng',
-        'completed':           '✅ Hoàn thành',
-        'cancelled':           'Đã hủy',
-        'returned':            'Đã trả hàng'
+        'unpaid': 'Chờ xác nhận',
+        'awaitingshipment': 'Chờ lấy hàng',
+        'awaitingcollection': 'Đang chuẩn bị',
+        'intransit': 'Đang giao hàng',
+        'delivered': '📦 Đã giao hàng',
+        'completed': '✅ Hoàn thành',
+        'cancelled': 'Đã hủy',
+        'returned': 'Đã trả hàng'
     };
     return labels[s] || s;
 }
 
-// ========= CONFIRM ORDER (Buyer xác nhận nhận hàng) =========
-async function confirmOrder(orderId) {
-    if (!confirm('Bạn xác nhận đã nhận được hàng?\nSau khi xác nhận, bạn có thể đánh giá sản phẩm!')) return;
+// ========= CONFIRM ORDER (Buyer xác nhận nhận hàng - removed) =========
+// Function removed as seller updates status to completed
 
-    // Capture order data before reload
-    const order = allOrders.find(o => o.id === orderId);
-
-    try {
-        await window.api.patch(`orders/${orderId}/status`, { status: 'Completed' });
-        window.common?.showToast('🎉 Đơn hàng hoàn thành! Hãy để lại đánh giá nhé.', 'success');
-        loadOrders(); // reload in background
-
-        // Show review modal after short delay
-        if (order?.items?.length > 0) {
-            setTimeout(() => showReviewModal(order), 600);
-        }
-    } catch (e) {
-        alert('Lỗi: ' + e.message);
-    }
-}
 
 // Open review modal from the banner (for delivered orders not yet confirmed)
 function openReviewForOrder(orderId) {
@@ -247,7 +226,7 @@ function showReviewModal(order) {
             <div style="margin-bottom:0.85rem;">
                 <div style="font-size:0.85rem;font-weight:600;color:#475569;margin-bottom:0.5rem;">Chất lượng sản phẩm</div>
                 <div style="display:flex;align-items:center;gap:0.35rem;">
-                    ${[1,2,3,4,5].map(s => `
+                    ${[1, 2, 3, 4, 5].map(s => `
                         <span class="star-btn"
                             data-product="${item.productId}"
                             data-val="${s}"
@@ -332,8 +311,18 @@ async function submitAllReviews() {
 
     closeReviewModal();
     if (submitted > 0) {
+        const reviewedOrders = JSON.parse(localStorage.getItem('reviewed_orders') || '[]');
+        reviewedOrders.push(_reviewOrder.id);
+        localStorage.setItem('reviewed_orders', JSON.stringify(reviewedOrders));
         window.common?.showToast(`✅ Đã gửi ${submitted} đánh giá. Cảm ơn bạn!`, 'success');
+        renderOrders(); // Re-render to hide banner
     } else {
+        const reviewedOrders = JSON.parse(localStorage.getItem('reviewed_orders') || '[]');
+        if (!reviewedOrders.includes(_reviewOrder.id)) {
+            reviewedOrders.push(_reviewOrder.id);
+            localStorage.setItem('reviewed_orders', JSON.stringify(reviewedOrders));
+            renderOrders();
+        }
         window.common?.showToast('Sản phẩm đã được đánh giá trước đó.', 'warning');
     }
 }

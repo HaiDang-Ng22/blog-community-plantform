@@ -23,6 +23,46 @@
         
         .no-results { text-align: center; padding: 3rem; color: #94a3b8; }
         .no-results i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+
+        /* Post Result Card (Social Style) */
+        .post-result-card { 
+            display: flex; 
+            flex-direction: column; 
+            background: #fff; 
+            border-radius: 12px; 
+            margin-bottom: 2rem; 
+            border: 1px solid #dbdbdb; 
+            max-width: 600px; 
+            margin-left: auto; 
+            margin-right: auto;
+            overflow: hidden;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            justify-content: space-between;
+        }
+        .post-author-info { display: flex; align-items: center; gap: 12px; }
+        .post-author-info img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .post-author-info span { font-weight: 700; color: #262626; font-size: 0.9rem; }
+        .post-more { color: #8e8e8e; cursor: pointer; }
+
+        .post-image { width: 100%; min-height: 300px; background: #fafafa; display: flex; align-items: center; justify-content: center; }
+        .post-image img { width: 100%; height: auto; display: block; }
+
+        .post-footer { padding: 12px 16px; }
+        .post-actions { display: flex; gap: 16px; margin-bottom: 10px; font-size: 1.5rem; }
+        .post-actions i { cursor: pointer; transition: color 0.2s; }
+        .post-actions .fa-heart:hover { color: #ed4956; }
+
+        .post-likes { font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: #262626; }
+        .post-caption { font-size: 0.95rem; line-height: 1.4; color: #262626; margin-bottom: 8px; }
+        .post-caption .author-name { font-weight: 700; margin-right: 8px; }
+        .post-time { font-size: 0.75rem; color: #8e8e8e; text-transform: uppercase; letter-spacing: 0.2px; }
+
+        .post-result-content { white-space: pre-wrap; word-break: break-word; }
     </style>
 </head>
 

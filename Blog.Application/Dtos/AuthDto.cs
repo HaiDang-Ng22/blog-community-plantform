@@ -85,6 +85,10 @@ public class PostSearchResult
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Summary { get; set; }
+    public string? Content { get; set; }
+    public string? FeaturedImageUrl { get; set; }
     public string AuthorName { get; set; } = string.Empty;
+    public string? AuthorAvatarUrl { get; set; }
+    public int LikeCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }

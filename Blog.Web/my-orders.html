@@ -87,15 +87,53 @@
         }
 
         /* Status badge styles */
-        .status-badge { display: inline-block; border-radius: 6px; padding: 4px 10px; font-size: 0.78rem; font-weight: 700; }
-        .status-badge.unpaid { background: #fef3c7; color: #d97706; }
-        .status-badge.awaitingshipment { background: #e0f2fe; color: #0369a1; }
-        .status-badge.awaitingcollection { background: #ede9fe; color: #7c3aed; }
-        .status-badge.intransit { background: #dbeafe; color: #1d4ed8; }
-        .status-badge.delivered { background: #d1fae5; color: #065f46; }
-        .status-badge.completed { background: #d1fae5; color: #059669; }
-        .status-badge.cancelled { background: #fee2e2; color: #dc2626; }
-        .status-badge.returned { background: #fce7f3; color: #be185d; }
+        .status-badge {
+            display: inline-block;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .status-badge.unpaid {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-badge.awaitingshipment {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .status-badge.awaitingcollection {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .status-badge.intransit {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-badge.delivered {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.completed {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-badge.cancelled {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-badge.returned {
+            background: #fce7f3;
+            color: #be185d;
+        }
 
         /* Banner đánh giá */
         .review-banner {
@@ -109,9 +147,17 @@
             margin-top: 0.75rem;
             animation: pulse-yellow 2s ease-in-out infinite;
         }
+
         @keyframes pulse-yellow {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.3); }
-            50% { box-shadow: 0 0 0 6px rgba(251,191,36,0); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(251, 191, 36, 0);
+            }
         }
 
         .order-item {
@@ -189,7 +235,7 @@
                     <div class="zynk-logo-clean logo-header"></div>
                 </a>
             </div>
-            
+
             <div id="nav-actions" class="nav-actions">
                 <!-- Sẽ được điền bằng JS -->
             </div>
@@ -199,28 +245,35 @@
     <main class="container">
         <div class="orders-header" style="margin-bottom: 2rem;">
             <h2 style="font-size: 1.8rem; font-weight: 800; color: #1e293b;" data-i18n="my_orders">Đơn hàng của tôi</h2>
-            <p style="color: #64748b; font-size: 0.95rem;" data-i18n="orders_desc">Theo dõi và quản lý lịch sử mua sắm của bạn</p>
+            <p style="color: #64748b; font-size: 0.95rem;" data-i18n="orders_desc">Theo dõi và quản lý lịch sử mua sắm
+                của bạn</p>
         </div>
 
         <!-- Search Bar -->
-        <div class="search-section" style="margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; display: flex; gap: 1rem;">
+        <div class="search-section"
+            style="margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; display: flex; gap: 1rem;">
             <div style="flex: 1; position: relative;">
-                <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
-                <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng hoặc Tên sản phẩm..." data-i18n="order_search_placeholder"
+                <i class="fa fa-search"
+                    style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng hoặc Tên sản phẩm..."
+                    data-i18n="order_search_placeholder"
                     style="width: 100%; padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; outline: none; transition: 0.2s;">
             </div>
-            <button class="btn-reorder" onclick="applyBuyerSearch()" style="width: auto; padding: 0 2rem; margin: 0;"><span data-i18n="find_order">Tìm đơn hàng</span></button>
+            <button class="btn-reorder" onclick="applyBuyerSearch()"
+                style="width: auto; padding: 0 2rem; margin: 0;"><span data-i18n="find_order">Tìm đơn
+                    hàng</span></button>
         </div>
 
         <!-- Status Filter Tabs -->
-        <div class="tabs-container" style="background: #fff; border-radius: 1rem; padding: 4px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+        <div class="tabs-container"
+            style="background: #fff; border-radius: 1rem; padding: 4px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
             <div class="tabs" style="border-bottom: none; margin-bottom: 0;">
                 <div class="tab-item active" data-status="ALL" data-i18n="status_all">Tất cả</div>
                 <div class="tab-item" data-status="Unpaid" data-i18n="status_pending">Chờ xác nhận</div>
                 <div class="tab-item" data-status="AwaitingShipment" data-i18n="status_awaiting">Chờ giao</div>
                 <div class="tab-item" data-status="InTransit" data-i18n="status_delivering">Đang giao</div>
                 <div class="tab-item" data-status="Delivered" data-i18n="status_delivered">Đã giao hàng</div>
-                <div class="tab-item" data-status="Completed" data-i18n="status_completed">Hoàn thành</div>
+                <!-- <div class="tab-item" data-status="Completed" data-i18n="status_completed">Hoàn thành</div> -->
                 <div class="tab-item" data-status="Cancelled" data-i18n="status_cancelled">Đã hủy</div>
             </div>
         </div>
