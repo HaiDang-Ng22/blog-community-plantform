@@ -25,9 +25,11 @@ public class SearchController : ControllerBase
             return Ok(new SearchResultDto());
 
         var query = q.ToLower();
+        Guid? searchId = null;
+        if (Guid.TryParse(q, out var guid)) searchId = guid;
 
         var users = await _context.Users
-            .Where(u => u.Username.ToLower().Contains(query) || u.FullName.ToLower().Contains(query))
+            .Where(u => u.Username.ToLower().Contains(query) || u.FullName.ToLower().Contains(query) || (searchId.HasValue && u.Id == searchId.Value))
             .Take(10)
             .Select(u => new UserSearchResult
             {
@@ -40,7 +42,7 @@ public class SearchController : ControllerBase
             .ToListAsync();
 
         var posts = await _context.Posts
-            .Where(p => p.Title.ToLower().Contains(query) || p.Content.ToLower().Contains(query))
+            .Where(p => p.Title.ToLower().Contains(query) || p.Content.ToLower().Contains(query) || (searchId.HasValue && p.Id == searchId.Value))
             .Include(p => p.Author)
             .Take(10)
             .Select(p => new PostSearchResult
@@ -48,7 +50,11 @@ public class SearchController : ControllerBase
                 Id = p.Id,
                 Title = p.Title,
                 Summary = p.Summary,
+                Content = p.Content,
+                FeaturedImageUrl = p.FeaturedImageUrl,
                 AuthorName = p.Author != null ? p.Author.FullName : "Người dùng",
+                AuthorAvatarUrl = p.Author != null ? p.Author.AvatarUrl : null,
+                LikeCount = p.LikeCount,
                 CreatedAt = p.CreatedAt
             })
             .ToListAsync();

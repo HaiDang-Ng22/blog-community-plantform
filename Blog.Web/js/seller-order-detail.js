@@ -72,7 +72,7 @@ function updateSellerStepper(status) {
     let currentIndex = statusOrder.indexOf(status);
 
     if (status === 'unpaid') currentIndex = -1;
-    if (status === 'delivered') currentIndex = 2; // Map delivered to InTransit for stepper
+    if (status === 'delivered') currentIndex = 3; // Map delivered to Completed for stepper
     
     if (status === 'cancelled' || status === 'returned') {
         document.getElementById('order-stepper').innerHTML = `

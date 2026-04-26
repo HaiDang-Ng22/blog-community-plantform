@@ -7,6 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let currentProducts = [];
+let filterState = {
+    categoryId: null,
+    keyword: null,
+    minPrice: null,
+    maxPrice: null,
+    sortBy: 'newest'
+};
 
 async function loadCategories() {
     const list = document.getElementById('category-list');
@@ -38,6 +45,9 @@ async function loadCategories() {
                 e.preventDefault();
                 document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
                 allLink.classList.add('active');
+                filterState.categoryId = null;
+                filterState.keyword = null;
+                document.getElementById('market-search-input').value = '';
                 loadProducts();
                 document.getElementById('market-title').textContent = 'Gợi ý hôm nay';
             };
@@ -68,7 +78,10 @@ function renderCategoryItem(cat, allCategories, container, level = 0) {
         e.preventDefault();
         document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
-        loadProducts(cat.id);
+        filterState.categoryId = cat.id;
+        filterState.keyword = null;
+        document.getElementById('market-search-input').value = '';
+        loadProducts();
         document.getElementById('market-title').textContent = cat.name;
     };
 
@@ -89,14 +102,21 @@ function renderCategoryItem(cat, allCategories, container, level = 0) {
     container.appendChild(li);
 }
 
-async function loadProducts(categoryId = null) {
+async function loadProducts() {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
 
     grid.innerHTML = '<div class="skeleton" style="height: 300px; grid-column: span 1 / -1;"></div>'.repeat(4);
 
     try {
-        const url = categoryId ? `marketplace/products?categoryId=${categoryId}` : 'marketplace/products';
+        let params = new URLSearchParams();
+        if (filterState.categoryId) params.append('categoryId', filterState.categoryId);
+        if (filterState.keyword) params.append('keyword', filterState.keyword);
+        if (filterState.minPrice) params.append('minPrice', filterState.minPrice);
+        if (filterState.maxPrice) params.append('maxPrice', filterState.maxPrice);
+        if (filterState.sortBy) params.append('sortBy', filterState.sortBy);
+
+        const url = `marketplace/products?${params.toString()}`;
         currentProducts = await window.api.get(url);
         renderProducts(currentProducts);
     } catch (e) {
@@ -611,6 +631,7 @@ function clearSearch() {
     clearBtn.classList.add('hidden');
     suggestions.classList.remove('active');
     
+    filterState.keyword = null;
     document.getElementById('market-title').textContent = 'Gợi ý hôm nay';
     loadProducts(); 
 }
@@ -671,43 +692,14 @@ function executeSearch(kw = null) {
     // De-activate categories
     document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
 
-    searchProducts(keyword);
-}
-
-async function searchProducts(keyword) {
-    const grid = document.getElementById('product-grid');
-    if (!grid) return;
-
-    grid.innerHTML = '<div class="skeleton" style="height: 300px; grid-column: span 1 / -1;"></div>'.repeat(4);
+    filterState.keyword = keyword;
+    filterState.categoryId = null; // Clear category when searching globally
+    loadProducts();
     document.getElementById('market-title').textContent = `Kết quả tìm kiếm cho "${keyword}"`;
-
-    try {
-        const url = `marketplace/products?search=${encodeURIComponent(keyword)}`;
-        let results = await window.api.get(url).catch(() => null);
-        
-        if (!results || results.length > 0 && Array.isArray(results) === false) {
-             // fallback to local filter if API doesn't support search param properly
-             const allProds = await window.api.get('marketplace/products');
-             const kw = keyword.toLowerCase();
-             results = allProds.filter(p => 
-                 p.name.toLowerCase().includes(kw) || 
-                 (p.shopName && p.shopName.toLowerCase().includes(kw))
-             );
-        }
-        
-        // If API returns all elements because it ignores "search", filter locally
-        const kw = keyword.toLowerCase();
-        currentProducts = results.filter(p => 
-            p.name.toLowerCase().includes(kw) || 
-            (p.shopName && p.shopName.toLowerCase().includes(kw))
-        );
-
-        renderProducts(currentProducts);
-    } catch (e) {
-        console.error('Failed to search products:', e);
-        grid.innerHTML = '<div class="no-posts">Lỗi khi tìm kiếm.</div>';
-    }
 }
+
+// Function removed, logic moved to loadProducts
+
 
 function searchByTag(tag) {
     executeSearch(tag);
@@ -715,13 +707,14 @@ function searchByTag(tag) {
 
 function handleSort() {
     const val = document.getElementById('sort-filter').value;
-    if (!currentProducts || currentProducts.length === 0) return;
-    
-    let sorted = [...currentProducts];
-    if (val === 'price-asc') sorted.sort((a,b) => a.price - b.price);
-    else if (val === 'price-desc') sorted.sort((a,b) => b.price - a.price);
-    else if (val === 'popular') sorted.sort((a,b) => (b.salesCount || 0) - (a.salesCount || 0));
-    else if (val === 'newest') sorted.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    filterState.sortBy = val;
+    loadProducts();
+}
 
-    renderProducts(sorted);
+function applyFilters() {
+    const min = document.getElementById('min-price').value;
+    const max = document.getElementById('max-price').value;
+    filterState.minPrice = min ? parseFloat(min) : null;
+    filterState.maxPrice = max ? parseFloat(max) : null;
+    loadProducts();
 }

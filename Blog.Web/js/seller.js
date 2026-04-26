@@ -566,6 +566,9 @@ function getActionButtons(id, status, paymentMethod) {
     else if (s === 'intransit') {
         buttons += `<button class="btn-premium confirm" style="background:#10b981;" onclick="updateOrderStatus('${id}', 'Delivered')">Hoàn tất giao</button>`;
     }
+    else if (s === 'delivered') {
+        buttons += `<button class="btn-premium confirm" style="background:#10b981;" onclick="updateOrderStatus('${id}', 'Completed')">Xác nhận đã nhận</button>`;
+    }
 
     buttons += `<button class="btn-premium detail" onclick="window.location.href='seller-order-detail.html?id=${id}'">Chi tiết</button>`;
     return buttons;
