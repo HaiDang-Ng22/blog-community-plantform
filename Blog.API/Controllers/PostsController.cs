@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Blog.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Blog.API.Controllers;
 
@@ -33,13 +34,15 @@ public class PostsController : ControllerBase
 
     // GET: api/posts
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string type = "discover")
     {
-        var posts = await _postRepository.GetPublishedPostsAsync();
-        
-        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        // Lấy UserId an toàn từ Token
+        var currentUserIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                             ?? User.FindFirst("sub")?.Value 
+                             ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                             
         Guid? currentUserId = !string.IsNullOrEmpty(currentUserIdStr) ? Guid.Parse(currentUserIdStr) : null;
-
+ 
         List<Guid> followingIds = new List<Guid>();
         List<Guid> blockedIds = new List<Guid>();
         if (currentUserId.HasValue)
@@ -55,21 +58,57 @@ public class PostsController : ControllerBase
                 .ToListAsync();
         }
 
-        // Bản lọc quyền riêng tư: 
-        // Lấy bài viết nếu:
-        // 1. Tác giả không trong danh sách bị chặn
-        // 2. Tác giả không Private
-        // 3. Tác giả là chính mình
-        // 4. Mình đang Follow tác giả
-        var filteredPosts = posts.Where(p => 
-            !blockedIds.Contains(p.AuthorId) && (
+        IQueryable<Post> query = _context.Posts
+            .Include(p => p.Author)
+            .Include(p => p.Images)
+            .Include(p => p.PostLikes)
+            .Include(p => p.Comments)
+            .Where(p => p.Status == PostStatus.Published && !blockedIds.Contains(p.AuthorId));
+
+        if (type == "following")
+        {
+            if (!currentUserId.HasValue)
+            {
+                return Ok(new List<PostDto>());
+            }
+
+            Console.WriteLine($">>> DEBUG: Loading Following Feed for User {currentUserId.Value}");
+            Console.WriteLine($">>> DEBUG: User is following {followingIds.Count} people");
+
+            if (followingIds.Count > 0)
+            {
+                // Chỉ lấy bài viết của người mình follow HOẶC của chính mình
+                // Ép kiểu list để tránh các lỗi logic tiềm ẩn trong LINQ
+                var validAuthors = followingIds.ToList();
+                validAuthors.Add(currentUserId.Value);
+                
+                query = query.Where(p => validAuthors.Contains(p.AuthorId));
+                
+                Console.WriteLine($">>> DEBUG: Filtering posts by {validAuthors.Count} allowed authors");
+            }
+            else 
+            {
+                Console.WriteLine(">>> DEBUG: User follows nobody, returning empty list.");
+                return Ok(new List<PostDto>());
+            }
+        }
+        else if (type == "discover")
+        {
+            // Lấy tất cả bài viết công khai, ưu tiên người mình follow + bài viết ngẫu nhiên của người lạ
+            // Để đơn giản, ta lấy bài viết không bị chặn và không phải Private (trừ khi là bạn bè)
+            query = query.Where(p => 
                 !p.Author.IsPrivate || 
                 (currentUserId.HasValue && p.AuthorId == currentUserId.Value) ||
                 (currentUserId.HasValue && followingIds.Contains(p.AuthorId))
-            )
-        ).ToList();
+            );
+        }
 
-        var postDtos = filteredPosts.Select(p => new PostDto
+        var posts = await query
+            .OrderByDescending(p => p.PublishedAt)
+            .Take(50)
+            .ToListAsync();
+
+        var postDtos = posts.Select(p => new PostDto
         {
             Id = p.Id,
             Title = p.Title,
@@ -129,7 +168,7 @@ public class PostsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreatePostDto createPostDto)
     {
         // Lấy UserId từ Claims của Token
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
         if (userIdClaim == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
@@ -181,12 +220,44 @@ public class PostsController : ControllerBase
         return Ok(new { message = "Đăng bài thành công", id = post.Id });
     }
 
+    // GET: api/posts/user/{userId}
+    [HttpGet("user/{userId}")]
+    public async Task<IActionResult> GetByUser(Guid userId)
+    {
+        var posts = await _postRepository.GetPostsByAuthorIdAsync(userId);
+        var currentUserIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        Guid? currentUserId = !string.IsNullOrEmpty(currentUserIdStr) ? Guid.Parse(currentUserIdStr) : null;
+
+        var postDtos = posts.Select(p => new PostDto
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Slug = p.Slug,
+            Content = p.Content,
+            Summary = p.Summary,
+            FeaturedImageUrl = p.FeaturedImageUrl,
+            ViewCount = p.ViewCount,
+            LikeCount = p.LikeCount,
+            Status = p.Status.ToString(),
+            AuthorName = p.Author?.FullName ?? "Người dùng",
+            AuthorAvatarUrl = p.Author?.AvatarUrl,
+            AuthorId = p.AuthorId,
+            CreatedAt = p.CreatedAt,
+            PublishedAt = p.PublishedAt,
+            CommentCount = p.Comments.Count,
+            IsLikedByMe = currentUserId.HasValue && p.PostLikes.Any(l => l.UserId == currentUserId.Value),
+            ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
+        });
+
+        return Ok(postDtos);
+    }
+
     // GET: api/posts/me
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> GetMyPosts()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
         if (userIdClaim == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
@@ -225,7 +296,7 @@ public class PostsController : ControllerBase
         if (post == null)
             return NotFound(new { message = "Không tìm thấy bài viết" });
 
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
         if (post.AuthorId != userId)
             return Forbid();
         
@@ -264,7 +335,7 @@ public class PostsController : ControllerBase
         if (post == null)
             return NotFound(new { message = "Không tìm thấy bài viết" });
 
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
         if (post.AuthorId != userId)
             return Forbid();
         
@@ -284,7 +355,7 @@ public class PostsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> LikePost(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
         var post = await _context.Posts.FindAsync(id);
         if (post == null) return NotFound();
 

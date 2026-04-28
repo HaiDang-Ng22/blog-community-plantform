@@ -259,10 +259,137 @@ function autoLink(text) {
     });
 }
 
+// Unified Post Card Creation (used in home.js and profile.js)
+function createPostCard(post) {
+    const card = document.createElement('div');
+    card.className = 'zynk-post-card animate-up';
+    card.dataset.id = post.id;
+    card.id = `post-${post.id}`;
+
+    const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const isOwner = (currentUser.id || currentUser.Id) === post.authorId;
+
+    const images = post.imageUrls && post.imageUrls.length > 0 ? post.imageUrls : (post.featuredImageUrl ? [post.featuredImageUrl] : []);
+    const hasImages = images.length > 0;
+    const hasMultiple = images.length > 1;
+
+    if (!hasImages) {
+        card.classList.add('style-threads');
+        card.innerHTML = `
+            <div class="zynk-threads-layout">
+                <div class="zynk-left">
+                    <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.authorName)}" class="zynk-avatar">
+                    <div class="zynk-line"></div>
+                </div>
+                <div class="zynk-right">
+                    <div class="zynk-header">
+                        <div class="zynk-author-meta">
+                            <a href="profile.html?id=${post.authorId}" class="zynk-author-name">${post.authorName}</a>
+                            <span class="zynk-time">${formatDate(post.createdAt)}</span>
+                        </div>
+                        <div class="zynk-options" onclick="window.common.toggleMenu(this)">
+                            <i class="fa-solid fa-ellipsis"></i>
+                            <div class="zynk-menu hidden">
+                                ${isOwner ? `
+                                    <button onclick="location.href='edit-post.html?id=${post.id}'">Sửa</button>
+                                    <button class="delete" onclick="window.postActions.deletePost('${post.id}')">Xóa</button>
+                                ` : `<button onclick="window.postActions.reportPost('${post.id}', '${post.authorId}')">Báo cáo</button>`}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="zynk-content">${autoLink(post.content)}</div>
+                    <div class="zynk-actions">
+                        <button class="${post.isLikedByMe ? 'liked' : ''}" onclick="window.postActions.toggleLike('${post.id}', this)">
+                            <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                        </button>
+                        <button onclick="window.postActions.toggleComments('${post.id}', this.closest('.zynk-post-card'))">
+                            <i class="fa-regular fa-comment"></i>
+                        </button>
+                    </div>
+                    <div class="zynk-stats">${post.likeCount} lượt thích</div>
+                </div>
+            </div>
+        `;
+    } else {
+        card.classList.add('style-instagram');
+        card.innerHTML = `
+            <div class="zynk-header">
+                <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.authorName)}" class="zynk-avatar-mini">
+                <a href="profile.html?id=${post.authorId}" class="zynk-author-name">${post.authorName}</a>
+                <div class="zynk-options" onclick="window.common.toggleMenu(this)" style="margin-left:auto">
+                    <i class="fa-solid fa-ellipsis"></i>
+                    <div class="zynk-menu hidden">
+                        ${isOwner ? `
+                            <button onclick="location.href='edit-post.html?id=${post.id}'">Sửa</button>
+                            <button class="delete" onclick="window.postActions.deletePost('${post.id}')">Xóa</button>
+                        ` : `<button onclick="window.postActions.reportPost('${post.id}', '${post.authorId}')">Báo cáo</button>`}
+                    </div>
+                </div>
+            </div>
+            <div class="zynk-media-container">
+                ${hasMultiple ? `<button class="carousel-nav left" onclick="window.common.scrollCarousel(this, -1)"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
+                <div class="zynk-carousel" onscroll="window.common.handleCarouselScroll(this)">
+                    ${images.map(url => `<div class="zynk-carousel-item"><img src="${url}" alt="Media" loading="lazy"></div>`).join('')}
+                </div>
+                ${hasMultiple ? `<button class="carousel-nav right" onclick="window.common.scrollCarousel(this, 1)"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
+                ${hasMultiple ? `<div class="zynk-dots">${images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : ''}
+            </div>
+            <div class="zynk-actions" style="padding:12px 16px 8px">
+                <button class="${post.isLikedByMe ? 'liked' : ''}" onclick="window.postActions.toggleLike('${post.id}', this)">
+                    <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                </button>
+                <button onclick="window.postActions.toggleComments('${post.id}', this.closest('.zynk-post-card'))">
+                    <i class="fa-regular fa-comment"></i>
+                </button>
+            </div>
+            <div class="zynk-body">
+                <div class="zynk-stats" style="margin-bottom:6px">${post.likeCount} lượt thích</div>
+                <div class="zynk-caption">
+                    <a href="profile.html?id=${post.authorId}" class="zynk-author-name">${post.authorName}</a>
+                    ${autoLink(post.content)}
+                </div>
+                <div class="zynk-time" style="margin-top:8px">${formatDate(post.createdAt)}</div>
+            </div>
+        `;
+    }
+    return card;
+}
+
+function toggleMenu(btn) {
+    const menu = btn.querySelector('.zynk-menu');
+    if (!menu) return;
+    menu.classList.toggle('hidden');
+    const close = (e) => {
+        if (!btn.contains(e.target)) {
+            menu.classList.add('hidden');
+            document.removeEventListener('click', close);
+        }
+    };
+    setTimeout(() => document.addEventListener('click', close), 10);
+}
+
+function scrollCarousel(btn, dir) {
+    const carousel = btn.parentElement.querySelector('.zynk-carousel');
+    if (carousel) {
+        const width = carousel.offsetWidth;
+        carousel.scrollBy({ left: dir * width, behavior: 'smooth' });
+    }
+}
+
+function handleCarouselScroll(carousel) {
+    const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+    const dots = carousel.parentElement.querySelectorAll('.zynk-dots .dot');
+    dots.forEach((dot, i) => dot.classList.toggle('active', i === idx));
+}
+
 // Export to global scope
 window.common = {
     formatDate,
     showToast,
     formatCurrency,
-    autoLink
+    autoLink,
+    createPostCard,
+    toggleMenu,
+    scrollCarousel,
+    handleCarouselScroll
 };

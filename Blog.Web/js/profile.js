@@ -1,4 +1,6 @@
 // js/profile.js
+let currentProfileId = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
@@ -10,17 +12,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const targetUserId = userId || currentUser.id || currentUser.Id;
-    if (targetUserId) {
-        const profileData = await loadUserProfile(targetUserId);
+    currentProfileId = userId || currentUser.id || currentUser.Id;
+    if (currentProfileId) {
+        const profileData = await loadUserProfile(currentProfileId);
         if (profileData) {
-            await loadUserPosts(targetUserId, profileData.isPrivate, profileData.isFollowing, targetUserId === currentUser.id);
+            await loadUserPosts(currentProfileId, profileData.isPrivate, profileData.isFollowing, currentProfileId === currentUser.id);
         }
-    } else {
-        console.error('No target user ID found');
-        document.getElementById('profile-name').textContent = 'Lỗi: Không tìm thấy người dùng';
     }
+
+    // Tab Listeners
+    document.querySelectorAll('.profile-tab').forEach(tab => {
+        tab.addEventListener('click', async () => {
+            const tabName = tab.dataset.tab;
+            switchTab(tabName);
+        });
+    });
 });
+
+async function switchTab(tabName) {
+    // UI Update
+    document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.profile-tab[data-tab="${tabName}"]`).classList.add('active');
+
+    const postsContainer = document.getElementById('posts-container');
+    const listContainer = document.getElementById('list-container');
+
+    if (tabName === 'posts') {
+        postsContainer.classList.add('active');
+        listContainer.classList.remove('active');
+    } else {
+        postsContainer.classList.remove('active');
+        listContainer.classList.add('active');
+        await loadUserList(currentProfileId, tabName);
+    }
+}
+
+async function loadUserList(userId, type) {
+    const grid = document.getElementById('user-list-grid');
+    const noUsers = document.getElementById('no-users');
+    grid.innerHTML = '<div class="loading-spinner"></div>';
+    noUsers.classList.add('hidden');
+
+    try {
+        // map type to endpoint: friends, followers, following
+        const users = await window.api.get(`users/${userId}/${type}`);
+        grid.innerHTML = '';
+
+        if (users.length === 0) {
+            noUsers.classList.remove('hidden');
+            return;
+        }
+
+        users.forEach(user => {
+            const card = document.createElement('div');
+            card.className = 'user-item-card animate-up';
+            card.innerHTML = `
+                <img src="${user.avatarUrl || 'https://ui-avatars.com/api/?name=' + user.fullName}" class="avatar-md">
+                <div class="user-info">
+                    <a href="profile.html?id=${user.id}" class="full-name">${user.fullName}</a>
+                    <span class="username">@${user.username}</span>
+                </div>
+                <button class="btn secondary-btn action-btn" onclick="window.location.href='profile.html?id=${user.id}'">Xem hồ sơ</button>
+            `;
+            grid.appendChild(card);
+        });
+    } catch (error) {
+        grid.innerHTML = '<p class="error">Không thể tải danh sách.</p>';
+    }
+}
 
 async function loadUserProfile(userId) {
     try {
@@ -124,15 +183,11 @@ async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
     }
 
     try {
-        // Dùng API chung, do Controller đã lọc quyền riêng tư
-        const posts = await window.api.get(`posts`);
-        const userPosts = posts.filter(p => 
-            p.authorId && userId && p.authorId.toString().toLowerCase() === userId.toString().toLowerCase()
-        );
-        
+        const userPosts = await window.api.get(`posts/user/${userId}`);
         grid.innerHTML = '';
+        
         if (userPosts.length === 0) {
-            grid.innerHTML = '<p class="no-posts">Người dùng này chưa có bài đăng nào.</p>';
+            grid.innerHTML = '<p class="no-posts">Chưa có bài đăng nào.</p>';
             document.getElementById('post-count').textContent = '0';
             return;
         }
@@ -143,7 +198,7 @@ async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
         userPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         userPosts.forEach(post => {
-            grid.appendChild(createPostCard(post));
+            grid.appendChild(window.common.createPostCard(post));
         });
     } catch (error) {
         grid.innerHTML = '<p class="error">Lỗi khi tải bài viết.</p>';
@@ -151,180 +206,5 @@ async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
     }
 }
 
-// Reuse createPostCard from home.js if possible, or redefine here
-// Since I can't easily share functions across files without modules, I'll redefine or use global
-function createPostCard(post) {
-    const card = document.createElement('div');
-    card.className = 'post-card animate-up';
-    card.dataset.id = post.id;
-
-    const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const isOwner = currentUser.id === post.authorId;
-
-    // Use ImageUrls if available, otherwise fallback to FeaturedImageUrl
-    const images = post.imageUrls && post.imageUrls.length > 0 ? post.imageUrls : (post.featuredImageUrl ? [post.featuredImageUrl] : []);
-    const hasMultiple = images.length > 1;
-
-    const hasImages = images.length > 0;
-    if (!hasImages) {
-        // Threads Style: Avatar on left, content on right
-        card.classList.add('threads-style');
-        card.innerHTML = `
-            <div class="threads-container" style="display: flex; gap: 12px; padding: 12px;">
-                <div class="threads-left" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + post.authorName}" class="mini-avatar" alt="Avatar" style="width: 44px; height: 44px;">
-                    <div class="threads-line" style="flex: 1; width: 2px; background: #efefef; border-radius: 1px;"></div>
-                </div>
-                <div class="threads-right" style="flex: 1;">
-                    <div class="post-header" style="padding: 0; margin-bottom: 4px; border: none; display: flex; justify-content: space-between; align-items: center;">
-                        <div class="author-info">
-                            <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 700; font-size: 0.95rem;">${post.authorName}</a>
-                            <span class="post-time" style="margin-left: 8px; color: #8e8e8e; font-size: 0.85rem;">${formatDate(post.createdAt)}</span>
-                        </div>
-                        ${currentUser.id ? `
-                            <div class="post-options">
-                                <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
-                                <div class="options-menu hidden">
-                                    ${isOwner ? `
-                                        <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
-                                        <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-                                    ` : `
-                                        <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
-                                    `}
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="post-content" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 12px;">
-                        ${post.content}
-                    </div>
-                    <div class="post-actions" style="padding: 0; gap: 16px;">
-                        <button class="action-btn ${post.isLikedByMe ? 'liked' : ''}" onclick="postActions.toggleLike('${post.id}', this)" style="padding: 0; font-size: 1.2rem;">
-                            <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-                        </button>
-                        <button class="action-btn" onclick="postActions.toggleComments('${post.id}', this.closest('.post-card'))" style="padding: 0; font-size: 1.2rem;">
-                            <i class="fa-regular fa-comment"></i>
-                        </button>
-                        <button class="action-btn" style="padding: 0; font-size: 1.2rem;">
-                            <i class="fa-regular fa-paper-plane"></i>
-                        </button>
-                    </div>
-                    <div class="post-stats" style="margin-top: 8px; font-size: 0.85rem; color: #8e8e8e;">
-                        <span class="post-likes-count">${post.likeCount} lượt thích</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    } else {
-        // Instagram Style: Header, Large Media, Actions, Caption
-        card.classList.add('instagram-style');
-        card.innerHTML = `
-            <div class="post-header" style="padding: 12px; border-bottom: none;">
-                <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + post.authorName}" class="mini-avatar" alt="Avatar" style="width: 32px; height: 32px;">
-                <div class="author-info">
-                    <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 600; font-size: 0.9rem;">${post.authorName}</a>
-                </div>
-                ${currentUser.id ? `
-                    <div class="post-options" style="margin-left: auto;">
-                        <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
-                        <div class="options-menu hidden">
-                            ${isOwner ? `
-                                <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
-                                <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-                            ` : `
-                                <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
-                            `}
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-
-            <div class="post-media-container" style="position:relative; background: #fafafa; min-height: 300px; display: flex; align-items: center;">
-                ${hasMultiple ? `<button class="carousel-nav-btn left" onclick="scrollCarousel(this, -1)"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
-                
-                <div class="post-carousel" onscroll="handleCarouselScroll(this)">
-                    ${images.map(url => `
-                        <div class="post-carousel-item">
-                            <img src="${url}" alt="Post Image" loading="lazy" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
-                        </div>
-                    `).join('')}
-                </div>
-                
-                ${hasMultiple ? `<button class="carousel-nav-btn right" onclick="scrollCarousel(this, 1)"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
- 
-                ${hasMultiple ? `
-                    <div class="carousel-dots">
-                        ${images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}
-                    </div>
-                ` : ''}
-            </div>
-
-            <div class="post-actions" style="padding: 12px 12px 8px; gap: 16px;">
-                <button class="action-btn ${post.isLikedByMe ? 'liked' : ''}" onclick="postActions.toggleLike('${post.id}', this)" style="padding: 0; font-size: 1.4rem;">
-                    <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-                </button>
-                <button class="action-btn" onclick="postActions.toggleComments('${post.id}', this.closest('.post-card'))" style="padding: 0; font-size: 1.4rem;">
-                    <i class="fa-regular fa-comment"></i>
-                </button>
-                <button class="action-btn" style="padding: 0; font-size: 1.4rem;">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </button>
-            </div>
-
-            <div class="post-content-area" style="padding: 0 12px 12px;">
-                <div class="post-likes-count" style="font-weight: 700; font-size: 0.9rem; margin-bottom: 6px;">${post.likeCount} lượt thích</div>
-                <div class="post-caption" style="font-size: 0.9rem; line-height: 1.4;">
-                    <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 700; margin-right: 6px; text-decoration: none; color: inherit;">${post.authorName}</a>
-                    ${post.content}
-                </div>
-                <div class="post-time" style="margin-top: 6px; font-size: 0.75rem; color: #8e8e8e; text-transform: uppercase;">${formatDate(post.createdAt)}</div>
-            </div>
-        `;
-    }
-    return card;
-}
-
-// Global function to scroll carousel
-window.scrollCarousel = function(btn, direction) {
-    const container = btn.parentElement.querySelector('.post-carousel');
-    if (container) {
-        const width = container.offsetWidth;
-        container.scrollBy({ left: direction * width, behavior: 'smooth' });
-    }
-}
-
-// Global function to update carousel dots
-window.handleCarouselScroll = function(carousel) {
-    const scrollLeft = carousel.scrollLeft;
-    const width = carousel.offsetWidth;
-    const index = Math.round(scrollLeft / width);
-    
-    const dots = carousel.parentElement.querySelectorAll('.carousel-dots .dot');
-    dots.forEach((dot, i) => {
-        dot.classList.toggle('active', i === index);
-    });
-}
-
-function toggleMenu(btn) {
-    const menu = btn.nextElementSibling;
-    menu.classList.toggle('hidden');
-    // Hide when clicking outside
-    const closeMenu = (e) => {
-        if (!btn.contains(e.target) && !menu.contains(e.target)) {
-            menu.classList.add('hidden');
-            document.removeEventListener('click', closeMenu);
-        }
-    };
-    setTimeout(() => document.addEventListener('click', closeMenu), 10);
-}
-
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = (now - date) / 1000;
-
-    if (diff < 60) return 'Vừa xong';
-    if (diff < 3600) return Math.floor(diff / 60) + ' phút trước';
-    if (diff < 86400) return Math.floor(diff / 3600) + ' giờ trước';
-    return date.toLocaleDateString('vi-VN');
-}
+function formatDate(dateStr) { return window.common.formatDate(dateStr); }
+function toggleMenu(btn) { window.common.toggleMenu(btn); }

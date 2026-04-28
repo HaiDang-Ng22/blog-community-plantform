@@ -3,6 +3,7 @@ using Blog.Domain.Entities;
 using Blog.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Blog.API.Controllers;
 
@@ -224,7 +225,7 @@ public class MarketplaceController : ControllerBase
     [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> CheckReviewEligibility(Guid id)
     {
-        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
         var userId = Guid.Parse(userIdStr);
         
@@ -244,7 +245,7 @@ public class MarketplaceController : ControllerBase
     [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> SubmitReview(Guid id, [FromBody] CreateProductReviewDto dto)
     {
-        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
         var userId = Guid.Parse(userIdStr);
 

@@ -63,7 +63,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
 
         var token = GenerateJwtToken(user);
-        return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
+        return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, Username = user.Username, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
     }
 
     [HttpPost("google")]
@@ -94,7 +94,7 @@ public class AuthController : ControllerBase
             }
 
             var token = GenerateJwtToken(user);
-            return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
+            return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, Username = user.Username, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
         }
         catch (InvalidJwtException)
         {
@@ -106,7 +106,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetProfile()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
         if (userIdClaim == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
@@ -135,7 +135,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst(JwtRegisteredClaimNames.Sub);
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
         if (userIdClaim == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 

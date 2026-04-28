@@ -1,20 +1,60 @@
 // js/home.js
+let currentFeedType = 'discover';
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Check auth for quick post
     const token = localStorage.getItem('auth_token');
+    const quickPost = document.getElementById('quick-post-auth-only');
+    const userWidget = document.getElementById('user-sidebar-widget');
+    
     if (!token) {
-        document.getElementById('quick-post-container').classList.add('hidden');
+        if (quickPost) quickPost.classList.add('hidden');
+        if (userWidget) userWidget.classList.add('hidden');
+    } else {
+        const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+        // Update Sidebar User Info
+        const avatarUrl = user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`;
+        const sidebarAvatar = document.getElementById('sidebar-user-avatar');
+        if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
+        
+        // Update Quick Post Avatar
+        const quickAvatar = document.getElementById('quick-post-avatar');
+        if (quickAvatar) quickAvatar.src = avatarUrl;
+
+        const sidebarName = document.getElementById('sidebar-user-name');
+        if (sidebarName) sidebarName.textContent = user.fullName;
+        
+        // Fix @undefined: check multiple possible field names
+        const username = user.username || user.Username || user.email?.split('@')[0] || 'user';
+        document.getElementById('sidebar-user-username').textContent = `@${username}`;
+        
+        if (userWidget) userWidget.classList.remove('hidden');
+        
+        loadSuggestions();
     }
 
-    await loadPosts();
+    // Tab Listeners
+    document.querySelectorAll('.feed-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentFeedType = tab.dataset.type;
+            loadPosts(currentFeedType);
+        });
+    });
+
+    await loadPosts(currentFeedType);
 });
 
-async function loadPosts() {
+async function loadPosts(type = 'discover') {
     const grid = document.getElementById('posts-grid');
     const noPosts = document.getElementById('no-posts');
     
+    // Show skeleton
+    grid.innerHTML = '<div class="post-card skeleton"></div>'.repeat(3);
+    
     try {
-        const posts = await window.api.get('posts');
+        const posts = await window.api.get(`posts?type=${type}`);
         grid.innerHTML = '';
         
         if (posts.length === 0) {
@@ -24,7 +64,7 @@ async function loadPosts() {
 
         noPosts.classList.add('hidden');
         posts.forEach(post => {
-            grid.appendChild(createPostCard(post));
+            grid.appendChild(window.common.createPostCard(post));
         });
 
         // Handle hash navigation for notifications
@@ -47,181 +87,64 @@ async function loadPosts() {
     }
 }
 
-function createPostCard(post) {
-    const card = document.createElement('div');
-    card.className = 'post-card animate-up';
-    card.dataset.id = post.id;
-    card.id = `post-${post.id}`;
-
-    const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const isOwner = currentUser.id === post.authorId;
-
-    // Use ImageUrls if available, otherwise fallback to FeaturedImageUrl
-    const images = post.imageUrls && post.imageUrls.length > 0 ? post.imageUrls : (post.featuredImageUrl ? [post.featuredImageUrl] : []);
-    const hasMultiple = images.length > 1;
-
-    const hasImages = images.length > 0;
-
-    if (!hasImages) {
-        // Threads Style: Avatar on left, content on right
-        card.classList.add('threads-style');
-        card.innerHTML = `
-            <div class="threads-container" style="display: flex; gap: 12px; padding: 12px;">
-                <div class="threads-left" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + post.authorName}" class="mini-avatar" alt="Avatar" style="width: 44px; height: 44px;">
-                    <div class="threads-line" style="flex: 1; width: 2px; background: #efefef; border-radius: 1px;"></div>
-                </div>
-                <div class="threads-right" style="flex: 1;">
-                    <div class="post-header" style="padding: 0; margin-bottom: 4px; border: none; display: flex; justify-content: space-between; align-items: center;">
-                        <div class="author-info">
-                            <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 700; font-size: 0.95rem;">${post.authorName}</a>
-                            <span class="post-time" style="margin-left: 8px; color: #8e8e8e; font-size: 0.85rem;">${formatDate(post.createdAt)}</span>
-                        </div>
-                        ${currentUser.id ? `
-                            <div class="post-options">
-                                <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
-                                <div class="options-menu hidden">
-                                    ${isOwner ? `
-                                        <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
-                                        <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-                                    ` : `
-                                        <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
-                                    `}
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="post-content" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 12px; word-break: break-word;">
-                        ${window.common.autoLink(post.content)}
-                    </div>
-                    <div class="post-actions" style="padding: 0; gap: 16px;">
-                        <button class="action-btn ${post.isLikedByMe ? 'liked' : ''}" onclick="postActions.toggleLike('${post.id}', this)" style="padding: 0; font-size: 1.2rem;">
-                            <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-                        </button>
-                        <button class="action-btn" onclick="postActions.toggleComments('${post.id}', this.closest('.post-card'))" style="padding: 0; font-size: 1.2rem;">
-                            <i class="fa-regular fa-comment"></i>
-                        </button>
-                        <button class="action-btn" style="padding: 0; font-size: 1.2rem;">
-                            <i class="fa-regular fa-paper-plane"></i>
-                        </button>
-                    </div>
-                    <div class="post-stats" style="margin-top: 8px; font-size: 0.85rem; color: #8e8e8e;">
-                        <span class="post-likes-count">${post.likeCount} lượt thích</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    } else {
-        // Instagram Style: Header, Large Media, Actions, Caption
-        card.classList.add('instagram-style');
-        card.innerHTML = `
-            <div class="post-header" style="padding: 12px; border-bottom: none;">
-                <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + post.authorName}" class="mini-avatar" alt="Avatar" style="width: 32px; height: 32px;">
-                <div class="author-info">
-                    <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 600; font-size: 0.9rem;">${post.authorName}</a>
-                </div>
-                ${currentUser.id ? `
-                    <div class="post-options" style="margin-left: auto;">
-                        <i class="fa-solid fa-ellipsis options-btn" onclick="toggleMenu(this)" style="cursor:pointer; color:#8e8e8e;"></i>
-                        <div class="options-menu hidden">
-                            ${isOwner ? `
-                                <button onclick="location.href='edit-post.html?id=${post.id}'"><i class="fa-solid fa-pen"></i> Sửa</button>
-                                <button class="delete" onclick="postActions.deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-                            ` : `
-                                <button onclick="postActions.reportPost('${post.id}', '${post.authorId}')"><i class="fa-solid fa-flag"></i> Báo cáo</button>
-                            `}
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-
-            <div class="post-media-container" style="position:relative; background: #fafafa; min-height: 300px; display: flex; align-items: center;">
-                ${hasMultiple ? `<button class="carousel-nav-btn left" onclick="scrollCarousel(this, -1)"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
-                
-                <div class="post-carousel" onscroll="handleCarouselScroll(this)">
-                    ${images.map(url => `
-                        <div class="post-carousel-item">
-                            <img src="${url}" alt="Post Image" loading="lazy" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
-                        </div>
-                    `).join('')}
-                </div>
-                
-                ${hasMultiple ? `<button class="carousel-nav-btn right" onclick="scrollCarousel(this, 1)"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
- 
-                ${hasMultiple ? `
-                    <div class="carousel-dots">
-                        ${images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}
-                    </div>
-                ` : ''}
-            </div>
-
-            <div class="post-actions" style="padding: 12px 12px 8px; gap: 16px;">
-                <button class="action-btn ${post.isLikedByMe ? 'liked' : ''}" onclick="postActions.toggleLike('${post.id}', this)" style="padding: 0; font-size: 1.4rem;">
-                    <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-                </button>
-                <button class="action-btn" onclick="postActions.toggleComments('${post.id}', this.closest('.post-card'))" style="padding: 0; font-size: 1.4rem;">
-                    <i class="fa-regular fa-comment"></i>
-                </button>
-                <button class="action-btn" style="padding: 0; font-size: 1.4rem;">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </button>
-            </div>
-
-            <div class="post-content-area" style="padding: 0 12px 12px;">
-                <div class="post-likes-count" style="font-weight: 700; font-size: 0.9rem; margin-bottom: 6px;">${post.likeCount} lượt thích</div>
-                <div class="post-caption" style="font-size: 0.9rem; line-height: 1.4; word-break: break-word;">
-                    <a href="profile.html?id=${post.authorId}" class="author-name" style="font-weight: 700; margin-right: 6px; text-decoration: none; color: inherit;">${post.authorName}</a>
-                    ${window.common.autoLink(post.content)}
-                </div>
-                <div class="post-time" style="margin-top: 6px; font-size: 0.75rem; color: #8e8e8e; text-transform: uppercase;">${formatDate(post.createdAt)}</div>
-            </div>
-        `;
-    }
-    return card;
+// Helper functions (wrappers for window.common)
+function formatDate(dateStr) {
+    return window.common.formatDate(dateStr);
 }
-
-// Global function to scroll carousel
-window.scrollCarousel = function(btn, direction) {
-    const container = btn.parentElement.querySelector('.post-carousel');
-    if (container) {
-        const width = container.offsetWidth;
-        container.scrollBy({ left: direction * width, behavior: 'smooth' });
-    }
-}
-
-// Global function to update carousel dots
-function handleCarouselScroll(carousel) {
-    const scrollLeft = carousel.scrollLeft;
-    const width = carousel.offsetWidth;
-    const index = Math.round(scrollLeft / width);
-    
-    const dots = carousel.parentElement.querySelectorAll('.carousel-dots .dot');
-    dots.forEach((dot, i) => {
-        dot.classList.toggle('active', i === index);
-    });
-}
-
 
 function toggleMenu(btn) {
-    const menu = btn.nextElementSibling;
-    menu.classList.toggle('hidden');
-    // Hide when clicking outside
-    const closeMenu = (e) => {
-        if (!btn.contains(e.target) && !menu.contains(e.target)) {
-            menu.classList.add('hidden');
-            document.removeEventListener('click', closeMenu);
-        }
-    };
-    setTimeout(() => document.addEventListener('click', closeMenu), 10);
+    window.common.toggleMenu(btn);
 }
 
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = (now - date) / 1000;
+async function loadSuggestions() {
+    const list = document.getElementById('suggestions-list');
+    if (!list) return;
 
-    if (diff < 60) return 'Vừa xong';
-    if (diff < 3600) return Math.floor(diff / 60) + ' phút trước';
-    if (diff < 86400) return Math.floor(diff / 3600) + ' giờ trước';
-    return date.toLocaleDateString('vi-VN');
+    try {
+        const users = await window.api.get('users/suggested');
+        list.innerHTML = '';
+
+        if (users.length === 0) {
+            list.innerHTML = '<p style="font-size: 0.8rem; color: #8e8e8e; text-align: center;">Không có gợi ý mới.</p>';
+            return;
+        }
+
+        users.forEach(user => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = `
+                <img src="${user.avatarUrl || 'https://ui-avatars.com/api/?name=' + user.fullName}" class="avatar-xs">
+                <div class="user-meta">
+                    <a href="profile.html?id=${user.id}" class="full-name" style="text-decoration:none; color:inherit;">${user.fullName}</a>
+                    <span class="username">@${user.username}</span>
+                </div>
+                <button class="follow-btn" onclick="followFromSuggestion('${user.id}', this)">Theo dõi</button>
+            `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error("Error loading suggestions:", err);
+        list.innerHTML = '<p style="font-size: 0.8rem; color: #ed4956; text-align: center;">Lỗi tải gợi ý.</p>';
+    }
+}
+
+window.followFromSuggestion = async function(userId, btn) {
+    try {
+        btn.disabled = true;
+        btn.textContent = '...';
+        const res = await window.api.post(`users/${userId}/follow`);
+        if (res.isFollowing) {
+            btn.textContent = 'Đã theo dõi';
+            btn.style.color = '#8e8e8e';
+            // Optional: refresh feed if on Following tab
+            if (currentFeedType === 'following') loadPosts('following');
+        } else {
+            btn.textContent = 'Theo dõi';
+            btn.style.color = '#0095f6';
+        }
+    } catch (err) {
+        btn.textContent = 'Theo dõi';
+    } finally {
+        btn.disabled = false;
+    }
 }

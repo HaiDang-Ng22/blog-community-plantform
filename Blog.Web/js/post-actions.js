@@ -11,9 +11,9 @@ window.postActions = {
             const result = await window.api.post(`posts/${postId}/like`);
             const heartIcon = btnElement.querySelector('i');
             
-            const card = btnElement.closest('.post-card');
+            const card = btnElement.closest('.zynk-post-card') || btnElement.closest('.post-card');
             if (card) {
-                const countDiv = card.querySelector('.post-likes-count');
+                const countDiv = card.querySelector('.zynk-stats') || card.querySelector('.post-likes-count');
                 if (countDiv) countDiv.textContent = `${result.likeCount} lượt thích`;
             } else {
                 const likeCountSpan = btnElement.querySelector('span');
@@ -40,8 +40,9 @@ window.postActions = {
         let commentSection = cardElement.querySelector('.comment-section');
         if (!commentSection) {
             commentSection = this.createCommentSection(postId);
-            const contentArea = cardElement.querySelector('.post-content-area') || cardElement.querySelector('.post-main-col') || cardElement;
-            contentArea.appendChild(commentSection);
+            // Append to the end of the card or body
+            const body = cardElement.querySelector('.zynk-body') || cardElement.querySelector('.post-content-area') || cardElement;
+            body.appendChild(commentSection);
             this.loadComments(postId, commentSection);
         } else {
             commentSection.classList.toggle('hidden');

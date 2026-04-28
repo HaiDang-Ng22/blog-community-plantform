@@ -288,3 +288,123 @@ body.dark-mode .profile-post-card .dropdown-menu button {
 body.dark-mode .profile-post-card .dropdown-menu button:hover {
     background: #0f172a;
 }
+/* Profile Tabs */
+.profile-tabs {
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    position: sticky;
+    top: 60px;
+    background: var(--bg-color);
+    z-index: 100;
+}
+
+.profile-tab {
+    flex: 1;
+    padding: 1rem;
+    border: none;
+    background: none;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-tab i {
+    font-size: 1.2rem;
+}
+
+.profile-tab:hover {
+    color: var(--text-primary);
+}
+
+.profile-tab.active {
+    color: #0095f6;
+    border-bottom-color: #0095f6;
+}
+
+/* Tab Content Visibility */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* User List Grid */
+.user-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.user-item-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: transform 0.2s;
+}
+
+.user-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.user-item-card .avatar-md {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-item-card .user-info {
+    flex: 1;
+}
+
+.user-item-card .full-name {
+    display: block;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.user-item-card .username {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.user-item-card .action-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* Dark Mode support for Tabs */
+body.dark-mode .profile-tabs {
+    background: #0f172a;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode .profile-tab.active {
+    color: #38bdf8;
+    border-bottom-color: #38bdf8;
+}
+
+body.dark-mode .user-item-card {
+    background: #1e293b;
+    border-color: #334155;
+}
