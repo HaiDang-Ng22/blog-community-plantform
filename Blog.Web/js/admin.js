@@ -34,7 +34,10 @@ function switchAdminTab(tabName) {
     // Refresh data using modular functions
     if (tabName === 'users' && typeof loadAdminUsers === 'function') loadAdminUsers();
     if (tabName === 'reports' && typeof loadAdminReports === 'function') loadAdminReports();
-    if (tabName === 'shops' && typeof loadAdminShopApps === 'function') loadAdminShopApps();
+    if (tabName === 'shops') {
+        if (typeof loadAdminShopApps === 'function') loadAdminShopApps();
+        if (typeof loadAdminActiveShops === 'function') loadAdminActiveShops();
+    }
     if (tabName === 'categories' && typeof loadAdminCategories === 'function') loadAdminCategories();
 }
 

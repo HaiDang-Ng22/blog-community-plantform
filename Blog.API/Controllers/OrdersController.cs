@@ -57,6 +57,7 @@ public class OrdersController : ControllerBase
                 ? OrderStatus.AwaitingShipment 
                 : OrderStatus.Unpaid,
             CreatedAt = DateTime.UtcNow,
+            ShippingFee = dto.ShippingFee,
             Items = new List<OrderItem>()
         };
 
@@ -84,8 +85,13 @@ public class OrdersController : ControllerBase
 
         foreach (var itemDto in dto.Items)
         {
-            var product = await _productRepository.GetByIdAsync(itemDto.ProductId);
+            var product = await _context.Products.Include(p => p.Shop).FirstOrDefaultAsync(p => p.Id == itemDto.ProductId);
             if (product == null) continue;
+            
+            if (product.Shop != null && product.Shop.IsSuspended)
+            {
+                return BadRequest(new { message = $"Sản phẩm '{product.Name}' thuộc về cửa hàng đang bị đình chỉ. Không thể thanh toán." });
+            }
 
             decimal unitPrice = product.Price;
             if (itemDto.VariantId.HasValue)
@@ -136,7 +142,7 @@ public class OrdersController : ControllerBase
             }
         }
 
-        order.TotalAmount = total;
+        order.TotalAmount = total + dto.ShippingFee;
         await _orderRepository.AddAsync(order);
         await _context.SaveChangesAsync();
 
@@ -313,9 +319,13 @@ public class OrdersController : ControllerBase
             PhoneNumber = order.PhoneNumber,
             CreatedAt = order.CreatedAt,
             ShippingAddress = order.ShippingAddress,
+            ShippingFee = order.ShippingFee,
             Province = order.Province,
             DistrictWard = order.DistrictWard,
             SpecificAddress = order.SpecificAddress,
+            BankName = order.Items.FirstOrDefault()?.Product?.Shop?.BankName,
+            BankAccountNumber = order.Items.FirstOrDefault()?.Product?.Shop?.BankAccountNumber,
+            BankAccountName = order.Items.FirstOrDefault()?.Product?.Shop?.BankAccountName,
             Items = order.Items.Select(i => new OrderItemDto
             {
                 Id = i.Id,

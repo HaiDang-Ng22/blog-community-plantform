@@ -23,11 +23,13 @@ Hệ thống TMĐT được xây dựng theo mô hình Market-place đa người
     *   Quy trình đăng ký và xét duyệt Shop bởi Admin.
     *   Dashboard quản lý sản phẩm, tồn kho và theo dõi đơn hàng chuyên nghiệp.
     *   Hệ thống báo cáo doanh thu tự động cập nhật khi đơn hàng được giao thành công.
-*   **Giỏ hàng & Thanh toán cực nhanh**: Luồng checkout tối ưu với hình thức thanh toán COD giả lập, tự động lưu địa chỉ giao hàng.
+*   **Giỏ hàng & Thanh toán cực nhanh**: Luồng checkout tối ưu, tự động lưu địa chỉ giao hàng.
+*   **Thanh toán VietQR Tự động**: Tích hợp tạo mã QR ngân hàng tự động cho người bán. Người mua chỉ cần quét mã để thanh toán với đầy đủ thông tin số tiền và nội dung đơn hàng.
 *   **Quản lý Đơn hàng & Đánh giá**: 
-    *   Hệ thống cập nhật trạng thái đơn hàng thời gian thực. Quy trình bàn giao được kiểm soát chặt chẽ (Người bán xác nhận đơn hàng Hoàn thành sau khi đã Giao hàng).
-    *   Hệ thống đánh giá sản phẩm thông minh: Mỗi đơn hàng chỉ được đánh giá một lần, yêu cầu đã nhận hàng mới được đánh giá.
-*   **Dữ liệu mẫu (Seeding)**: Hệ thống tự động khởi tạo dữ liệu mẫu cho Marketplace (Danh mục, Shop, Sản phẩm) ngay khi khởi động ứng dụng lần đầu.
+    *   Hệ thống cập nhật trạng thái đơn hàng thời gian thực. Quy trình bàn giao được kiểm soát chặt chẽ.
+    *   Phí vận chuyển được tính toán tự động và tích hợp vào hóa đơn.
+    *   Hệ thống đánh giá sản phẩm thông minh kèm hình ảnh thực tế.
+*   **Dữ liệu mẫu (Seeding)**: Hệ thống tự động khởi tạo dữ liệu mẫu cho Marketplace ngay khi khởi động.
  
  ### 📸 2. Mạng Xã hội Tương tác
  Trải nghiệm chia sẻ nội dung được tối ưu theo phong cách hiện đại:
@@ -53,9 +55,18 @@ Dự án áp dụng các tiêu chuẩn phát triển phần mềm hiện đại:
 
 ---
 
+## 📌 Lộ trình Phát triển (Roadmap) & Các vấn đề tồn tại
+
+### ⚠️ Các vấn đề cần xử lý tiếp theo:
+- [ ] **Tự động xác nhận Thanh toán QR**: Hiện tại mã QR chỉ phục vụ hiển thị, việc xác nhận thanh toán vẫn cần người bán kiểm tra thủ công. Cần tích hợp Webhook Ngân hàng hoặc PayOS để tự động hóa hoàn toàn.
+- [ ] **Giao diện Mobile**: Tiếp tục tối ưu hóa các thành phần UI phức tạp (như Variant selection) trên các thiết bị màn hình siêu nhỏ.
+- [ ] **Real-time Notifications**: Tích hợp SignalR để thông báo đơn hàng mới và tin nhắn ngay lập tức mà không cần tải lại trang.
+
+---
+
 ## 🚀 Công nghệ sử dụng
 
-- **Backend:** .NET 8 Web API, Entity Framework Core 8, SQL Server.
+- **Backend:** .NET 9 Web API, Entity Framework Core 9, PostgreSQL (Npgsql).
 - **Frontend:** HTML5, CSS3, Javascript ES6+, UI Kit Glassmorphism.
 - **Tools:** GitHub, Visual Studio 2022.
 
@@ -68,11 +79,10 @@ Dự án áp dụng các tiêu chuẩn phát triển phần mềm hiện đại:
    git clone https://github.com/HaiDang-Ng22/blog-community-plantform.git
    ```
 
-2. **Cấu hình**: Cập nhật Connection String trong `Blog.API/appsettings.json`.
+2. **Cấu hình**: Cập nhật Connection String (PostgreSQL) trong `Blog.API/appsettings.json`.
 3. **Chạy ứng dụng**:
    ```bash
-   cd Blog.API
-   dotnet run
+   dotnet run --project Blog.API/Blog.API.csproj
    ```
 4. **Truy cập**: `http://localhost:7000`.
 

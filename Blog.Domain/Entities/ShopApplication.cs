@@ -13,7 +13,15 @@ public class ShopApplication
     public Guid UserId { get; set; }
     public string ShopName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string? IdentityInfo { get; set; } // CCCD or Tax ID
+
+    // New Identity Fields
+    public string CitizenId { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Gender { get; set; } = string.Empty;
+    public DateTime DateOfBirth { get; set; }
+    public string Hometown { get; set; } = string.Empty;
+    public string Occupation { get; set; } = string.Empty;
+
     public ShopApplicationStatus Status { get; set; } = ShopApplicationStatus.Pending;
     public string? AdminNote { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

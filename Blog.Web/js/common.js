@@ -87,11 +87,10 @@ async function updateNav() {
                 <a href="marketplace.html" class="nav-marketplace-link">
                     <i class="fa-solid fa-bag-shopping"></i> <span data-i18n="shopping">${window.t('shopping')}</span>
                 </a>
-                ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin' && window._userHasShop) ? `
-                <a href="seller-center.html" class="nav-seller-link">
+                ${window._userHasShop ? `
+                <a href="seller-center.html" class="nav-marketplace-link" style="color: #059669; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
                     <i class="fa-solid fa-store"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span>
-                </a>
-                ` : ''}
+                </a>` : ''}
             </div>
 
             <div class="user-menu" id="user-menu-trigger">
@@ -101,9 +100,8 @@ async function updateNav() {
                     <a href="profile.html"><i class="fa fa-user"></i> <span data-i18n="profile">${window.t('profile')}</span></a>
                     <a href="marketplace.html" style="color: #2563eb; font-weight: 600;"><i class="fa fa-shopping-bag"></i> <span data-i18n="marketplace">${window.t('marketplace')}</span></a>
                     <a href="my-orders.html" style="color: #f59e0b; font-weight: 600;"><i class="fa-solid fa-box-open"></i> <span data-i18n="my_orders">${window.t('my_orders')}</span></a>
-                    ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin' && window._userHasShop) ? `
-                    <a href="seller-center.html" style="color: #059669; font-weight: 600;"><i class="fa fa-shop"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span></a>
-                    ` : ''}
+                    ${window._userHasShop ? `<a href="seller-center.html" style="color: #059669; font-weight: 600;"><i class="fa fa-store"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span></a>` : ''}
+                  
                     <hr>
                     ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `<a href="create-post.html"><i class="fa fa-plus-circle"></i> <span data-i18n="post_new">${window.t('post_new')}</span></a>` : ''}
                     <a href="settings.html"><i class="fa fa-cog"></i> <span data-i18n="settings">${window.t('settings')}</span></a>
@@ -249,14 +247,14 @@ window.addEventListener('languageChanged', () => {
 // Utility to auto-link URLs in text
 function autoLink(text) {
     if (!text) return '';
-    
+
     // Regex to match URLs (http, https)
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    
+
     // We should be careful to escape HTML first if the text is raw, 
     // but in Zynk we often insert as innerHTML, so we just replace the links.
     // Assuming the text is already safe or will be safely rendered.
-    return text.replace(urlRegex, function(url) {
+    return text.replace(urlRegex, function (url) {
         return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;">${url}</a>`;
     });
 }

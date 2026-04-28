@@ -236,5 +236,19 @@ public class AppDbContext : DbContext
             .WithMany(r => r.Images)
             .HasForeignKey(i => i.ProductReviewId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // --- Global DateTime UTC Converter ---
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
+                        v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+                        v => DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+                }
+            }
+        }
     }
 }

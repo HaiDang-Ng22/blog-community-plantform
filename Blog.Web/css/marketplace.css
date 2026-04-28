@@ -635,9 +635,30 @@ html, body {
     color: #3b82f6;
     font-weight: 700;
     font-size: 0.875rem;
-    margin-bottom: 0.5rem;
     text-decoration: none;
+    transition: color 0.2s;
 }
+
+.modal-shop-name:hover { color: #2563eb; text-decoration: underline; }
+
+.btn-shop-follow {
+    background: #fff;
+    color: #3b82f6;
+    border: 1.5px solid #3b82f6;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-shop-follow:hover { background: #eff6ff; }
+.btn-shop-follow.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+.btn-shop-follow.active:hover { background: #2563eb; }
 
 .modal-title {
     font-size: 1.5rem;
@@ -949,6 +970,24 @@ body.dark-mode .suggestion-item:hover { background: #334155; }
     .modal-btns .btn { min-width: unset; }
     .modal-action-row { gap: 1rem; padding: 1rem 0; margin: 1rem 0; }
     .review-summary-card { flex-direction: column; gap: 1rem; padding: 1rem; }
+    
+    @media (max-width: 768px) {
+        .modal-content-grid { grid-template-columns: 1fr; height: auto; max-height: 95vh; }
+        .modal-gallery { height: 350px; }
+        .modal-product-info { padding: 1.5rem; max-height: none; }
+        .modal-title { font-size: 1.25rem; }
+        .modal-price { font-size: 1.5rem; }
+        .modal-btns { flex-direction: column; }
+        .modal-btns .btn { width: 100%; }
+        .qty-control { width: 100%; justify-content: space-between; }
+        .qty-control button { flex: 1; }
+        .qty-control input { flex: 2; }
+        
+        .cart-layout { grid-template-columns: 1fr; margin: 1rem auto; padding: 0 1rem; }
+        .cart-item { flex-direction: column; align-items: flex-start; }
+        .cart-item img { width: 60px; height: 60px; }
+        .cart-price { margin-top: 5px; }
+    }
 }
 
 /* Small phone: <= 480px */

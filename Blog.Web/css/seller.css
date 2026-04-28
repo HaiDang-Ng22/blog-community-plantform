@@ -452,6 +452,18 @@ body.dark-mode .action-pill.delete:hover {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    .seller-layout {
+        margin: 1rem auto;
+    }
+    .seller-container {
+        padding: 1.5rem;
+    }
+    div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    div[style*="grid-template-columns: repeat(3, 1fr)"] {
+        grid-template-columns: 1fr !important;
+    }
     .order-status-tabs {
         padding-bottom: 5px;
     }
