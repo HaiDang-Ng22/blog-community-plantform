@@ -45,16 +45,58 @@
         </div>
         <form id="form-shop-apply" class="application-form">
             <div id="msg-box" class="message-box hidden"></div>
+            
             <div class="input-group">
                 <label data-i18n="shop_name_label">Tên cửa hàng dự kiến</label>
                 <input type="text" id="shop-name" placeholder="Ví dụ: Zynk Mobile Store" data-i18n="shop_name_placeholder" required>
             </div>
+            
+            <h3 style="margin: 1.5rem 0 1rem 0; font-size: 1.1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;" data-i18n="identity_info_title">Thông tin định danh người bán</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;" data-i18n="identity_info_desc">Vui lòng cung cấp chính xác thông tin trên CCCD/CMND của bạn. Người bán phải từ 18 tuổi trở lên.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="input-group">
+                    <label data-i18n="citizen_id_label">Số CCCD / CMND</label>
+                    <input type="text" id="citizen-id" placeholder="Nhập số CCCD" required>
+                </div>
+                <div class="input-group">
+                    <label data-i18n="full_name_label">Họ và tên</label>
+                    <input type="text" id="full-name" placeholder="Nhập họ và tên" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="input-group">
+                    <label data-i18n="gender_label">Giới tính</label>
+                    <select id="gender" required style="width: 100%; padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label data-i18n="dob_label">Ngày tháng năm sinh</label>
+                    <input type="date" id="dob" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="input-group">
+                    <label data-i18n="hometown_label">Quê quán</label>
+                    <input type="text" id="hometown" placeholder="Nhập quê quán" required>
+                </div>
+                <div class="input-group">
+                    <label data-i18n="occupation_label">Nghề nghiệp</label>
+                    <input type="text" id="occupation" placeholder="Nhập nghề nghiệp" required>
+                </div>
+            </div>
+
             <div class="input-group">
                 <label data-i18n="shop_desc_label">Mô tả shop</label>
                 <textarea id="shop-desc" rows="4" placeholder="Giới thiệu ngắn về những gì bạn định bán..." data-i18n="shop_desc_placeholder"
                     required></textarea>
             </div>
-            <button type="submit" class="btn primary-btn" data-i18n="submit_apply">Gửi yêu cầu phê duyệt</button>
+            <button type="submit" class="btn primary-btn" id="btn-submit-apply" data-i18n="submit_apply">Gửi yêu cầu phê duyệt</button>
         </form>
     </template>
 
@@ -80,6 +122,7 @@
                 <div class="tab-link active" onclick="switchSellerTab('overview')" data-i18n="overview">Tổng quan</div>
                 <div class="tab-link" onclick="switchSellerTab('products')" data-i18n="products">Sản phẩm</div>
                 <div class="tab-link" onclick="switchSellerTab('orders')" data-i18n="orders">Đơn hàng</div>
+                <div class="tab-link" onclick="switchSellerTab('payment')" data-i18n="payment_settings_tab">Thanh toán</div>
             </nav>
 
             <!-- Overview Section -->
@@ -160,6 +203,52 @@
 
                 <div id="order-list-container">
                     <!-- Premium cards will be injected here by JS -->
+                </div>
+            </section>
+
+            <!-- Payment Settings Section -->
+            <section id="section-payment" class="dashboard-section">
+                <div class="seller-header" style="text-align: left; margin-bottom: 2rem;">
+                    <h3 data-i18n="payment_config_title">Cấu hình Thanh toán VietQR</h3>
+                    <p style="font-size: 0.9rem; color: #64748b;">Thiết lập thông tin ngân hàng để nhận thanh toán từ khách hàng qua mã QR tự động.</p>
+                </div>
+
+                <div class="glass-card" style="max-width: 600px; padding: 2rem;">
+                    <form id="form-payment-settings">
+                        <div class="input-group">
+                            <label data-i18n="bank_name">Ngân hàng</label>
+                            <select id="bank-name" class="glass-select" style="width: 100%; height: 45px;" required>
+                                <option value="" disabled selected>Chọn ngân hàng</option>
+                                <option value="MB">MB Bank (Ngân hàng Quân đội)</option>
+                                <option value="VCB">Vietcombank</option>
+                                <option value="ICB">VietinBank</option>
+                                <option value="BIDV">BIDV</option>
+                                <option value="TCB">Techcombank</option>
+                                <option value="ACB">ACB</option>
+                                <option value="VPB">VPBank</option>
+                                <option value="STB">Sacombank</option>
+                                <option value="VIB">VIB</option>
+                                <option value="TPB">TPBank</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="bank_account_number">Số tài khoản</label>
+                            <input type="text" id="bank-account-number" placeholder="Nhập số tài khoản ngân hàng" required>
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="bank_account_name">Tên chủ tài khoản (Không dấu)</label>
+                            <input type="text" id="bank-account-name" placeholder="Ví dụ: NGUYEN VAN A" required>
+                        </div>
+
+                        <div style="margin-top: 2rem; background: #f0f9ff; padding: 1rem; border-radius: 12px; border: 1px solid #e0f2fe; display: flex; gap: 1rem; align-items: flex-start;">
+                            <i class="fa fa-info-circle" style="color: #0ea5e9; margin-top: 3px;"></i>
+                            <div style="font-size: 0.85rem; color: #0369a1; line-height: 1.5;">
+                                Thông tin này sẽ được dùng để tạo mã VietQR tự động tại trang thanh toán. Đảm bảo thông tin chính xác để nhận được tiền từ khách hàng.
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn primary-btn" style="margin-top: 2rem;" data-i18n="save_payment_config">Lưu cấu hình thanh toán</button>
+                    </form>
                 </div>
             </section>
         </div>

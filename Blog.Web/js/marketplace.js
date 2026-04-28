@@ -198,7 +198,12 @@ async function openProductModal(productId) {
                 </div>
                 <div class="modal-product-info">
                     <span class="close-modal" onclick="closeModal()"><i class="fa fa-times"></i></span>
-                    <a href="#" class="modal-shop-name"><i class="fa fa-shop"></i> ${p.shopName}</a>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <a href="profile.html?id=${p.shopOwnerId}" class="modal-shop-name" style="margin-bottom: 0;"><i class="fa fa-shop"></i> ${p.shopName}</a>
+                        <button id="shop-follow-btn" class="btn-shop-follow" onclick="toggleShopFollow('${p.shopOwnerId}')">
+                            <i class="fa fa-plus"></i> Theo dõi
+                        </button>
+                    </div>
                     <h2 class="modal-title">${p.name}</h2>
                     <div class="modal-rating">
                         <span style="color: #fbbf24; font-weight: 700;">${p.rating.toFixed(1)}</span>
@@ -275,6 +280,7 @@ async function openProductModal(productId) {
         loadReviewStats(productId);
         loadReviews(productId);
         checkReviewEligibility(productId);
+        checkShopFollowStatus(p.shopOwnerId);
 
     } catch (e) {
         console.error('Failed to load product details', e);
@@ -717,4 +723,50 @@ function applyFilters() {
     filterState.minPrice = min ? parseFloat(min) : null;
     filterState.maxPrice = max ? parseFloat(max) : null;
     loadProducts();
+}
+
+async function toggleShopFollow(userId) {
+    if (!localStorage.getItem('auth_token')) {
+        window.location.href = 'auth.html';
+        return;
+    }
+    const btn = document.getElementById('shop-follow-btn');
+    if (!btn) return;
+
+    try {
+        btn.disabled = true;
+        const res = await window.api.post(`users/${userId}/follow`);
+        updateShopFollowButton(res.isFollowing);
+        if (window.common?.showToast) {
+            window.common.showToast(res.isFollowing ? 'Đã theo dõi shop!' : 'Đã bỏ theo dõi shop.', 'success');
+        } else {
+            alert(res.isFollowing ? 'Đã theo dõi shop!' : 'Đã bỏ theo dõi shop.');
+        }
+    } catch (e) {
+        console.error('Follow failed', e);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function updateShopFollowButton(isFollowing) {
+    const btn = document.getElementById('shop-follow-btn');
+    if (!btn) return;
+    if (isFollowing) {
+        btn.innerHTML = '<i class="fa fa-check"></i> Đang theo dõi';
+        btn.classList.add('active');
+    } else {
+        btn.innerHTML = '<i class="fa fa-plus"></i> Theo dõi';
+        btn.classList.remove('active');
+    }
+}
+
+async function checkShopFollowStatus(userId) {
+    if (!localStorage.getItem('auth_token')) return;
+    try {
+        const profile = await window.api.get(`users/${userId}/profile`);
+        updateShopFollowButton(profile.isFollowing);
+    } catch (e) {
+        console.error('Failed to check follow status', e);
+    }
 }

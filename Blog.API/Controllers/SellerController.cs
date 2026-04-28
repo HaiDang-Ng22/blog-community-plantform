@@ -42,6 +42,11 @@ public class SellerController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
+        // Age validation
+        var age = DateTime.UtcNow.Year - dto.DateOfBirth.Year;
+        if (dto.DateOfBirth > DateTime.UtcNow.AddYears(-age)) age--;
+        if (age < 18) return BadRequest(new { message = "Bạn phải từ 18 tuổi trở lên để đăng ký cửa hàng." });
+
         var existing = await _appRepository.FindAsync(a => a.UserId == userId && a.Status == ShopApplicationStatus.Pending);
         if (existing.Any()) return BadRequest(new { message = "Bạn đã có khảo sát đang chờ duyệt." });
 
@@ -54,6 +59,12 @@ public class SellerController : ControllerBase
             UserId = userId,
             ShopName = dto.ShopName,
             Description = dto.Description,
+            CitizenId = dto.CitizenId,
+            FullName = dto.FullName,
+            Gender = dto.Gender,
+            DateOfBirth = DateTime.SpecifyKind(dto.DateOfBirth, DateTimeKind.Utc),
+            Hometown = dto.Hometown,
+            Occupation = dto.Occupation,
             Status = ShopApplicationStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -281,5 +292,20 @@ public class SellerController : ControllerBase
         });
 
         return Ok(dtos);
+    }
+
+    [HttpPut("payment-settings")]
+    public async Task<IActionResult> UpdatePaymentSettings([FromBody] UpdateShopPaymentDto dto)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return NotFound(new { message = "Không tìm thấy cửa hàng." });
+
+        shop.BankName = dto.BankName;
+        shop.BankAccountNumber = dto.BankAccountNumber;
+        shop.BankAccountName = dto.BankAccountName;
+
+        await _shopRepository.UpdateAsync(shop);
+        return Ok(new { message = "Cập nhật cấu hình thanh toán thành công." });
     }
 }

@@ -246,149 +246,81 @@ async function updateMarketplaceTabUI() {
     const section = document.getElementById('section-marketplace');
     if (!tabLabel || !section) return;
 
-    let hasShop = false;
-    let shopData = null;
-    let pendingApp = null;
-
     try {
-        shopData = await window.api.get('seller/my-shop');
-        hasShop = true;
-    } catch (e) {
-        // 404 = chưa có shop, kiểm tra xem có đơn đang chờ duyệt không
-        try {
-            pendingApp = await window.api.get('seller/application-status');
-        } catch {}
-    }
-
-    if (hasShop) {
-        // Đã có shop → đổi tên tab thành "Kênh người bán"
+        const shop = await window.api.get('seller/my-shop');
+        
         tabLabel.setAttribute('data-i18n', 'seller_center');
         tabLabel.textContent = window.t('seller_center');
-        // Hiển thị form quản lý shop
+
+        let statusHtml = '';
+        if (shop.status === 'Active') {
+            statusHtml = `
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
+                    <i class="fa-solid fa-circle-check" style="font-size:3.5rem; color:#22c55e; margin-bottom:1.5rem;"></i>
+                    <h3 style="color:#166534; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="shop_active_title">${window.t('shop_active_title')}</h3>
+                    <p style="color:#166534; margin: 1rem 0; font-size:0.95rem;">Cửa hàng <strong>${shop.name}</strong> của bạn đang hoạt động bình thường.</p>
+                    <a href="seller-center.html" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; background:#22c55e; border:none; border-radius:10px; font-weight:700; text-decoration:none;" data-i18n="go_to_seller_center">
+                        ${window.t('go_to_seller_center')}
+                    </a>
+                </div>
+            `;
+        } else if (shop.status === 'Pending') {
+            statusHtml = `
+                <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
+                    <i class="fa-solid fa-clock" style="font-size:3.5rem; color:#f59e0b; margin-bottom:1.5rem;"></i>
+                    <h3 style="color:#92400e; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="pending_approval_title">${window.t('pending_approval_title')}</h3>
+                    <p style="color:#92400e; margin: 1rem 0; font-size:0.95rem;">Hồ sơ <strong>${shop.name}</strong> đang được Admin xem xét.</p>
+                </div>
+            `;
+        } else if (shop.status === 'Rejected') {
+             statusHtml = `
+                <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
+                    <i class="fa-solid fa-circle-xmark" style="font-size:3.5rem; color:#ef4444; margin-bottom:1.5rem;"></i>
+                    <h3 style="color:#991b1b; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="shop_rejected_title">${window.t('shop_rejected_title')}</h3>
+                    <p style="color:#991b1b; margin: 1rem 0; font-size:0.95rem;">Lý do: ${shop.rejectionReason || 'Không có lý do cụ thể.'}</p>
+                    <button onclick="window.location.href='seller-center.html'" class="btn secondary-btn" style="border-color:#ef4444; color:#ef4444; border-radius:10px; font-weight:700;">Đăng ký lại</button>
+                </div>
+            `;
+        } else {
+            // Default active UI if status is unknown but shop exists
+            statusHtml = `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
+                    <i class="fa-solid fa-store" style="font-size:3.5rem; color:#64748b; margin-bottom:1.5rem;"></i>
+                    <h3 style="color:#334155; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="seller_center">${window.t('seller_center')}</h3>
+                    <p style="color:#64748b; margin: 1rem 0; font-size:0.95rem;">Truy cập vào trang quản lý cửa hàng của bạn.</p>
+                    <a href="seller-center.html" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; border-radius:10px; font-weight:700; text-decoration:none;" data-i18n="go_to_seller_center">
+                        ${window.t('go_to_seller_center')}
+                    </a>
+                </div>
+            `;
+        }
+
         section.innerHTML = `
             <h2 class="section-title" data-i18n="seller_center">${window.t('seller_center')}</h2>
-            <p class="section-desc" data-i18n="marketplace_settings_desc">${window.t('marketplace_settings_desc') || 'Quản lý và thiết lập thông tin kinh doanh trên Marketplace.'}</p>
-            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.75rem;">
-                <i class="fa-solid fa-circle-check" style="color:#16a34a; font-size:1.3rem;"></i>
-                <div>
-                    <div style="font-weight:600; color:#15803d;" data-i18n="shop_active_title">${window.t('shop_active_title')}</div>
-                    <div style="font-size:0.85rem; color:#166534;">${window.t('shop_active_desc').replace('{name}', shopData.name || '')}</div>
-                </div>
-            </div>
-            <form id="marketplace-form" style="max-width: 500px;" onsubmit="event.preventDefault(); showStatus(window.t('update_success'), 'success');">
-                <div class="form-group">
-                    <label for="set-shop-name" data-i18n="shop_name_label">${window.t('shop_name_label')}</label>
-                    <input type="text" id="set-shop-name" placeholder="${window.t('shop_name_placeholder')}" data-i18n-placeholder="shop_name_placeholder" value="${shopData.name || ''}">
-                </div>
-                <div class="form-group">
-                    <label for="set-delivery-address" data-i18n="delivery_address_label">${window.t('delivery_address_label')}</label>
-                    <textarea id="set-delivery-address" rows="3" placeholder="${window.t('delivery_address_placeholder')}" data-i18n-placeholder="delivery_address_placeholder"></textarea>
-                </div>
-                <div class="theme-card" style="margin-bottom: 1.5rem; margin-top: 0">
-                    <div>
-                        <div style="font-weight: 600;" data-i18n="auto_reply_label">${window.t('auto_reply_label')}</div>
-                        <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="auto_reply_desc">${window.t('auto_reply_desc')}</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="auto-reply-toggle" onchange="document.getElementById('auto-reply-box').style.display = this.checked ? 'block' : 'none'">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="form-group" id="auto-reply-box" style="display: none;">
-                    <textarea id="set-auto-reply" rows="2" placeholder="${window.t('auto_reply_placeholder')}" data-i18n-placeholder="auto_reply_placeholder"></textarea>
-                </div>
-                <button type="submit" class="btn primary-btn" data-i18n="save_marketplace_btn">${window.t('save_marketplace_btn')}</button>
-            </form>
+            <p class="section-desc">Cài đặt và quản lý thông tin bán hàng của bạn.</p>
+            ${statusHtml}
         `;
-    } else {
-        // Chưa có shop → đổi tên tab thành "Đăng ký bán hàng"
+
+    } catch (err) {
         tabLabel.setAttribute('data-i18n', 'register_seller');
         tabLabel.textContent = window.t('register_seller');
 
-        // Kiểm tra xem có đơn chờ duyệt không
-        const isPending = pendingApp && pendingApp.status === 'Pending';
-        const isRejected = pendingApp && pendingApp.status === 'Rejected';
-
         section.innerHTML = `
             <h2 class="section-title" data-i18n="register_seller">${window.t('register_seller')}</h2>
-            <p class="section-desc" data-i18n="register_seller_desc">${window.t('register_seller_desc') || 'Đăng ký để mở cửa hàng và bắt đầu kinh doanh trên Zynk Marketplace.'}</p>
-            ${isPending ? `
-            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:12px; padding:1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.75rem;">
-                <i class="fa-solid fa-clock" style="color:#d97706; font-size:1.3rem;"></i>
-                <div>
-                    <div style="font-weight:600; color:#92400e;" data-i18n="pending_approval_title">${window.t('pending_approval_title')}</div>
-                    <div style="font-size:0.85rem; color:#78350f;">${window.t('pending_approval_desc').replace('{name}', pendingApp.shopName)}</div>
-                </div>
-            </div>
-            ` : ''}
-            ${isRejected ? `
-            <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.75rem;">
-                <i class="fa-solid fa-circle-xmark" style="color:#dc2626; font-size:1.3rem;"></i>
-                <div>
-                    <div style="font-weight:600; color:#b91c1c;" data-i18n="rejected_approval_title">${window.t('rejected_approval_title')}</div>
-                    <div style="font-size:0.85rem; color:#991b1b;">${window.t('rejected_approval_desc').replace('{name}', pendingApp.shopName)}</div>
-                </div>
-            </div>
-            ` : ''}
-            ${!isPending ? `
-            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
-                <h4 style="margin:0 0 0.75rem; color:#1e40af; display:flex; align-items:center; gap:0.5rem;" data-i18n="seller_benefits_title">
-                    <i class="fa-solid fa-store"></i> ${window.t('seller_benefits_title')}
-                </h4>
-                <ul style="margin:0; padding-left:1.25rem; color:#1e3a8a; font-size:0.9rem; line-height:2;">
-                    <li data-i18n="seller_benefits_1">${window.t('seller_benefits_1')}</li>
-                    <li data-i18n="seller_benefits_2">${window.t('seller_benefits_2')}</li>
-                    <li data-i18n="seller_benefits_3">${window.t('seller_benefits_3')}</li>
-                    <li data-i18n="seller_benefits_4">${window.t('seller_benefits_4')}</li>
-                </ul>
-            </div>
-            <form id="register-seller-form" style="max-width: 500px;" onsubmit="submitSellerRegistration(event)">
-                <div class="form-group">
-                    <label for="reg-shop-name" data-i18n="shop_name_label">${window.t('shop_name_label')} <span style="color:#ef4444">*</span></label>
-                    <input type="text" id="reg-shop-name" placeholder="${window.t('shop_name_placeholder')}" data-i18n-placeholder="shop_name_placeholder" required>
-                </div>
-                <div class="form-group">
-                    <label for="reg-shop-desc" data-i18n="shop_desc_label">${window.t('shop_desc_label') || 'Mô tả cửa hàng'}</label>
-                    <textarea id="reg-shop-desc" rows="3" placeholder="${window.t('shop_desc_placeholder') || 'Mô tả ngắn về sản phẩm/dịch vụ bạn cung cấp...'}" data-i18n-placeholder="shop_desc_placeholder"></textarea>
-                </div>
-                <button type="submit" class="btn primary-btn" id="register-seller-btn" style="background: linear-gradient(135deg, #059669, #10b981);">
-                    <i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i> <span data-i18n="send_application_btn">${window.t('send_application_btn')}</span>
+            <p class="section-desc" data-i18n="register_seller_desc">${window.t('register_seller_desc')}</p>
+            
+            <div style="background:linear-gradient(135deg, #f8fafc, #f1f5f9); border:1px solid #e2e8f0; border-radius:12px; padding:2.5rem; text-align:center; margin-top:1rem;">
+                <i class="fa-solid fa-store" style="font-size:3.5rem; color:#94a3b8; margin-bottom:1.5rem;"></i>
+                <h3 style="color:#475569; font-size:1.4rem; margin-bottom:0.5rem;">Bắt đầu kinh doanh trên Zynk</h3>
+                <p style="color:#64748b; margin: 1rem 0; font-size:0.95rem;">Mở cửa hàng miễn phí và tiếp cận hàng ngàn khách hàng tiềm năng ngay hôm nay.</p>
+                <button onclick="window.location.href='seller-center.html'" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; border-radius:10px; font-weight:700;">
+                    Đăng ký bán hàng ngay
                 </button>
-            </form>
-            ` : ''}
+            </div>
         `;
     }
     
-    // Apply translations to the newly injected HTML
-    if (window.applyTranslations) {
-        window.applyTranslations();
-    }
-}
-
-async function submitSellerRegistration(e) {
-    e.preventDefault();
-    const btn = document.getElementById('register-seller-btn');
-    const shopName = document.getElementById('reg-shop-name').value.trim();
-    const description = document.getElementById('reg-shop-desc').value.trim();
-
-    if (!shopName) {
-        showStatus('Vui lòng nhập tên cửa hàng.', 'error');
-        return;
-    }
-
-    try {
-        btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${window.t('submitting')}`;
-        await window.api.post('seller/apply', { shopName, description });
-        showStatus(window.t('register_success'), 'success');
-        // Xóa cache và làm mới UI
-        sessionStorage.removeItem('zynk_has_shop');
-        await updateMarketplaceTabUI();
-    } catch (err) {
-        showStatus(err.message || window.t('register_failed'), 'error');
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i> ${window.t('send_application_btn')}`;
-    }
+    if (window.applyTranslations) window.applyTranslations();
 }
 
 // =============================================

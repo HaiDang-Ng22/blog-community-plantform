@@ -171,6 +171,12 @@ public class AdminController : ControllerBase
                 a.UserId,
                 a.ShopName,
                 a.Description,
+                a.CitizenId,
+                a.FullName,
+                a.Gender,
+                a.DateOfBirth,
+                a.Hometown,
+                a.Occupation,
                 a.Status,
                 a.CreatedAt,
                 UserName = a.User.FullName
@@ -178,6 +184,48 @@ public class AdminController : ControllerBase
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
         return Ok(apps);
+    }
+
+    [HttpGet("shops")]
+    public async Task<IActionResult> GetShops()
+    {
+        var shops = await _context.Shops
+            .Include(s => s.User)
+            .Select(s => new
+            {
+                s.Id,
+                s.Name,
+                s.Description,
+                s.IsSuspended,
+                s.CreatedAt,
+                OwnerName = s.User.FullName,
+                ProductCount = s.Products.Count
+            })
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync();
+        return Ok(shops);
+    }
+
+    [HttpPost("shops/{id}/suspend")]
+    public async Task<IActionResult> SuspendShop(Guid id)
+    {
+        var shop = await _context.Shops.FindAsync(id);
+        if (shop == null) return NotFound();
+
+        shop.IsSuspended = true;
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã đình chỉ cửa hàng." });
+    }
+
+    [HttpPost("shops/{id}/unsuspend")]
+    public async Task<IActionResult> UnsuspendShop(Guid id)
+    {
+        var shop = await _context.Shops.FindAsync(id);
+        if (shop == null) return NotFound();
+
+        shop.IsSuspended = false;
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã gỡ đình chỉ cửa hàng." });
     }
 
     [HttpPost("shop-applications/{id}/approve")]

@@ -652,13 +652,37 @@
                                     <tr>
                                         <th data-i18n="applicant">Người đăng ký</th>
                                         <th data-i18n="shop_name">Tên Shop</th>
-                                        <th data-i18n="description">Mô tả</th>
-                                        <th data-i18n="request_date">Ngày gửi</th>
+                                        <th data-i18n="citizen_id_label">CCCD</th>
                                         <th data-i18n="status">Trạng thái</th>
                                         <th data-i18n="actions_label">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-shops-list">
+                                    <!-- JS will inject rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.5rem; font-weight: 700;" data-i18n="active_shops">Cửa hàng đang hoạt động</h2>
+                            <button class="btn secondary-btn" onclick="loadAdminActiveShops()" style="width: auto; margin: 0;">
+                                <i class="fa-solid fa-rotate"></i> <span data-i18n="refresh">Làm mới</span>
+                            </button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="shop_name">Tên Shop</th>
+                                        <th data-i18n="owner_name">Chủ sở hữu</th>
+                                        <th data-i18n="product_count">Sản phẩm</th>
+                                        <th data-i18n="status">Trạng thái</th>
+                                        <th data-i18n="actions_label">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-active-shops-list">
                                     <!-- JS will inject rows -->
                                 </tbody>
                             </table>
@@ -754,6 +778,22 @@
                             onclick="closeCategoryModal()" data-i18n="cancel">Hủy</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Application Detail Modal -->
+    <div id="shop-app-detail-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 data-i18n="shop_app_details">Chi tiết yêu cầu mở cửa hàng</h3>
+                <button class="close-btn" onclick="document.getElementById('shop-app-detail-modal').classList.add('hidden')">&times;</button>
+            </div>
+            <div class="modal-body" id="shop-app-detail-body">
+                <!-- Injected via JS -->
+            </div>
+            <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn secondary-btn" style="width: auto;" onclick="document.getElementById('shop-app-detail-modal').classList.add('hidden')" data-i18n="close">Đóng</button>
             </div>
         </div>
     </div>

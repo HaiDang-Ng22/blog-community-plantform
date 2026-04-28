@@ -19,6 +19,7 @@ public class Order
     public decimal TotalAmount { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.Unpaid;
     public string PaymentMethod { get; set; } = "COD";
+    public decimal ShippingFee { get; set; } = 0;
     
     // Address detail fields
     public string CustomerName { get; set; } = string.Empty;

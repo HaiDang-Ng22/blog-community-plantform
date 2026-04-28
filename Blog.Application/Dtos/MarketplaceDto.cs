@@ -20,6 +20,16 @@ public class ShopDto
     public string? LogoUrl { get; set; }
     public string? CoverUrl { get; set; }
     public double Rating { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? BankAccountName { get; set; }
+}
+
+public class UpdateShopPaymentDto
+{
+    public string BankName { get; set; } = string.Empty;
+    public string BankAccountNumber { get; set; } = string.Empty;
+    public string BankAccountName { get; set; } = string.Empty;
 }
 
 public class ShopApplicationDto
@@ -27,6 +37,15 @@ public class ShopApplicationDto
     public Guid Id { get; set; }
     public string ShopName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    
+    // Identity Fields
+    public string CitizenId { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Gender { get; set; } = string.Empty;
+    public DateTime DateOfBirth { get; set; }
+    public string Hometown { get; set; } = string.Empty;
+    public string Occupation { get; set; } = string.Empty;
+
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
@@ -36,6 +55,7 @@ public class ProductDto
 {
     public Guid Id { get; set; }
     public Guid ShopId { get; set; }
+    public Guid ShopOwnerId { get; set; }
     public string ShopName { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
@@ -132,6 +152,7 @@ public class OrderDto
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public string PaymentMethod { get; set; } = string.Empty;
+    public decimal ShippingFee { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty; // Holds combined address
@@ -140,6 +161,9 @@ public class OrderDto
     public string SpecificAddress { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public List<OrderItemDto> Items { get; set; } = new();
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? BankAccountName { get; set; }
 }
 
 public class UpdateOrderAddressDto
@@ -173,6 +197,7 @@ public class CreateOrderDto
     public string SpecificAddress { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
     public string PaymentMethod { get; set; } = "COD";
+    public decimal ShippingFee { get; set; }
     public bool SaveAddress { get; set; }
     public string? CustomerNote { get; set; }
     public List<CreateOrderItemDto> Items { get; set; } = new();

@@ -83,6 +83,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
         return await _dbSet
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+                    .ThenInclude(p => p.Shop)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Variant)
             .FirstOrDefaultAsync(o => o.Id == id);

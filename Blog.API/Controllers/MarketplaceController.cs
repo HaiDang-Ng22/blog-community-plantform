@@ -35,7 +35,7 @@ public class MarketplaceController : ControllerBase
         var query = _context.Products
             .Include(p => p.Shop)
             .Include(p => p.Category)
-            .Where(p => p.Status == ProductStatus.Active);
+            .Where(p => p.Status == ProductStatus.Active && !p.Shop.IsSuspended);
 
         // 1. Filter by categoryId (hierarchical)
         if (categoryId.HasValue)
@@ -89,6 +89,8 @@ public class MarketplaceController : ControllerBase
             Price = p.Price,
             FeaturedImageUrl = p.FeaturedImageUrl,
             ShopName = p.Shop?.Name ?? "N/A",
+            ShopId = p.ShopId,
+            ShopOwnerId = p.Shop?.UserId ?? Guid.Empty,
             CategoryName = p.Category?.Name ?? "Khác",
             Rating = p.Rating,
             SalesCount = p.SalesCount
@@ -119,7 +121,7 @@ public class MarketplaceController : ControllerBase
             .Include(p => p.Category)
             .Include(p => p.Images)
             .Include(p => p.Variants)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && !x.Shop.IsSuspended);
 
         if (p == null) return NotFound();
 
@@ -131,6 +133,8 @@ public class MarketplaceController : ControllerBase
             Stock = p.Stock,
             Description = p.Description,
             FeaturedImageUrl = p.FeaturedImageUrl,
+            ShopId = p.ShopId,
+            ShopOwnerId = p.Shop?.UserId ?? Guid.Empty,
             ShopName = p.Shop?.Name ?? "N/A",
             CategoryName = p.Category?.Name ?? "Khác",
             Rating = p.Rating,

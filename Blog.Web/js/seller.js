@@ -64,11 +64,42 @@ function renderRegistration(errorMsg = '') {
 
     const form = document.getElementById('form-shop-apply');
     if (form) {
+        // Age validation
+        const dobInput = document.getElementById('dob');
+        const submitBtn = document.getElementById('btn-submit-apply');
+        
+        if (dobInput && submitBtn) {
+            dobInput.addEventListener('change', (e) => {
+                const dob = new Date(e.target.value);
+                const today = new Date();
+                let age = today.getFullYear() - dob.getFullYear();
+                const m = today.getMonth() - dob.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+                
+                if (age < 18) {
+                    alert('Bạn phải từ 18 tuổi trở lên để có thể mở cửa hàng.');
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                }
+            });
+        }
+
         form.onsubmit = async (e) => {
             e.preventDefault();
             const data = {
                 shopName: document.getElementById('shop-name').value,
-                description: document.getElementById('shop-desc').value
+                description: document.getElementById('shop-desc').value,
+                citizenId: document.getElementById('citizen-id').value,
+                fullName: document.getElementById('full-name').value,
+                gender: document.getElementById('gender').value,
+                dateOfBirth: document.getElementById('dob').value,
+                hometown: document.getElementById('hometown').value,
+                occupation: document.getElementById('occupation').value
             };
 
             try {
@@ -100,6 +131,7 @@ async function renderDashboard(shop) {
     loadSellerProducts();
     loadIncomingOrders();
     loadCategoriesForProduct();
+    loadPaymentSettings(shop);
 }
 
 function switchSellerTab(tab) {
@@ -614,6 +646,40 @@ async function handleImageUpload(inputEl, targetId) {
         btn.disabled = false;
         inputEl.value = ''; // Reset input
     }
+}
+
+// Payment Settings Logic
+async function loadPaymentSettings(shop) {
+    const form = document.getElementById('form-payment-settings');
+    if (!form) return;
+
+    if (shop.bankName) document.getElementById('bank-name').value = shop.bankName;
+    if (shop.bankAccountNumber) document.getElementById('bank-account-number').value = shop.bankAccountNumber;
+    if (shop.bankAccountName) document.getElementById('bank-account-name').value = shop.bankAccountName;
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        const oldText = btn.textContent;
+        
+        const data = {
+            bankName: document.getElementById('bank-name').value,
+            bankAccountNumber: document.getElementById('bank-account-number').value,
+            bankAccountName: document.getElementById('bank-account-name').value.toUpperCase()
+        };
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang lưu...';
+            await window.api.put('seller/payment-settings', data);
+            window.common?.showToast('Đã lưu cấu hình thanh toán.', 'success');
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = oldText;
+        }
+    };
 }
 
 // Global exposure
