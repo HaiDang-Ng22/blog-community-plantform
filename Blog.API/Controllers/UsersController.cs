@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Blog.API.Controllers;
 
@@ -29,11 +30,11 @@ public class UsersController : ControllerBase
 
         if (user == null) return NotFound();
 
-        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         bool isFollowing = false;
-        if (!string.IsNullOrEmpty(currentUserIdStr))
+        if (!string.IsNullOrEmpty(userIdStr))
         {
-            var currentUserId = Guid.Parse(currentUserIdStr);
+            var currentUserId = Guid.Parse(userIdStr);
             isFollowing = user.Followers.Any(f => f.FollowerId == currentUserId);
         }
 
@@ -57,7 +58,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdatePrivacy([FromBody] UpdatePrivacyRequest request)
     {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
@@ -74,7 +75,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> FollowUser(Guid id)
     {
-        var followerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var followerId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
         if (followerId == id) return BadRequest(new { message = "Bạn không thể theo dõi chính mình." });
 
         // Check if blocked
@@ -123,7 +124,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> BlockUser(Guid id)
     {
-        var blockerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var blockerId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
         if (blockerId == id) return BadRequest(new { message = "Bạn không thể chặn chính mình." });
 
         var block = await _context.Blocks
@@ -162,7 +163,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetBlockedUsers()
     {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
@@ -185,11 +186,122 @@ public class UsersController : ControllerBase
     }
 
     
+    [HttpGet("{id}/followers")]
+    public async Task<IActionResult> GetFollowers(Guid id)
+    {
+        var followers = await _context.Follows
+            .Where(f => f.FollowingId == id)
+            .Include(f => f.Follower)
+            .Select(f => new
+            {
+                f.Follower.Id,
+                f.Follower.FullName,
+                f.Follower.Username,
+                f.Follower.AvatarUrl,
+                f.Follower.Bio,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+        return Ok(followers);
+    }
+
+    [HttpGet("{id}/following")]
+    public async Task<IActionResult> GetFollowing(Guid id)
+    {
+        var following = await _context.Follows
+            .Where(f => f.FollowerId == id)
+            .Include(f => f.Following)
+            .Select(f => new
+            {
+                f.Following.Id,
+                f.Following.FullName,
+                f.Following.Username,
+                f.Following.AvatarUrl,
+                f.Following.Bio,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+        return Ok(following);
+    }
+
+    [HttpGet("{id}/friends")]
+    public async Task<IActionResult> GetFriends(Guid id)
+    {
+        // Bạn bè = Theo dõi chéo (Reciprocal Follows)
+        var followingIds = _context.Follows.Where(f => f.FollowerId == id).Select(f => f.FollowingId);
+        
+        var friends = await _context.Follows
+            .Where(f => f.FollowingId == id && followingIds.Contains(f.FollowerId))
+            .Include(f => f.Follower)
+            .Select(f => new
+            {
+                f.Follower.Id,
+                f.Follower.FullName,
+                f.Follower.Username,
+                f.Follower.AvatarUrl,
+                f.Follower.Bio
+            })
+            .ToListAsync();
+        
+        return Ok(friends);
+    }
+
+    [HttpGet("suggested")]
+    [Authorize]
+    public async Task<IActionResult> GetSuggestedUsers()
+    {
+        try 
+        {
+            // Cách lấy UserId an toàn nhất cho mọi loại Token
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                          ?? User.FindFirst("sub")?.Value 
+                          ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdStr)) 
+            {
+                Console.WriteLine(">>> GetSuggestedUsers: Unauthorized - No Sub claim found");
+                return Unauthorized();
+            }
+
+            var userId = Guid.Parse(userIdStr);
+            Console.WriteLine($">>> Loading suggestions for User: {userId}");
+
+            var followingIds = await _context.Follows
+                .Where(f => f.FollowerId == userId)
+                .Select(f => f.FollowingId)
+                .ToListAsync();
+            
+            // Gợi ý những người chưa theo dõi, không phải bản thân
+            // Sử dụng Guid.NewGuid() nếu EF.Functions.Random() gặp vấn đề tùy phiên bản Provider
+            var suggested = await _context.Users
+                .Where(u => u.Id != userId && !followingIds.Contains(u.Id))
+                .OrderBy(u => EF.Functions.Random()) 
+                .Take(5)
+                .Select(u => new {
+                    u.Id,
+                    u.Username,
+                    u.FullName,
+                    u.AvatarUrl
+                })
+                .ToListAsync();
+            
+            Console.WriteLine($">>> Found {suggested.Count} suggestions");
+            return Ok(suggested);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($">>> CRITICAL ERROR in GetSuggestedUsers: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+            // Trả về danh sách trống thay vì 500 để không làm lỗi giao diện
+            return Ok(new List<object>()); 
+        }
+    }
+
     [HttpPut("profile")]
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
         var user = await _context.Users.FindAsync(userId);
         
         if (user == null) return NotFound();
@@ -217,7 +329,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteAccount()
     {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);

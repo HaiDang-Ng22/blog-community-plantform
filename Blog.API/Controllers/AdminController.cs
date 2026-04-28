@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Blog.API.Controllers;
 
@@ -113,7 +114,9 @@ public class AdminController : ControllerBase
         var post = await _context.Posts.FindAsync(id);
         if (post == null) return NotFound();
 
-        var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var adminIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (string.IsNullOrEmpty(adminIdStr)) return Unauthorized();
+        var adminId = Guid.Parse(adminIdStr);
 
         // Send notification to author before deleting
         var notification = new Notification
@@ -256,7 +259,7 @@ public class AdminController : ControllerBase
         {
             Id = Guid.NewGuid(),
             ReceiverId = app.UserId,
-            ActorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            ActorId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value),
             Type = "System",
             Message = $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã được phê duyệt!",
             CreatedAt = DateTime.UtcNow
@@ -282,7 +285,7 @@ public class AdminController : ControllerBase
         {
             Id = Guid.NewGuid(),
             ReceiverId = app.UserId,
-            ActorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            ActorId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value),
             Type = "System",
             Message = $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã bị từ chối. Lý do: {note}",
             CreatedAt = DateTime.UtcNow

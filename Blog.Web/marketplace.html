@@ -24,14 +24,9 @@
             <div class="market-search-wrap" id="market-search-wrap">
                 <div class="market-search-box">
                     <i class="fa fa-search search-icon-left"></i>
-                    <input 
-                        type="text" 
-                        id="market-search-input" 
-                        class="market-search-input" 
-                        placeholder="Tìm kiếm sản phẩm, cửa hàng..."
-                        data-i18n="market_search_placeholder"
-                        autocomplete="off"
-                    >
+                    <input type="text" id="market-search-input" class="market-search-input"
+                        placeholder="Tìm kiếm sản phẩm, cửa hàng..." data-i18n="market_search_placeholder"
+                        autocomplete="off">
                     <button class="search-clear-btn hidden" id="search-clear-btn" onclick="clearSearch()">
                         <i class="fa fa-times"></i>
                     </button>
@@ -39,18 +34,15 @@
                         <i class="fa fa-search"></i> <span data-i18n="search_btn">Tìm</span>
                     </button>
                 </div>
-                <!-- Search Suggestions Dropdown -->
                 <div class="search-suggestions" id="search-suggestions"></div>
             </div>
             <div class="nav-actions" id="nav-actions">
-                <!-- Sẽ được điền bằng common.js -->
             </div>
         </nav>
     </header>
 
     <main class="container-wide" style="overflow-x:hidden; padding-bottom: 2rem;">
         <div class="marketplace-layout">
-            <!-- Sidebar -->
             <aside class="market-sidebar">
                 <h3 data-i18n="categories_title"><i class="fa-solid fa-layer-group"></i> Danh mục</h3>
                 <ul class="category-list" id="category-list">
@@ -59,41 +51,40 @@
                             <i class="fa fa-border-all"></i> <span data-i18n="all">Tất cả</span>
                         </a>
                     </li>
-                    <!-- Danh mục sẽ được load từ API -->
                 </ul>
             </aside>
 
-            <!-- Main Marketplace -->
             <div class="products-wrapper">
                 <div class="market-header">
                     <h2 id="market-title" data-i18n="market_suggestions">Gợi ý hôm nay</h2>
-                        <div class="market-filters">
-                            <!-- Price Range -->
-                            <div class="price-range-filter">
-                                <input type="number" id="min-price" placeholder="Tối thiểu" class="glass-input-small">
-                                <span>-</span>
-                                <input type="number" id="max-price" placeholder="Tối đa" class="glass-input-small">
-                                <button class="btn-filter-price" onclick="applyFilters()"><i class="fa fa-filter"></i></button>
-                            </div>
-                            
-                            <!-- Hot Search Tags -->
-                            <div class="hot-tags" id="hot-tags">
-                                <span class="hot-tag" onclick="searchByTag('giày')"><i class="fa fa-fire"></i> <span data-i18n="tag_shoes">Giày</span></span>
-                                <span class="hot-tag" onclick="searchByTag('áo')"><i class="fa fa-fire"></i> <span data-i18n="tag_shirts">Áo</span></span>
-                                <span class="hot-tag" onclick="searchByTag('túi')"><i class="fa fa-fire"></i> <span data-i18n="tag_bags">Túi xách</span></span>
-                            </div>
-                            <select id="sort-filter" class="glass-select" onchange="handleSort()">
-                                <option value="newest" data-i18n="latest">Mới nhất</option>
-                                <option value="price-asc" data-i18n="price_low_high">Giá thấp đến cao</option>
-                                <option value="price-desc" data-i18n="price_high_low">Giá cao đến thấp</option>
-                                <option value="rating_desc" data-i18n="top_rated">Top Đánh giá</option>
-                                <option value="sales_desc" data-i18n="best_seller">Bán chạy</option>
-                            </select>
+                    <div class="market-filters">
+                        <div class="price-range-filter">
+                            <input type="number" id="min-price" placeholder="Tối thiểu" class="glass-input-small">
+                            <span>-</span>
+                            <input type="number" id="max-price" placeholder="Tối đa" class="glass-input-small">
+                            <button class="btn-filter-price" onclick="applyFilters()"><i
+                                    class="fa fa-filter"></i></button>
                         </div>
+
+                        <div class="hot-tags" id="hot-tags">
+                            <span class="hot-tag" onclick="searchByTag('giày')"><i class="fa fa-fire"></i> <span
+                                    data-i18n="tag_shoes">Giày</span></span>
+                            <span class="hot-tag" onclick="searchByTag('áo')"><i class="fa fa-fire"></i> <span
+                                    data-i18n="tag_shirts">Áo</span></span>
+                            <span class="hot-tag" onclick="searchByTag('túi')"><i class="fa fa-fire"></i> <span
+                                    data-i18n="tag_bags">Túi xách</span></span>
+                        </div>
+                        <select id="sort-filter" class="glass-select" onchange="handleSort()">
+                            <option value="newest" data-i18n="latest">Mới nhất</option>
+                            <option value="price-asc" data-i18n="price_low_high">Giá thấp đến cao</option>
+                            <option value="price-desc" data-i18n="price_high_low">Giá cao đến thấp</option>
+                            <option value="rating_desc" data-i18n="top_rated">Top Đánh giá</option>
+                            <option value="sales_desc" data-i18n="best_seller">Bán chạy</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="product-grid" id="product-grid">
-                    <!-- Sản phẩm sẽ được load từ API -->
                     <div class="skeleton" style="height: 300px;"></div>
                     <div class="skeleton" style="height: 300px;"></div>
                     <div class="skeleton" style="height: 300px;"></div>
@@ -103,17 +94,14 @@
         </div>
     </main>
 
-    <!-- Cart Floating Button -->
     <div class="cart-float" id="cart-float" onclick="location.href='cart.html'">
         <i class="fa-solid fa-cart-shopping"></i>
         <span class="cart-badge" id="cart-count">0</span>
     </div>
 
-    <!-- Modal chi tiết sản phẩm -->
     <div id="product-modal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event)">
         <div class="modal-box" id="product-modal-box">
             <div class="product-modal-body" id="product-modal-content">
-                <!-- Nội dung inject bởi JS -->
             </div>
         </div>
     </div>

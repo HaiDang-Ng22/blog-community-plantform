@@ -12,12 +12,12 @@
 .post-card {
     background: white;
     border-radius: 0.75rem;
-    padding: 1.25rem;
+    padding: 0; /* Remove fixed padding to allow full-width media */
     border: 1px solid #E5E7EB;
     transition: var(--transition);
     display: flex;
-    flex-direction: row;
-    gap: 1.2rem;
+    flex-direction: column;
+    gap: 0;
     width: 100%;
 }
 

@@ -20,69 +20,87 @@
                     <div class="zynk-logo-clean logo-header"></div>
                 </a>
             </div>
-            
+
             <div class="nav-actions" id="nav-actions">
-                <!-- Sẽ được điền bằng JS -->
             </div>
         </nav>
     </header>
 
     <main class="main-content container-wide" style="max-width: 900px;">
-        <div class="create-post-container glassmorphism" style="margin-top: 2rem; padding: 0; overflow: hidden; width: 100%;">
+        <div class="create-post-container glassmorphism"
+            style="margin-top: 2rem; padding: 0; overflow: hidden; width: 100%;">
             <div id="message-box" class="message-box hidden" style="margin: 1rem;"></div>
-            
+
             <form id="form-edit-post" style="display: flex; flex-direction: row; min-height: 500px;">
-                <!-- Left Side: Image Preview -->
-                <div class="post-create-left" style="flex: 1.2; background: #fafafa; display: flex; align-items: center; justify-content: center; border-right: 1px solid #efefef; position: relative; min-height: 400px;">
+                <div class="post-create-left"
+                    style="flex: 1.2; background: #fafafa; display: flex; align-items: center; justify-content: center; border-right: 1px solid #efefef; position: relative; min-height: 400px;">
                     <div id="image-empty-state" class="hidden" style="text-align: center; color: #8e8e8e;">
                         <i class="fa-solid fa-images" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
                         <p data-i18n="post_images_label">Hình ảnh bài viết</p>
-                        <button type="button" class="btn primary-btn" onclick="document.getElementById('post-image-file').click()" style="width: auto; margin-top: 1rem; padding: 0.5rem 1.5rem;">
+                        <button type="button" class="btn primary-btn"
+                            onclick="document.getElementById('post-image-file').click()"
+                            style="width: auto; margin-top: 1rem; padding: 0.5rem 1.5rem;">
                             <span data-i18n="post_images_btn">Chọn ảnh mới</span>
                         </button>
                     </div>
-                    
-                    <div id="image-preview-grid" class="hidden hide-scrollbar" style="width: 100%; height: 100%; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; position: relative; background: #000;" onscroll="updateCarouselUI(this)">
-                        <!-- Previews will be injected here -->
+
+                    <div id="image-preview-grid" class="hidden hide-scrollbar"
+                        style="width: 100%; height: 100%; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; position: relative; background: #000;"
+                        onscroll="updateCarouselUI(this)">
                     </div>
-                    
-                    <!-- Navigation Buttons -->
-                    <button type="button" id="prev-btn" class="hidden carousel-nav-btn left" onclick="scrollCarousel(-1)" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; z-index: 15; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+
+                    <button type="button" id="prev-btn" class="hidden carousel-nav-btn left"
+                        onclick="scrollCarousel(-1)"
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; z-index: 15; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
-                    <button type="button" id="next-btn" class="hidden carousel-nav-btn right" onclick="scrollCarousel(1)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; z-index: 15; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <button type="button" id="next-btn" class="hidden carousel-nav-btn right"
+                        onclick="scrollCarousel(1)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; z-index: 15; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
 
                     <!-- Pagination Dots -->
-                    <div id="carousel-dots" class="hidden" style="position: absolute; bottom: 15px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; z-index: 15;">
+                    <div id="carousel-dots" class="hidden"
+                        style="position: absolute; bottom: 15px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; z-index: 15;">
                         <!-- Dots will be injected here -->
                     </div>
-                    
-                    <button type="button" id="btn-add-more-images" class="hidden" onclick="document.getElementById('post-image-file').click()" style="position: absolute; bottom: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;">
+
+                    <button type="button" id="btn-add-more-images" class="hidden"
+                        onclick="document.getElementById('post-image-file').click()"
+                        style="position: absolute; bottom: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;">
                         <i class="fa-solid fa-plus" style="color: #262626; font-size: 1.2rem;"></i>
                     </button>
-                    <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;" onchange="handleMultipleImageUpload(this)">
+                    <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;"
+                        onchange="handleMultipleImageUpload(this)">
                     <div id="image-urls-container"></div>
                 </div>
 
                 <!-- Right Side: Content -->
                 <div class="post-create-right" style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column;">
-                    <div class="post-create-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
-                        <img id="user-avatar-mini" src="https://via.placeholder.com/32" class="mini-avatar" style="width: 32px; height: 32px;">
+                    <div class="post-create-header"
+                        style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
+                        <img id="user-avatar-mini" src="https://via.placeholder.com/32" class="mini-avatar"
+                            style="width: 32px; height: 32px;">
                         <span id="user-name-mini" style="font-weight: 600; font-size: 0.9rem;">User</span>
                     </div>
 
                     <div class="input-group" style="flex: 1; display: flex; flex-direction: column;">
-                        <textarea id="post-content" placeholder="Bạn muốn chia sẻ điều gì?" data-i18n="post_content_placeholder" required style="width: 100%; flex: 1; border: none; outline: none; font-family: inherit; resize: none; font-size: 1rem;"></textarea>
+                        <textarea id="post-content" placeholder="Bạn muốn chia sẻ điều gì?"
+                            data-i18n="post_content_placeholder" required
+                            style="width: 100%; flex: 1; border: none; outline: none; font-family: inherit; resize: none; font-size: 1rem;"></textarea>
                     </div>
 
                     <div class="post-create-footer" style="padding-top: 1rem; border-top: 1px solid #efefef;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span id="file-name" style="font-size: 0.75rem; color: #8e8e8e;">Giữ nguyên ảnh cũ</span>
                             <div style="display: flex; gap: 10px;">
-                                <button type="button" class="btn secondary-btn" onclick="window.history.back()" style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem;" data-i18n="cancel">Hủy</button>
-                                <button type="submit" class="btn primary-btn" style="width: auto; margin: 0; padding: 0.5rem 1.5rem; font-size: 0.9rem;" data-i18n="save_changes">Lưu</button>
+                                <button type="button" class="btn secondary-btn" onclick="window.history.back()"
+                                    style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem;"
+                                    data-i18n="cancel">Hủy</button>
+                                <button type="submit" class="btn primary-btn"
+                                    style="width: auto; margin: 0; padding: 0.5rem 1.5rem; font-size: 0.9rem;"
+                                    data-i18n="save_changes">Lưu</button>
                             </div>
                         </div>
                     </div>

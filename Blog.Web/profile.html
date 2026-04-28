@@ -56,20 +56,45 @@
                 </div>
             </div>
 
-            <!-- User Timeline -->
-            <div class="section-title">
-                <h3 data-i18n="my_posts">Bài đăng của tôi</h3>
+            <!-- Profile Tabs -->
+            <div class="profile-tabs">
+                <button class="profile-tab active" data-tab="posts">
+                    <i class="fa-solid fa-grid-2"></i>
+                    <span data-i18n="posts_label">Bài viết</span>
+                </button>
+                <button class="profile-tab" data-tab="friends">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span data-i18n="friends_label">Bạn bè</span>
+                </button>
+                <button class="profile-tab" data-tab="followers">
+                    <i class="fa-solid fa-users"></i>
+                    <span data-i18n="followers_label">Người theo dõi</span>
+                </button>
+                <button class="profile-tab" data-tab="following">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span data-i18n="following_label">Đang theo dõi</span>
+                </button>
             </div>
 
-            <div id="profile-posts-grid" class="posts-grid">
-                <!-- Sẽ được điền bằng JS -->
-                <div class="post-card skeleton"></div>
+            <!-- Tab Content Containers -->
+            <div id="posts-container" class="tab-content active">
+                <div id="profile-posts-grid" class="posts-grid">
+                    <div class="post-card skeleton"></div>
+                </div>
+                <div id="no-posts" class="no-posts hidden">
+                    <i class="fa-solid fa-note-sticky"></i>
+                    <p data-i18n="no_posts_user">Chưa có bài đăng nào.</p>
+                </div>
             </div>
 
-            <div id="no-posts" class="no-posts hidden">
-                <i class="fa-solid fa-note-sticky"></i>
-                <p data-i18n="no_posts_user">Bạn chưa có bài đăng nào.</p>
-                <button class="btn primary-btn" onclick="window.location.href='create-post.html'" style="width: auto; padding: 0.6rem 2rem; margin-top: 1rem;" data-i18n="post_now">Đăng bài ngay</button>
+            <div id="list-container" class="tab-content">
+                <div class="user-list-grid" id="user-list-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div id="no-users" class="no-posts hidden">
+                    <i class="fa-solid fa-users-slash"></i>
+                    <p data-i18n="empty_list">Danh sách trống.</p>
+                </div>
             </div>
         </div>
     </main>

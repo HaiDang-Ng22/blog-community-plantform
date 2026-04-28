@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Blog.API.Controllers;
 
@@ -40,7 +41,7 @@ public class CommentsController : ControllerBase
     {
         try 
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
             var userId = Guid.Parse(userIdStr);
             
@@ -132,7 +133,7 @@ public class CommentsController : ControllerBase
     {
         try 
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
             var userId = Guid.Parse(userIdStr);
 

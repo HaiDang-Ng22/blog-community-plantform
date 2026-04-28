@@ -3,6 +3,7 @@ using Blog.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Blog.API.Controllers;
 
@@ -21,7 +22,7 @@ public class ReportsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> CreateReport([FromBody] ReportRequest request)
     {
-        var reporterId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var reporterId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
         
         var post = await _context.Posts.FindAsync(request.PostId);
         if (post == null) return NotFound(new { message = "Không tìm thấy bài viết" });

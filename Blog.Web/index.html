@@ -22,7 +22,7 @@
                     <div class="zynk-logo-clean logo-header"></div>
                 </a>
             </div>
-            
+
             <div class="nav-actions" id="nav-actions">
                 <!-- Populated by JS -->
                 <a href="auth.html" class="btn-login-link" data-i18n="login">Đăng nhập</a>
@@ -31,35 +31,71 @@
     </header>
 
     <main class="main-content container-wide">
-        <!-- Quick Post Area -->
-        <section class="quick-post-section" id="quick-post-auth-only">
-            <div class="quick-post-card">
-                <img src="https://ui-avatars.com/api/?name=User&background=random" id="current-user-avatar" class="mini-avatar" alt="Avatar">
-                <div class="quick-post-input" onclick="window.location.href='create-post.html'" data-i18n="quick_post_placeholder">
-                    Bạn đang nghĩ gì thế?
+        <div class="home-grid">
+            <div class="feed-column">
+                <!-- Quick Post Area -->
+                <section class="quick-post-section" id="quick-post-auth-only">
+                    <div class="quick-post-card glassmorphism" onclick="location.href='create-post.html'">
+                        <div class="user-avatar-placeholder">
+                            <img src="https://ui-avatars.com/api/?name=User" id="quick-post-avatar">
+                        </div>
+                        <span data-i18n="whats_on_your_mind">Bạn đang nghĩ gì thế?</span>
+                    </div>
+                </section>
+
+                <section class="posts-section">
+                    <div class="feed-tabs">
+                        <button class="feed-tab active" data-type="discover" data-i18n="discover">Khám phá</button>
+                        <button class="feed-tab" data-type="following" data-i18n="following">Đang theo dõi</button>
+                    </div>
+
+                    <div id="posts-grid" class="posts-grid">
+                        <!-- Skeleton Loading -->
+                        <div class="post-card skeleton"></div>
+                    </div>
+
+                    <div id="no-posts" class="no-posts hidden">
+                        <i class="fa-solid fa-wind"></i>
+                        <p data-i18n="no_posts">Mọi thứ thật yên tĩnh. Hãy là người đầu tiên đăng bài!</p>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="sidebar-column">
+                <!-- User Quick Info -->
+                <div class="sidebar-widget user-widget hidden" id="user-sidebar-widget">
+                    <div class="user-info">
+                        <img src="" id="sidebar-user-avatar" class="avatar-sm">
+                        <div class="user-meta">
+                            <span class="full-name" id="sidebar-user-name"></span>
+                            <span class="username" id="sidebar-user-username"></span>
+                        </div>
+                        <a href="profile.html" class="switch-link" data-i18n="view_profile">Xem hồ sơ</a>
+                    </div>
                 </div>
-            </div>
-        </section>
 
-        <section class="posts-section">
-            <div class="section-title">
-                <h2 data-i18n="news_feed">Bảng tin</h2>
-                <div class="filter-tabs">
-                    <button class="filter-btn active" data-i18n="latest">Mới nhất</button>
-                    <button class="filter-btn" data-i18n="following">Đang theo dõi</button>
+                <!-- Suggestions Widget -->
+                <div class="sidebar-widget suggestions-widget">
+                    <div class="widget-header">
+                        <h3 data-i18n="suggested_for_you">Gợi ý cho bạn</h3>
+                        <a href="#" data-i18n="see_all">Xem tất cả</a>
+                    </div>
+                    <div class="suggestions-list" id="suggestions-list">
+                        <!-- Populated by JS -->
+                        <div class="loading-spinner"></div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="posts-grid" class="posts-grid">
-                <!-- Skeleton Loading -->
-                <div class="post-card skeleton"></div>
-            </div>
-
-            <div id="no-posts" class="no-posts hidden">
-                <i class="fa-solid fa-wind"></i>
-                <p data-i18n="no_posts">Mọi thứ thật yên tĩnh. Hãy là người đầu tiên đăng bài!</p>
-            </div>
-        </section>
+                <!-- Footer Links -->
+                <div class="sidebar-footer">
+                    <nav class="footer-links">
+                        <a href="#">Giới thiệu</a> • <a href="#">Trợ giúp</a> • <a href="#">Báo chí</a> • <a
+                            href="#">API</a> • <a href="#">Việc làm</a> • <a href="#">Quyền riêng tư</a> • <a
+                            href="#">Điều khoản</a>
+                    </nav>
+                </div>
+            </aside>
+        </div>
     </main>
 
     <footer class="main-footer">
@@ -76,11 +112,12 @@
                 <button class="close-btn" onclick="closeReportModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);" data-i18n="report_post_desc">Chúng tôi sẽ xem xét bài viết này dựa trên lý do bạn cung cấp.</p>
+                <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);"
+                    data-i18n="report_post_desc">Chúng tôi sẽ xem xét bài viết này dựa trên lý do bạn cung cấp.</p>
                 <form id="report-form">
                     <input type="hidden" id="report-post-id">
                     <input type="hidden" id="report-author-id">
-                    
+
                     <div class="report-options">
                         <label class="report-opt">
                             <input type="radio" name="report-reason" value="Tôi không thích nội dung này" checked>
@@ -104,11 +141,15 @@
                         </label>
                     </div>
 
-                    <textarea id="report-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin..." data-i18n="report_other_placeholder" rows="3" style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
-                    
+                    <textarea id="report-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin..."
+                        data-i18n="report_other_placeholder" rows="3"
+                        style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
+
                     <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
-                        <button type="button" class="btn secondary-btn" style="width: 100%;" onclick="closeReportModal()" data-i18n="cancel">Hủy</button>
-                        <button type="submit" class="btn primary-btn" style="width: 100%;" id="submit-report-btn" data-i18n="submit_report">Gửi báo cáo</button>
+                        <button type="button" class="btn secondary-btn" style="width: 100%;"
+                            onclick="closeReportModal()" data-i18n="cancel">Hủy</button>
+                        <button type="submit" class="btn primary-btn" style="width: 100%;" id="submit-report-btn"
+                            data-i18n="submit_report">Gửi báo cáo</button>
                     </div>
                 </form>
             </div>
@@ -116,8 +157,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/api.js?v=1.0.5"></script>
-    <script src="js/api.js?v=1.1"></script>
+    <script src="js/api.js?v=1.2"></script>
     <script src="js/lang.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/common.js?v=2.2"></script>

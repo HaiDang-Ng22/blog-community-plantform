@@ -55,12 +55,28 @@ Dự án áp dụng các tiêu chuẩn phát triển phần mềm hiện đại:
 
 ---
 
-## 📌 Lộ trình Phát triển (Roadmap) & Các vấn đề tồn tại
+### 🚀 Lộ trình Phát triển & Tính năng Dự kiến (Roadmap):
 
-### ⚠️ Các vấn đề cần xử lý tiếp theo:
-- [ ] **Tự động xác nhận Thanh toán QR**: Hiện tại mã QR chỉ phục vụ hiển thị, việc xác nhận thanh toán vẫn cần người bán kiểm tra thủ công. Cần tích hợp Webhook Ngân hàng hoặc PayOS để tự động hóa hoàn toàn.
-- [ ] **Giao diện Mobile**: Tiếp tục tối ưu hóa các thành phần UI phức tạp (như Variant selection) trên các thiết bị màn hình siêu nhỏ.
-- [ ] **Real-time Notifications**: Tích hợp SignalR để thông báo đơn hàng mới và tin nhắn ngay lập tức mà không cần tải lại trang.
+#### 📸 Phân hệ Blog (Mạng xã hội):
+- [ ] **Zynk Stories**: Đăng tin ngắn biến mất sau 24 giờ.
+- [ ] **Saved Posts (Lưu bài viết)**: Cho phép người dùng lưu bài viết vào bộ sưu tập cá nhân.
+- [ ] **Trending Hashtags**: Tự động thống kê và hiển thị các chủ đề đang hot.
+- [ ] **Nhắn tin 1-1 (Direct Message)**: Tích hợp SignalR để chat trực tiếp giữa người dùng.
+- [ ] **Trạng thái hoạt động**: Hiển thị dấu chấm xanh khi người dùng đang online.
+- [ ] **Verified Badges**: Cấp dấu tích xanh cho các tài khoản uy tín/KOLs.
+
+#### 🛒 Phân hệ Shop (Thương mại điện tử):
+- [ ] **Mã giảm giá (Vouchers)**: Shop có thể tạo các mã khuyến mãi cho khách hàng.
+- [ ] **Flash Sale & Countdown**: Tạo các khung giờ giảm giá sốc có đồng hồ đếm ngược.
+- [ ] **AI Recommendation**: Gợi ý sản phẩm thông minh dựa trên hành vi người dùng.
+- [ ] **Buyer-Seller Chat**: Khung chat chuyên biệt ngay trong trang sản phẩm.
+- [ ] **Shipping Integration**: Tích hợp các đơn vị vận chuyển thực tế (GHTK, GHN).
+- [ ] **Wallet System**: Hệ thống ví điện tử nội bộ cho người bán và người mua.
+
+#### 🛠 Kỹ thuật & Hệ thống:
+- [ ] **Tự động xác nhận Thanh toán QR**: Tích hợp Webhook Ngân hàng hoặc PayOS để tự động hóa hoàn toàn.
+- [ ] **Giao diện Mobile**: Tối ưu hóa UI cho các thiết bị màn hình nhỏ.
+- [ ] **PWA (Progressive Web App)**: Cho phép cài đặt ứng dụng lên màn hình điện thoại.
 
 ---
 
