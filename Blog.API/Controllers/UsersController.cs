@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Blog.API.Extensions;
 
 namespace Blog.API.Controllers;
 
@@ -30,7 +31,7 @@ public class UsersController : ControllerBase
 
         if (user == null) return NotFound();
 
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userIdStr = User.GetUserIdStr();
         bool isFollowing = false;
         if (!string.IsNullOrEmpty(userIdStr))
         {
@@ -58,7 +59,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdatePrivacy([FromBody] UpdatePrivacyRequest request)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userIdStr = User.GetUserIdStr();
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
@@ -75,7 +76,8 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> FollowUser(Guid id)
     {
-        var followerId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var followerId = User.GetUserId() ?? Guid.Empty;
+        if (followerId == Guid.Empty) return Unauthorized();
         if (followerId == id) return BadRequest(new { message = "Bạn không thể theo dõi chính mình." });
 
         // Check if blocked
@@ -124,7 +126,8 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> BlockUser(Guid id)
     {
-        var blockerId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var blockerId = User.GetUserId() ?? Guid.Empty;
+        if (blockerId == Guid.Empty) return Unauthorized();
         if (blockerId == id) return BadRequest(new { message = "Bạn không thể chặn chính mình." });
 
         var block = await _context.Blocks
@@ -163,7 +166,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetBlockedUsers()
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userIdStr = User.GetUserIdStr();
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);
@@ -252,14 +255,11 @@ public class UsersController : ControllerBase
     {
         try 
         {
-            // Cách lấy UserId an toàn nhất cho mọi loại Token
-            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
-                          ?? User.FindFirst("sub")?.Value 
-                          ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            var userIdStr = User.GetUserIdStr();
             
             if (string.IsNullOrEmpty(userIdStr)) 
             {
-                Console.WriteLine(">>> GetSuggestedUsers: Unauthorized - No Sub claim found");
+                Console.WriteLine(">>> GetSuggestedUsers: Unauthorized - No valid claim found");
                 return Unauthorized();
             }
 
@@ -301,7 +301,8 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var user = await _context.Users.FindAsync(userId);
         
         if (user == null) return NotFound();
@@ -329,7 +330,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteAccount()
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userIdStr = User.GetUserIdStr();
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
 
         var userId = Guid.Parse(userIdStr);

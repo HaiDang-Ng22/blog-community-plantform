@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using Blog.API.Extensions;
 
 namespace Blog.API.Controllers;
 
@@ -40,9 +41,8 @@ public class OrdersController : ControllerBase
     [HttpPost("checkout")]
     public async Task<IActionResult> Checkout([FromBody] CreateOrderDto dto)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         
         var order = new Order
         {
@@ -155,9 +155,8 @@ public class OrdersController : ControllerBase
     [HttpGet("my-orders")]
     public async Task<IActionResult> GetMyOrders()
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var orders = await _orderRepository.GetOrdersByBuyerIdAsync(userId);
         
         var dtos = orders.Select(o => new OrderDto
@@ -196,9 +195,8 @@ public class OrdersController : ControllerBase
         var order = await _orderRepository.GetOrderDetailAsync(id);
         if (order == null) return NotFound();
 
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         
         // Authorization check
         bool isBuyer = order.BuyerId == userId;
@@ -295,10 +293,9 @@ public class OrdersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOrderById(Guid id)
     {
-        var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         
-        var userId = Guid.Parse(userIdString);
         var order = await _orderRepository.GetOrderDetailAsync(id);
         
         if (order == null) return NotFound();
@@ -352,9 +349,8 @@ public class OrdersController : ControllerBase
     [HttpPut("{id}/address")]
     public async Task<IActionResult> UpdateOrderAddress(Guid id, [FromBody] UpdateOrderAddressDto dto)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var order = await _orderRepository.GetByIdAsync(id);
         
         if (order == null) return NotFound();
@@ -381,9 +377,8 @@ public class OrdersController : ControllerBase
     [HttpGet("my-addresses")]
     public async Task<IActionResult> GetMyAddresses()
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var userAddresses = await _addressRepository.FindAsync(a => a.UserId == userId);
         
         var dtos = userAddresses.Select(a => new

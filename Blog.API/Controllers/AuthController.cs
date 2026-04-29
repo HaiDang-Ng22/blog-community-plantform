@@ -8,6 +8,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Blog.API.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Blog.API.Controllers;
@@ -106,12 +107,11 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetProfile()
     {
-        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
-        if (userIdClaim == null)
+        var userId = User.GetUserId();
+        if (userId == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
-        var userId = Guid.Parse(userIdClaim.Value);
-        var user = await _context.Users.FindAsync(userId);
+        var user = await _context.Users.FindAsync(userId.Value);
 
         if (user == null)
             return NotFound(new { message = "Người dùng không tồn tại" });
@@ -135,12 +135,11 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
-        if (userIdClaim == null)
+        var userId = User.GetUserId();
+        if (userId == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
-        var userId = Guid.Parse(userIdClaim.Value);
-        var user = await _context.Users.FindAsync(userId);
+        var user = await _context.Users.FindAsync(userId.Value);
 
         if (user == null)
             return NotFound(new { message = "Người dùng không tồn tại" });

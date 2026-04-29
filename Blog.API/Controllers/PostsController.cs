@@ -8,6 +8,7 @@ using Blog.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Blog.API.Extensions;
 
 namespace Blog.API.Controllers;
 
@@ -37,9 +38,7 @@ public class PostsController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string type = "discover")
     {
         // Lấy UserId an toàn từ Token
-        var currentUserIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
-                             ?? User.FindFirst("sub")?.Value 
-                             ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var currentUserIdStr = User.GetUserIdStr();
                              
         Guid? currentUserId = !string.IsNullOrEmpty(currentUserIdStr) ? Guid.Parse(currentUserIdStr) : null;
  
@@ -168,13 +167,11 @@ public class PostsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreatePostDto createPostDto)
     {
         // Lấy UserId từ Claims của Token
-        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
-        if (userIdClaim == null)
+        var userId = User.GetUserId();
+        if (userId == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
         var postId = Guid.NewGuid();
-        var userId = Guid.Parse(userIdClaim.Value);
-
         // Improved slug generation - Version 2 (Robust Fix)
         var titleForSlug = string.IsNullOrWhiteSpace(createPostDto.Title) || createPostDto.Title == "Post"
             ? (!string.IsNullOrWhiteSpace(createPostDto.Content) 
@@ -204,7 +201,7 @@ public class PostsController : ControllerBase
             Summary = createPostDto.Summary,
             FeaturedImageUrl = createPostDto.ImageUrls.FirstOrDefault() ?? createPostDto.FeaturedImageUrl,
             Status = PostStatus.Published,
-            AuthorId = userId,
+            AuthorId = userId.Value,
             CreatedAt = DateTime.UtcNow,
             PublishedAt = DateTime.UtcNow,
             Images = createPostDto.ImageUrls.Select((url, index) => new PostImage
@@ -225,7 +222,7 @@ public class PostsController : ControllerBase
     public async Task<IActionResult> GetByUser(Guid userId)
     {
         var posts = await _postRepository.GetPostsByAuthorIdAsync(userId);
-        var currentUserIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var currentUserIdStr = User.GetUserIdStr();
         Guid? currentUserId = !string.IsNullOrEmpty(currentUserIdStr) ? Guid.Parse(currentUserIdStr) : null;
 
         var postDtos = posts.Select(p => new PostDto
@@ -257,12 +254,11 @@ public class PostsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetMyPosts()
     {
-        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
-        if (userIdClaim == null)
+        var userId = User.GetUserId();
+        if (userId == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
-        var userId = Guid.Parse(userIdClaim.Value);
-        var posts = await _postRepository.GetPostsByAuthorIdAsync(userId);
+        var posts = await _postRepository.GetPostsByAuthorIdAsync(userId.Value);
         
         var postDtos = posts.Select(p => new PostDto
         {
@@ -281,7 +277,7 @@ public class PostsController : ControllerBase
             CreatedAt = p.CreatedAt,
             PublishedAt = p.PublishedAt,
             CommentCount = p.Comments.Count,
-            IsLikedByMe = p.PostLikes.Any(l => l.UserId == userId),
+            IsLikedByMe = p.PostLikes.Any(l => l.UserId == userId.Value),
             ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
         });
 
@@ -296,7 +292,8 @@ public class PostsController : ControllerBase
         if (post == null)
             return NotFound(new { message = "Không tìm thấy bài viết" });
 
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         if (post.AuthorId != userId)
             return Forbid();
         
@@ -335,7 +332,8 @@ public class PostsController : ControllerBase
         if (post == null)
             return NotFound(new { message = "Không tìm thấy bài viết" });
 
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         if (post.AuthorId != userId)
             return Forbid();
         
@@ -355,7 +353,8 @@ public class PostsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> LikePost(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var post = await _context.Posts.FindAsync(id);
         if (post == null) return NotFound();
 

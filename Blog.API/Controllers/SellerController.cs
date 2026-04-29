@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Blog.API.Extensions;
 
 namespace Blog.API.Controllers;
 
@@ -41,9 +42,8 @@ public class SellerController : ControllerBase
     [HttpPost("apply")]
     public async Task<IActionResult> ApplyForShop([FromBody] ShopApplicationDto dto)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         
         // Age validation
         var age = DateTime.UtcNow.Year - dto.DateOfBirth.Year;
@@ -79,9 +79,8 @@ public class SellerController : ControllerBase
     [HttpGet("application-status")]
     public async Task<IActionResult> GetApplicationStatus()
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var apps = await _appRepository.FindAsync(a => a.UserId == userId);
         return Ok(apps.OrderByDescending(a => a.CreatedAt).FirstOrDefault());
     }
@@ -89,9 +88,8 @@ public class SellerController : ControllerBase
     [HttpGet("my-shop")]
     public async Task<IActionResult> GetMyShop()
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return NotFound(new { message = "Bạn chưa có cửa hàng." });
         return Ok(shop);
@@ -100,9 +98,8 @@ public class SellerController : ControllerBase
     [HttpPost("products")]
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto dto)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
@@ -147,9 +144,8 @@ public class SellerController : ControllerBase
     [HttpGet("my-products")]
     public async Task<IActionResult> GetMyProducts()
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
@@ -160,9 +156,8 @@ public class SellerController : ControllerBase
     [HttpPut("products/{id}")]
     public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductDto dto)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
@@ -260,9 +255,8 @@ public class SellerController : ControllerBase
     [HttpDelete("products/{id}")]
     public async Task<IActionResult> DeleteProduct(Guid id)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
@@ -277,9 +271,8 @@ public class SellerController : ControllerBase
     [HttpGet("incoming-orders")]
     public async Task<IActionResult> GetIncomingOrders([FromQuery] string? status = null, [FromQuery] string? keyword = null)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
@@ -314,9 +307,8 @@ public class SellerController : ControllerBase
     [HttpPut("payment-settings")]
     public async Task<IActionResult> UpdatePaymentSettings([FromBody] UpdateShopPaymentDto dto)
     {
-        var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        var userId = Guid.Parse(userIdStr);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return NotFound(new { message = "Không tìm thấy cửa hàng." });
 
