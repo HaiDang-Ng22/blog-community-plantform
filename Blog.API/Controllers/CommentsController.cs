@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Blog.API.Extensions;
 
 namespace Blog.API.Controllers;
 
@@ -41,9 +42,8 @@ public class CommentsController : ControllerBase
     {
         try 
         {
-            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-            var userId = Guid.Parse(userIdStr);
+            var userId = User.GetUserId() ?? Guid.Empty;
+            if (userId == Guid.Empty) return Unauthorized();
             
             var post = await _context.Posts.FindAsync(postId);
             if (post == null) return NotFound("Không tìm thấy bài viết");
@@ -133,9 +133,8 @@ public class CommentsController : ControllerBase
     {
         try 
         {
-            var userIdStr = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-            var userId = Guid.Parse(userIdStr);
+            var userId = User.GetUserId() ?? Guid.Empty;
+            if (userId == Guid.Empty) return Unauthorized();
 
             var comment = await _context.Comments.FindAsync(id);
             if (comment == null) return NotFound("Không tìm thấy bình luận");

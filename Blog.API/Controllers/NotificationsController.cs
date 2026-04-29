@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Blog.API.Extensions;
 
 namespace Blog.API.Controllers;
 
@@ -23,7 +24,8 @@ public class NotificationsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetMyNotifications()
     {
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var notifications = await _context.Notifications
             .Include(n => n.Actor)
             .Where(n => n.ReceiverId == userId)
@@ -49,7 +51,8 @@ public class NotificationsController : ControllerBase
     [HttpPost("{id}/read")]
     public async Task<IActionResult> MarkAsRead(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var notification = await _context.Notifications
             .FirstOrDefaultAsync(n => n.Id == id && n.ReceiverId == userId);
 
@@ -63,7 +66,8 @@ public class NotificationsController : ControllerBase
     [HttpPost("read-all")]
     public async Task<IActionResult> MarkAllAsRead()
     {
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var notifications = await _context.Notifications
             .Where(n => n.ReceiverId == userId && !n.IsRead)
             .ToListAsync();
@@ -76,7 +80,8 @@ public class NotificationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteNotification(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value);
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
         var notification = await _context.Notifications
             .FirstOrDefaultAsync(n => n.Id == id && n.ReceiverId == userId);
 
