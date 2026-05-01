@@ -3,6 +3,27 @@
 // Cache seller status in memory for the page session
 window._userHasShop = false;
 
+function requireAuth(options = {}) {
+    const {
+        redirectTo = 'auth.html',
+        returnTo = window.location.pathname.split('/').pop() + window.location.search + window.location.hash,
+        storageKey = 'zynk_return_to',
+    } = options;
+
+    const token = localStorage.getItem('auth_token');
+    const userInfoRaw = localStorage.getItem('user_info');
+    const hasUser = !!(userInfoRaw && userInfoRaw !== 'null');
+
+    if (token && hasUser) return true;
+
+    try {
+        if (returnTo) sessionStorage.setItem(storageKey, returnTo);
+    } catch { /* ignore */ }
+
+    window.location.href = redirectTo;
+    return false;
+}
+
 async function checkSellerStatus() {
     const token = localStorage.getItem('auth_token');
     if (!token) return false;
@@ -29,9 +50,571 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
     }
-    await checkSellerStatus();
+    
+    try {
+        await checkSellerStatus();
+    } catch (e) {
+        console.error("Seller status check failed", e);
+    }
+    
+    renderSidebar();
     updateNav();
 });
+
+
+
+function renderSidebar() {
+    if (window._sidebarRendered) return;
+    
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    window._sidebarRendered = true;
+    
+    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+    
+    // Aggressively remove any existing sidebar or legacy header that might be lingering
+    document.querySelectorAll('.sidebar-nav, .main-header, header, .nav-container').forEach(el => el.remove());
+
+    const sidebar = document.createElement('div');
+    sidebar.className = 'sidebar-nav';
+    sidebar.id = 'zynk-main-sidebar';
+    
+    const userName = userInfo.fullName || userInfo.username || 'User';
+    const userAvatar = (userInfo.avatarUrl && userInfo.avatarUrl !== 'null')
+            ? userInfo.avatarUrl
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random&color=fff`;
+
+    sidebar.innerHTML = `
+        <div class="sidebar-logo" onclick="window.location.href='index.html'">
+            <img src="assets/logo.png" onerror="this.src='https://via.placeholder.com/100x30?text=ZYNK'">
+            <span class="zynk-logo-text">Zynk</span>
+        </div>
+        <div class="sidebar-links">
+            <a href="index.html" class="sidebar-link">
+                <i class="fa-solid fa-house"></i>
+                <span>Trang chủ</span>
+            </a>
+            <a href="search.html" class="sidebar-link" id="sidebar-search-trigger">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Tìm kiếm</span>
+            </a>
+            <a href="marketplace.html" class="sidebar-link">
+                <i class="fa-solid fa-compass"></i>
+                <span>Khám phá</span>
+            </a>
+            <div class="sidebar-link mobile-hide" id="sidebar-noti-trigger">
+                <i class="fa-regular fa-heart"></i>
+                <span>Thông báo</span>
+            </div>
+            <a href="create-post.html" class="sidebar-link">
+                <i class="fa-regular fa-square-plus"></i>
+                <span>Tạo</span>
+            </a>
+            <a href="profile.html" class="sidebar-link">
+                <img src="${userAvatar}" class="mini-avatar" style="width:24px; height:24px; margin:0; border: 1px solid #dbdbdb;">
+                <span>Trang cá nhân</span>
+            </a>
+            <div class="sidebar-link" id="sidebar-more-trigger">
+                <i class="fa-solid fa-bars"></i>
+                <span>Xem thêm</span>
+            </div>
+            
+            <!-- More Menu Popup -->
+            <div id="sidebar-more-menu" class="sidebar-more-menu hidden">
+                <a href="settings.html"><i class="fa-solid fa-gear"></i> Cài đặt</a>
+                ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<a href="admin.html" style="color: #6366f1;"><i class="fa-solid fa-user-shield"></i> Quản trị</a>` : ''}
+                <div class="menu-divider"></div>
+                <a href="#" onclick="logout(event)"><i class="fa-solid fa-sign-out-alt"></i> Đăng xuất</a>
+            </div>
+        </div>
+    `;
+    
+    // Create search sub-panel separately to avoid overflow issues
+    const searchPanel = document.createElement('div');
+    searchPanel.className = 'sidebar-sub-panel';
+    searchPanel.id = 'sidebar-search-panel';
+    searchPanel.innerHTML = `
+        <div class="sub-panel-content">
+            <h2 class="sub-panel-title">Tìm kiếm</h2>
+            <div class="search-input-container">
+                <input type="text" id="sidebar-search-input" placeholder="Tìm kiếm">
+            </div>
+            <div id="search-results-mini" class="search-results-mini">
+                <p>Chưa có nội dung tìm kiếm gần đây.</p>
+            </div>
+        </div>
+    `;
+
+    document.body.prepend(searchPanel);
+    document.body.prepend(sidebar);
+    
+    // Select elements after prepending
+    const searchTrigger = document.getElementById('sidebar-search-trigger');
+    const searchInput = document.getElementById('sidebar-search-input');
+    const moreTrigger = document.getElementById('sidebar-more-trigger');
+    const moreMenu = document.getElementById('sidebar-more-menu');
+    let panelBackdrop = document.getElementById('sidebar-panel-backdrop');
+    if (!panelBackdrop) {
+        panelBackdrop = document.createElement('div');
+        panelBackdrop.id = 'sidebar-panel-backdrop';
+        panelBackdrop.className = 'sidebar-panel-backdrop hidden';
+        document.body.appendChild(panelBackdrop);
+    }
+
+    const closeSidebarPanels = () => {
+        if (searchPanel) searchPanel.classList.remove('active');
+        sidebar.classList.remove('sub-panel-open');
+        document.body.classList.remove('mobile-search-open');
+        if (panelBackdrop) panelBackdrop.classList.add('hidden');
+        if (moreMenu) moreMenu.classList.add('hidden');
+    };
+
+    const useDedicatedSearchPage = true;
+    const isMobileSidebar = window.innerWidth <= 768;
+
+    // Use dedicated search page across all devices to avoid panel/menu conflicts.
+    if (useDedicatedSearchPage) {
+        closeSidebarPanels();
+        if (searchPanel) searchPanel.remove();
+        if (panelBackdrop) panelBackdrop.remove();
+    }
+
+    // On mobile: keep "More" menu working.
+    if (isMobileSidebar) {
+        closeSidebarPanels();
+    }
+
+    if (!useDedicatedSearchPage && !isMobileSidebar && searchTrigger && searchPanel) {
+        searchTrigger.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isActive = searchPanel.classList.contains('active');
+            
+            // Close other panels if any
+            searchPanel.classList.toggle('active');
+            
+            if (searchPanel.classList.contains('active')) {
+                sidebar.classList.add('sub-panel-open');
+                searchInput.value = '';
+                searchInput.focus();
+                if (window.innerWidth <= 768) {
+                    document.body.classList.add('mobile-search-open');
+                    if (panelBackdrop) panelBackdrop.classList.remove('hidden');
+                }
+            } else {
+                closeSidebarPanels();
+            }
+        };
+        searchPanel.onclick = (e) => e.stopPropagation();
+
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.oninput = (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                if (query.length > 1) {
+                    searchTimeout = setTimeout(() => handleMiniSearch(query), 300);
+                } else if (query.length === 0) {
+                    const resultsContainer = document.getElementById('search-results-mini');
+                    if (resultsContainer) {
+                        resultsContainer.innerHTML = '<p style="color: #8e8e8e; font-size: 0.9rem; text-align:center;">Chưa có nội dung tìm kiếm gần đây.</p>';
+                    }
+                }
+            };
+            
+            searchInput.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    const q = searchInput.value.trim();
+                    if (q) handleMiniSearch(q);
+                }
+            };
+        }
+    }
+
+    if (moreTrigger && moreMenu) {
+        moreTrigger.onclick = (e) => {
+            e.stopPropagation();
+            moreMenu.classList.toggle('hidden');
+        };
+        document.addEventListener('click', () => moreMenu.classList.add('hidden'));
+    }
+
+    // Global click handler to close panels
+    if (!useDedicatedSearchPage) {
+        document.addEventListener('click', (e) => {
+            if (searchPanel && !searchPanel.contains(e.target) && e.target !== searchTrigger) {
+                closeSidebarPanels();
+            }
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768) {
+            closeSidebarPanels();
+        }
+    });
+
+    if (!useDedicatedSearchPage && panelBackdrop) {
+        panelBackdrop.onclick = () => closeSidebarPanels();
+    }
+
+    // Ensure any sidebar navigation action closes overlay on mobile
+    sidebar.querySelectorAll('.sidebar-link').forEach(link => {
+        if (link.id !== 'sidebar-search-trigger' && link.id !== 'sidebar-more-trigger') {
+            link.addEventListener('click', () => closeSidebarPanels());
+        }
+    });
+
+    // Adjust main content on all pages
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+        mainEl.classList.add('main-with-sidebar');
+    } else {
+        document.body.classList.add('main-with-sidebar');
+    }
+}
+
+// Global Instagram-style Split Modal
+window.openPostModal = async function(postOrId) {
+    if (!postOrId) return;
+    
+    let initialPost = typeof postOrId === 'string' ? { id: postOrId } : postOrId;
+    let postId = initialPost.id || initialPost.Id;
+    if (!postId) return;
+
+    let modal = document.getElementById('zynk-split-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'zynk-split-modal';
+        modal.className = 'zynk-modal-overlay hidden';
+        document.body.appendChild(modal);
+    }
+
+    modal.classList.remove('hidden');
+    // Clear old content immediately to prevent "stale" view
+    modal.innerHTML = `
+        <div class="zynk-modal-close" onclick="this.parentElement.classList.add('hidden')">&times;</div>
+        <div style="height:100%; display:flex; align-items:center; justify-content:center; color:white;">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+        </div>
+    `;
+
+    // Clear old content immediately to prevent "stale" view
+    modal.innerHTML = `
+        <div class="zynk-modal-close" onclick="this.parentElement.classList.add('hidden')">&times;</div>
+        <div style="height:100%; display:flex; align-items:center; justify-content:center; color:white;">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+        </div>
+    `;
+
+    
+    try {
+        // 1. Try to get data from global cache first (feed data is often more complete)
+        window._postCache = window._postCache || {};
+        const cachedPost = window._postCache[postId];
+        
+        // 2. Fetch fresh data (for images/comments)
+        const fetched = await window.api.get(`posts/${postId}`);
+        const apiData = Array.isArray(fetched) ? fetched[0] : fetched;
+        
+        // 3. Unified merge: Cache > Initial > API Data (API is still preferred, but we preserve good older values)
+        const post = { 
+            ...(cachedPost || {}), 
+            ...initialPost, 
+            ...(apiData || {}) 
+        };
+        
+        // Keep the best values for metadata/media when API returns empty placeholders
+        // Priority for fallback source: cachedPost -> initialPost
+        if (apiData) {
+            for (let k in apiData) {
+                const apiValue = apiData[k];
+                const cachedValue = cachedPost ? cachedPost[k] : undefined;
+                const initialValue = initialPost ? initialPost[k] : undefined;
+                const fallbackValue = (cachedValue !== undefined && cachedValue !== null) ? cachedValue : initialValue;
+                const hasFallback = fallbackValue !== undefined && fallbackValue !== null;
+
+                const isEmptyArray = Array.isArray(apiValue) && apiValue.length === 0;
+                const isEmptyString = typeof apiValue === 'string' && apiValue.trim() === '';
+                const isNullish = apiValue === null || apiValue === undefined;
+
+                if ((isNullish || isEmptyArray || isEmptyString) && hasFallback) {
+                    post[k] = fallbackValue;
+                }
+            }
+        }
+        
+        console.log("Opening Modal for Post:", postId, post);
+
+        // DATA NORMALIZATION (Ultra-Aggressive)
+        const author = post.author || post.Author || post.user || post.User || post.creator || post.Creator || {};
+        const profileNameFromPage = document.getElementById('profile-name')?.textContent?.trim();
+        const profileIdFromUrl = new URLSearchParams(window.location.search).get('id');
+        const isProfilePage = window.location.pathname.toLowerCase().includes('profile.html');
+        const authorName =
+            post.authorName ||
+            post.AuthorName ||
+            post.fullName ||
+            post.FullName ||
+            author.fullName ||
+            author.FullName ||
+            author.userName ||
+            author.UserName ||
+            author.username ||
+            author.Username ||
+            author.name ||
+            author.Name ||
+            author.displayName ||
+            author.DisplayName ||
+            (isProfilePage ? profileNameFromPage : null) ||
+            "Người dùng Zynk";
+        const authorAvatar =
+            post.authorAvatarUrl ||
+            post.AuthorAvatarUrl ||
+            post.avatarUrl ||
+            post.AvatarUrl ||
+            author.avatarUrl ||
+            author.AvatarUrl ||
+            author.profileImageUrl ||
+            author.ProfileImageUrl ||
+            author.image ||
+            author.Image ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random`;
+        const authorId =
+            post.authorId ||
+            post.AuthorId ||
+            post.userId ||
+            post.UserId ||
+            author.id ||
+            author.Id ||
+            (isProfilePage ? profileIdFromUrl : null) ||
+            "";
+        
+        const postContent = post.content || post.caption || post.text || "";
+        const postTime = formatDate(post.createdAt || new Date());
+        const likeCount = post.likeCount || 0;
+
+        // IMAGE NORMALIZATION
+        let images = [];
+        if (post.imageUrls && Array.isArray(post.imageUrls) && post.imageUrls.length > 0) {
+            images = post.imageUrls;
+        } else if (post.images && Array.isArray(post.images)) {
+            images = post.images.map(img => typeof img === 'string' ? img : (img.url || img.path));
+        } else if (post.featuredImageUrl) {
+            images = [post.featuredImageUrl];
+        } else if (post.imagePath) {
+            images = [post.imagePath];
+        } else {
+            images = ['https://via.placeholder.com/800x800?text=No+Image'];
+        }
+
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const myAvatar = userInfo.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo.fullName || 'User')}`;
+
+        let carouselHtml = '';
+        if (images.length > 1) {
+            carouselHtml = `
+                <div class="modal-carousel-container" style="width:100%; height:100%; position:relative; overflow:hidden; background:#000;">
+                    <div class="modal-carousel-track" style="display:flex; height:100%; transition: transform 0.4s cubic-bezier(0.2, 0, 0.2, 1);">
+                        ${images.map(img => `<div style="flex:0 0 100%; display:flex; align-items:center; justify-content:center;"><img src="${img}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`).join('')}
+                    </div>
+                    <button class="carousel-nav prev" style="left:15px; display:none;"><i class="fa fa-chevron-left"></i></button>
+                    <button class="carousel-nav next" style="right:15px;"><i class="fa fa-chevron-right"></i></button>
+                </div>
+            `;
+        } else {
+            carouselHtml = `<img src="${images[0]}" alt="Post media" style="max-width:100%; max-height:100%; object-fit:contain; width:100%; height:100%;">`;
+        }
+
+        modal.innerHTML = `
+            <div class="zynk-modal-close" onclick="this.parentElement.classList.add('hidden')">&times;</div>
+            <div class="zynk-modal-container">
+                <div class="zynk-modal-media">
+                    ${carouselHtml}
+                </div>
+                <div class="zynk-modal-side">
+                    <div class="zynk-modal-header" style="border-bottom: 1px solid #efefef; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+                        <img src="${authorAvatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;" alt="Avatar">
+                        <a href="profile.html?id=${authorId}" style="font-weight:700; text-decoration:none; color:#262626; font-size:0.9rem;">${authorName}</a>
+                    </div>
+                    <div class="zynk-modal-comments" style="flex:1; overflow-y:auto; padding:16px;">
+                        <div class="zynk-modal-caption" style="margin-bottom: 24px; display:flex; gap:12px;">
+                             <img src="${authorAvatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;" alt="Avatar">
+                             <div style="flex:1;">
+                                <span style="font-weight:700; margin-right:8px; color:#262626;">${authorName}</span>
+                                <span style="font-size:0.9rem; line-height:1.5;">${autoLink(postContent)}</span>
+                                <div style="font-size:0.75rem; color:#8e8e8e; margin-top:8px;">${postTime}</div>
+                             </div>
+                        </div>
+                        <div id="modal-comments-list">
+                            <div style="text-align:center; padding:30px; color:#8e8e8e;">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải bình luận...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="zynk-modal-actions" style="padding:12px 16px; border-top:1px solid #efefef;">
+                        <div style="display:flex; gap:16px; margin-bottom:8px; font-size:1.5rem;">
+                            <i id="modal-like-icon" class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart" style="cursor:pointer; ${post.isLikedByMe ? 'color:#EF4444;' : ''}" onclick="window.postActions.toggleLike('${postId}', this)"></i>
+                            <i class="fa-regular fa-comment" style="cursor:pointer;" onclick="document.getElementById('modal-comment-input').focus()"></i>
+                        </div>
+                        <div id="modal-like-count" style="font-weight:700; font-size:0.9rem; margin-bottom:12px;">${likeCount} lượt thích</div>
+                        
+                        <div class="modal-comment-input-wrap" style="display:flex; align-items:center; gap:12px; border-top:1px solid #efefef; padding-top:12px;">
+                            <img src="${myAvatar}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;" alt="Me">
+                            <input type="text" id="modal-comment-input" placeholder="Thêm bình luận..." style="flex:1; border:none; outline:none; font-size:0.9rem;">
+                            <button onclick="submitModalComment('${postId}')" style="background:none; border:none; color:#0095f6; font-weight:600; cursor:pointer;">Đăng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Carousel Logic
+        if (images.length > 1) {
+            const track = modal.querySelector('.modal-carousel-track');
+            const prev = modal.querySelector('.carousel-nav.prev');
+            const next = modal.querySelector('.carousel-nav.next');
+            let idx = 0;
+            const update = () => {
+                track.style.transform = `translateX(-${idx * 100}%)`;
+                if (prev) prev.style.display = idx === 0 ? 'none' : 'flex';
+                if (next) next.style.display = idx === images.length - 1 ? 'none' : 'flex';
+            };
+            if (prev) prev.onclick = (e) => { e.stopPropagation(); if (idx > 0) { idx--; update(); } };
+            if (next) next.onclick = (e) => { e.stopPropagation(); if (idx < images.length - 1) { idx++; update(); } };
+            update();
+        }
+
+// Global shortcut for submitting comment in modal
+window.submitModalComment = async function(postId) {
+    const input = document.getElementById('modal-comment-input');
+    const content = input.value.trim();
+    if (!content) return;
+
+    try {
+        const comment = await window.api.post(`posts/${postId}/comments`, { content });
+        input.value = '';
+        
+        // Reload comments list
+        const container = document.getElementById('modal-comments-list');
+        if (window.postActions && window.postActions.loadCommentsForModal) {
+            await window.postActions.loadCommentsForModal(postId, container);
+        }
+        
+        // Update cache
+        if (window._postCache && window._postCache[postId]) {
+            window._postCache[postId].comments = window._postCache[postId].comments || [];
+            window._postCache[postId].comments.push(comment);
+        }
+    } catch (err) {
+        alert("Lỗi khi đăng bình luận: " + err.message);
+    }
+};
+
+        // Delegate loading to unified comment loader in post-actions.js
+        const modalCommentsContainer = document.getElementById('modal-comments-list');
+        if (window.postActions && window.postActions.loadCommentsForModal && modalCommentsContainer) {
+            window.postActions.loadCommentsForModal(postId, modalCommentsContainer);
+        }
+
+    } catch (err) {
+        console.error("Critical Modal Error:", err);
+        modal.innerHTML = `
+            <div class="zynk-modal-close" onclick="this.parentElement.classList.add('hidden')">&times;</div>
+            <div style="color:white; text-align:center; padding: 50px;">
+                <p>Không thể tải dữ liệu bài viết này.</p>
+                <button onclick="location.reload()" style="margin-top:20px; padding:8px 20px;">Thử lại</button>
+            </div>
+        `;
+    }
+}
+
+
+window.submitModalComment = async function(postId) {
+    const input = document.getElementById('modal-comment-input');
+    const content = input.value.trim();
+    if (!content) return;
+
+    try {
+        const comment = await window.api.post(`posts/${postId}/comments`, { content });
+        input.value = '';
+        // Reload comments list in modal
+        if (window.postActions && window.postActions.loadCommentsForModal) {
+            window.postActions.loadCommentsForModal(postId, document.getElementById('modal-comments-list'));
+        }
+        // Also update comment count in actions area if we wanted to (omitted for brevity)
+    } catch (e) {
+        alert('Lỗi khi gửi bình luận');
+    }
+}
+
+
+async function handleMiniSearch(query) {
+    const resultsContainer = document.getElementById('search-results-mini');
+    if (!resultsContainer) return;
+
+    resultsContainer.innerHTML = '<div style="text-align:center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tìm...</div>';
+
+    try {
+        const results = await window.api.get(`search?q=${encodeURIComponent(query)}`);
+        resultsContainer.innerHTML = '';
+
+        if (results.users.length === 0 && results.posts.length === 0) {
+            resultsContainer.innerHTML = '<p style="color: #8e8e8e; font-size: 0.9rem; text-align:center;">Không tìm thấy kết quả nào.</p>';
+            return;
+        }
+
+        // Render Users
+        if (results.users.length > 0) {
+            const userTitle = document.createElement('h4');
+            userTitle.textContent = 'Người dùng';
+            userTitle.style.cssText = 'font-size: 0.85rem; margin-bottom: 12px; color: #8e8e8e; text-transform: uppercase; letter-spacing: 0.5px;';
+            resultsContainer.appendChild(userTitle);
+
+            results.users.slice(0, 5).forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'mini-result-item';
+                const avatar = user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`;
+                item.innerHTML = `
+                    <img src="${avatar}" class="mini-result-avatar">
+                    <div class="mini-result-info">
+                        <span class="mini-result-name">${user.fullName}</span>
+                        <span class="mini-result-username">@${user.username}</span>
+                    </div>
+                `;
+                item.onclick = () => window.location.href = `profile.html?id=${user.id}`;
+                resultsContainer.appendChild(item);
+            });
+        }
+
+        // Render Posts
+        if (results.posts.length > 0) {
+            const postTitle = document.createElement('h4');
+            postTitle.textContent = 'Bài viết';
+            postTitle.style.cssText = 'font-size: 0.85rem; margin: 20px 0 12px; color: #8e8e8e; text-transform: uppercase; letter-spacing: 0.5px;';
+            resultsContainer.appendChild(postTitle);
+
+            results.posts.slice(0, 5).forEach(post => {
+                const item = document.createElement('div');
+                item.className = 'mini-result-item';
+                const thumb = (post.imageUrls && post.imageUrls[0]) || post.featuredImageUrl || 'assets/no-image.png';
+                item.innerHTML = `
+                    <img src="${thumb}" class="mini-result-thumb">
+                    <div class="mini-result-info">
+                        <span class="mini-result-name">${post.authorName}</span>
+                        <span class="mini-result-username">${post.content ? post.content.substring(0, 30) + '...' : 'Bài viết'}</span>
+                    </div>
+                `;
+                item.onclick = () => window.location.href = `index.html#post-${post.id}`;
+                resultsContainer.appendChild(item);
+            });
+        }
+    } catch (err) {
+        resultsContainer.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem; text-align:center;">Lỗi khi tìm kiếm.</p>';
+    }
+}
+
 
 async function updateNav() {
     const navActions = document.getElementById('nav-actions');
@@ -143,18 +726,6 @@ async function updateNav() {
         // Dispatch update event for i18n
         window.dispatchEvent(new CustomEvent('navUpdated'));
 
-        // Search logic
-        const searchInput = document.getElementById('header-search-input');
-        const searchBtn = document.getElementById('header-search-btn');
-        const triggerSearch = () => {
-            const query = searchInput.value.trim();
-            if (query) window.location.href = `search.html?q=${encodeURIComponent(query)}`;
-        };
-        if (searchBtn) searchBtn.onclick = triggerSearch;
-        if (searchInput) {
-            searchInput.onkeypress = (e) => { if (e.key === 'Enter') triggerSearch(); };
-        }
-
         // Auto-fix missing ID in user_info
         if (!userInfo.id && !userInfo.Id && token) {
             window.api.get('auth/profile').then(profile => {
@@ -168,9 +739,14 @@ async function updateNav() {
 
 function logout(e) {
     if (e) e.preventDefault();
+    if (e) e.stopPropagation();
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_info');
-    window.location.reload();
+    try {
+        sessionStorage.removeItem('zynk_return_to');
+        sessionStorage.removeItem('zynk_has_shop');
+    } catch { /* ignore */ }
+    window.location.href = 'auth.html';
 }
 
 // Utility to format dates based on language
@@ -206,11 +782,9 @@ function showToast(message, type = 'success') {
         padding: 12px 24px;
         border-radius: 12px;
         background: ${type === 'success' ? '#10b981' : '#ef4444'};
-        color: white;
-        font-weight: 600;
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-        z-index: 9999;
-        animation: slideIn 0.3s ease-out;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 20002;
+        box-shadow: 10px 0 30px rgba(0,0,0,0.05);
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
@@ -247,113 +821,178 @@ window.addEventListener('languageChanged', () => {
 // Utility to auto-link URLs in text
 function autoLink(text) {
     if (!text) return '';
-
-    // Regex to match URLs (http, https)
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-    // We should be careful to escape HTML first if the text is raw, 
-    // but in Zynk we often insert as innerHTML, so we just replace the links.
-    // Assuming the text is already safe or will be safely rendered.
-    return text.replace(urlRegex, function (url) {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;">${url}</a>`;
-    });
+    return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0095f6; text-decoration: none;">${url}</a>`);
 }
 
-// Unified Post Card Creation (used in home.js and profile.js)
+// Truncate text with Read More
+function truncateText(text, limit = 120) {
+    if (!text || text.length <= limit) return autoLink(text);
+    
+    const truncated = text.substring(0, limit);
+    return `
+        <span class="text-collapsed">${autoLink(truncated)}...</span>
+        <span class="text-expanded hidden">${autoLink(text)}</span>
+        <button class="read-more-btn" onclick="window.common.toggleReadMore(this)">Xem thêm</button>
+    `;
+}
+
+function toggleReadMore(btn) {
+    const parent = btn.parentElement;
+    const collapsed = parent.querySelector('.text-collapsed');
+    const expanded = parent.querySelector('.text-expanded');
+    
+    if (expanded.classList.contains('hidden')) {
+        expanded.classList.remove('hidden');
+        collapsed.classList.add('hidden');
+        btn.textContent = 'Ẩn bớt';
+    } else {
+        expanded.classList.add('hidden');
+        collapsed.classList.remove('hidden');
+        btn.textContent = 'Xem thêm';
+    }
+}
+
+async function openPostModalByPostId(postId) {
+    try {
+        const post = await window.api.get(`posts/${postId}`);
+        if (window.openPostModal) window.openPostModal(post);
+    } catch (e) {
+        console.error("Failed to load post for modal", e);
+    }
+}
+
+// Unified Post Card Creation (used in home.js, profile.js, search.js)
 function createPostCard(post) {
     const card = document.createElement('div');
     card.className = 'zynk-post-card animate-up';
-    card.dataset.id = post.id;
-    card.id = `post-${post.id}`;
+    const postId = post.id || post.Id;
+    const authorId = post.authorId || post.AuthorId;
+    const authorName = post.authorName || post.AuthorName || 'Người dùng';
+    const authorAvatarUrl = post.authorAvatarUrl || post.AuthorAvatarUrl;
+
+    card.dataset.id = postId;
+    card.id = `post-${postId}`;
+    
+    // Cache the post data for the modal
+    window._postCache = window._postCache || {};
+    window._postCache[postId] = post;
+
 
     const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const isOwner = (currentUser.id || currentUser.Id) === post.authorId;
+    const currentId = (currentUser.id || currentUser.Id || '').toString();
+    const isOwner = currentId && currentId === (authorId || '').toString();
 
-    const images = post.imageUrls && post.imageUrls.length > 0 ? post.imageUrls : (post.featuredImageUrl ? [post.featuredImageUrl] : []);
+    const images = [];
+    if (post.imageUrls && post.imageUrls.length > 0) {
+        images.push(...post.imageUrls);
+    } else if (post.featuredImageUrl) {
+        images.push(post.featuredImageUrl);
+    }
+
     const hasImages = images.length > 0;
     const hasMultiple = images.length > 1;
 
+    const avatarUrl = authorAvatarUrl
+        || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName || 'U')}&background=random&color=fff`;
+
+    const menuItems = isOwner
+        ? `<button onclick="location.href='edit-post.html?id=${postId}'"><i class="fa-solid fa-pen" style="margin-right:8px;"></i>Chỉnh sửa</button>
+           <button class="delete" onclick="window.postActions.deletePost('${postId}')"><i class="fa-solid fa-trash" style="margin-right:8px;"></i>Xóa bài</button>`
+        : `<button onclick="window.postActions.reportPost('${postId}', '${authorId}')"><i class="fa-solid fa-flag" style="margin-right:8px;"></i>Báo cáo</button>`;
+
+    const postTime = formatDate(post.createdAt);
+    const likeCount = post.likeCount || 0;
+    const isLiked = post.isLikedByMe;
+
     if (!hasImages) {
+        // ---- THREADS STYLE (Text-only post) ----
         card.classList.add('style-threads');
         card.innerHTML = `
             <div class="zynk-threads-layout">
                 <div class="zynk-left">
-                    <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.authorName)}" class="zynk-avatar">
+                    <img src="${avatarUrl}" class="zynk-avatar" alt="${authorName}">
                     <div class="zynk-line"></div>
                 </div>
                 <div class="zynk-right">
                     <div class="zynk-header">
                         <div class="zynk-author-meta">
-                            <a href="profile.html?id=${post.authorId}" class="zynk-author-name">${post.authorName}</a>
-                            <span class="zynk-time">${formatDate(post.createdAt)}</span>
+                            <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                            <span class="zynk-time">${postTime}</span>
                         </div>
                         <div class="zynk-options" onclick="window.common.toggleMenu(this)">
                             <i class="fa-solid fa-ellipsis"></i>
-                            <div class="zynk-menu hidden">
-                                ${isOwner ? `
-                                    <button onclick="location.href='edit-post.html?id=${post.id}'">Sửa</button>
-                                    <button class="delete" onclick="window.postActions.deletePost('${post.id}')">Xóa</button>
-                                ` : `<button onclick="window.postActions.reportPost('${post.id}', '${post.authorId}')">Báo cáo</button>`}
-                            </div>
+                            <div class="zynk-menu hidden">${menuItems}</div>
                         </div>
                     </div>
-                    <div class="zynk-content">${autoLink(post.content)}</div>
+                    <div class="zynk-content">${truncateText(post.content || '')}</div>
                     <div class="zynk-actions">
-                        <button class="${post.isLikedByMe ? 'liked' : ''}" onclick="window.postActions.toggleLike('${post.id}', this)">
-                            <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                        <button class="${isLiked ? 'liked' : ''}" onclick="window.postActions.toggleLike('${postId}', this)">
+                            <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                         </button>
-                        <button onclick="window.postActions.toggleComments('${post.id}', this.closest('.zynk-post-card'))">
+                        <button onclick="window.postActions.toggleComments('${postId}', this.closest('.zynk-post-card'))">
                             <i class="fa-regular fa-comment"></i>
                         </button>
                     </div>
-                    <div class="zynk-stats">${post.likeCount} lượt thích</div>
+                    <div class="zynk-stats">${likeCount > 0 ? likeCount + ' lượt thích' : ''}</div>
                 </div>
             </div>
+            <div class="comments-container" id="comments-${postId}"></div>
         `;
     } else {
+        // ---- INSTAGRAM STYLE (Image post) ----
         card.classList.add('style-instagram');
+        const carouselItems = images.map(url =>
+            `<div class="zynk-carousel-item"><img src="${url}" alt="Ảnh bài viết" loading="lazy"></div>`
+        ).join('');
+        const dots = hasMultiple
+            ? `<div class="zynk-dots">${images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : '';
+        const navBtns = hasMultiple
+            ? `<button class="carousel-nav left" onclick="event.stopPropagation(); window.common.scrollCarousel(this,-1)"><i class="fa-solid fa-chevron-left"></i></button>
+               <button class="carousel-nav right" onclick="event.stopPropagation(); window.common.scrollCarousel(this,1)"><i class="fa-solid fa-chevron-right"></i></button>` : '';
+
         card.innerHTML = `
             <div class="zynk-header">
-                <img src="${post.authorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.authorName)}" class="zynk-avatar-mini">
-                <a href="profile.html?id=${post.authorId}" class="zynk-author-name">${post.authorName}</a>
-                <div class="zynk-options" onclick="window.common.toggleMenu(this)" style="margin-left:auto">
+                <img src="${avatarUrl}" class="zynk-avatar-mini" alt="${authorName}">
+                <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                <div class="zynk-options" onclick="window.common.toggleMenu(this)" style="margin-left:auto;">
                     <i class="fa-solid fa-ellipsis"></i>
-                    <div class="zynk-menu hidden">
-                        ${isOwner ? `
-                            <button onclick="location.href='edit-post.html?id=${post.id}'">Sửa</button>
-                            <button class="delete" onclick="window.postActions.deletePost('${post.id}')">Xóa</button>
-                        ` : `<button onclick="window.postActions.reportPost('${post.id}', '${post.authorId}')">Báo cáo</button>`}
-                    </div>
+                    <div class="zynk-menu hidden">${menuItems}</div>
                 </div>
             </div>
-            <div class="zynk-media-container">
-                ${hasMultiple ? `<button class="carousel-nav left" onclick="window.common.scrollCarousel(this, -1)"><i class="fa-solid fa-chevron-left"></i></button>` : ''}
+            <div class="zynk-media-container" onclick="window.common.openPostModalByPostId('${postId}')" style="cursor:pointer;">
+                ${navBtns}
                 <div class="zynk-carousel" onscroll="window.common.handleCarouselScroll(this)">
-                    ${images.map(url => `<div class="zynk-carousel-item"><img src="${url}" alt="Media" loading="lazy"></div>`).join('')}
+                    ${carouselItems}
                 </div>
-                ${hasMultiple ? `<button class="carousel-nav right" onclick="window.common.scrollCarousel(this, 1)"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
-                ${hasMultiple ? `<div class="zynk-dots">${images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : ''}
+                ${dots}
             </div>
-            <div class="zynk-actions" style="padding:12px 16px 8px">
-                <button class="${post.isLikedByMe ? 'liked' : ''}" onclick="window.postActions.toggleLike('${post.id}', this)">
-                    <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+            <div class="zynk-actions">
+                <button class="${isLiked ? 'liked' : ''}" onclick="window.postActions.toggleLike('${postId}', this)">
+                    <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                 </button>
-                <button onclick="window.postActions.toggleComments('${post.id}', this.closest('.zynk-post-card'))">
+                <button onclick="window.postActions.toggleComments('${postId}', this.closest('.zynk-post-card'))">
                     <i class="fa-regular fa-comment"></i>
+                </button>
+                <button onclick="navigator.share ? navigator.share({url: location.href + '#post-${postId}'}) : null" style="margin-left:auto;">
+                    <i class="fa-regular fa-paper-plane"></i>
                 </button>
             </div>
             <div class="zynk-body">
-                <div class="zynk-stats" style="margin-bottom:6px">${post.likeCount} lượt thích</div>
+                <div class="zynk-stats">${likeCount > 0 ? likeCount + ' lượt thích' : ''}</div>
                 <div class="zynk-caption">
-                    <a href="profile.html?id=${post.authorId}" class="zynk-author-name">${post.authorName}</a>
-                    ${autoLink(post.content)}
+                    <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                    ${truncateText(post.content || '')}
                 </div>
-                <div class="zynk-time" style="margin-top:8px">${formatDate(post.createdAt)}</div>
+                <span class="zynk-time">${postTime}</span>
             </div>
+            <div class="comments-container" id="comments-${postId}"></div>
         `;
     }
     return card;
 }
+
+
 
 function toggleMenu(btn) {
     const menu = btn.querySelector('.zynk-menu');
@@ -387,9 +1026,18 @@ window.common = {
     formatDate,
     showToast,
     formatCurrency,
-    autoLink,
     createPostCard,
     toggleMenu,
     scrollCarousel,
-    handleCarouselScroll
+    handleCarouselScroll,
+    checkSellerStatus,
+    requireAuth,
+    autoLink,
+    toggleReadMore,
+    openPostModalByPostId
 };
+
+// Global shortcuts
+window.formatDate = formatDate;
+window.autoLink = autoLink;
+

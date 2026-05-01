@@ -9,116 +9,126 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/post-editor.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="home-page" data-i18n-title="create_post_title">
-    <header class="main-header">
-        <nav class="nav-container container-wide">
-            <div class="logo">
-                <a href="index.html">
-                    <div class="zynk-logo-clean logo-header"></div>
-                </a>
+<body class="home-page post-editor-page" data-i18n-title="create_post_title">
+
+
+    <main class="main-content post-editor-shell">
+        <div class="create-post-modern-modal animate-up">
+            <!-- Step Header -->
+            <div class="cp-modal-header">
+                <button type="button" id="cp-back-btn" class="cp-header-btn hidden">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 id="cp-modal-title" data-i18n="create_post_title">Tạo bài viết mới</h3>
+                <button type="button" id="cp-next-btn" class="cp-header-btn primary hidden">Tiếp</button>
+                <button type="button" id="cp-share-btn" class="cp-header-btn primary hidden">Chia sẻ</button>
             </div>
 
-            <div class="nav-actions" id="nav-actions">
-            </div>
-        </nav>
-    </header>
-
-    <main class="main-content container-wide" style="max-width: 900px;">
-        <div class="create-post-container">
-            <div id="message-box" class="message-box hidden" style="margin: 1rem;"></div>
-
-            <form id="form-create-post" class="create-post-form">
-                <div class="post-create-left">
-                    <div id="image-empty-state" style="text-align: center; color: #8e8e8e;">
-                        <i class="fa-solid fa-images" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
-                        <p data-i18n="post_images_label">Chọn hình ảnh bài viết</p>
-                        <button type="button" class="btn primary-btn"
-                            onclick="document.getElementById('post-image-file').click()"
-                            style="width: auto; margin-top: 1rem; padding: 0.5rem 1.5rem;">
-                            <span data-i18n="post_images_btn">Chọn ảnh</span>
+            <div class="cp-modal-body">
+                <form id="form-create-post" style="display: contents;">
+                    
+                    <!-- Step 0: Select Files (Initial State) -->
+                    <div id="step-0" class="cp-step active" style="flex:1; display:flex; align-items:center; justify-content:center; padding: 2rem;">
+                        <div id="cp-dropzone" class="cp-dropzone">
+                        <i class="fa-solid fa-images" style="font-size: 4rem; margin-bottom: 1.25rem; color: #262626;"></i>
+                        <h2 style="font-size: 1.2rem; font-weight: 500; margin-bottom: 1.2rem;">Kéo ảnh vào đây</h2>
+                        <button type="button" class="btn primary-btn" onclick="document.getElementById('post-image-file').click()" style="width: auto; padding: 0.6rem 1.5rem;">
+                            Chọn từ máy tính
                         </button>
+                        <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;" onchange="initWizard(this)">
+                        </div>
                     </div>
 
-                    <div id="image-preview-grid" class="hidden hide-scrollbar"
-                        style="width: 100%; height: 100%; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; position: relative; background: #000;"
-                        onscroll="updateCarouselUI(this)">
+                    <!-- Step 1: Crop & Reorder -->
+                    <div id="step-1" class="cp-step cp-two-pane hidden">
+                        <div class="cp-pane-left">
+                            <div id="crop-preview-container" class="cp-preview-full">
+                                <img id="current-crop-img" src="" alt="To Crop">
+                            </div>
+                        </div>
+                        <div class="cp-pane-right cp-reorder-pane">
+                            <h4 style="margin-bottom: 1rem;">Sắp xếp & Thu phóng</h4>
+                            <div class="control-group" style="margin-bottom: 1.5rem;">
+                                <label>Thu phóng</label>
+                                <input type="range" id="adj-zoom" min="1" max="3" step="0.1" value="1" oninput="applyZoom()">
+                            </div>
+                            <div id="reorder-list" class="cp-thumb-list"></div>
+                        </div>
                     </div>
 
-                    <button type="button" id="prev-btn" class="hidden carousel-nav-btn left"
-                        onclick="scrollCarousel(-1)"
-                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; z-index: 15; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button type="button" id="next-btn" class="hidden carousel-nav-btn right"
-                        onclick="scrollCarousel(1)"
-                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; z-index: 15; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </button>
-
-                    <div id="carousel-dots" class="hidden"
-                        style="position: absolute; bottom: 15px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; z-index: 15;">
-                    </div>
-
-                    <button type="button" id="btn-add-more-images" class="hidden"
-                        onclick="document.getElementById('post-image-file').click()"
-                        style="position: absolute; bottom: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;">
-                        <i class="fa-solid fa-plus" style="color: #262626; font-size: 1.2rem;"></i>
-                    </button>
-                    <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;"
-                        onchange="handleMultipleImageUpload(this)">
-                    <div id="image-urls-container"></div>
-                </div>
-
-                <div class="post-create-right">
-                    <div class="post-create-header"
-                        style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
-                        <img id="user-avatar-mini" src="https://via.placeholder.com/32" class="mini-avatar"
-                            style="width: 32px; height: 32px;">
-                        <span id="user-name-mini" style="font-weight: 600; font-size: 0.9rem;">User</span>
-                    </div>
-
-                    <div class="input-group" style="flex: 1; display: flex; flex-direction: column;">
-                        <textarea id="post-content" class="post-content-textarea"
-                            placeholder="Bạn muốn chia sẻ điều gì?" data-i18n="post_content_placeholder"
-                            required></textarea>
-                    </div>
-
-                    <div class="post-create-footer"
-                        style="padding-top: 1rem; border-top: 1px solid var(--input-border);">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span id="file-name" style="font-size: 0.75rem; color: #8e8e8e;"></span>
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="btn secondary-btn"
-                                    onclick="window.location.href='index.html'"
-                                    style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem;"
-                                    data-i18n="cancel">Hủy</button>
-                                <button type="submit" class="btn primary-btn"
-                                    style="width: auto; margin: 0; padding: 0.5rem 1.5rem; font-size: 0.9rem;"
-                                    data-i18n="post_publish">Chia sẻ</button>
+                    <!-- Step 2: Edit / Filters -->
+                    <div id="step-2" class="cp-step cp-two-pane hidden">
+                        <div class="cp-pane-left">
+                            <div class="cp-preview-full">
+                                <img id="current-edit-img" src="" alt="To Edit">
+                            </div>
+                        </div>
+                        <div class="cp-pane-right cp-adjust-pane">
+                            <div class="cp-adjust-tabs">
+                                <button type="button" class="cp-tab active">Điều chỉnh</button>
+                            </div>
+                            <div class="cp-adjust-controls">
+                                <div class="control-group">
+                                    <label>Độ sáng</label>
+                                    <input type="range" id="adj-brightness" min="0" max="200" value="100" oninput="applyFilters()">
+                                </div>
+                                <div class="control-group">
+                                    <label>Độ tương phản</label>
+                                    <input type="range" id="adj-contrast" min="0" max="200" value="100" oninput="applyFilters()">
+                                </div>
+                                <div class="control-group">
+                                    <label>Độ bão hòa</label>
+                                    <input type="range" id="adj-saturate" min="0" max="200" value="100" oninput="applyFilters()">
+                                </div>
+                                <div class="control-group">
+                                    <label>Độ mờ</label>
+                                    <input type="range" id="adj-blur" min="0" max="10" value="0" oninput="applyFilters()">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <input type="hidden" id="post-title" value="">
-                <input type="hidden" id="post-summary" value="">
-            </form>
+                    <!-- Step 3: Caption / Share -->
+                    <div id="step-3" class="cp-step cp-two-pane hidden">
+                        <div class="cp-pane-left">
+                            <div class="cp-preview-full">
+                                <img id="final-preview-img" src="" alt="Final Preview">
+                            </div>
+                        </div>
+                        <div class="cp-pane-right cp-caption-pane">
+                            <div class="post-create-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+                                <img id="user-avatar-mini" src="https://via.placeholder.com/32" class="mini-avatar">
+                                <span id="user-name-mini" style="font-weight: 600;">User</span>
+                            </div>
+                            <textarea id="post-content" class="post-editor-textarea" placeholder="Viết chú thích..." required></textarea>
+                            <div class="cp-caption-meta">
+                                <button type="button" class="cp-icon-btn"><i class="fa-regular fa-face-smile"></i></button>
+                                <span id="char-count">0/2200</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="post-title" value="Social Post">
+                    <input type="hidden" id="post-summary" value="">
+                </form>
+            </div>
         </div>
     </main>
-
+    <!-- bỏ 
     <footer class="main-footer">
         <div class="container-wide">
             <p data-i18n="footer_copy">© 2026 Zynk Community. Made with LV for developers.</p>
         </div>
-    </footer>
+    </footer> -->
 
     <script src="js/api.js?v=2.0"></script>
     <script src="js/lang.js"></script>
     <script src="js/i18n.js"></script>
-    <script src="js/common.js?v=2.2"></script>
+    <script src="js/common.js?v=2.5"></script>
     <script src="js/create-post.js?v=2.0"></script>
 </body>
 

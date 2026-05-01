@@ -5,165 +5,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="app_name">Zynk - Nền tảng Chia sẻ Kiến thức</title>
+    <meta name="description" content="Zynk - Mạng xã hội chia sẻ kiến thức, hình ảnh và kết nối cộng đồng">
     <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/common.css?v=1.5">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/home.css?v=1.3">
-    <!-- Font Awesome for icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=2.6">
+    <link rel="stylesheet" href="css/home.css?v=2.6">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body class="home-page" data-i18n-title="app_name">
-    <header class="main-header">
-        <nav class="nav-container container-wide">
-            <div class="logo">
-                <a href="index.html">
-                    <div class="zynk-logo-clean logo-header"></div>
-                </a>
+
+    <main class="main-content" id="main-content">
+        <div class="home-layout">
+            <!-- Left: Feed -->
+            <div class="feed-col">
+                <!-- Feed Tabs -->
+                <div class="home-tabs">
+                    <div class="home-tab active" data-type="discover">Khám phá</div>
+                    <div class="home-tab" data-type="following">Đang theo dõi</div>
+                </div>
+
+                <!-- Quick Post -->
+                <div class="quick-post-card" id="quick-post-auth-only" style="display:none;"
+                    onclick="location.href='create-post.html'">
+                    <img src="https://ui-avatars.com/api/?name=U&background=random" id="quick-post-avatar" alt="Avatar">
+                    <span>Bạn đang nghĩ gì thế?</span>
+                </div>
+
+                <!-- Posts -->
+                <div id="posts-grid" class="posts-grid">
+                    <div class="post-card skeleton"></div>
+                </div>
+
+                <div id="no-posts" class="no-posts hidden">
+                    <i class="fa-regular fa-compass"></i>
+                    <p>Chưa có bài viết nào. Hãy là người đầu tiên chia sẻ!</p>
+                </div>
             </div>
 
-            <div class="nav-actions" id="nav-actions">
-                <!-- Populated by JS -->
-                <a href="auth.html" class="btn-login-link" data-i18n="login">Đăng nhập</a>
-            </div>
-        </nav>
-    </header>
-
-    <main class="main-content container-wide">
-        <div class="home-grid">
-            <div class="feed-column">
-                <!-- Quick Post Area -->
-                <section class="quick-post-section" id="quick-post-auth-only">
-                    <div class="quick-post-card glassmorphism" onclick="location.href='create-post.html'">
-                        <div class="user-avatar-placeholder">
-                            <img src="https://ui-avatars.com/api/?name=User" id="quick-post-avatar">
+            <!-- Right: Sidebar Widgets -->
+            <aside class="right-sidebar" id="right-sidebar-col">
+                <!-- User widget -->
+                <div class="widget user-widget hidden" id="user-sidebar-widget">
+                    <div class="user-widget-inner">
+                        <img src="" id="sidebar-user-avatar" class="widget-avatar" alt="Avatar">
+                        <div class="widget-user-info">
+                            <span class="widget-name" id="sidebar-user-name"></span>
+                            <span class="widget-username" id="sidebar-user-username"></span>
                         </div>
-                        <span data-i18n="whats_on_your_mind">Bạn đang nghĩ gì thế?</span>
-                    </div>
-                </section>
-
-                <section class="posts-section">
-                    <div class="feed-tabs">
-                        <button class="feed-tab active" data-type="discover" data-i18n="discover">Khám phá</button>
-                        <button class="feed-tab" data-type="following" data-i18n="following">Đang theo dõi</button>
-                    </div>
-
-                    <div id="posts-grid" class="posts-grid">
-                        <!-- Skeleton Loading -->
-                        <div class="post-card skeleton"></div>
-                    </div>
-
-                    <div id="no-posts" class="no-posts hidden">
-                        <i class="fa-solid fa-wind"></i>
-                        <p data-i18n="no_posts">Mọi thứ thật yên tĩnh. Hãy là người đầu tiên đăng bài!</p>
-                    </div>
-                </section>
-            </div>
-
-            <aside class="sidebar-column">
-                <!-- User Quick Info -->
-                <div class="sidebar-widget user-widget hidden" id="user-sidebar-widget">
-                    <div class="user-info">
-                        <img src="" id="sidebar-user-avatar" class="avatar-sm">
-                        <div class="user-meta">
-                            <span class="full-name" id="sidebar-user-name"></span>
-                            <span class="username" id="sidebar-user-username"></span>
-                        </div>
-                        <a href="profile.html" class="switch-link" data-i18n="view_profile">Xem hồ sơ</a>
+                        <a href="profile.html" class="widget-action-link">Xem hồ sơ</a>
                     </div>
                 </div>
 
-                <!-- Suggestions Widget -->
-                <div class="sidebar-widget suggestions-widget">
+                <!-- Suggestions -->
+                <div class="widget suggestions-widget">
                     <div class="widget-header">
-                        <h3 data-i18n="suggested_for_you">Gợi ý cho bạn</h3>
-                        <a href="#" data-i18n="see_all">Xem tất cả</a>
+                        <span class="widget-title">Gợi ý cho bạn</span>
+                        <a href="#" class="widget-see-all">Xem tất cả</a>
                     </div>
-                    <div class="suggestions-list" id="suggestions-list">
-                        <!-- Populated by JS -->
+                    <div id="suggestions-list" class="suggestions-list">
                         <div class="loading-spinner"></div>
                     </div>
                 </div>
 
-                <!-- Footer Links -->
-                <div class="sidebar-footer">
-                    <nav class="footer-links">
-                        <a href="#">Giới thiệu</a> • <a href="#">Trợ giúp</a> • <a href="#">Báo chí</a> • <a
-                            href="#">API</a> • <a href="#">Việc làm</a> • <a href="#">Quyền riêng tư</a> • <a
-                            href="#">Điều khoản</a>
-                    </nav>
+                <!-- Footer links -->
+                <div class="widget-footer-links">
+                    <!-- Giới thiệu • • • • • • -->
+                    <!-- <span> <a href="about.html">• Giới thiệu</a></span>
+                    <span> <a href="help.html">• Trợ giúp</a></span>
+                    <span> <a href="press.html">• Báo chí</a></span>
+                    <span> <a href="api.html">• API</a></span>
+                    <span> <a href="jobs.html">• Việc làm</a></span>
+                    <span> <a href="privacy.html">• Quyền riêng tư</a></span>
+                    <span> <a href="terms.html">• Điều khoản</a></span> -->
+
+                    <a href="about.html">• Giới thiệu</a>
+                    <a href="help.html">• Trợ giúp</a>
+                    <a href="press.html">• Báo chí</a>
+                    <a href="api.html">• API</a>
+                    <a href="jobs.html">• Việc làm</a>
+                    <a href="privacy.html">• Quyền riêng tư</a>
+                    <a href="terms.html">• Điều khoản</a>
+
                 </div>
             </aside>
         </div>
     </main>
 
-    <footer class="main-footer">
-        <div class="container-wide">
-            <p data-i18n="footer_copy">© 2026 Zynk Community. Made with LV for developers.</p>
-        </div>
-    </footer>
-
     <!-- Report Modal -->
     <div id="report-modal" class="modal-overlay hidden">
         <div class="modal-content report-modal-content">
             <div class="modal-header">
-                <h3 data-i18n="report_post">Báo cáo vi phạm</h3>
+                <h3>Báo cáo vi phạm</h3>
                 <button class="close-btn" onclick="closeReportModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);"
-                    data-i18n="report_post_desc">Chúng tôi sẽ xem xét bài viết này dựa trên lý do bạn cung cấp.</p>
                 <form id="report-form">
                     <input type="hidden" id="report-post-id">
                     <input type="hidden" id="report-author-id">
-
                     <div class="report-options">
-                        <label class="report-opt">
-                            <input type="radio" name="report-reason" value="Tôi không thích nội dung này" checked>
-                            <span data-i18n="report_reason_not_like">Tôi không thích nội dung này</span>
-                        </label>
-                        <label class="report-opt">
-                            <input type="radio" name="report-reason" value="Vấn đề nhạy cảm/khiêu dâm">
-                            <span data-i18n="report_reason_sensitive">Vấn đề nhạy cảm/khiêu dâm</span>
-                        </label>
-                        <label class="report-opt">
-                            <input type="radio" name="report-reason" value="Bạo lực">
-                            <span data-i18n="report_reason_violence">Bạo lực</span>
-                        </label>
-                        <label class="report-opt">
-                            <input type="radio" name="report-reason" value="Phản động">
-                            <span data-i18n="report_reason_political">Phản động</span>
-                        </label>
-                        <label class="report-opt">
-                            <input type="radio" name="report-reason" value="Khác" id="reason-other-radio">
-                            <span data-i18n="report_reason_other">Khác...</span>
-                        </label>
+                        <label class="report-opt"><input type="radio" name="report-reason"
+                                value="Tôi không thích nội dung này" checked><span>Tôi không thích nội dung
+                                này</span></label>
+                        <label class="report-opt"><input type="radio" name="report-reason"
+                                value="Vấn đề nhạy cảm/khiêu dâm"><span>Vấn đề nhạy cảm/khiêu dâm</span></label>
+                        <label class="report-opt"><input type="radio" name="report-reason" value="Bạo lực"><span>Bạo
+                                lực</span></label>
+                        <label class="report-opt"><input type="radio" name="report-reason" value="Phản động"><span>Phản
+                                động</span></label>
+                        <label class="report-opt"><input type="radio" name="report-reason" value="Khác"
+                                id="reason-other-radio"><span>Khác...</span></label>
                     </div>
-
                     <textarea id="report-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin..."
-                        data-i18n="report_other_placeholder" rows="3"
-                        style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
-
-                    <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
-                        <button type="button" class="btn secondary-btn" style="width: 100%;"
-                            onclick="closeReportModal()" data-i18n="cancel">Hủy</button>
-                        <button type="submit" class="btn primary-btn" style="width: 100%;" id="submit-report-btn"
-                            data-i18n="submit_report">Gửi báo cáo</button>
+                        rows="3"
+                        style="width:100%;margin-top:10px;padding:10px;border-radius:8px;border:1px solid #dbdbdb;"></textarea>
+                    <div style="margin-top:1.5rem;display:flex;gap:10px;">
+                        <button type="button" class="btn secondary-btn" style="width:100%;"
+                            onclick="closeReportModal()">Hủy</button>
+                        <button type="submit" class="btn primary-btn" style="width:100%;" id="submit-report-btn">Gửi báo
+                            cáo</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/api.js?v=1.2"></script>
-    <script src="js/lang.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/common.js?v=2.2"></script>
-    <script src="js/notifications.js?v=1.1"></script>
-    <script src="js/post-actions.js?v=1.3"></script>
-    <script src="js/home.js?v=1.2"></script>
+    <script src="js/api.js?v=4.1"></script>
+    <script src="js/lang.js?v=4.1"></script>
+    <script src="js/i18n.js?v=4.1"></script>
+    <script src="js/common.js?v=4.1"></script>
+    <script src="js/notifications.js?v=4.1"></script>
+    <script src="js/post-actions.js?v=4.1"></script>
+    <script src="js/home.js?v=4.1"></script>
 </body>
 
 </html>

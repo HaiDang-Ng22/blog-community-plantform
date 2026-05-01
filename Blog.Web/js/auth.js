@@ -117,9 +117,17 @@ function handleLoginSuccess(user) {
     
     showMessage('Đăng nhập thành công! Đang chuyển hướng...', 'success');
     
-    // Chuyển hướng về trang chủ
+    // Chuyển hướng về trang yêu cầu trước đó (nếu có)
     setTimeout(() => {
-        window.location.href = 'index.html';
+        let target = 'index.html';
+        try {
+            const saved = sessionStorage.getItem('zynk_return_to');
+            if (saved) {
+                sessionStorage.removeItem('zynk_return_to');
+                target = saved;
+            }
+        } catch { /* ignore */ }
+        window.location.href = target;
     }, 1000);
 }
 

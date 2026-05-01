@@ -4,12 +4,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const query = urlParams.get('q');
     
     if (!query) {
-        document.getElementById('search-title').textContent = window.t('search_query_empty');
-        return;
+        document.getElementById('search-title').textContent = 'Vui lòng nhập từ khóa tìm kiếm';
+    } else {
+        document.getElementById('search-title').textContent = `Kết quả tìm kiếm cho "${query}"`;
+        await performSearch(query);
     }
 
-    document.getElementById('search-title').textContent = `${window.t('search_results_for')} "${query}"`;
-    await performSearch(query);
+    // Page search bar logic
+    const pageInput = document.getElementById('page-search-input');
+    const pageBtn = document.getElementById('page-search-btn');
+
+    const doSearch = () => {
+        if (!pageInput) return;
+        const q = pageInput.value.trim();
+        if (q) window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+    };
+
+    if (pageBtn) pageBtn.onclick = doSearch;
+    if (pageInput) {
+        if (query) pageInput.value = query;
+        pageInput.onkeypress = (e) => { if (e.key === 'Enter') doSearch(); };
+    }
 });
 
 async function performSearch(query) {
@@ -53,74 +68,7 @@ async function performSearch(query) {
             postsSection.classList.remove('hidden');
             postsList.innerHTML = '';
             results.posts.forEach(post => {
-                const card = document.createElement('div');
-                card.className = 'post-result-card';
-                
-                const authorAvatar = post.authorAvatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.authorName)}&background=random`;
-                const postContent = post.content || post.summary || '';
-                const hasImage = !!(post.featuredImageUrl || post.FeaturedImageUrl);
-                const postTime = timeAgo(post.createdAt);
-
-                if (!hasImage) {
-                    // Layout 1: Blog style (Text only)
-                    card.innerHTML = `
-                        <div class="post-header">
-                            <div class="post-author-info">
-                                <img src="${authorAvatar}" alt="Avatar">
-                                <span>${post.authorName}</span>
-                                <span style="color: #8e8e8e; font-weight: 400; margin-left: 5px;">${postTime}</span>
-                            </div>
-                            <div class="post-more"><i class="fa fa-ellipsis-h"></i></div>
-                        </div>
-                        <div class="post-body-text" style="padding: 0 16px 12px 16px; font-size: 0.95rem; line-height: 1.5; color: #262626;">
-                            ${window.common && window.common.autoLink ? window.common.autoLink(postContent) : postContent}
-                        </div>
-                        <div class="post-footer">
-                            <div class="post-actions">
-                                <i class="fa-regular fa-heart"></i>
-                                <i class="fa-regular fa-comment"></i>
-                                <i class="fa-regular fa-paper-plane"></i>
-                            </div>
-                            <div class="post-likes">
-                                ${post.likeCount || 0} lượt thích
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // Layout 2: Image style
-                    card.innerHTML = `
-                        <div class="post-header">
-                            <div class="post-author-info">
-                                <img src="${authorAvatar}" alt="Avatar">
-                                <span>${post.authorName}</span>
-                            </div>
-                            <div class="post-more"><i class="fa fa-ellipsis-h"></i></div>
-                        </div>
-                        
-                        <div class="post-image" onclick="window.location.href='index.html?postId=${post.id}'">
-                            <img src="${post.featuredImageUrl || post.FeaturedImageUrl}" alt="Post Content">
-                        </div>
-
-                        <div class="post-footer">
-                            <div class="post-actions">
-                                <i class="fa-regular fa-heart"></i>
-                                <i class="fa-regular fa-comment"></i>
-                                <i class="fa-regular fa-paper-plane"></i>
-                            </div>
-                            <div class="post-likes">
-                                ${post.likeCount || 0} lượt thích
-                            </div>
-                            <div class="post-caption">
-                                <span class="author-name">${post.authorName}</span>
-                                <span class="post-result-content">${window.common && window.common.autoLink ? window.common.autoLink(postContent) : postContent}</span>
-                            </div>
-                            <div class="post-time">
-                                ${postTime}
-                            </div>
-                        </div>
-                    `;
-                }
-                postsList.appendChild(card);
+                postsList.appendChild(window.common.createPostCard(post));
             });
         }
 

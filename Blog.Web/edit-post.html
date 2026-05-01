@@ -7,12 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="edit_post_title">Sửa bài viết - Zynk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="css/common.css?v=1.6">
     <link rel="stylesheet" href="css/auth.css?v=1.5">
+    <link rel="stylesheet" href="css/post-editor.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="home-page" data-i18n-title="edit_post_title">
+<body class="home-page post-editor-page" data-i18n-title="edit_post_title">
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
@@ -26,14 +27,13 @@
         </nav>
     </header>
 
-    <main class="main-content container-wide" style="max-width: 900px;">
-        <div class="create-post-container glassmorphism"
-            style="margin-top: 2rem; padding: 0; overflow: hidden; width: 100%;">
+    <main class="main-content post-editor-shell">
+        <div class="create-post-container glassmorphism post-editor-card" style="margin-top: 0; padding: 0;">
             <div id="message-box" class="message-box hidden" style="margin: 1rem;"></div>
 
-            <form id="form-edit-post" style="display: flex; flex-direction: row; min-height: 500px;">
-                <div class="post-create-left"
-                    style="flex: 1.2; background: #fafafa; display: flex; align-items: center; justify-content: center; border-right: 1px solid #efefef; position: relative; min-height: 400px;">
+            <form id="form-edit-post" class="post-editor-layout">
+                <div class="post-create-left post-editor-preview"
+                    style="border-right: 1px solid #efefef; min-height: 400px;">
                     <div id="image-empty-state" class="hidden" style="text-align: center; color: #8e8e8e;">
                         <i class="fa-solid fa-images" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
                         <p data-i18n="post_images_label">Hình ảnh bài viết</p>
@@ -77,7 +77,7 @@
                 </div>
 
                 <!-- Right Side: Content -->
-                <div class="post-create-right" style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column;">
+                <div class="post-create-right post-editor-form" style="display: flex; flex-direction: column;">
                     <div class="post-create-header"
                         style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
                         <img id="user-avatar-mini" src="https://via.placeholder.com/32" class="mini-avatar"
@@ -86,15 +86,15 @@
                     </div>
 
                     <div class="input-group" style="flex: 1; display: flex; flex-direction: column;">
-                        <textarea id="post-content" placeholder="Bạn muốn chia sẻ điều gì?"
+                        <textarea id="post-content" class="post-editor-textarea" placeholder="Bạn muốn chia sẻ điều gì?"
                             data-i18n="post_content_placeholder" required
-                            style="width: 100%; flex: 1; border: none; outline: none; font-family: inherit; resize: none; font-size: 1rem;"></textarea>
+                            style="flex: 1;"></textarea>
                     </div>
 
                     <div class="post-create-footer" style="padding-top: 1rem; border-top: 1px solid #efefef;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="post-editor-meta">
                             <span id="file-name" style="font-size: 0.75rem; color: #8e8e8e;">Giữ nguyên ảnh cũ</span>
-                            <div style="display: flex; gap: 10px;">
+                            <div class="post-editor-actions">
                                 <button type="button" class="btn secondary-btn" onclick="window.history.back()"
                                     style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem;"
                                     data-i18n="cancel">Hủy</button>

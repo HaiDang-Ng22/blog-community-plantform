@@ -18,7 +18,8 @@ public class User
     public bool IsPrivate { get; set; } = false;
     public string Role { get; set; } = "User"; // User, Admin
 
-     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+
+    public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual ICollection<PostLike> PostLikes { get; set; } = new List<PostLike>();
     public virtual ICollection<Follow> Followers { get; set; } = new List<Follow>();

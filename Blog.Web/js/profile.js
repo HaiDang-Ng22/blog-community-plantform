@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
     const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const currentUserId = (currentUser.id || currentUser.Id || '').toString();
 
     // Nếu không có ID trong URL và không đăng nhập -> qua trang login
     if (!userId && !localStorage.getItem('auth_token')) {
@@ -12,11 +13,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    currentProfileId = userId || currentUser.id || currentUser.Id;
+    currentProfileId = userId || currentUserId;
+
+    // Chuẩn hóa URL khi xem hồ sơ của chính mình để luôn có ?id=
+    if (!userId && currentUserId) {
+        const nextUrl = `profile.html?id=${encodeURIComponent(currentUserId)}`;
+        window.history.replaceState({}, '', nextUrl);
+    }
+
     if (currentProfileId) {
         const profileData = await loadUserProfile(currentProfileId);
         if (profileData) {
-            await loadUserPosts(currentProfileId, profileData.isPrivate, profileData.isFollowing, currentProfileId === currentUser.id);
+            const isMyProfile = currentUserId.toLowerCase() === currentProfileId.toString().toLowerCase();
+            await loadUserPosts(currentProfileId, profileData.isPrivate, profileData.isFollowing, isMyProfile);
         }
     }
 
@@ -34,28 +43,22 @@ async function switchTab(tabName) {
     document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
     document.querySelector(`.profile-tab[data-tab="${tabName}"]`).classList.add('active');
 
-    const postsContainer = document.getElementById('posts-container');
-    const listContainer = document.getElementById('list-container');
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.getElementById(`${tabName}-container`).classList.add('active');
 
-    if (tabName === 'posts') {
-        postsContainer.classList.add('active');
-        listContainer.classList.remove('active');
-    } else {
-        postsContainer.classList.remove('active');
-        listContainer.classList.add('active');
-        await loadUserList(currentProfileId, tabName);
+    if (tabName === 'friends') {
+        await loadFriendsList();
     }
 }
 
-async function loadUserList(userId, type) {
-    const grid = document.getElementById('user-list-grid');
-    const noUsers = document.getElementById('no-users');
+async function loadFriendsList() {
+    const grid = document.getElementById('friends-grid');
+    const noUsers = document.getElementById('no-friends');
     grid.innerHTML = '<div class="loading-spinner"></div>';
     noUsers.classList.add('hidden');
 
     try {
-        // map type to endpoint: friends, followers, following
-        const users = await window.api.get(`users/${userId}/${type}`);
+        const users = await window.api.get(`users/${currentProfileId}/friends`);
         grid.innerHTML = '';
 
         if (users.length === 0) {
@@ -81,12 +84,49 @@ async function loadUserList(userId, type) {
     }
 }
 
+window.openUserListModal = async function(type) {
+    const modal = document.getElementById('user-list-modal');
+    const content = document.getElementById('user-list-modal-content');
+    const title = document.getElementById('user-list-modal-title');
+    
+    title.textContent = type === 'followers' ? 'Người theo dõi' : 'Đang theo dõi';
+    content.innerHTML = '<div class="loading-spinner"></div>';
+    modal.classList.remove('hidden');
+    
+    try {
+        const users = await window.api.get(`users/${currentProfileId}/${type}`);
+        content.innerHTML = '';
+        if (users.length === 0) {
+            content.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-secondary);">Danh sách trống</div>';
+            return;
+        }
+        
+        users.forEach(user => {
+            const card = document.createElement('div');
+            card.style = "display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color);";
+            card.innerHTML = `
+                <div style="display:flex; align-items:center; gap: 12px; cursor: pointer;" onclick="window.location.href='profile.html?id=${user.id}'">
+                    <img src="${user.avatarUrl || 'https://ui-avatars.com/api/?name=' + user.fullName}" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
+                    <div>
+                        <div style="font-weight:600; color:var(--text-primary); font-size:0.95rem;">${user.fullName}</div>
+                        <div style="font-size:0.85rem; color:var(--text-secondary);">@${user.username}</div>
+                    </div>
+                </div>
+                <button class="btn secondary-btn" style="padding: 5px 12px; font-size: 0.85rem;" onclick="window.location.href='profile.html?id=${user.id}'">Xem</button>
+            `;
+            content.appendChild(card);
+        });
+    } catch(e) {
+        content.innerHTML = '<div class="error">Lỗi tải danh sách.</div>';
+    }
+}
+
 async function loadUserProfile(userId) {
     try {
         const profile = await window.api.get(`users/${userId}/profile`);
         const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
         
-        const currentId = (currentUser.id || '').toString().toLowerCase();
+        const currentId = (currentUser.id || currentUser.Id || '').toString().toLowerCase();
         const targetId = userId.toString().toLowerCase();
         const isMyProfile = currentId === targetId;
 
@@ -104,21 +144,27 @@ async function loadUserProfile(userId) {
         document.getElementById('profile-bio').textContent = profile.bio || 'Chưa có tiểu sử.';
         document.getElementById('follower-count').textContent = profile.followerCount;
         document.getElementById('following-count').textContent = profile.followingCount;
-        
-        // Render Cover Image
-        const coverEl = document.querySelector('.profile-cover');
-        if (profile.coverImageUrl) {
-            coverEl.style.backgroundImage = `url(${profile.coverImageUrl})`;
-        } else {
-            coverEl.style.background = 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)';
-        }
 
+        const profileIdEl = document.getElementById('profile-id');
+        if (profileIdEl) {
+            if (isMyProfile && profile.id) {
+                profileIdEl.textContent = `ID: ${profile.id}`;
+                profileIdEl.classList.remove('hidden');
+            } else {
+                profileIdEl.classList.add('hidden');
+                profileIdEl.textContent = '';
+            }
+        }
+        
+        const friendsTabBtn = document.getElementById('friends-tab-btn');
         const followBtn = document.getElementById('follow-btn');
         if (isMyProfile) {
+            friendsTabBtn.classList.remove('hidden');
             followBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa hồ sơ';
             followBtn.className = 'btn secondary-btn';
             followBtn.onclick = () => window.location.href = 'settings.html';
         } else {
+            friendsTabBtn.classList.add('hidden');
             updateFollowButton(profile.isFollowing);
             followBtn.onclick = () => toggleFollow(userId);
         }
@@ -164,44 +210,104 @@ async function toggleFollow(userId) {
 }
 
 async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
-    const grid = document.getElementById('profile-posts-grid');
-    grid.innerHTML = '<div class="post-card skeleton animate-up"></div>';
+    const galleryGrid = document.getElementById('profile-posts-grid');
+    const notesGrid = document.getElementById('profile-text-posts-feed');
+    
+    galleryGrid.innerHTML = '<div class="post-card skeleton animate-up"></div>';
+    notesGrid.innerHTML = '';
 
     // Xử lý Private Account Lockdown
     if (!isMyProfile && isPrivate && !isFollowing) {
         document.getElementById('post-count').textContent = '?';
-        grid.innerHTML = `
-            <div style="text-align:center; padding: 4rem 2rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); margin-top: 1rem;">
+        const lockdownHtml = `
+            <div style="text-align:center; padding: 4rem 2rem; background: var(--card-bg); border-radius: 1rem; border: 1px solid var(--border-color); margin-top: 1rem; grid-column: 1 / -1;">
                 <div style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #64748b; display: flex; align-items:center; justify-content:center; margin: 0 auto 1.5rem;">
                     <i class="fa-solid fa-lock" style="font-size: 2.5rem; color: #64748b;"></i>
                 </div>
                 <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Tài khoản này là riêng tư</h3>
-                <p style="color: var(--text-secondary); font-size: 0.95rem;">Theo dõi để xem ảnh và video của họ.</p>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">Theo dõi để xem ảnh và bài viết của họ.</p>
             </div>
         `;
+        galleryGrid.innerHTML = lockdownHtml;
+        notesGrid.innerHTML = lockdownHtml;
         return;
     }
 
     try {
-        const userPosts = await window.api.get(`posts/user/${userId}`);
-        grid.innerHTML = '';
+        const userPostsRaw = await window.api.get(`posts/user/${userId}`);
+        const userPosts = (userPostsRaw || []).map(p => {
+            const normalized = { ...p };
+            normalized.id = p.id || p.Id;
+            normalized.authorId = p.authorId || p.AuthorId || userId;
+            normalized.authorName = p.authorName || p.AuthorName || document.getElementById('profile-name')?.textContent?.trim() || 'Người dùng';
+            normalized.authorAvatarUrl = p.authorAvatarUrl || p.AuthorAvatarUrl || document.getElementById('profile-avatar')?.src || '';
+
+            const imageUrls = p.imageUrls || p.ImageUrls;
+            if (Array.isArray(imageUrls)) {
+                normalized.imageUrls = imageUrls.filter(Boolean);
+            } else if (!normalized.imageUrls) {
+                normalized.imageUrls = [];
+            }
+            return normalized;
+        });
+
+        galleryGrid.innerHTML = '';
+        notesGrid.innerHTML = '';
+        
+        document.getElementById('post-count').textContent = userPosts.length;
         
         if (userPosts.length === 0) {
-            grid.innerHTML = '<p class="no-posts">Chưa có bài đăng nào.</p>';
-            document.getElementById('post-count').textContent = '0';
+            document.getElementById('no-gallery-posts').classList.remove('hidden');
+            document.getElementById('no-text-posts').classList.remove('hidden');
             return;
         }
 
-        document.getElementById('post-count').textContent = userPosts.length;
-        
         // Sắp xếp bài viết mới nhất lên đầu
         userPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        userPosts.forEach(post => {
-            grid.appendChild(window.common.createPostCard(post));
-        });
+        const imagePosts = userPosts.filter(p => p.featuredImageUrl || (p.imageUrls && p.imageUrls.length > 0));
+        const textPosts = userPosts.filter(p => !p.featuredImageUrl && (!p.imageUrls || p.imageUrls.length === 0));
+
+        if (imagePosts.length === 0) {
+            document.getElementById('no-gallery-posts').classList.remove('hidden');
+        } else {
+            document.getElementById('no-gallery-posts').classList.add('hidden');
+            imagePosts.forEach(post => {
+                const square = document.createElement('div');
+                square.className = 'ig-post-square animate-up';
+                
+                let thumbUrl = post.featuredImageUrl || (post.imageUrls && post.imageUrls[0]);
+                let hasMultiple = (post.imageUrls && post.imageUrls.length > 1);
+                
+                square.innerHTML = `
+                    <img src="${thumbUrl}" alt="Post thumbnail" loading="lazy">
+                    ${hasMultiple ? '<i class="fa-solid fa-clone" style="position:absolute; top: 8px; right: 8px; color: white; text-shadow: 0 0 4px rgba(0,0,0,0.5);"></i>' : ''}
+                    <div class="ig-post-overlay">
+                        <span><i class="fa-solid fa-heart"></i> ${post.likeCount || 0}</span>
+                        <span><i class="fa-solid fa-comment"></i> ${post.commentCount || 0}</span>
+                    </div>
+                `;
+                
+                square.onclick = () => openPostModal(post);
+                galleryGrid.appendChild(square);
+            });
+        }
+
+        if (textPosts.length === 0) {
+            document.getElementById('no-text-posts').classList.remove('hidden');
+        } else {
+            document.getElementById('no-text-posts').classList.add('hidden');
+            textPosts.forEach(post => {
+                if (window.common && window.common.createPostCard) {
+                    notesGrid.appendChild(window.common.createPostCard(post));
+                } else {
+                    console.warn("window.common.createPostCard not ready, retrying...");
+                    setTimeout(() => notesGrid.appendChild(window.common.createPostCard(post)), 100);
+                }
+            });
+        }
     } catch (error) {
-        grid.innerHTML = '<p class="error">Lỗi khi tải bài viết.</p>';
+        galleryGrid.innerHTML = '<p class="error">Lỗi khi tải bài viết.</p>';
         console.error(error);
     }
 }

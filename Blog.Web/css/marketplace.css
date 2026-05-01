@@ -23,12 +23,7 @@ html, body {
 
 /* ===== MARKET HEADER / NAV ===== */
 .market-header-bar {
-    background: #ffffff;
-    border-bottom: 1px solid #E5E7EB;
-    position: sticky;
-    top: 0;
-    z-index: 9000;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: none !important;
 }
 
 .market-nav {
@@ -118,7 +113,8 @@ html, body {
 .market-search-btn span { display: inline; }
 
 /* Hide blog search in marketplace */
-.market-header-bar .header-search-container { display: none !important; }
+/* Removed conflicting search bar */
+/* .market-header-bar .header-search-container { display: none !important; } */
 
 /* ===== SEARCH SUGGESTIONS ===== */
 .search-suggestions {
@@ -167,15 +163,10 @@ html, body {
 /* ===== LAYOUT ===== */
 .marketplace-layout {
     display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 1.5rem;
-    margin: 1.5rem auto;
-    align-items: start;
-    /* Prevent horizontal overflow */
-    overflow: hidden;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
+    grid-template-columns: 240px 1fr;
+    gap: 2rem;
+    margin: 2rem auto;
+    max-width: 1300px;
 }
 
 /* ===== PRODUCTS WRAPPER ===== */
