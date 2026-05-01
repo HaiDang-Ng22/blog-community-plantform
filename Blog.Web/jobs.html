@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Việc làm – Zynk</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+<link rel="stylesheet" href="css/info-pages.css">
+<style>
+  .job-card{background:#fff;border:1px solid #dbdbdb;border-radius:14px;padding:22px 26px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.2s;}
+  .job-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.09);}
+  .job-dept{font-size:0.72rem;color:#667eea;font-weight:600;margin-bottom:4px;}
+  .job-title{font-size:1rem;font-weight:700;color:#111;}
+  .job-loc{font-size:0.8rem;color:#999;margin-top:4px;}
+  .job-tag{display:inline-block;background:#f0f0f0;color:#555;border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:500;margin-left:8px;}
+  .perks{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:600px){.job-card{flex-direction:column;align-items:flex-start;}.perks{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav class="info-nav">
+  <div class="info-nav-inner">
+    <a href="index.html" class="info-nav-logo">Zynk</a>
+    <div class="info-nav-links">
+      <a href="about.html">Giới thiệu</a>
+      <a href="help.html">Trợ giúp</a>
+      <a href="jobs.html" class="active">Việc làm</a>
+      <a href="terms.html">Điều khoản</a>
+    </div>
+  </div>
+</nav>
+<section class="info-hero">
+  <div class="info-badge">Gia nhập đội ngũ</div>
+  <h1>Cùng xây dựng tương lai</h1>
+  <p>Chúng tôi đang tìm kiếm những người đam mê công nghệ và muốn tạo ra sự khác biệt thực sự.</p>
+</section>
+<div class="info-content">
+  <div class="info-stats">
+    <div class="info-stat"><span class="stat-num">🌏</span><span class="stat-label">Remote friendly</span></div>
+    <div class="info-stat"><span class="stat-num">💰</span><span class="stat-label">Lương cạnh tranh</span></div>
+    <div class="info-stat"><span class="stat-num">🚀</span><span class="stat-label">Growth mindset</span></div>
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-briefcase"></i></span> Vị trí tuyển dụng</h2>
+    <div class="job-card">
+      <div>
+        <div class="job-dept">Engineering</div>
+        <div class="job-title">Backend Developer (.NET / C#)</div>
+        <div class="job-loc"><i class="fa fa-location-dot"></i> Hà Nội &nbsp;·&nbsp; <span>Full-time</span><span class="job-tag">Remote OK</span></div>
+      </div>
+      <a class="info-cta" href="mailto:jobs@zynk.app?subject=Backend Developer"><i class="fa fa-arrow-right"></i> Ứng tuyển</a>
+    </div>
+    <div class="job-card">
+      <div>
+        <div class="job-dept">Engineering</div>
+        <div class="job-title">Frontend Developer (JS / HTML / CSS)</div>
+        <div class="job-loc"><i class="fa fa-location-dot"></i> TP.HCM &nbsp;·&nbsp; <span>Full-time</span><span class="job-tag">Remote OK</span></div>
+      </div>
+      <a class="info-cta" href="mailto:jobs@zynk.app?subject=Frontend Developer"><i class="fa fa-arrow-right"></i> Ứng tuyển</a>
+    </div>
+    <div class="job-card">
+      <div>
+        <div class="job-dept">Product</div>
+        <div class="job-title">UI/UX Designer</div>
+        <div class="job-loc"><i class="fa fa-location-dot"></i> Remote &nbsp;·&nbsp; <span>Part-time</span></div>
+      </div>
+      <a class="info-cta" href="mailto:jobs@zynk.app?subject=UI/UX Designer"><i class="fa fa-arrow-right"></i> Ứng tuyển</a>
+    </div>
+    <div class="job-card">
+      <div>
+        <div class="job-dept">Marketing</div>
+        <div class="job-title">Content Creator & Community Manager</div>
+        <div class="job-loc"><i class="fa fa-location-dot"></i> Remote &nbsp;·&nbsp; <span>Part-time</span></div>
+      </div>
+      <a class="info-cta" href="mailto:jobs@zynk.app?subject=Content Creator"><i class="fa fa-arrow-right"></i> Ứng tuyển</a>
+    </div>
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-gift"></i></span> Quyền lợi</h2>
+    <div class="perks">
+      <div><strong>💻 Thiết bị làm việc</strong><p style="font-size:0.85rem;color:#666;margin-top:4px;">Laptop và phụ kiện hỗ trợ đầy đủ.</p></div>
+      <div><strong>📚 Phát triển bản thân</strong><p style="font-size:0.85rem;color:#666;margin-top:4px;">Ngân sách học tập hàng năm.</p></div>
+      <div><strong>🏥 Bảo hiểm</strong><p style="font-size:0.85rem;color:#666;margin-top:4px;">Bảo hiểm y tế và tai nạn.</p></div>
+      <div><strong>🕐 Giờ làm linh hoạt</strong><p style="font-size:0.85rem;color:#666;margin-top:4px;">Kết quả quan trọng hơn giờ làm.</p></div>
+    </div>
+  </div>
+</div>
+<footer class="info-footer">
+  <p><a href="about.html">Giới thiệu</a><a href="help.html">Trợ giúp</a><a href="press.html">Báo chí</a><a href="api.html">API</a><a href="jobs.html">Việc làm</a><a href="privacy.html">Quyền riêng tư</a><a href="terms.html">Điều khoản</a></p>
+  <p style="margin-top:8px;">© 2026 Zynk Community.</p>
+</footer>
+</body>
+</html>
