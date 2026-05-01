@@ -1,8 +1,17 @@
 // js/create-post.js
 
+let postImages = []; // Array of objects: { url, filters, transforms }
+let currentStep = 0;
+let currentImageIndex = 0;
+
+// Pan state
+let isDraggingImage = false;
+let startX, startY;
+
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    initForm();
+    initUI();
+    initDropzone();
 });
 
 function checkAuth() {
@@ -11,198 +20,309 @@ function checkAuth() {
     }
 }
 
-function initForm() {
-    const form = document.getElementById('form-create-post');
+function initUI() {
     const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-    
-    // Fill user info in preview
     const userName = userInfo.fullName || userInfo.username || 'User';
     const userAvatar = userInfo.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}`;
     
     document.getElementById('user-name-mini').textContent = userName;
     document.getElementById('user-avatar-mini').src = userAvatar;
 
-    // Handle form submission
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const title = document.getElementById('post-title').value; // Hidden
-        const summary = document.getElementById('post-summary').value; // Hidden
-        const content = document.getElementById('post-content').value.trim();
+    // Header buttons
+    document.getElementById('cp-back-btn').addEventListener('click', () => {
+        if (currentStep > 0) goToStep(currentStep - 1);
+    });
 
-        // Collect all image URLs from hidden inputs
-        const imageUrls = Array.from(document.querySelectorAll('.post-image-url-hidden')).map(input => input.value);
+    document.getElementById('cp-next-btn').addEventListener('click', () => {
+        if (currentStep < 3) goToStep(currentStep + 1);
+    });
 
-        if (!content) {
-            showMessage('Vui lòng nhập nội dung bài viết.', 'error');
-            return;
-        }
+    document.getElementById('cp-share-btn').addEventListener('click', handlePublish);
 
-        const btn = form.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.textContent = 'Đang chia sẻ...';
+    // Filter inputs
+    ['brightness', 'contrast', 'saturate', 'blur'].forEach(f => {
+        const input = document.getElementById(`adj-${f}`);
+        input.addEventListener('input', applyFilters);
+    });
 
-        try {
-            await window.api.post('posts', {
-                title: title || '',
-                content,
-                summary: summary || '',
-                imageUrls
-            });
+    // Pan setup
+    const cropImg = document.getElementById('current-crop-img');
+    cropImg.addEventListener('mousedown', startPan);
+    window.addEventListener('mousemove', handlePan);
+    window.addEventListener('mouseup', endPan);
 
-            showMessage('Đã chia sẻ bài viết thành công!', 'success');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1500);
-        } catch (error) {
-            showMessage(error.message || 'Lỗi khi đăng bài. Vui lòng thử lại.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'Chia sẻ';
-        }
+    // Content character count
+    const contentTextarea = document.getElementById('post-content');
+    const charCount = document.getElementById('char-count');
+    contentTextarea.addEventListener('input', () => {
+        const len = contentTextarea.value.length;
+        charCount.textContent = `${len}/2200`;
     });
 }
 
-// Global function for handling multiple image uploads
-async function handleMultipleImageUpload(input) {
+function initDropzone() {
+    const dz = document.getElementById('cp-dropzone');
+    const input = document.getElementById('post-image-file');
+    if (!dz || !input) return;
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dz.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dz.classList.add('dragover');
+        });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dz.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dz.classList.remove('dragover');
+        });
+    });
+    dz.addEventListener('drop', (e) => {
+        const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/'));
+        if (!files.length) return;
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+        initWizard(input);
+    });
+}
+
+// Wizard & Steps
+async function initWizard(input) {
     const files = Array.from(input.files);
     if (files.length === 0) return;
 
-    const fileNameSpan = document.getElementById('file-name');
-    const previewGrid = document.getElementById('image-preview-grid');
-    const urlsContainer = document.getElementById('image-urls-container');
-    const addMoreBtn = document.getElementById('btn-add-more-images');
-
-    fileNameSpan.textContent = `Đang tải ${files.length} ảnh...`;
-    previewGrid.classList.remove('hidden');
-    document.getElementById('image-empty-state').classList.add('hidden');
-    addMoreBtn.classList.remove('hidden');
+    const step0 = document.getElementById('step-0');
+    const originalContent = step0.innerHTML;
+    step0.innerHTML = '<div class="loading-spinner"></div><p style="margin-top:1rem">Đang tải ảnh...</p>';
 
     for (const file of files) {
         try {
             const result = await window.api.uploadImage(file);
-            
-            // Add hidden input
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.className = 'post-image-url-hidden';
-            hiddenInput.value = result.url;
-            urlsContainer.appendChild(hiddenInput);
-
-            renderPreviews();
-
+            postImages.push({
+                url: result.url,
+                filters: { brightness: 100, contrast: 100, saturate: 100, blur: 0 },
+                transforms: { zoom: 1, x: 0, y: 0 }
+            });
         } catch (error) {
             console.error('Error uploading file:', file.name, error);
-            alert(`Lỗi khi tải ảnh ${file.name}: ${error.message}`);
         }
     }
 
-    // Clear input so same file can be uploaded again if removed
-    input.value = '';
-    fileNameSpan.textContent = `Đã tải xong. Tổng cộng ${urlsContainer.children.length} ảnh.`;
+    if (postImages.length > 0) {
+        goToStep(1);
+    } else {
+        step0.innerHTML = originalContent;
+        alert('Không thể tải ảnh. Vui lòng thử lại.');
+    }
 }
 
-function renderPreviews() {
-    const previewGrid = document.getElementById('image-preview-grid');
-    const urlsContainer = document.getElementById('image-urls-container');
-    const imageUrls = Array.from(urlsContainer.querySelectorAll('.post-image-url-hidden')).map(input => input.value);
-    const addMoreBtn = document.getElementById('btn-add-more-images');
-    const dotsContainer = document.getElementById('carousel-dots');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
+function goToStep(step) {
+    currentStep = step;
+    document.querySelectorAll('.cp-step').forEach(s => s.classList.add('hidden'));
+    const targetStep = document.getElementById(`step-${step}`);
+    targetStep.classList.remove('hidden');
 
-    if (imageUrls.length === 0) {
-        previewGrid.classList.add('hidden');
-        document.getElementById('image-empty-state').classList.remove('hidden');
-        addMoreBtn.classList.add('hidden');
-        dotsContainer.classList.add('hidden');
-        prevBtn.classList.add('hidden');
-        nextBtn.classList.add('hidden');
+    const backBtn = document.getElementById('cp-back-btn');
+    const nextBtn = document.getElementById('cp-next-btn');
+    const shareBtn = document.getElementById('cp-share-btn');
+    const title = document.getElementById('cp-modal-title');
+
+    backBtn.classList.toggle('hidden', step === 0);
+    nextBtn.classList.toggle('hidden', step === 0 || step === 3);
+    shareBtn.classList.toggle('hidden', step !== 3);
+
+    if (step === 1) {
+        title.textContent = 'Cắt';
+        renderReorderList();
+        showPreview(1, currentImageIndex);
+        updateZoomSlider();
+    } else if (step === 2) {
+        title.textContent = 'Chỉnh sửa';
+        showPreview(2, currentImageIndex);
+        updateFilterSliders();
+    } else if (step === 3) {
+        title.textContent = 'Tạo bài viết mới';
+        showPreview(3, currentImageIndex);
+    }
+}
+
+function renderReorderList() {
+    const list = document.getElementById('reorder-list');
+    list.innerHTML = '';
+    postImages.forEach((imgObj, idx) => {
+        const item = document.createElement('div');
+        item.className = `cp-thumb-item ${idx === currentImageIndex ? 'active' : ''}`;
+        item.draggable = true;
+        item.innerHTML = `
+            <img src="${imgObj.url}">
+            <button type="button" class="remove-btn" onclick="removeImage(${idx}, event)"><i class="fa-solid fa-x"></i></button>
+        `;
+
+        item.onclick = () => {
+            currentImageIndex = idx;
+            renderReorderList();
+            showPreview(currentStep, idx);
+            if (currentStep === 1) updateZoomSlider();
+            if (currentStep === 2) updateFilterSliders();
+        };
+
+        item.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', idx);
+            item.classList.add('dragging');
+        });
+        item.addEventListener('dragover', (e) => e.preventDefault());
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIdx = idx;
+            reorderImages(fromIdx, toIdx);
+        });
+        item.addEventListener('dragend', () => item.classList.remove('dragging'));
+
+        list.appendChild(item);
+    });
+}
+
+function reorderImages(from, to) {
+    if (from === to) return;
+    const item = postImages.splice(from, 1)[0];
+    postImages.splice(to, 0, item);
+    currentImageIndex = to;
+    renderReorderList();
+    showPreview(currentStep, to);
+}
+
+function showPreview(step, idx) {
+    let imgId = step === 1 ? 'current-crop-img' : (step === 2 ? 'current-edit-img' : 'final-preview-img');
+    const imgElement = document.getElementById(imgId);
+    if (imgElement && postImages[idx]) {
+        imgElement.src = postImages[idx].url;
+        applyStoredVisuals(imgElement, idx);
+    }
+}
+
+function removeImage(idx, e) {
+    if (e) e.stopPropagation();
+    postImages.splice(idx, 1);
+    if (postImages.length === 0) {
+        goToStep(0);
+        document.getElementById('post-image-file').value = '';
+    } else {
+        currentImageIndex = 0;
+        renderReorderList();
+        showPreview(currentStep, 0);
+    }
+}
+
+// Pan & Zoom Logic
+function startPan(e) {
+    if (currentStep !== 1) return;
+    isDraggingImage = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    document.getElementById('current-crop-img').style.cursor = 'grabbing';
+}
+
+function handlePan(e) {
+    if (!isDraggingImage || currentStep !== 1) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    startX = e.clientX;
+    startY = e.clientY;
+
+    const t = postImages[currentImageIndex].transforms;
+    t.x += dx / t.zoom;
+    t.y += dy / t.zoom;
+    applyTransforms();
+}
+
+function endPan() {
+    isDraggingImage = false;
+    const img = document.getElementById('current-crop-img');
+    if (img) img.style.cursor = 'grab';
+}
+
+function applyZoom() {
+    const zoom = document.getElementById('adj-zoom').value;
+    postImages[currentImageIndex].transforms.zoom = parseFloat(zoom);
+    applyTransforms();
+}
+
+function applyTransforms() {
+    const t = postImages[currentImageIndex].transforms;
+    const imgId = currentStep === 1 ? 'current-crop-img' : (currentStep === 2 ? 'current-edit-img' : 'final-preview-img');
+    const img = document.getElementById(imgId);
+    if (img) {
+        img.style.transform = `scale(${t.zoom}) translate(${t.x}px, ${t.y}px)`;
+    }
+}
+
+function updateZoomSlider() {
+    const t = postImages[currentImageIndex].transforms;
+    document.getElementById('adj-zoom').value = t.zoom;
+}
+
+// Filter Logic
+function applyFilters() {
+    const b = document.getElementById('adj-brightness').value;
+    const c = document.getElementById('adj-contrast').value;
+    const s = document.getElementById('adj-saturate').value;
+    const bl = document.getElementById('adj-blur').value;
+
+    postImages[currentImageIndex].filters = { brightness: b, contrast: c, saturate: s, blur: bl };
+    const img = document.getElementById('current-edit-img');
+    if (img) {
+        img.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) blur(${bl}px)`;
+    }
+}
+
+function updateFilterSliders() {
+    const f = postImages[currentImageIndex].filters;
+    document.getElementById('adj-brightness').value = f.brightness;
+    document.getElementById('adj-contrast').value = f.contrast;
+    document.getElementById('adj-saturate').value = f.saturate;
+    document.getElementById('adj-blur').value = f.blur;
+}
+
+function applyStoredVisuals(img, idx) {
+    const item = postImages[idx];
+    if (!item) return;
+    const f = item.filters;
+    const t = item.transforms;
+    img.style.filter = `brightness(${f.brightness}%) contrast(${f.contrast}%) saturate(${f.saturate}%) blur(${f.blur}px)`;
+    img.style.transform = `scale(${t.zoom}) translate(${t.x}px, ${t.y}px)`;
+}
+
+async function handlePublish() {
+    const content = document.getElementById('post-content').value.trim();
+    if (!content) {
+        alert('Vui lòng nhập nội dung bài viết.');
         return;
     }
 
-    previewGrid.classList.remove('hidden');
-    document.getElementById('image-empty-state').classList.add('hidden');
-    addMoreBtn.classList.remove('hidden');
-    
-    // Show navigation/dots if more than 1 image
-    if (imageUrls.length > 1) {
-        dotsContainer.classList.remove('hidden');
-        prevBtn.classList.remove('hidden');
-        nextBtn.classList.remove('hidden');
-    } else {
-        dotsContainer.classList.add('hidden');
-        prevBtn.classList.add('hidden');
-        nextBtn.classList.add('hidden');
-    }
+    const shareBtn = document.getElementById('cp-share-btn');
+    shareBtn.disabled = true;
+    shareBtn.textContent = 'Đang chia sẻ...';
 
-    previewGrid.innerHTML = '';
-    dotsContainer.innerHTML = '';
-    
-    imageUrls.forEach((url, index) => {
-        const previewDiv = document.createElement('div');
-        previewDiv.className = 'preview-item';
+    try {
+        await window.api.post('posts', {
+            title: 'Social Post',
+            content,
+            summary: '',
+            imageUrls: postImages.map(p => p.url)
+        });
 
-        previewDiv.innerHTML = `
-            <img src="${url}">
-            <button type="button" class="remove-photo-btn" onclick="removeImage('${url}')">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        `;
-        previewGrid.appendChild(previewDiv);
-
-        // Add dot
-        const dot = document.createElement('div');
-        dot.className = 'carousel-dot' + (index === 0 ? ' active' : '');
-        dotsContainer.appendChild(dot);
-    });
-
-    // Reset scroll to start
-    previewGrid.scrollLeft = 0;
-}
-
-function updateCarouselUI(container) {
-    const dots = document.getElementById('carousel-dots').children;
-    const index = Math.round(container.scrollLeft / container.clientWidth);
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-
-    // Update dots
-    for (let i = 0; i < dots.length; i++) {
-        if (i === index) {
-            dots[i].classList.add('active');
-        } else {
-            dots[i].classList.remove('active');
-        }
-    }
-
-    // Update arrows visibility (optional but nice)
-    prevBtn.style.opacity = index === 0 ? '0.3' : '1';
-    prevBtn.style.pointerEvents = index === 0 ? 'none' : 'auto';
-    nextBtn.style.opacity = index === dots.length - 1 ? '0.3' : '1';
-    nextBtn.style.pointerEvents = index === dots.length - 1 ? 'none' : 'auto';
-}
-
-function scrollCarousel(direction) {
-    const container = document.getElementById('image-preview-grid');
-    container.scrollBy({ left: direction * container.clientWidth, behavior: 'smooth' });
-}
-
-function removeImage(url) {
-    const urlsContainer = document.getElementById('image-urls-container');
-    const inputs = Array.from(urlsContainer.querySelectorAll('.post-image-url-hidden'));
-    const inputToDelete = inputs.find(input => input.value === url);
-    
-    if (inputToDelete) {
-        inputToDelete.remove();
-        renderPreviews();
-        const count = urlsContainer.children.length;
-        document.getElementById('file-name').textContent = count > 0 ? `Đã cập nhật. Tổng cộng ${count} ảnh.` : '';
+        alert('Đã chia sẻ bài viết thành công!');
+        window.location.href = 'index.html';
+    } catch (error) {
+        alert(error.message || 'Lỗi khi đăng bài.');
+        shareBtn.disabled = false;
+        shareBtn.textContent = 'Chia sẻ';
     }
 }
 
-function showMessage(msg, type) {
-    const messageBox = document.getElementById('message-box');
-    messageBox.textContent = msg;
-    messageBox.className = `message-box ${type}`;
-    messageBox.classList.remove('hidden');
-}
+window.initWizard = initWizard;
+window.removeImage = removeImage;
+window.applyFilters = applyFilters;
+window.applyZoom = applyZoom;

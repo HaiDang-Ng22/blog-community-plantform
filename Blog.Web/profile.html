@@ -10,100 +10,102 @@
     <link rel="stylesheet" href="css/common.css?v=1.5">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/home.css?v=1.7">
-    <link rel="stylesheet" href="css/profile.css?v=1.7">
+    <link rel="stylesheet" href="css/profile.css?v=2.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body class="home-page" data-i18n-title="profile">
-    <header class="main-header">
-        <nav class="nav-container container-wide">
-            <div class="logo">
-                <a href="index.html">
-                    <div class="zynk-logo-clean logo-header"></div>
-                </a>
-            </div>
-            
-            <div class="nav-actions" id="nav-actions">
-                <!-- Sẽ được điền bằng JS -->
-            </div>
-        </nav>
-    </header>
 
-    <main class="main-content container-wide">
-        <div class="profile-container">
-            <!-- Profile Header -->
-            <div class="profile-header-card" id="profile-header-loading">
-                <div class="profile-cover"></div>
-                <div class="profile-info-section">
-                    <div class="profile-avatar-wrapper">
-                        <img src="https://ui-avatars.com/api/?name=User&background=random" id="profile-avatar" class="large-avatar" alt="Avatar">
+
+    <main class="main-content" style="padding-top: 40px;">
+        <div class="profile-container" style="max-width: 900px; margin: 0 auto;">
+            <!-- Profile Header Modern -->
+            <div class="profile-header-modern" id="profile-header-loading">
+                <div class="ph-avatar-wrap">
+                    <div class="ph-avatar-ring">
+                        <img src="https://ui-avatars.com/api/?name=User&background=random" id="profile-avatar" alt="Avatar">
                     </div>
-                    <div class="profile-names">
-                        <h2 id="profile-name" data-i18n="loading">Đang tải...</h2>
-                        <p id="profile-username">@loading</p>
+                </div>
+                
+                <div class="ph-info-wrap">
+                    <div class="ph-top-row">
+                        <h2 id="profile-username" class="ph-username">@loading</h2>
+                        <div class="ph-actions">
+                            <button id="follow-btn" class="btn primary-btn ph-btn" data-i18n="follow">Theo dõi</button>
+                        </div>
                     </div>
-                    <div class="profile-bio" id="profile-bio" data-i18n="default_bio">
-                        Đây là nơi chia sẻ những suy nghĩ và câu chuyện của tôi.
+                    
+                    <div class="ph-stats-row">
+                        <div class="ph-stat" onclick="switchTab('gallery')">
+                            <b id="post-count">0</b> <span data-i18n="posts_label">bài viết</span>
+                        </div>
+                        <div class="ph-stat" onclick="openUserListModal('followers')">
+                            <b id="follower-count">0</b> <span data-i18n="followers_label">người theo dõi</span>
+                        </div>
+                        <div class="ph-stat" onclick="openUserListModal('following')">
+                            <b id="following-count">0</b> <span data-i18n="following_label">đang theo dõi</span>
+                        </div>
                     </div>
-                    <div class="profile-stats-row">
-                        <span><b id="post-count">0</b> <span data-i18n="posts_label">Bài viết</span></span>
-                        <span><b id="follower-count">0</b> <span data-i18n="followers_label">Người theo dõi</span></span>
-                        <span><b id="following-count">0</b> <span data-i18n="following_label">Đang theo dõi</span></span>
-                    </div>
-                    <div style="margin-top: 1.5rem;">
-                        <button id="follow-btn" class="btn primary-btn" style="width: auto; padding: 0.6rem 2rem;" data-i18n="follow">Theo dõi</button>
+                    
+                    <div class="ph-bio-row">
+                        <h3 id="profile-name" class="ph-fullname">Đang tải...</h3>
+                        <div id="profile-id" class="ph-meta-id hidden" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;"></div>
+                        <div class="ph-bio" id="profile-bio" data-i18n="default_bio">
+                            Đây là nơi chia sẻ những suy nghĩ và câu chuyện của tôi.
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Profile Tabs -->
             <div class="profile-tabs">
-                <button class="profile-tab active" data-tab="posts">
-                    <i class="fa-solid fa-grid-2"></i>
-                    <span data-i18n="posts_label">Bài viết</span>
+                <button class="profile-tab active" data-tab="gallery">
+                    <i class="fa-solid fa-border-all"></i>
+                    <span>Thư viện ảnh</span>
                 </button>
-                <button class="profile-tab" data-tab="friends">
+                <button class="profile-tab" data-tab="notes">
+                    <i class="fa-solid fa-bars-staggered"></i>
+                    <span>Bài viết chữ</span>
+                </button>
+                <button class="profile-tab hidden" data-tab="friends" id="friends-tab-btn">
                     <i class="fa-solid fa-user-group"></i>
-                    <span data-i18n="friends_label">Bạn bè</span>
-                </button>
-                <button class="profile-tab" data-tab="followers">
-                    <i class="fa-solid fa-users"></i>
-                    <span data-i18n="followers_label">Người theo dõi</span>
-                </button>
-                <button class="profile-tab" data-tab="following">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <span data-i18n="following_label">Đang theo dõi</span>
+                    <span>Bạn bè</span>
                 </button>
             </div>
 
             <!-- Tab Content Containers -->
-            <div id="posts-container" class="tab-content active">
+            <div id="gallery-container" class="tab-content active">
                 <div id="profile-posts-grid" class="posts-grid">
                     <div class="post-card skeleton"></div>
                 </div>
-                <div id="no-posts" class="no-posts hidden">
-                    <i class="fa-solid fa-note-sticky"></i>
-                    <p data-i18n="no_posts_user">Chưa có bài đăng nào.</p>
+                <div id="no-gallery-posts" class="no-posts hidden">
+                    <i class="fa-solid fa-camera"></i>
+                    <p>Chưa có hình ảnh nào.</p>
                 </div>
             </div>
 
-            <div id="list-container" class="tab-content">
-                <div class="user-list-grid" id="user-list-grid">
+            <div id="notes-container" class="tab-content">
+                <div id="profile-text-posts-feed" style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+                </div>
+                <div id="no-text-posts" class="no-posts hidden">
+                    <i class="fa-solid fa-pen-nib"></i>
+                    <p>Chưa có bài viết chữ nào.</p>
+                </div>
+            </div>
+
+            <div id="friends-container" class="tab-content">
+                <div class="user-list-grid" id="friends-grid">
                     <!-- Populated by JS -->
                 </div>
-                <div id="no-users" class="no-posts hidden">
+                <div id="no-friends" class="no-posts hidden">
                     <i class="fa-solid fa-users-slash"></i>
-                    <p data-i18n="empty_list">Danh sách trống.</p>
+                    <p>Danh sách bạn bè trống.</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="main-footer">
-        <div class="container-wide">
-            <p data-i18n="footer_copy">&copy; 2026 Zynk Community.</p>
-        </div>
-    </footer>
+
 
     <!-- Scripts -->
     <script src="js/api.js?v=2.1"></script>
@@ -112,7 +114,19 @@
     <script src="js/common.js?v=2.2"></script>
     <script src="js/post-actions.js?v=1.3"></script>
     <script src="js/notifications.js?v=1.1"></script>
-    <script src="js/profile.js?v=2.0"></script>
+    <script src="js/profile.js?v=2.2"></script>
+
+    <!-- User List Modal -->
+    <div id="user-list-modal" class="modal-overlay hidden">
+        <div class="modal-container" style="background: var(--bg-color); border-radius: 12px; width: 100%; max-width: 400px; padding: 1.5rem; display: flex; flex-direction: column; max-height: 80vh;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3 id="user-list-modal-title" style="margin: 0; font-size: 1.1rem; text-align: center; flex: 1;">Danh sách</h3>
+                <button onclick="document.getElementById('user-list-modal').classList.add('hidden')" style="background: none; border: none; font-size: 1.5rem; color: var(--text-primary); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="user-list-modal-content" style="overflow-y: auto; flex: 1;">
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

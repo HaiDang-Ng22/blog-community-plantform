@@ -9,27 +9,38 @@ window.postActions = {
 
         try {
             const result = await window.api.post(`posts/${postId}/like`);
-            const heartIcon = btnElement.querySelector('i');
+            // Target specific modal IDs if they exist
+            const modalIcon = document.getElementById('modal-like-icon');
+            const modalCount = document.getElementById('modal-like-count');
             
-            const card = btnElement.closest('.zynk-post-card') || btnElement.closest('.post-card');
-            if (card) {
-                const countDiv = card.querySelector('.zynk-stats') || card.querySelector('.post-likes-count');
-                if (countDiv) countDiv.textContent = `${result.likeCount} lượt thích`;
-            } else {
-                const likeCountSpan = btnElement.querySelector('span');
-                if (likeCountSpan) likeCountSpan.textContent = result.likeCount;
+            // 1. Update Modal specifically if the interaction happened there or modal is open
+            if (modalIcon) {
+                if (result.isLiked) {
+                    modalIcon.classList.replace('fa-regular', 'fa-solid');
+                    modalIcon.style.color = '#EF4444';
+                } else {
+                    modalIcon.classList.replace('fa-solid', 'fa-regular');
+                    modalIcon.style.color = '';
+                }
+                if (modalCount) modalCount.textContent = `${result.likeCount} lượt thích`;
             }
 
-            if (result.isLiked) {
-                heartIcon.classList.remove('fa-regular');
-                heartIcon.classList.add('fa-solid');
-                heartIcon.style.color = '#EF4444';
-                btnElement.classList.add('liked');
-            } else {
-                heartIcon.classList.remove('fa-solid');
-                heartIcon.classList.add('fa-regular');
-                heartIcon.style.color = '';
-                btnElement.classList.remove('liked');
+            // 2. Update feed card (if it exists on the page)
+            // Use ID-based search first for better precision
+            const card = document.getElementById(`post-${postId}`) || btnElement.closest('.zynk-post-card');
+            if (card) {
+                const icon = card.querySelector('.fa-heart');
+                if (icon) {
+                    if (result.isLiked) {
+                        icon.classList.replace('fa-regular', 'fa-solid');
+                        icon.style.color = '#EF4444';
+                    } else {
+                        icon.classList.replace('fa-solid', 'fa-regular');
+                        icon.style.color = '';
+                    }
+                }
+                const countDiv = card.querySelector('.zynk-stats');
+                if (countDiv) countDiv.textContent = `${result.likeCount} lượt thích`;
             }
         } catch (error) {
             console.error('Like error:', error);
@@ -77,7 +88,7 @@ window.postActions = {
                 list.innerHTML = '<p class="no-comments">Chưa có bình luận nào.</p>';
             } else {
                 comments.forEach(c => {
-                    list.appendChild(this.renderCommentItem(c, postId));
+                    list.appendChild(window.postActions.renderCommentItem(c, postId));
                 });
             }
         } catch (error) {
@@ -108,12 +119,12 @@ window.postActions = {
                     ${window.common.autoLink(comment.content)}
                 </div>
                 <div class="comment-actions">
-                    <span class="comment-time">${formatDate(comment.createdAt)}</span>
+                    <span class="comment-time">${window.common.formatDate(comment.createdAt)}</span>
                     <button class="action-link" onclick="window.postActions.showReplyInput('${postId}', '${comment.id}', this)">Trả lời</button>
                     ${isMyComment ? `<button class="action-link delete" onclick="window.postActions.deleteComment('${postId}', '${comment.id}')">Xóa</button>` : ''}
                 </div>
                 <div class="replies-container" id="replies-${comment.id}" style="margin-top: 10px;">
-                    ${(comment.replies || []).map(r => this.renderCommentItem(r, postId).outerHTML).join('')}
+                    ${(comment.replies || []).map(r => window.postActions.renderCommentItem(r, postId).outerHTML).join('')}
                 </div>
             </div>
         `;
@@ -137,7 +148,7 @@ window.postActions = {
             const list = btn.closest('.comment-section').querySelector('.comments-list');
             const noRes = list.querySelector('.no-comments');
             if (noRes) noRes.remove();
-            list.prepend(this.renderCommentItem(comment));
+            list.prepend(window.postActions.renderCommentItem(comment, postId));
         } catch (error) {
             alert('Lỗi khi gửi bình luận');
         } finally {
@@ -175,7 +186,7 @@ window.postActions = {
             console.log('Reply saved:', reply);
             input.value = '';
             const repliesList = document.getElementById(`replies-${parentId}`);
-            repliesList.innerHTML += this.renderCommentItem(reply, postId).outerHTML;
+            repliesList.innerHTML += window.postActions.renderCommentItem(reply, postId).outerHTML;
             btn.closest(`.reply-area-${parentId}`).classList.add('hidden');
         } catch (error) {
             alert('Lỗi khi gửi phản hồi');
@@ -383,6 +394,50 @@ window.postActions = {
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+    },
+    async loadCommentsForModal(postId, container) {
+        if (!postId || !container) return;
+        
+        // Watchdog timer: if nothing happens in 6s, clear the spinner
+        const watchdog = setTimeout(() => {
+            if (container.innerHTML.includes('fa-spinner') || container.innerHTML.includes('Đang tải')) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:20px;">
+                        <p style="color:#8e8e8e; font-size:0.9rem;">Máy chủ phản hồi chậm...</p>
+                        <button onclick="window.postActions.loadCommentsForModal('${postId}', document.getElementById('modal-comments-list'))" style="margin-top:10px; border:none; background:none; color:#0095f6; font-weight:600; cursor:pointer;">Thử lại</button>
+                    </div>
+                `;
+            }
+        }, 6000);
+
+        // Cache usage
+        const cached = window._postCache && window._postCache[postId];
+        if (cached && cached.comments && Array.isArray(cached.comments) && cached.comments.length > 0) {
+            container.innerHTML = '';
+            cached.comments.forEach(c => {
+                try { container.appendChild(window.postActions.renderCommentItem(c, postId)); } catch(e) {}
+            });
+        }
+
+        try {
+            const comments = await window.api.get(`posts/${postId}/comments`);
+            clearTimeout(watchdog);
+            
+            container.innerHTML = '';
+            if (comments && comments.length > 0) {
+                comments.forEach(c => {
+                    try { container.appendChild(window.postActions.renderCommentItem(c, postId)); } catch (e) {}
+                });
+            } else {
+                container.innerHTML = '<p style="color:#8e8e8e; text-align:center; padding:20px;">Chưa có bình luận nào.</p>';
+            }
+        } catch (error) {
+            clearTimeout(watchdog);
+            console.warn("Modal comments fetch issues:", error.message);
+            if (!container.children.length || container.innerHTML.includes('Đang tải')) {
+                container.innerHTML = '<p style="color:#8e8e8e; text-align:center; padding:20px;">Không thể tải bình luận lúc này.</p>';
+            }
+        }
     }
 };
 

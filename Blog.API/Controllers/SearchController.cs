@@ -29,7 +29,10 @@ public class SearchController : ControllerBase
         if (Guid.TryParse(q, out var guid)) searchId = guid;
 
         var users = await _context.Users
-            .Where(u => u.Username.ToLower().Contains(query) || u.FullName.ToLower().Contains(query) || (searchId.HasValue && u.Id == searchId.Value))
+            .Where(u =>
+                (u.Username != null && u.Username.ToLower().Contains(query)) ||
+                (u.FullName != null && u.FullName.ToLower().Contains(query)) ||
+                (searchId.HasValue && u.Id == searchId.Value))
             .Take(10)
             .Select(u => new UserSearchResult
             {
@@ -42,7 +45,13 @@ public class SearchController : ControllerBase
             .ToListAsync();
 
         var posts = await _context.Posts
-            .Where(p => p.Title.ToLower().Contains(query) || p.Content.ToLower().Contains(query) || (searchId.HasValue && p.Id == searchId.Value))
+            .Where(p =>
+                p.Status == Blog.Domain.Entities.PostStatus.Published &&
+                (
+                    (p.Title != null && p.Title.ToLower().Contains(query)) ||
+                    (p.Content != null && p.Content.ToLower().Contains(query)) ||
+                    (searchId.HasValue && p.Id == searchId.Value)
+                ))
             .Include(p => p.Author)
             .Take(10)
             .Select(p => new PostSearchResult

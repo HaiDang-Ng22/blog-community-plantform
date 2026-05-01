@@ -135,13 +135,21 @@ public class PostsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var post = await _postRepository.GetByIdAsync(id);
+        var currentUserIdStr = User.GetUserIdStr();
+        Guid? currentUserId = !string.IsNullOrEmpty(currentUserIdStr) ? Guid.Parse(currentUserIdStr) : null;
+
+        var post = await _context.Posts
+            .Include(p => p.Author)
+            .Include(p => p.Images)
+            .Include(p => p.PostLikes)
+            .Include(p => p.Comments)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (post == null)
             return NotFound(new { message = "Không tìm thấy bài viết" });
         
         // Tăng view count
         post.ViewCount++;
-        await _postRepository.UpdateAsync(post);
+        await _context.SaveChangesAsync();
         
         var postDto = new PostDto
         {
@@ -154,8 +162,14 @@ public class PostsController : ControllerBase
             ViewCount = post.ViewCount,
             LikeCount = post.LikeCount,
             Status = post.Status.ToString(),
+            AuthorName = post.Author?.FullName ?? "Người dùng",
+            AuthorAvatarUrl = post.Author?.AvatarUrl,
+            AuthorId = post.AuthorId,
             CreatedAt = post.CreatedAt,
-            PublishedAt = post.PublishedAt
+            PublishedAt = post.PublishedAt,
+            CommentCount = post.Comments.Count,
+            IsLikedByMe = currentUserId.HasValue && post.PostLikes.Any(l => l.UserId == currentUserId.Value),
+            ImageUrls = post.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
         };
         
         return Ok(postDto);

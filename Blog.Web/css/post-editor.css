@@ -1,0 +1,186 @@
+.post-editor-page {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+}
+
+.post-editor-shell {
+    min-height: 100vh;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-post-modern-modal,
+.post-editor-card {
+    width: min(1120px, 96vw);
+    min-height: min(760px, 92vh);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+    overflow: hidden;
+}
+
+.cp-modal-header,
+.post-editor-header {
+    height: 64px;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: #fff;
+}
+
+.cp-header-btn {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-weight: 600;
+}
+
+.cp-header-btn.primary {
+    background: #111827;
+    color: #fff;
+    border-color: #111827;
+}
+
+.cp-modal-body {
+    height: calc(100% - 64px);
+}
+
+.cp-step {
+    height: 100%;
+}
+
+.cp-two-pane,
+.post-editor-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    min-height: 640px;
+}
+
+.cp-pane-left,
+.post-editor-preview {
+    background: #0b0b0c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.cp-preview-full {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cp-preview-full img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.cp-pane-right,
+.post-editor-form {
+    background: #fff;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.cp-dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 48px 28px;
+    text-align: center;
+    background: #f8fafc;
+    max-width: 560px;
+    width: 100%;
+}
+
+.cp-dropzone.dragover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.cp-thumb-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 12px;
+}
+
+.cp-thumb-item {
+    border: 2px solid transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+}
+
+.cp-thumb-item.active {
+    border-color: #2563eb;
+}
+
+.cp-thumb-item img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.cp-thumb-item .remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+}
+
+.post-editor-textarea,
+#post-content {
+    width: 100%;
+    min-height: 220px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.post-editor-meta {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    color: #64748b;
+    font-size: 0.82rem;
+}
+
+.post-editor-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+@media (max-width: 960px) {
+    .post-editor-shell {
+        padding: 8px;
+    }
+    .cp-two-pane,
+    .post-editor-layout {
+        grid-template-columns: 1fr;
+    }
+    .create-post-modern-modal,
+    .post-editor-card {
+        min-height: 96vh;
+        width: 100%;
+        border-radius: 14px;
+    }
+}

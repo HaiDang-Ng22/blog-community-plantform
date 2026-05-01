@@ -119,24 +119,63 @@ public class AdminController : ControllerBase
         if (string.IsNullOrEmpty(adminIdStr)) return Unauthorized();
         var adminId = Guid.Parse(adminIdStr);
 
-        // Send notification to author before deleting
-        var notification = new Notification
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            Id = Guid.NewGuid(),
-            ReceiverId = post.AuthorId,
-            ActorId = adminId,
-            Type = "System",
-            Message = "bài viết của bạn đã vi phạm quy tắt cộng đồng",
-            CreatedAt = DateTime.UtcNow,
-            TargetId = null // Target is deleted so set to null
-        };
-        _context.Notifications.Add(notification);
+            // Send notification to author before deleting
+            var notification = new Notification
+            {
+                Id = Guid.NewGuid(),
+                ReceiverId = post.AuthorId,
+                ActorId = adminId,
+                Type = "System",
+                Message = "Bài viết của bạn đã vi phạm quy tắc cộng đồng và đã bị xóa.",
+                CreatedAt = DateTime.UtcNow,
+                TargetId = null // Target is deleted so set to null
+            };
+            _context.Notifications.Add(notification);
 
-        // Cascade delete will handle related entities
-        _context.Posts.Remove(post);
-        await _context.SaveChangesAsync();
+            // Safely delete all comments related to this post to avoid self-referencing Restrict constraints
+            var allComments = await _context.Comments.Select(c => new { c.Id, c.ParentCommentId, c.PostId }).ToListAsync();
+            var commentIdsToDelete = new HashSet<Guid>();
+            var queue = new Queue<Guid>();
+            
+            foreach (var c in allComments.Where(x => x.PostId == id))
+            {
+                if (commentIdsToDelete.Add(c.Id))
+                    queue.Enqueue(c.Id);
+            }
 
-        return Ok(new { message = "Đã xóa bài viết và gửi cảnh báo đến người dùng." });
+            while (queue.Count > 0)
+            {
+                var curr = queue.Dequeue();
+                foreach (var c in allComments.Where(x => x.ParentCommentId == curr))
+                {
+                    if (commentIdsToDelete.Add(c.Id))
+                        queue.Enqueue(c.Id);
+                }
+            }
+
+            if (commentIdsToDelete.Any())
+            {
+                var commentsToDeleteList = await _context.Comments
+                    .Where(c => commentIdsToDelete.Contains(c.Id))
+                    .ToListAsync();
+                _context.Comments.RemoveRange(commentsToDeleteList);
+            }
+
+            // Xóa post, EF Core sẽ tự cascade xóa Report, PostLike, PostImage, etc.
+            _context.Posts.Remove(post);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new { message = "Đã xóa bài viết và gửi cảnh báo đến người dùng." });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new { message = "Lỗi khi xóa bài viết: " + (ex.InnerException?.Message ?? ex.Message) });
+        }
     }
 
     [HttpDelete("users/{id}")]
@@ -146,10 +185,114 @@ public class AdminController : ControllerBase
         if (user == null) return NotFound();
         if (user.Role == "Admin") return BadRequest(new { message = "Không thể xóa tài khoản Admin." });
 
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // 1. Blocks
+            var blocks = await _context.Blocks.Where(b => b.BlockerId == id || b.BlockedId == id).ToListAsync();
+            _context.Blocks.RemoveRange(blocks);
 
-        return Ok(new { message = "Đã xóa tài khoản người dùng vĩnh viễn." });
+            // 2. Follows
+            var follows = await _context.Follows.Where(f => f.FollowerId == id || f.FollowingId == id).ToListAsync();
+            _context.Follows.RemoveRange(follows);
+
+            // 3. Post Likes
+            var postLikes = await _context.PostLikes.Where(pl => pl.UserId == id).ToListAsync();
+            _context.PostLikes.RemoveRange(postLikes);
+
+            // 4. Notifications
+            var notifications = await _context.Notifications.Where(n => n.ActorId == id || n.ReceiverId == id).ToListAsync();
+            _context.Notifications.RemoveRange(notifications);
+
+            // 5. Reports
+            var reports = await _context.Reports.Where(r => r.ReporterId == id).ToListAsync();
+            _context.Reports.RemoveRange(reports);
+
+            // 6. Product Reviews
+            var reviews = await _context.ProductReviews.Where(pr => pr.UserId == id).ToListAsync();
+            _context.ProductReviews.RemoveRange(reviews);
+
+            // 7. Orders (where user is Buyer)
+            var buyerOrders = await _context.Orders.Where(o => o.BuyerId == id).ToListAsync();
+            _context.Orders.RemoveRange(buyerOrders);
+
+            // 8. Shop and Shop Applications
+            var shopApps = await _context.ShopApplications.Where(sa => sa.UserId == id).ToListAsync();
+            _context.ShopApplications.RemoveRange(shopApps);
+
+            var shop = await _context.Shops.FirstOrDefaultAsync(s => s.UserId == id);
+            if (shop != null)
+            {
+                var userProductIds = await _context.Products.Where(p => p.ShopId == shop.Id).Select(p => p.Id).ToListAsync();
+                if (userProductIds.Any())
+                {
+                    var relatedOrderItems = await _context.OrderItems.Where(oi => userProductIds.Contains(oi.ProductId)).ToListAsync();
+                    _context.OrderItems.RemoveRange(relatedOrderItems);
+                    
+                    // Delete orders associated with this shop's items (so we don't leave orphaned orders)
+                    var relatedOrderIds = relatedOrderItems.Select(oi => oi.OrderId).Distinct().ToList();
+                    var relatedOrders = await _context.Orders.Where(o => relatedOrderIds.Contains(o.Id)).ToListAsync();
+                    _context.Orders.RemoveRange(relatedOrders);
+                }
+                _context.Shops.Remove(shop);
+            }
+
+            // 9. Comments (and all their descendant replies)
+            var allComments = await _context.Comments.Select(c => new { c.Id, c.ParentCommentId, c.AuthorId, c.PostId }).ToListAsync();
+            var commentIdsToDelete = new HashSet<Guid>();
+            var queue = new Queue<Guid>();
+            
+            // Start with comments authored by the user
+            foreach (var c in allComments.Where(x => x.AuthorId == id))
+            {
+                if (commentIdsToDelete.Add(c.Id))
+                    queue.Enqueue(c.Id);
+            }
+
+            // Also include all comments on posts authored by the user
+            var userPosts = await _context.Posts.Where(p => p.AuthorId == id).Select(p => p.Id).ToListAsync();
+            foreach (var c in allComments.Where(x => userPosts.Contains(x.PostId)))
+            {
+                if (commentIdsToDelete.Add(c.Id))
+                    queue.Enqueue(c.Id);
+            }
+
+            // Find all replies recursively
+            while (queue.Count > 0)
+            {
+                var curr = queue.Dequeue();
+                foreach (var c in allComments.Where(x => x.ParentCommentId == curr))
+                {
+                    if (commentIdsToDelete.Add(c.Id))
+                        queue.Enqueue(c.Id);
+                }
+            }
+
+            if (commentIdsToDelete.Any())
+            {
+                var commentsToDeleteList = await _context.Comments
+                    .Where(c => commentIdsToDelete.Contains(c.Id))
+                    .ToListAsync();
+                _context.Comments.RemoveRange(commentsToDeleteList);
+            }
+
+            // 10. Posts
+            var posts = await _context.Posts.Where(p => p.AuthorId == id).ToListAsync();
+            _context.Posts.RemoveRange(posts);
+
+            // 11. Remove the user
+            _context.Users.Remove(user);
+            
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new { message = "Đã xóa tài khoản người dùng và tất cả dữ liệu liên quan." });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new { message = "Lỗi khi xóa người dùng: " + (ex.InnerException?.Message ?? ex.Message) });
+        }
     }
 
     [HttpPost("reports/{id}/resolve")]
