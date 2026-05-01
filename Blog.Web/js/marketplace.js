@@ -81,18 +81,29 @@ function renderCategoryItem(cat, allCategories, container, level = 0) {
     const link = li.querySelector('.category-link');
     link.onclick = (e) => {
         e.preventDefault();
-        alert('[DEBUG] Đã click danh mục: ' + cat.name + '\nID: ' + cat.id);
-        document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        filterState.categoryId = cat.id;
-        filterState.keyword = null;
-        document.getElementById('market-search-input').value = '';
-        
-        const titleEl = document.getElementById('market-title');
-        titleEl.textContent = cat.name;
-        titleEl.removeAttribute('data-i18n'); // Prevent i18n from overwriting
-        
-        loadProducts();
+        try {
+            alert('[DEBUG] Đã click danh mục: ' + cat.name + '\nID: ' + cat.id);
+            document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            filterState.categoryId = cat.id;
+            filterState.keyword = null;
+            
+            const searchInput = document.getElementById('market-search-input');
+            if (searchInput) searchInput.value = '';
+            
+            const titleEl = document.getElementById('market-title');
+            if (titleEl) {
+                titleEl.textContent = cat.name;
+                titleEl.removeAttribute('data-i18n'); // Prevent i18n from overwriting
+            } else {
+                alert('[DEBUG] Không tìm thấy market-title!');
+            }
+            
+            loadProducts();
+        } catch (err) {
+            alert('[DEBUG ERROR] ' + err.message + '\n' + err.stack);
+            console.error('Click error:', err);
+        }
     };
 
     if (subCategories.length > 0) {
@@ -113,10 +124,16 @@ function renderCategoryItem(cat, allCategories, container, level = 0) {
 }
 
 async function loadProducts() {
-    const grid = document.getElementById('product-grid');
-    if (!grid) return;
+    let grid;
+    try {
+        grid = document.getElementById('product-grid');
+        if (!grid) return;
 
-    grid.innerHTML = '<div class="skeleton" style="height: 300px; grid-column: span 1 / -1;"></div>'.repeat(4);
+        grid.innerHTML = '<div class="skeleton" style="height: 300px; grid-column: span 1 / -1;"></div>'.repeat(4);
+    } catch (err) {
+        alert('[DEBUG ERROR in loadProducts init] ' + err.message);
+        return;
+    }
 
     try {
         let params = new URLSearchParams();
@@ -134,7 +151,7 @@ async function loadProducts() {
         renderProducts(currentProducts);
     } catch (e) {
         console.error('Failed to load products', e);
-        grid.innerHTML = '<div class="no-posts">Lỗi khi tải sản phẩm. Vui lòng thử lại.</div>';
+        if (grid) grid.innerHTML = '<div class="no-posts">Lỗi khi tải sản phẩm. Vui lòng thử lại.</div>';
     }
 }
 
