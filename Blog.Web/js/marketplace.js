@@ -38,18 +38,23 @@ async function loadCategories() {
             renderCategoryItem(cat, categories, list);
         });
 
-        // Initialize "All" click
         const allLink = list.querySelector('[data-id="all"]');
         if (allLink) {
             allLink.onclick = (e) => {
                 e.preventDefault();
+                console.log('[Marketplace] "All Categories" clicked');
                 document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
                 allLink.classList.add('active');
                 filterState.categoryId = null;
                 filterState.keyword = null;
                 document.getElementById('market-search-input').value = '';
+                
+                const titleEl = document.getElementById('market-title');
+                titleEl.textContent = 'Gợi ý hôm nay';
+                titleEl.setAttribute('data-i18n', 'market_suggestions'); // Restore i18n
+                if(window.applyTranslations) window.applyTranslations();
+                
                 loadProducts();
-                document.getElementById('market-title').textContent = 'Gợi ý hôm nay';
             };
         }
 
@@ -76,13 +81,18 @@ function renderCategoryItem(cat, allCategories, container, level = 0) {
     const link = li.querySelector('.category-link');
     link.onclick = (e) => {
         e.preventDefault();
+        console.log('[Marketplace] Category clicked:', cat.name, 'ID:', cat.id);
         document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
         filterState.categoryId = cat.id;
         filterState.keyword = null;
         document.getElementById('market-search-input').value = '';
+        
+        const titleEl = document.getElementById('market-title');
+        titleEl.textContent = cat.name;
+        titleEl.removeAttribute('data-i18n'); // Prevent i18n from overwriting
+        
         loadProducts();
-        document.getElementById('market-title').textContent = cat.name;
     };
 
     if (subCategories.length > 0) {
