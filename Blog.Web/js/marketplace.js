@@ -42,7 +42,6 @@ async function loadCategories() {
         if (allLink) {
             allLink.onclick = (e) => {
                 e.preventDefault();
-                alert('[DEBUG] Đã click Tất cả danh mục');
                 document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
                 allLink.classList.add('active');
                 filterState.categoryId = null;
@@ -82,7 +81,6 @@ function renderCategoryItem(cat, allCategories, container, level = 0) {
     link.onclick = (e) => {
         e.preventDefault();
         try {
-            alert('[DEBUG] Đã click danh mục: ' + cat.name + '\nID: ' + cat.id);
             document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
             link.classList.add('active');
             filterState.categoryId = cat.id;
@@ -94,14 +92,11 @@ function renderCategoryItem(cat, allCategories, container, level = 0) {
             const titleEl = document.getElementById('market-title');
             if (titleEl) {
                 titleEl.textContent = cat.name;
-                titleEl.removeAttribute('data-i18n'); // Prevent i18n from overwriting
-            } else {
-                alert('[DEBUG] Không tìm thấy market-title!');
+                titleEl.removeAttribute('data-i18n');
             }
             
             loadProducts();
         } catch (err) {
-            alert('[DEBUG ERROR] ' + err.message + '\n' + err.stack);
             console.error('Click error:', err);
         }
     };
@@ -131,7 +126,6 @@ async function loadProducts() {
 
         grid.innerHTML = '<div class="skeleton" style="height: 300px; grid-column: span 1 / -1;"></div>'.repeat(4);
     } catch (err) {
-        alert('[DEBUG ERROR in loadProducts init] ' + err.message);
         return;
     }
 
@@ -144,10 +138,7 @@ async function loadProducts() {
         if (filterState.sortBy) params.append('sortBy', filterState.sortBy);
 
         const url = `marketplace/products?${params.toString()}`;
-        console.log('[Marketplace] Loading products with URL:', url, '| filterState:', JSON.stringify(filterState));
         currentProducts = await window.api.get(url);
-        alert('[DEBUG] URL API gọi: ' + url + '\nSố lượng sản phẩm trả về: ' + currentProducts.length);
-        console.log('[Marketplace] Got', currentProducts.length, 'products');
         renderProducts(currentProducts);
     } catch (e) {
         console.error('Failed to load products', e);
