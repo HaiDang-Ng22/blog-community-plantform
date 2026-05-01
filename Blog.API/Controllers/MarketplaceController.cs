@@ -39,10 +39,13 @@ public class MarketplaceController : ControllerBase
             .Include(p => p.Category)
             .Where(p => p.Status == ProductStatus.Active && !p.Shop.IsSuspended);
 
+        List<Category>? allCategories = null;
+
         // 1. Filter by categoryId (hierarchical)
         if (categoryId.HasValue)
         {
-            var categoryIds = await GetCategoryIdsRecursive(categoryId.Value);
+            allCategories ??= await _context.Categories.ToListAsync();
+            var categoryIds = GetCategoryIdsRecursiveInMemory(categoryId.Value, allCategories);
             Console.WriteLine($"[DEBUG] CategoryId filter: {categoryId.Value} → resolved IDs: [{string.Join(", ", categoryIds)}]");
             query = query.Where(p => categoryIds.Contains(p.CategoryId));
         }
@@ -51,16 +54,15 @@ public class MarketplaceController : ControllerBase
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             var kw = keyword.ToLower();
+            allCategories ??= await _context.Categories.ToListAsync();
             
             // Find categories matching keyword to include their products
-            var matchingCats = await _context.Categories
-                .Where(c => c.Name.ToLower().Contains(kw))
-                .ToListAsync();
+            var matchingCats = allCategories.Where(c => c.Name.ToLower().Contains(kw)).ToList();
             
             var allMatchingCatIds = new List<Guid>();
             foreach(var cat in matchingCats)
             {
-                allMatchingCatIds.AddRange(await GetCategoryIdsRecursive(cat.Id));
+                allMatchingCatIds.AddRange(GetCategoryIdsRecursiveInMemory(cat.Id, allCategories));
             }
             allMatchingCatIds = allMatchingCatIds.Distinct().ToList();
 
@@ -103,16 +105,14 @@ public class MarketplaceController : ControllerBase
         return Ok(dtos);
     }
 
-    private async Task<List<Guid>> GetCategoryIdsRecursive(Guid parentId)
+    private List<Guid> GetCategoryIdsRecursiveInMemory(Guid parentId, List<Category> allCategories)
     {
         var ids = new List<Guid> { parentId };
-        var subCats = await _context.Categories
-            .Where(c => c.ParentCategoryId == parentId)
-            .ToListAsync();
+        var subCats = allCategories.Where(c => c.ParentCategoryId == parentId).ToList();
         
         foreach (var sub in subCats)
         {
-            ids.AddRange(await GetCategoryIdsRecursive(sub.Id));
+            ids.AddRange(GetCategoryIdsRecursiveInMemory(sub.Id, allCategories));
         }
         return ids;
     }
