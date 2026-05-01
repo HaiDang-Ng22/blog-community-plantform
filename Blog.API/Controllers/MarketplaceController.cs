@@ -43,6 +43,7 @@ public class MarketplaceController : ControllerBase
         if (categoryId.HasValue)
         {
             var categoryIds = await GetCategoryIdsRecursive(categoryId.Value);
+            Console.WriteLine($"[DEBUG] CategoryId filter: {categoryId.Value} → resolved IDs: [{string.Join(", ", categoryIds)}]");
             query = query.Where(p => categoryIds.Contains(p.CategoryId));
         }
 
@@ -64,7 +65,7 @@ public class MarketplaceController : ControllerBase
             allMatchingCatIds = allMatchingCatIds.Distinct().ToList();
 
             query = query.Where(p => p.Name.ToLower().Contains(kw) || 
-                                    p.Description.ToLower().Contains(kw) || 
+                                    (p.Description != null && p.Description.ToLower().Contains(kw)) || 
                                     allMatchingCatIds.Contains(p.CategoryId));
         }
 
@@ -73,7 +74,7 @@ public class MarketplaceController : ControllerBase
         if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
 
         // 4. Sorting
-        switch (sortBy?.ToLower())
+        switch (sortBy?.ToLower().Replace("-", "_"))
         {
             case "price_asc": query = query.OrderBy(p => p.Price); break;
             case "price_desc": query = query.OrderByDescending(p => p.Price); break;
@@ -83,6 +84,7 @@ public class MarketplaceController : ControllerBase
         }
 
         var products = await query.ToListAsync();
+        Console.WriteLine($"[DEBUG] GetProducts result: {products.Count} products (categoryId={categoryId}, keyword={keyword})");
 
         var dtos = products.Select(p => new ProductDto
         {
