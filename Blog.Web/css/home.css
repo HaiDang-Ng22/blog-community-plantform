@@ -205,10 +205,36 @@
 
 /* Sidebar Footer */
 .widget-footer-links {
+    padding: 4px 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 2px;
+}
+
+.widget-footer-links a {
+    display: inline-block;
     font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: transparent;
+    transition: background 0.15s, color 0.15s;
+    font-weight: 500;
+}
+
+.widget-footer-links a:hover {
+    background: rgba(0,0,0,0.06);
+    color: var(--text-primary);
+}
+
+.widget-footer-links .footer-copy {
+    display: block;
+    width: 100%;
+    font-size: 0.68rem;
     color: var(--text-light);
-    line-height: 1.6;
-    padding: 0 4px;
+    padding: 6px 8px 0;
+    letter-spacing: 0.2px;
 }
 
 /* Quick Post Card */

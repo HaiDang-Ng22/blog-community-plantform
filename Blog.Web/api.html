@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API – Zynk</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+<link rel="stylesheet" href="css/info-pages.css">
+<style>
+  .code-block {
+    background:#1e1e2e;
+    color:#cdd6f4;
+    border-radius:10px;
+    padding:16px 20px;
+    font-family:'Courier New',monospace;
+    font-size:0.82rem;
+    line-height:1.8;
+    overflow-x:auto;
+    margin-top:12px;
+  }
+  .code-block .kw{color:#cba6f7;}
+  .code-block .str{color:#a6e3a1;}
+  .code-block .key{color:#89dceb;}
+  .endpoint-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.72rem;font-weight:700;margin-right:8px;}
+  .get{background:#dbf0e8;color:#1a7a4a;}
+  .post{background:#ddeeff;color:#1a4a7a;}
+</style>
+</head>
+<body>
+<nav class="info-nav">
+  <div class="info-nav-inner">
+    <a href="index.html" class="info-nav-logo">Zynk</a>
+    <div class="info-nav-links">
+      <a href="about.html">Giới thiệu</a>
+      <a href="help.html">Trợ giúp</a>
+      <a href="api.html" class="active">API</a>
+      <a href="terms.html">Điều khoản</a>
+    </div>
+  </div>
+</nav>
+<section class="info-hero">
+  <div class="info-badge">Dành cho lập trình viên</div>
+  <h1>Zynk Developer API</h1>
+  <p>Tích hợp sức mạnh của Zynk vào ứng dụng của bạn với REST API đơn giản và mạnh mẽ.</p>
+</section>
+<div class="info-content">
+  <div class="info-stats">
+    <div class="info-stat"><span class="stat-num">REST</span><span class="stat-label">Kiến trúc</span></div>
+    <div class="info-stat"><span class="stat-num">JWT</span><span class="stat-label">Xác thực</span></div>
+    <div class="info-stat"><span class="stat-num">JSON</span><span class="stat-label">Định dạng</span></div>
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-plug"></i></span> Base URL</h2>
+    <div class="code-block">/api/</div>
+    <p style="margin-top:12px;">Tất cả các endpoints đều yêu cầu header <code>Authorization: Bearer &lt;token&gt;</code> (trừ đăng nhập/đăng ký).</p>
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-lock"></i></span> Xác thực</h2>
+    <p>Endpoint để lấy JWT token:</p>
+    <div class="code-block">
+<span class="kw">POST</span> /api/auth/login<br><br>{<br>  <span class="key">"email"</span>: <span class="str">"user@example.com"</span>,<br>  <span class="key">"password"</span>: <span class="str">"your_password"</span><br>}<br><br>// Response<br>{<br>  <span class="key">"token"</span>: <span class="str">"eyJhbGciOiJIUzI1NiIs..."</span><br>}
+    </div>
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-list"></i></span> Endpoints chính</h2>
+    <ul style="list-style:none;padding:0;">
+      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge get">GET</span><code>/api/marketplace/products</code> – Lấy danh sách sản phẩm</li>
+      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge get">GET</span><code>/api/marketplace/categories</code> – Lấy danh mục</li>
+      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge get">GET</span><code>/api/posts</code> – Lấy danh sách bài viết</li>
+      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge post">POST</span><code>/api/posts</code> – Tạo bài viết mới</li>
+      <li style="padding:10px 0;"><span class="endpoint-badge get">GET</span><code>/api/users/{id}/profile</code> – Lấy hồ sơ người dùng</li>
+    </ul>
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-envelope"></i></span> Yêu cầu API Key</h2>
+    <p>API hiện đang trong giai đoạn beta. Liên hệ chúng tôi để được cấp quyền truy cập sớm.</p>
+    <a class="info-cta" href="mailto:dev@zynk.app"><i class="fa fa-paper-plane"></i> Đăng ký truy cập</a>
+  </div>
+</div>
+<footer class="info-footer">
+  <p><a href="about.html">Giới thiệu</a><a href="help.html">Trợ giúp</a><a href="press.html">Báo chí</a><a href="api.html">API</a><a href="jobs.html">Việc làm</a><a href="privacy.html">Quyền riêng tư</a><a href="terms.html">Điều khoản</a></p>
+  <p style="margin-top:8px;">© 2026 Zynk Community.</p>
+</footer>
+</body>
+</html>
