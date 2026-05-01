@@ -250,7 +250,7 @@ function addCascadeLevel(options, level, containerId, hiddenInputId, pathId, pre
 
     select.onchange = () => {
         const val = select.value;
-        const children = allCategories.filter(c => c.parentCategoryId === val);
+        const children = allCategories.filter(c => c.parentCategoryId && c.parentCategoryId.toLowerCase() === val.toLowerCase());
         document.getElementById(hiddenInputId).value = children.length === 0 ? val : '';
         
         if (children.length > 0) {
@@ -267,7 +267,7 @@ function addCascadeLevel(options, level, containerId, hiddenInputId, pathId, pre
     // If pre-selected, trigger next level automatically
     if (preSelectedPath && preSelectedPath[level]) {
         const val = select.value;
-        const children = allCategories.filter(c => c.parentCategoryId === val);
+        const children = allCategories.filter(c => c.parentCategoryId && c.parentCategoryId.toLowerCase() === val.toLowerCase());
         if (children.length > 0) {
             addCascadeLevel(children, level + 1, containerId, hiddenInputId, pathId, preSelectedPath);
         }

@@ -59,7 +59,7 @@ async function loadCategories() {
 }
 
 function renderCategoryItem(cat, allCategories, container, level = 0) {
-    const subCategories = allCategories.filter(c => c.parentCategoryId === cat.id);
+    const subCategories = allCategories.filter(c => c.parentCategoryId && c.parentCategoryId.toLowerCase() === cat.id.toLowerCase());
     const li = document.createElement('li');
     li.className = `category-item ${subCategories.length > 0 ? 'has-sub' : ''}`;
 
@@ -117,7 +117,9 @@ async function loadProducts() {
         if (filterState.sortBy) params.append('sortBy', filterState.sortBy);
 
         const url = `marketplace/products?${params.toString()}`;
+        console.log('[Marketplace] Loading products with URL:', url, '| filterState:', JSON.stringify(filterState));
         currentProducts = await window.api.get(url);
+        console.log('[Marketplace] Got', currentProducts.length, 'products');
         renderProducts(currentProducts);
     } catch (e) {
         console.error('Failed to load products', e);
