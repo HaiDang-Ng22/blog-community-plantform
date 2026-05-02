@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
+using Blog.API.Services;
 
 namespace Blog.API.Controllers;
 
@@ -15,10 +16,12 @@ namespace Blog.API.Controllers;
 public class CommentsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly INotificationService _notiService;
 
-    public CommentsController(AppDbContext context)
+    public CommentsController(AppDbContext context, INotificationService notiService)
     {
         _context = context;
+        _notiService = notiService;
     }
 
     [HttpGet]
@@ -66,32 +69,14 @@ public class CommentsController : ControllerBase
                 if (request.ParentCommentId.HasValue)
                 {
                     var parent = await _context.Comments.FindAsync(request.ParentCommentId.Value);
-                    if (parent != null && parent.AuthorId != userId)
+                    if (parent != null)
                     {
-                        _context.Notifications.Add(new Notification
-                        {
-                            Id = Guid.NewGuid(),
-                            ReceiverId = parent.AuthorId,
-                            ActorId = userId,
-                            Type = "Reply",
-                            TargetId = postId,
-                            Message = $"đã trả lời bình luận của bạn.",
-                            CreatedAt = DateTime.UtcNow
-                        });
+                        await _notiService.SendNotificationAsync(parent.AuthorId, userId, "Reply", postId, "đã trả lời bình luận của bạn.");
                     }
                 }
-                else if (post.AuthorId != userId)
+                else
                 {
-                    _context.Notifications.Add(new Notification
-                    {
-                        Id = Guid.NewGuid(),
-                        ReceiverId = post.AuthorId,
-                        ActorId = userId,
-                        Type = "Comment",
-                        TargetId = postId,
-                        Message = $"đã bình luận vào bài viết của bạn.",
-                        CreatedAt = DateTime.UtcNow
-                    });
+                    await _notiService.SendNotificationAsync(post.AuthorId, userId, "Comment", postId, "đã bình luận vào bài viết của bạn.");
                 }
             }
             catch (Exception ex)

@@ -1,4 +1,9 @@
 // js/settings.js
+const _t = (key) => {
+    if (typeof window.t === 'function') return window.t(key);
+    return window.zynkTranslations?.vi?.[key] || key;
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -10,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
         const darkBtn = document.getElementById('dark-mode-btn');
-        if (darkBtn) darkBtn.textContent = window.t('dark_mode_off') || 'Tắt chế độ tối';
+        if (darkBtn) darkBtn.textContent = _t('dark_mode_off');
     }
 
     // Initialize Language UI
@@ -18,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('languageChanged', (e) => {
         syncLanguageUI();
         updateDarkModeButtonUI();
-        window.common.showToast(window.t('lang_applied'));
+        if (window.common) window.common.showToast(_t('lang_applied'));
     });
 
     await loadCurrentSettings();
@@ -27,17 +32,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Profile Form
     const profileForm = document.getElementById('settings-form');
-    profileForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await saveSettings();
-    });
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveSettings();
+        });
+    }
 
     // Password Form
     const passwordForm = document.getElementById('password-form');
-    passwordForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await changePassword();
-    });
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await changePassword();
+        });
+    }
 });
 
 // Tab Switching
@@ -45,7 +54,8 @@ function switchTab(tabName) {
     // Update nav buttons
     document.querySelectorAll('.settings-nav-item').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.getAttribute('onclick').includes(`'${tabName}'`)) {
+        const onClick = btn.getAttribute('onclick') || '';
+        if (onClick.includes(`'${tabName}'`)) {
             btn.classList.add('active');
         }
     });
@@ -54,7 +64,8 @@ function switchTab(tabName) {
     document.querySelectorAll('.settings-section').forEach(sec => {
         sec.classList.remove('active');
     });
-    document.getElementById(`section-${tabName}`).classList.add('active');
+    const targetSec = document.getElementById(`section-${tabName}`);
+    if (targetSec) targetSec.classList.add('active');
 
     // Load blocked list when switching to privacy tab
     if (tabName === 'privacy') loadBlockedUsers();
@@ -70,7 +81,7 @@ function toggleDarkMode() {
 
     const darkBtn = document.getElementById('dark-mode-btn');
     if (darkBtn) {
-        darkBtn.textContent = isDark ? (window.t('dark_mode_off') || 'Tắt chế độ tối') : (window.t('dark_mode_on') || 'Bật chế độ tối');
+        darkBtn.textContent = isDark ? _t('dark_mode_off') : _t('dark_mode_on');
     }
 }
 
@@ -86,7 +97,7 @@ function updateDarkModeButtonUI() {
     const darkBtn = document.getElementById('dark-mode-btn');
     if (darkBtn) {
         const isDark = document.body.classList.contains('dark-mode');
-        darkBtn.textContent = isDark ? (window.t('dark_mode_off') || 'Tắt chế độ tối') : (window.t('dark_mode_on') || 'Bật chế độ tối');
+        darkBtn.textContent = isDark ? _t('dark_mode_off') : _t('dark_mode_on');
     }
 }
 
@@ -124,17 +135,15 @@ async function togglePrivateAccount() {
 
     try {
         const result = await window.api.put('users/me/privacy', { isPrivate: isPrivate });
-        showStatus(result.message || window.t('privacy_updated_success'), 'success');
+        showStatus(result.message || _t('privacy_updated_success'), 'success');
     } catch (error) {
         toggle.checked = !isPrivate;
-        showStatus(window.t('error') + ': ' + error.message, 'error');
+        showStatus(_t('error') + ': ' + error.message, 'error');
     }
 }
 
 async function saveSettings() {
     const btn = document.getElementById('save-settings-btn');
-    const msg = document.getElementById('settings-msg');
-
     const data = {
         username: document.getElementById('set-username').value.trim().replace('@', ''),
         fullName: document.getElementById('set-fullname').value.trim(),
@@ -145,7 +154,7 @@ async function saveSettings() {
     };
 
     try {
-        btn.disabled = true;
+        if (btn) btn.disabled = true;
         const result = await window.api.put('users/profile', data);
 
         // Update local cache
@@ -155,11 +164,11 @@ async function saveSettings() {
         userInfo.username = data.username;
         localStorage.setItem('user_info', JSON.stringify(userInfo));
 
-        showStatus(window.t('profile_updated_success') || 'Cập nhật hồ sơ thành công!', 'success');
+        showStatus(_t('profile_updated_success') || 'Cập nhật hồ sơ thành công!', 'success');
     } catch (error) {
-        showStatus(error.message || window.t('update_failed'), 'error');
+        showStatus(error.message || _t('update_failed'), 'error');
     } finally {
-        btn.disabled = false;
+        if (btn) btn.disabled = false;
     }
 }
 
@@ -179,10 +188,11 @@ async function changePassword() {
             oldPassword: oldPwd,
             newPassword: newPwd
         });
-        showStatus(window.t('password_changed_success') || 'Đổi mật khẩu thành công!', 'success');
-        document.getElementById('password-form').reset();
+        showStatus(_t('password_changed_success') || 'Đổi mật khẩu thành công!', 'success');
+        const pwdForm = document.getElementById('password-form');
+        if (pwdForm) pwdForm.reset();
     } catch (error) {
-        showStatus(error.message || window.t('password_change_failed'), 'error');
+        showStatus(error.message || _t('password_change_failed'), 'error');
     }
 }
 
@@ -232,6 +242,7 @@ async function handleProfileUpload(input, type) {
 
 function showStatus(text, type) {
     const msg = document.getElementById('settings-msg');
+    if (!msg) return;
     msg.textContent = text;
     msg.className = `message-box ${type}`;
     msg.classList.remove('hidden');
@@ -247,80 +258,179 @@ async function updateMarketplaceTabUI() {
     if (!tabLabel || !section) return;
 
     try {
+        // 1. Check for active shop
         const shop = await window.api.get('seller/my-shop');
         
-        tabLabel.setAttribute('data-i18n', 'seller_center');
-        tabLabel.textContent = window.t('seller_center');
-
-        let statusHtml = '';
-        if (shop.status === 'Active') {
-            statusHtml = `
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
-                    <i class="fa-solid fa-circle-check" style="font-size:3.5rem; color:#22c55e; margin-bottom:1.5rem;"></i>
-                    <h3 style="color:#166534; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="shop_active_title">${window.t('shop_active_title')}</h3>
-                    <p style="color:#166534; margin: 1rem 0; font-size:0.95rem;">Cửa hàng <strong>${shop.name}</strong> của bạn đang hoạt động bình thường.</p>
-                    <a href="seller-center.html" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; background:#22c55e; border:none; border-radius:10px; font-weight:700; text-decoration:none;" data-i18n="go_to_seller_center">
-                        ${window.t('go_to_seller_center')}
-                    </a>
-                </div>
-            `;
-        } else if (shop.status === 'Pending') {
-            statusHtml = `
-                <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
-                    <i class="fa-solid fa-clock" style="font-size:3.5rem; color:#f59e0b; margin-bottom:1.5rem;"></i>
-                    <h3 style="color:#92400e; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="pending_approval_title">${window.t('pending_approval_title')}</h3>
-                    <p style="color:#92400e; margin: 1rem 0; font-size:0.95rem;">Hồ sơ <strong>${shop.name}</strong> đang được Admin xem xét.</p>
-                </div>
-            `;
-        } else if (shop.status === 'Rejected') {
-             statusHtml = `
-                <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
-                    <i class="fa-solid fa-circle-xmark" style="font-size:3.5rem; color:#ef4444; margin-bottom:1.5rem;"></i>
-                    <h3 style="color:#991b1b; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="shop_rejected_title">${window.t('shop_rejected_title')}</h3>
-                    <p style="color:#991b1b; margin: 1rem 0; font-size:0.95rem;">Lý do: ${shop.rejectionReason || 'Không có lý do cụ thể.'}</p>
-                    <button onclick="window.location.href='seller-center.html'" class="btn secondary-btn" style="border-color:#ef4444; color:#ef4444; border-radius:10px; font-weight:700;">Đăng ký lại</button>
-                </div>
-            `;
-        } else {
-            // Default active UI if status is unknown but shop exists
-            statusHtml = `
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
-                    <i class="fa-solid fa-store" style="font-size:3.5rem; color:#64748b; margin-bottom:1.5rem;"></i>
-                    <h3 style="color:#334155; font-size:1.4rem; margin-bottom:0.5rem;" data-i18n="seller_center">${window.t('seller_center')}</h3>
-                    <p style="color:#64748b; margin: 1rem 0; font-size:0.95rem;">Truy cập vào trang quản lý cửa hàng của bạn.</p>
-                    <a href="seller-center.html" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; border-radius:10px; font-weight:700; text-decoration:none;" data-i18n="go_to_seller_center">
-                        ${window.t('go_to_seller_center')}
-                    </a>
-                </div>
-            `;
-        }
-
+        tabLabel.textContent = _t('seller_center');
         section.innerHTML = `
-            <h2 class="section-title" data-i18n="seller_center">${window.t('seller_center')}</h2>
-            <p class="section-desc">Cài đặt và quản lý thông tin bán hàng của bạn.</p>
-            ${statusHtml}
-        `;
-
-    } catch (err) {
-        tabLabel.setAttribute('data-i18n', 'register_seller');
-        tabLabel.textContent = window.t('register_seller');
-
-        section.innerHTML = `
-            <h2 class="section-title" data-i18n="register_seller">${window.t('register_seller')}</h2>
-            <p class="section-desc" data-i18n="register_seller_desc">${window.t('register_seller_desc')}</p>
-            
-            <div style="background:linear-gradient(135deg, #f8fafc, #f1f5f9); border:1px solid #e2e8f0; border-radius:12px; padding:2.5rem; text-align:center; margin-top:1rem;">
-                <i class="fa-solid fa-store" style="font-size:3.5rem; color:#94a3b8; margin-bottom:1.5rem;"></i>
-                <h3 style="color:#475569; font-size:1.4rem; margin-bottom:0.5rem;">Bắt đầu kinh doanh trên Zynk</h3>
-                <p style="color:#64748b; margin: 1rem 0; font-size:0.95rem;">Mở cửa hàng miễn phí và tiếp cận hàng ngàn khách hàng tiềm năng ngay hôm nay.</p>
-                <button onclick="window.location.href='seller-center.html'" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; border-radius:10px; font-weight:700;">
-                    Đăng ký bán hàng ngay
-                </button>
+            <h2 class="section-title" data-i18n="seller_center">${_t('seller_center')}</h2>
+            <p class="section-desc">Quản lý cửa hàng và kinh doanh của bạn.</p>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
+                <i class="fa-solid fa-shop" style="font-size:3.5rem; color:#22c55e; margin-bottom:1.5rem;"></i>
+                <h3 style="color:#166534; font-size:1.4rem; margin-bottom:0.5rem;">Cửa hàng của bạn đang hoạt động</h3>
+                <p style="color:#166534; margin: 1rem 0; font-size:0.95rem;">Cửa hàng <strong>${shop.name}</strong> đã sẵn sàng.</p>
+                <a href="seller-center.html" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; background:#22c55e; border:none; border-radius:10px; font-weight:700; text-decoration:none;">
+                    Vào Kênh Người Bán
+                </a>
             </div>
         `;
+    } catch (err) {
+        // Only check application status if shop was NOT found (404)
+        if (err.status === 404) {
+            try {
+                const app = await window.api.get('seller/application-status');
+                
+                if (app && app.status === 'Pending') {
+                    tabLabel.textContent = "Đang chờ duyệt";
+                    section.innerHTML = `
+                        <h2 class="section-title">Trạng thái đăng ký</h2>
+                        <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
+                            <i class="fa-solid fa-clock" style="font-size:3.5rem; color:#f59e0b; margin-bottom:1.5rem;"></i>
+                            <h3 style="color:#92400e; font-size:1.4rem; margin-bottom:0.5rem;">Đang chờ phê duyệt</h3>
+                            <p style="color:#92400e; margin: 1rem 0; font-size:0.95rem;">Hồ sơ đăng ký <strong>${app.shopName}</strong> đang được Admin xem xét.</p>
+                        </div>
+                    `;
+                } else if (app && app.status === 'Rejected') {
+                    tabLabel.textContent = "Đã bị từ chối";
+                    section.innerHTML = `
+                        <h2 class="section-title">Trạng thái đăng ký</h2>
+                        <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:12px; padding:2rem; text-align:center; margin-top:1rem;">
+                            <i class="fa-solid fa-circle-xmark" style="font-size:3.5rem; color:#ef4444; margin-bottom:1.5rem;"></i>
+                            <h3 style="color:#991b1b; font-size:1.4rem; margin-bottom:0.5rem;">Đăng ký bị từ chối</h3>
+                            <p style="color:#991b1b; margin: 1rem 0; font-size:0.95rem;">Lý do: ${app.rejectionReason || 'Thông tin chưa chính xác.'}</p>
+                            <button onclick="window.location.href='seller-center.html'" class="btn primary-btn" style="background:#ef4444; border:none;">Đăng ký lại</button>
+                        </div>
+                    `;
+                } else {
+                    // No shop AND no app (or app is null)
+                    tabLabel.textContent = _t('register_seller') || "Đăng ký bán hàng";
+                    section.innerHTML = `
+                        <h2 class="section-title">Đăng ký người bán</h2>
+                        <div style="background:linear-gradient(135deg, #f8fafc, #f1f5f9); border:1px solid #e2e8f0; border-radius:12px; padding:2.5rem; text-align:center; margin-top:1rem;">
+                            <i class="fa-solid fa-store" style="font-size:3.5rem; color:#94a3b8; margin-bottom:1.5rem;"></i>
+                            <h3 style="color:#475569; font-size:1.4rem; margin-bottom:0.5rem;">Bắt đầu kinh doanh trên Zynk</h3>
+                            <p style="color:#64748b; margin: 1rem 0; font-size:0.95rem;">Tiếp cận hàng ngàn khách hàng tiềm năng bằng cách mở cửa hàng ngay hôm nay.</p>
+                            <button onclick="window.location.href='seller-center.html'" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; border-radius:10px; font-weight:700;">
+                                Đăng ký ngay
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error("Failed to fetch application status", e);
+                section.innerHTML = `<p class="noti-empty">Không thể tải thông tin đăng ký.</p>`;
+            }
+        } else {
+            // Other errors (500, etc.)
+            console.error("Seller info fetch error:", err);
+            section.innerHTML = `<p class="noti-empty">Lỗi hệ thống: ${err.message || 'Không thể kết nối API'}</p>`;
+        }
     }
     
     if (window.applyTranslations) window.applyTranslations();
+}
+
+// =============================================
+// BLOCKED USERS
+// =============================================
+async function loadBlockedUsers() {
+    const container = document.getElementById('blocked-users-list');
+    if (!container) return;
+
+    try {
+        const list = await window.api.get('users/me/blocked');
+
+        if (!list || list.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding: 2rem; color:#94a3b8; font-size:0.9rem;">
+                    <i class="fa-solid fa-user-check" style="font-size:2rem; display:block; margin-bottom:0.5rem; color:#d1d5db;"></i>
+                    Bạn chưa chặn ai cả.
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = list.map(u => {
+            const avatar = u.avatarUrl && u.avatarUrl !== 'null'
+                ? u.avatarUrl
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || u.username)}&background=random&color=fff`;
+            return `
+            <div id="blocked-row-${u.id}" style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                margin-bottom: 8px;
+                background: #fff;
+            ">
+                <img src="${avatar}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:1px solid #e5e7eb;"
+                    onerror="this.src='https://ui-avatars.com/api/?name=U&background=random&color=fff'">
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:600; font-size:0.95rem; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.fullName || 'Người dùng'}</div>
+                    <div style="font-size:0.8rem; color:#6b7280;">@${u.username}</div>
+                </div>
+                <button
+                    onclick="unblockUser('${u.id}', this)"
+                    style="
+                        padding: 7px 16px;
+                        background: #fff;
+                        color: #ef4444;
+                        border: 1.5px solid #ef4444;
+                        border-radius: 8px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        white-space: nowrap;
+                    "
+                    onmouseover="this.style.background='#fef2f2'"
+                    onmouseout="this.style.background='#fff'"
+                >
+                    <i class="fa-solid fa-lock-open" style="margin-right:4px;"></i>Bỏ chặn
+                </button>
+            </div>`;
+        }).join('');
+
+    } catch (err) {
+        container.innerHTML = `<div style="color:#ef4444; font-size:0.85rem; padding:0.5rem;">Không thể tải danh sách chặn.</div>`;
+        console.error('loadBlockedUsers error:', err);
+    }
+}
+
+async function unblockUser(userId, btn) {
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+        await window.api.post(`users/${userId}/block`);
+
+        // Xóa dòng người dùng khỏi danh sách với animation
+        const row = document.getElementById(`blocked-row-${userId}`);
+        if (row) {
+            row.style.transition = 'opacity 0.3s, transform 0.3s';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            setTimeout(() => {
+                row.remove();
+                // Nếu danh sách trống sau khi xóa thì hiển thị thông báo
+                const container = document.getElementById('blocked-users-list');
+                if (container && container.children.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding: 2rem; color:#94a3b8; font-size:0.9rem;">
+                            <i class="fa-solid fa-user-check" style="font-size:2rem; display:block; margin-bottom:0.5rem; color:#d1d5db;"></i>
+                            Bạn chưa chặn ai cả.
+                        </div>`;
+                }
+            }, 300);
+        }
+        showStatus('Đã bỏ chặn tài khoản này.', 'success');
+    } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        showStatus('Lỗi khi bỏ chặn: ' + err.message, 'error');
+    }
 }
 
 // =============================================

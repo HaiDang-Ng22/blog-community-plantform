@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
+using Blog.API.Services;
 
 namespace Blog.API.Controllers;
 
@@ -21,6 +22,7 @@ public class OrdersController : ControllerBase
     private readonly IRepository<UserAddress> _addressRepository;
     private readonly IShopRepository _shopRepository;
     private readonly Blog.Infrastructure.Data.AppDbContext _context;
+    private readonly INotificationService _notiService;
 
     public OrdersController(
         IOrderRepository orderRepository,
@@ -28,7 +30,8 @@ public class OrdersController : ControllerBase
         IRepository<ProductVariant> variantRepository,
         IRepository<UserAddress> addressRepository,
         IShopRepository shopRepository,
-        Blog.Infrastructure.Data.AppDbContext context)
+        Blog.Infrastructure.Data.AppDbContext context,
+        INotificationService notiService)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
@@ -36,6 +39,7 @@ public class OrdersController : ControllerBase
         _addressRepository = addressRepository;
         _shopRepository = shopRepository;
         _context = context;
+        _notiService = notiService;
     }
 
     [HttpPost("checkout")]
@@ -130,17 +134,7 @@ public class OrdersController : ControllerBase
                 var shop = await _shopRepository.GetByIdAsync(product.ShopId);
                 if (shop != null)
                 {
-                    var noti = new Notification
-                    {
-                        Id = Guid.NewGuid(),
-                        ReceiverId = shop.UserId,
-                        ActorId = userId,
-                        Type = "NewOrder",
-                        TargetId = order.Id,
-                        Message = "đã đặt một đơn hàng mới từ shop của bạn.",
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    _context.Notifications.Add(noti);
+                    await _notiService.SendNotificationAsync(shop.UserId, userId, "NewOrder", order.Id, "đã đặt một đơn hàng mới từ shop của bạn.");
                 }
             }
         }
@@ -237,34 +231,14 @@ public class OrdersController : ControllerBase
                     var shop = await _shopRepository.GetByIdAsync(shopId.Value);
                     if (shop != null)
                     {
-                        var noti = new Notification
-                        {
-                            Id = Guid.NewGuid(),
-                            ReceiverId = shop.UserId,
-                            ActorId = userId,
-                            Type = "OrderCancelled",
-                            TargetId = order.Id,
-                            Message = "đã hủy đơn hàng.",
-                            CreatedAt = DateTime.UtcNow
-                        };
-                        _context.Notifications.Add(noti);
+                        await _notiService.SendNotificationAsync(shop.UserId, userId, "OrderCancelled", order.Id, "đã hủy đơn hàng.");
                     }
                 }
             }
             else if (isSeller && !isBuyer)
             {
                 // Seller updated status -> Notify Buyer
-                var noti = new Notification
-                {
-                    Id = Guid.NewGuid(),
-                    ReceiverId = order.BuyerId,
-                    ActorId = userId, // Seller user ID
-                    Type = "OrderStatusUpdated",
-                    TargetId = order.Id,
-                    Message = $"đã cập nhật đơn hàng thành: {GetStatusDisplayName(newStatus)}",
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.Notifications.Add(noti);
+                await _notiService.SendNotificationAsync(order.BuyerId, userId, "OrderStatusUpdated", order.Id, $"đã cập nhật đơn hàng thành: {GetStatusDisplayName(newStatus)}");
             }
             await _context.SaveChangesAsync();
 

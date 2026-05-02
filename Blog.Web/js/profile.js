@@ -163,10 +163,15 @@ async function loadUserProfile(userId) {
             followBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa hồ sơ';
             followBtn.className = 'btn secondary-btn';
             followBtn.onclick = () => window.location.href = 'settings.html';
+            document.getElementById('message-btn').classList.add('hidden');
         } else {
             friendsTabBtn.classList.add('hidden');
             updateFollowButton(profile.isFollowing);
             followBtn.onclick = () => toggleFollow(userId);
+            
+            const messageBtn = document.getElementById('message-btn');
+            messageBtn.classList.remove('hidden');
+            messageBtn.onclick = () => window.location.href = `messages.html?with=${userId}`;
         }
         
         return profile;

@@ -1,123 +1,261 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trợ giúp – Zynk</title>
-<meta name="description" content="Trung tâm hỗ trợ Zynk – Tìm câu trả lời nhanh cho mọi thắc mắc của bạn.">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="icon" href="assets/favicon.png?v=2" type="image/png">
-<link rel="stylesheet" href="css/info-pages.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trợ giúp – Zynk</title>
+  <meta name="description" content="Trung tâm hỗ trợ Zynk – Tìm câu trả lời nhanh cho mọi thắc mắc của bạn.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+  <link rel="stylesheet" href="css/info-pages.css">
+  <style>
+    .search-box {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px 16px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin: 20px auto;
+      display: block;
+    }
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+    .faq-question {
+      padding: 12px 0;
+      cursor: pointer;
+      color: #0095f6;
+      font-weight: 600;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .faq-question:hover {
+      color: #00376b;
+    }
+    .faq-answer {
+      display: none;
+      padding: 12px 0 0;
+      line-height: 1.6;
+      color: #555;
+      animation: slideDown 0.2s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
+
 <body>
 
-<nav class="info-nav">
-  <div class="info-nav-inner">
-    <a href="index.html" class="info-nav-logo">Zynk</a>
-    <div class="info-nav-links">
+  <nav class="info-nav">
+    <div class="info-nav-inner">
+      <a href="index.html" class="info-nav-logo">Zynk</a>
+      <div class="info-nav-links">
+         <a href="about.html">Giới thiệu</a>
+                    <a href="help.html">Trợ giúp</a>
+                    <a href="press.html">Báo chí</a>
+                    <a href="api.html">API</a>
+                    <a href="jobs.html">Việc làm</a>
+                    <a href="privacy.html">Quyền riêng tư</a>
+                    <a href="terms.html">Điều khoản</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="info-hero">
+    <div class="info-badge">Trung tâm hỗ trợ</div>
+    <h1>Chúng tôi có thể giúp gì cho bạn?</h1>
+    <p>Tìm câu trả lời nhanh cho các câu hỏi thường gặp hoặc liên hệ trực tiếp với đội ngũ hỗ trợ.</p>
+    <input type="search" placeholder="Tìm câu trả lời..." class="search-box">
+  </section>
+
+  <div class="info-content">
+    <div class="info-grid">
+      <div class="info-card">
+        <h2><span class="icon"><i class="fa fa-user-plus"></i></span> Tài khoản</h2>
+        <p>Tạo tài khoản, đặt lại mật khẩu, xác minh email và quản lý thông tin cá nhân.</p>
+        <br>
+        <ul>
+          <li><strong>Cách đăng ký tài khoản mới</strong> - Nhấp vào nút "Đăng ký", điền email và tạo mật khẩu mạnh</li>
+          <li><strong>Quên mật khẩu, lấy lại tài khoản</strong> - Sử dụng tính năng "Quên mật khẩu" để đặt lại</li>
+          <li><strong>Thay đổi thông tin hồ sơ</strong> - Vào Cài đặt > Hồ sơ để chỉnh sửa</li>
+          <li><strong>Xác minh email</strong> - Kiểm tra email nhận được từ Zynk để xác minh tài khoản</li>
+          <li><strong>Bảo vệ tài khoản</strong> - Bật xác thực hai lớp (2FA) trong Cài đặt > Bảo mật</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h2><span class="icon"><i class="fa fa-camera"></i></span> Bài Viết & Nội Dung</h2>
+        <p>Hướng dẫn tạo, chỉnh sửa và quản lý bài viết của bạn trên Zynk.</p>
+        <br>
+        <ul>
+          <li><strong>Tạo bài viết mới</strong> - Nhấp nút "+" hoặc vào "Tạo bài viết"</li>
+          <li><strong>Thêm ảnh/video</strong> - Tải lên hình ảnh hoặc video từ thiết bị của bạn</li>
+          <li><strong>Viết caption của bạn</strong> - Sử dụng hashtag (#) để phân loại nội dung</li>
+          <li><strong>Chỉnh sửa bài viết</strong> - Nhấp 3 chấm > "Chỉnh sửa bài viết"</li>
+          <li><strong>Xóa bài viết</strong> - Vào 3 chấm > "Xóa bài viết" (không thể khôi phục)</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h2><span class="icon"><i class="fa fa-cart-shopping"></i></span> Mua sắm</h2>
+        <p>Hướng dẫn về Marketplace, đặt hàng, thanh toán và theo dõi đơn hàng.</p>
+        <br>
+        <ul>
+          <li><strong>Cách tìm sản phẩm</strong> - Sử dụng tìm kiếm hoặc duyệt danh mục</li>
+          <li><strong>Đặt hàng và thanh toán</strong> - Thêm vào giỏ hàng > Thanh toán > Chọn phương thức</li>
+          <li><strong>Xử lý đơn hàng có vấn đề</strong> - Vào "Đơn hàng" > Liên hệ với người bán</li>
+          <li><strong>Hủy đơn hàng</strong> - Có thể hủy trong 1 giờ sau khi đặt</li>
+          <li><strong>Bảo hộ người mua</strong> - Zynk bảo vệ mọi giao dịch của bạn</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h2><span class="icon"><i class="fa fa-store"></i></span> Bán hàng</h2>
+        <p>Hướng dẫn mở shop, đăng sản phẩm và quản lý cửa hàng trên Zynk.</p>
+        <br>
+        <ul>
+          <li><strong>Đăng ký mở cửa hàng</strong> - Vào "Cửa hàng" > "Mở shop" > Điền thông tin</li>
+          <li><strong>Đăng sản phẩm</strong> - "Quản lý sản phẩm" > "Thêm sản phẩm mới"</li>
+          <li><strong>Quản lý giá & kho hàng</strong> - Chỉnh sửa sản phẩm > "Giá & Kho hàng"</li>
+          <li><strong>Xử lý đơn hàng của khách</strong> - Xác nhận > Đóng gói > Giao hàng</li>
+          <li><strong>Hỗ trợ thanh toán</strong> - Rút tiền hàng ngày hoặc hàng tuần</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h2><span class="icon"><i class="fa fa-people-group"></i></span> Mạng Xã Hội</h2>
+        <p>Tìm hiểu cách tương tác và kết nối với những người khác trên Zynk.</p>
+        <br>
+        <ul>
+          <li><strong>Theo dõi người dùng</strong> - Nhấp nút "Theo dõi" trên hồ sơ của họ</li>
+          <li><strong>Bình luận & tương tác</strong> - Nhấp biểu tượng tim hoặc bình luận bài viết</li>
+          <li><strong>Tin nhắn riêng</strong> - Mở hội thoại từ hồ sơ người dùng</li>
+          <li><strong>Tham gia nhóm/cộng đồng</strong> - Tìm nhóm quan tâm & yêu cầu tham gia</li>
+          <li><strong>Chia sẻ bài viết</strong> - Nhấp 3 chấm > "Chia sẻ" trên tin nhắn</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h2><span class="icon"><i class="fa fa-flag"></i></span> Báo cáo & An toàn</h2>
+        <p>Cách báo cáo nội dung vi phạm, spam hoặc hành vi không phù hợp.</p>
+        <br>
+        <ul>
+          <li><strong>Báo cáo bài viết vi phạm</strong> - Nhấp 3 chấm > "Báo cáo bài viết"</li>
+          <li><strong>Báo cáo tài khoản giả mạo</strong> - Vào hồ sơ > 3 chấm > "Báo cáo tài khoản"</li>
+          <li><strong>Chặn người dùng</strong> - Vào hồ sơ > 3 chấm > "Chặn"</li>
+          <li><strong>Báo cáo spam/lừa đảo</strong> - Gửi báo cáo chi tiết cho hỗ trợ</li>
+          <li><strong>Chính sách xử lý vi phạm</strong> - Xem tại trang Điều khoản</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2><span class="icon"><i class="fa fa-circle-question"></i></span> Câu hỏi thường gặp</h2>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Làm sao để tạo tài khoản Zynk?</div>
+        <div class="faq-answer">
+          <p>Truy cập trang <a href="auth.html" style="color: #0095f6;"><strong>đăng ký</strong></a>, điền email, tạo mật khẩu mạnh (ít nhất 8 ký tự) và tên hiển thị. Sau đó xác nhận email để kích hoạt tài khoản. Bạn sẽ nhận được email xác thực trong vài giây.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Tôi có thể mở shop bán hàng không?</div>
+        <div class="faq-answer">
+          <p>Có! Sau khi đăng nhập, vào mục <a href="seller-center.html" style="color: #0095f6;"><strong>Seller Center</strong></a> và làm theo hướng dẫn để đăng ký shop miễn phí. Bạn có thể đăng sản phẩm ngay sau khi shop được duyệt (thường là 24 giờ).</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Zynk có tính phí không?</div>
+        <div class="faq-answer">
+          <p>Zynk hoàn toàn miễn phí để đăng ký và sử dụng các tính năng mạng xã hội. Chúng tôi chỉ thu phí dịch vụ nhỏ (3-5%) trên các giao dịch thương mại thành công trên Marketplace. Người mua không phải trả thêm phí nào.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Làm sao để bảo vệ tài khoản của tôi?</div>
+        <div class="faq-answer">
+          <p>Sử dụng mật khẩu mạnh ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số. Không chia sẻ thông tin đăng nhập với người khác và đăng xuất khỏi thiết bị công cộng. Bật xác thực hai lớp (2FA) trong Cài đặt > Bảo mật để bảo vệ thêm.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Tôi quên mật khẩu, phải làm sao?</div>
+        <div class="faq-answer">
+          <p>Nhấp vào "Quên mật khẩu?" trên trang đăng nhập, nhập email của bạn. Chúng tôi sẽ gửi email xác nhận để đặt lại mật khẩu. Kiểm tra thư spam nếu không nhận được email sau 5 phút.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Làm sao để chỉnh sửa hoặc xóa bài viết?</div>
+        <div class="faq-answer">
+          <p>Trên bài viết của bạn, nhấp 3 chấm (...) ở góc trên cùng bên phải. Chọn "Chỉnh sửa bài viết" để sửa nội dung hoặc "Xóa bài viết" để xóa vĩnh viễn (không thể khôi phục).</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Bài viết của tôi bị ẩn, tại sao vậy?</div>
+        <div class="faq-answer">
+          <p>Bài viết có thể bị ẩn nếu vi phạm Quy tắc Cộng đồng của chúng tôi. Kiểm tra email để xem lý do cụ thể. Bạn có thể lên tiếng nếu cho rằng quyết định là sai lầm bằng cách liên hệ hỗ trợ.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Cách thành công khi bán hàng trên Zynk?</div>
+        <div class="faq-answer">
+          <p>Mẹo: (1) Chụp ảnh sản phẩm chất lượng cao từ nhiều góc độ; (2) Viết mô tả chi tiết & trung thực; (3) Đặt giá cạnh tranh; (4) Phản ứng nhanh với tin nhắn khách hàng; (5) Đóng gói & giao hàng chuyên nghiệp; (6) Hỉm tích vai trò tích cực bằng cách luôn lịch sự & chẩn thực.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question"><i class="fa fa-plus"></i> Có thể kiếm tiền từ Zynk không?</div>
+        <div class="faq-answer">
+          <p>Có nhiều cách: Mở shop bán hàng (sản phẩm, dịch vụ), đăng nội dung hấp dẫn (người dùng có thể quy tặng), hoặc trở thành người sáng tạo/influencer và hợp tác với brand. Chúng tôi sẽ sớm ra mắt chương trình kiếm tiền chính thức.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2><span class="icon"><i class="fa fa-headset"></i></span> Liên hệ hỗ trợ</h2>
+      <p style="margin-bottom: 16px;">Không tìm thấy câu trả lời? Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp bạn trong giờ hành chính (T2–T6, 8h–17h).</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a class="info-cta" href="mailto:support@zynk.app"><i class="fa fa-envelope"></i> support@zynk.app</a>
+        <a class="info-cta" href="mailto:marketplace@zynk.app"><i class="fa fa-store"></i> marketplace@zynk.app</a>
+        <a class="info-cta" href="mailto:safety@zynk.app"><i class="fa fa-shield"></i> safety@zynk.app</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="info-footer">
+    <p>
       <a href="about.html">Giới thiệu</a>
-      <a href="help.html" class="active">Trợ giúp</a>
+      <a href="help.html">Trợ giúp</a>
+      <a href="press.html">Báo chí</a>
+      <a href="api.html">API</a>
+      <a href="jobs.html">Việc làm</a>
       <a href="privacy.html">Quyền riêng tư</a>
       <a href="terms.html">Điều khoản</a>
-    </div>
-  </div>
-</nav>
+    </p>
+    <p style="margin-top:8px;">© 2026 Zynk Community. All rights reserved.</p>
+  </footer>
 
-<section class="info-hero">
-  <div class="info-badge">Trung tâm hỗ trợ</div>
-  <h1>Chúng tôi có thể giúp gì cho bạn?</h1>
-  <p>Tìm câu trả lời nhanh cho các câu hỏi thường gặp hoặc liên hệ trực tiếp với đội ngũ hỗ trợ.</p>
-</section>
+  <script>
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        q.closest('.faq-item').classList.toggle('open');
+      });
+    });
 
-<div class="info-content">
-  <div class="info-grid">
-    <div class="info-card">
-      <h2><span class="icon"><i class="fa fa-user-plus"></i></span> Tài khoản</h2>
-      <p>Tạo tài khoản, đặt lại mật khẩu, xác minh email và quản lý thông tin cá nhân.</p>
-      <br>
-      <ul>
-        <li>Cách đăng ký tài khoản mới</li>
-        <li>Quên mật khẩu, lấy lại tài khoản</li>
-        <li>Thay đổi thông tin hồ sơ</li>
-      </ul>
-    </div>
-    <div class="info-card">
-      <h2><span class="icon"><i class="fa fa-cart-shopping"></i></span> Mua sắm</h2>
-      <p>Hướng dẫn về Marketplace, đặt hàng, thanh toán và theo dõi đơn hàng.</p>
-      <br>
-      <ul>
-        <li>Cách tìm sản phẩm</li>
-        <li>Đặt hàng và thanh toán</li>
-        <li>Xử lý đơn hàng có vấn đề</li>
-      </ul>
-    </div>
-    <div class="info-card">
-      <h2><span class="icon"><i class="fa fa-store"></i></span> Bán hàng</h2>
-      <p>Hướng dẫn mở shop, đăng sản phẩm và quản lý cửa hàng trên Zynk.</p>
-      <br>
-      <ul>
-        <li>Đăng ký mở cửa hàng</li>
-        <li>Đăng và quản lý sản phẩm</li>
-        <li>Xử lý đơn hàng của khách</li>
-      </ul>
-    </div>
-    <div class="info-card">
-      <h2><span class="icon"><i class="fa fa-flag"></i></span> Báo cáo</h2>
-      <p>Cách báo cáo nội dung vi phạm, spam hoặc hành vi không phù hợp.</p>
-      <br>
-      <ul>
-        <li>Báo cáo bài viết vi phạm</li>
-        <li>Báo cáo tài khoản giả mạo</li>
-        <li>Chính sách xử lý vi phạm</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="info-card">
-    <h2><span class="icon"><i class="fa fa-circle-question"></i></span> Câu hỏi thường gặp</h2>
-    <div class="faq-item">
-      <div class="faq-question">Làm sao để tạo tài khoản Zynk?</div>
-      <div class="faq-answer">Truy cập trang đăng ký tại <strong>auth.html</strong>, điền email, mật khẩu và tên hiển thị của bạn. Sau đó xác nhận email để kích hoạt tài khoản.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-question">Tôi có thể mở shop bán hàng không?</div>
-      <div class="faq-answer">Có! Sau khi đăng nhập, vào mục <strong>Cửa hàng</strong> và làm theo hướng dẫn để đăng ký shop miễn phí. Bạn có thể đăng sản phẩm ngay sau khi shop được duyệt.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-question">Zynk có tính phí không?</div>
-      <div class="faq-answer">Zynk hoàn toàn miễn phí để đăng ký và sử dụng các tính năng mạng xã hội. Chúng tôi chỉ thu phí dịch vụ nhỏ trên các giao dịch thương mại thành công.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-question">Làm sao để bảo vệ tài khoản của tôi?</div>
-      <div class="faq-answer">Sử dụng mật khẩu mạnh ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số. Không chia sẻ thông tin đăng nhập với người khác và đăng xuất khỏi thiết bị công cộng.</div>
-    </div>
-  </div>
-
-  <div class="info-card">
-    <h2><span class="icon"><i class="fa fa-headset"></i></span> Liên hệ hỗ trợ</h2>
-    <p>Không tìm thấy câu trả lời? Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp bạn trong giờ hành chính (T2–T6, 8h–17h).</p>
-    <a class="info-cta" href="mailto:support@zynk.app"><i class="fa fa-envelope"></i> Gửi yêu cầu hỗ trợ</a>
-  </div>
-</div>
-
-<footer class="info-footer">
-  <p>
-    <a href="about.html">Giới thiệu</a>
-    <a href="help.html">Trợ giúp</a>
-    <a href="press.html">Báo chí</a>
-    <a href="api.html">API</a>
-    <a href="jobs.html">Việc làm</a>
-    <a href="privacy.html">Quyền riêng tư</a>
-    <a href="terms.html">Điều khoản</a>
-  </p>
-  <p style="margin-top:8px;">© 2026 Zynk Community. All rights reserved.</p>
-</footer>
-
-<script>
-  document.querySelectorAll('.faq-question').forEach(q => {
-    q.addEventListener('click', () => q.closest('.faq-item').classList.toggle('open'));
-  });
-</script>
+    // Search functionality
+    document.querySelector('.search-box').addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      document.querySelectorAll('.faq-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(query) ? 'block' : 'none';
+      });
+    });
+  </script>
 </body>
+
 </html>

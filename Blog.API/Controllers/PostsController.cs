@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
+using Blog.API.Services;
 
 namespace Blog.API.Controllers;
 
@@ -19,18 +20,21 @@ public class PostsController : ControllerBase
     private readonly IPostRepository _postRepository; // Đổi từ IRepository sang IPostRepository
     private readonly IRepository<User> _userRepository;
     private readonly IRepository<Tag> _tagRepository;
-    private readonly AppDbContext _context; // Giải quyết tạm thời để xử lý Like/Notification
+    private readonly AppDbContext _context;
+    private readonly INotificationService _notiService;
 
     public PostsController(
-        IPostRepository postRepository, // Đổi ở đây
+        IPostRepository postRepository,
         IRepository<User> userRepository,
         IRepository<Tag> tagRepository,
-        AppDbContext context)
+        AppDbContext context,
+        INotificationService notiService)
     {
         _postRepository = postRepository;
         _userRepository = userRepository;
         _tagRepository = tagRepository;
         _context = context;
+        _notiService = notiService;
     }
 
     // GET: api/posts
@@ -394,21 +398,8 @@ public class PostsController : ControllerBase
             post.LikeCount++;
             isLiked = true;
 
-            // Thông báo
-            if (post.AuthorId != userId)
-            {
-                var notification = new Notification
-                {
-                    Id = Guid.NewGuid(),
-                    ReceiverId = post.AuthorId,
-                    ActorId = userId,
-                    Type = "Like",
-                    TargetId = id,
-                    Message = "đã thích bài viết của bạn.",
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.Notifications.Add(notification);
-            }
+            // Thông báo realtime
+            await _notiService.SendNotificationAsync(post.AuthorId, userId, "Like", id, "đã thích bài viết của bạn.");
         }
 
         await _context.SaveChangesAsync();

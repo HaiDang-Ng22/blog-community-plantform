@@ -15,6 +15,8 @@ const API_BASE_URL = IS_LOCAL
         ? `${PRODUCTION_BACKEND_URL}/api`
         : `${window.location.origin}/api`); // Mặc định về origin nếu chưa cấu hình
 
+window.API_BASE_URL = API_BASE_URL;
+
 
 /**
  * Helper function for making API requests

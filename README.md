@@ -1,106 +1,99 @@
-# Zynk - Nền tảng Mạng xã hội & Thương mại Điện tử Đa năng 🚀
+# Zynk - Nền tảng Mạng xã hội & Thương mại Điện tử Hiện đại 🚀
 
-Zynk là một hệ sinh thái hiện đại kết hợp giữa **Mạng xã hội hình ảnh (Instagram Style)** và **Thương mại điện tử đa người bán (TikTok Shop Style)**. Dự án được phát triển dựa trên nền tảng **.NET 8** và **Vanilla JS**, tập trung vào kiến trúc mã nguồn sạch, trải nghiệm người dùng mượt mà và khả năng quản trị mạnh mẽ.
+Zynk là một hệ sinh thái mạng xã hội tích hợp thương mại điện tử (All-in-one), kết hợp tinh hoa từ phong cách thẩm mỹ của **Instagram** và mô hình vận hành của **TikTok Shop**. Dự án được xây dựng trên nền tảng công nghệ mới nhất (**ASP.NET Core 9**), tập trung vào hiệu năng cao, trải nghiệm người dùng cao cấp (Glassmorphism UI) và khả năng tương tác thời gian thực.
 
-![Tech Stack](https://img.shields.io/badge/Backend-.NET%208-blue)
+![Tech Stack](https://img.shields.io/badge/Backend-.NET%209-blue)
 ![Frontend](https://img.shields.io/badge/Frontend-Vanilla%20JS-yellow)
-![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture-green)
+![Realtime](https://img.shields.io/badge/Realtime-SignalR-orange)
+![UI](https://img.shields.io/badge/UI-Glassmorphism-purple)
 
 🌍 **[Xem Live Demo tại đây](https://zynk-9al4.onrender.com/)**
 
 ---
 
-## ✨ Các Phân hệ Tính năng
+## ✨ Tính năng Nổi bật
 
-### 🛒 1. Hệ thống Thương mại Điện tử (Zynk Shop)
-Hệ thống TMĐT được xây dựng theo mô hình Market-place đa người bán với các tính năng chuyên sâu:
-*   **Marketplace & Discovery**: Giao diện mua sắm Glassmorphism hiện đại, hỗ trợ duyệt sản phẩm theo danh mục đa cấp (Recursive Category), lọc theo khoảng giá, và sắp xếp theo đánh giá/bán chạy.
-*   **Hệ thống Tìm kiếm Toàn năng**: 
-    *   **Shop Search**: Tìm kiếm sản phẩm thông minh theo tên, mô tả hoặc danh mục cha/con.
-    *   **Blog Search**: Tìm kiếm bài viết và người dùng theo tên, nội dung hoặc ID.
-    *   **Conditional Rendering**: Hiển thị bài viết linh hoạt theo phong cách Blog (chữ) hoặc Social (ảnh) tùy thuộc vào nội dung.
+### 📸 1. Mạng Xã hội Tương tác (Instagram Style)
+*   **Multimedia Feed**: Chia sẻ bài viết với nhiều hình ảnh (Carousel), hỗ trợ hiển thị linh hoạt theo dạng Blog (chữ) hoặc Social (ảnh).
+*   **Tương tác Thời gian thực**: Like, Comment đa cấp và Follow người dùng.
+*   **Hệ thống Thông báo (Real-time)**: Nhận thông báo tức thì khi có người tim, bình luận hoặc nhắc tên.
+*   **Nhắn tin Trực tiếp (Direct Message)**: Hệ thống Chat 1-1 realtime sử dụng SignalR, hỗ trợ xem trạng thái tin nhắn và danh sách hộp thư thông minh.
+*   **Trang cá nhân Chuyên nghiệp**: Quản lý bài viết, bộ sưu tập và thông tin cá nhân với giao diện hiện đại.
+
+### 🛒 2. Thương mại Điện tử (Zynk Shop)
+*   **Marketplace Đa dạng**: Khám phá sản phẩm theo danh mục đa cấp, lọc giá và sắp xếp thông minh.
 *   **Kênh Người Bán (Seller Center)**: 
-    *   Quy trình đăng ký và xét duyệt Shop bởi Admin.
-    *   Dashboard quản lý sản phẩm, tồn kho và theo dõi đơn hàng chuyên nghiệp.
-    *   Hệ thống báo cáo doanh thu tự động cập nhật khi đơn hàng được giao thành công.
-*   **Giỏ hàng & Thanh toán cực nhanh**: Luồng checkout tối ưu, tự động lưu địa chỉ giao hàng.
-*   **Thanh toán VietQR Tự động**: Tích hợp tạo mã QR ngân hàng tự động cho người bán. Người mua chỉ cần quét mã để thanh toán với đầy đủ thông tin số tiền và nội dung đơn hàng.
-*   **Quản lý Đơn hàng & Đánh giá**: 
-    *   Hệ thống cập nhật trạng thái đơn hàng thời gian thực. Quy trình bàn giao được kiểm soát chặt chẽ.
-    *   Phí vận chuyển được tính toán tự động và tích hợp vào hóa đơn.
-    *   Hệ thống đánh giá sản phẩm thông minh kèm hình ảnh thực tế.
-*   **Dữ liệu mẫu (Seeding)**: Hệ thống tự động khởi tạo dữ liệu mẫu cho Marketplace ngay khi khởi động.
- 
- ### 📸 2. Mạng Xã hội Tương tác
- Trải nghiệm chia sẻ nội dung được tối ưu theo phong cách hiện đại:
- *   **Multimedia Sharing**: Hỗ trợ đăng nhiều ảnh trong một bài viết với Carousel mượt mà.
- *   **Social Interactions**: Hệ thống Like, Comment đa cấp, Chia sẻ và Follow người dùng.
- *   **Kiểm duyệt Nội dung (Moderation)**: Tính năng báo cáo vi phạm và hệ thống ẩn/chặn nội dung nhạy cảm.
- *   **Thông báo (Notifications)**: Thông báo tức thời về các tương tác xã hội và cập nhật trạng thái mua sắm.
+    *   Quy trình đăng ký Shop và xét duyệt bởi Admin.
+    *   Quản lý sản phẩm, tồn kho và xử lý đơn hàng chuyên nghiệp.
+    *   Dashboard thống kê doanh thu và hiệu quả kinh doanh.
+*   **Thanh toán VietQR Tự động**: Tích hợp tạo mã QR thanh toán ngân hàng tự động cho từng đơn hàng, giúp người mua thanh toán chỉ trong vài giây.
+*   **Đánh giá & Phản hồi**: Hệ thống đánh giá sản phẩm kèm hình ảnh thực tế từ người mua.
 
-### 🛡 3. Quản trị Hệ thống (Admin Dashboard)
-*   **Duyệt Cửa hàng**: Admin có quyền phê duyệt hoặc từ chối các yêu cầu mở shop.
-*   **Quản lý Người dùng & Nội dung**: Theo dõi báo cáo, xử lý vi phạm và quản lý danh sách thành viên (tự động ẩn các tài khoản quản trị để bảo mật).
+### 🛡 3. Quản trị & Bảo mật
+*   **Admin Dashboard**: Phê duyệt Shop, quản lý báo cáo vi phạm và kiểm duyệt nội dung toàn hệ thống.
+*   **Xác thực JWT**: Hệ thống bảo mật Token đảm bảo an toàn thông tin người dùng và phân quyền (User/Seller/Admin).
+*   **Responsive Design**: Tối ưu hóa 100% giao diện cho Mobile, Tablet và Desktop.
 
 ---
 
-## 🛠 Kiến trúc & Kỹ thuật
+## 🛠 Công nghệ Sử dụng
 
-Dự án áp dụng các tiêu chuẩn phát triển phần mềm hiện đại:
-- **Clean Architecture**: Tách biệt rõ ràng các lớp Domain, Application, Infrastructure và API.
-- **Repository Pattern**: Tối ưu việc truy xuất và xử lý dữ liệu từ Database.
-- **Auto-Schema Management**: Tự động phát hiện và nâng cấp cơ sở dữ liệu qua code SQL thủ công trong `Program.cs`, không cần migrations phức tạp.
-- **JWT Authentication**: Hệ thống xác thực và phân quyền (Admin/User/Seller) dựa trên Token bảo mật.
-- **Responsive Design**: Giao diện hiển thị tốt trên mọi thiết bị (Mobile & Desktop).
+### Backend
+- **Framework**: ASP.NET Core 9 (Web API)
+- **Database**: PostgreSQL (Npgsql)
+- **ORM**: Entity Framework Core 9
+- **Real-time**: SignalR
+- **Authentication**: JWT Bearer Token
+- **Storage**: Cloudinary Integration (Xử lý hình ảnh)
+
+### Frontend
+- **Core**: Vanilla Javascript (ES6+), HTML5, CSS3
+- **Design System**: Glassmorphism UI Kit (Tự phát triển)
+- **Icons**: FontAwesome 6
+- **Typography**: Inter & Outfit (Google Fonts)
 
 ---
 
-### 🚀 Lộ trình Phát triển & Tính năng Dự kiến (Roadmap):
+## 🚀 Lộ trình Phát triển (Roadmap)
 
-#### 📸 Phân hệ Blog (Mạng xã hội):
+### ✅ Đã Hoàn thành
+- [x] Kiến trúc Clean Architecture & Database Core.
+- [x] Hệ thống Marketplace & Giỏ hàng.
+- [x] Thanh toán VietQR.
+- [x] Chức năng Blog, Like, Comment, Follow.
+- [x] **Real-time Chat (SignalR)**.
+- [x] **Hệ thống Thông báo thời gian thực**.
+- [x] **Tối ưu hóa UI Mobile & Tablet**.
+- [x] Admin Center & Seller Center.
+
+### 🏗 Sắp tới
 - [ ] **Zynk Stories**: Đăng tin ngắn biến mất sau 24 giờ.
-- [ ] **Saved Posts (Lưu bài viết)**: Cho phép người dùng lưu bài viết vào bộ sưu tập cá nhân.
-- [ ] **Trending Hashtags**: Tự động thống kê và hiển thị các chủ đề đang hot.
-- [ ] **Nhắn tin 1-1 (Direct Message)**: Tích hợp SignalR để chat trực tiếp giữa người dùng.
-- [ ] **Trạng thái hoạt động**: Hiển thị dấu chấm xanh khi người dùng đang online.
-- [ ] **Verified Badges**: Cấp dấu tích xanh cho các tài khoản uy tín/KOLs.
-
-#### 🛒 Phân hệ Shop (Thương mại điện tử):
-- [ ] **Mã giảm giá (Vouchers)**: Shop có thể tạo các mã khuyến mãi cho khách hàng.
-- [ ] **Flash Sale & Countdown**: Tạo các khung giờ giảm giá sốc có đồng hồ đếm ngược.
-- [ ] **AI Recommendation**: Gợi ý sản phẩm thông minh dựa trên hành vi người dùng.
-- [ ] **Buyer-Seller Chat**: Khung chat chuyên biệt ngay trong trang sản phẩm.
-- [ ] **Shipping Integration**: Tích hợp các đơn vị vận chuyển thực tế (GHTK, GHN).
-- [ ] **Wallet System**: Hệ thống ví điện tử nội bộ cho người bán và người mua.
-
-#### 🛠 Kỹ thuật & Hệ thống:
-- [ ] **Tự động xác nhận Thanh toán QR**: Tích hợp Webhook Ngân hàng hoặc PayOS để tự động hóa hoàn toàn.
-- [ ] **Giao diện Mobile**: Tối ưu hóa UI cho các thiết bị màn hình nhỏ.
-- [ ] **PWA (Progressive Web App)**: Cho phép cài đặt ứng dụng lên màn hình điện thoại.
+- [ ] **Mã giảm giá (Vouchers)**: Shop có thể tạo khuyến mãi riêng.
+- [ ] **AI Recommendation**: Gợi ý sản phẩm và bài viết theo sở thích.
+- [ ] **PWA (Progressive Web App)**: Cài đặt ứng dụng trực tiếp lên điện thoại.
 
 ---
 
-## 🚀 Công nghệ sử dụng
+## 🛠 Hướng dẫn Cài đặt
 
-- **Backend:** .NET 9 Web API, Entity Framework Core 9, PostgreSQL (Npgsql).
-- **Frontend:** HTML5, CSS3, Javascript ES6+, UI Kit Glassmorphism.
-- **Tools:** GitHub, Visual Studio 2022.
-
----
-
-## 🛠 Hướng dẫn cài đặt
-
-1. **Clone dự án:**
+1. **Clone dự án**:
    ```bash
    git clone https://github.com/HaiDang-Ng22/blog-community-plantform.git
    ```
 
-2. **Cấu hình**: Cập nhật Connection String (PostgreSQL) trong `Blog.API/appsettings.json`.
+2. **Cấu hình**: 
+   Cập nhật thông tin kết nối PostgreSQL và các khóa bí mật (JWT, Cloudinary) trong file `Blog.API/appsettings.json`.
+
 3. **Chạy ứng dụng**:
    ```bash
-   dotnet run --project Blog.API/Blog.API.csproj
+   # Di chuyển vào thư mục API
+   cd Blog.API
+   # Chạy dự án (Backend sẽ tự động serve Frontend từ thư mục Blog.Web)
+   dotnet run
    ```
-4. **Truy cập**: `http://localhost:7000`.
+
+4. **Truy cập**: 
+   Mở trình duyệt và truy cập `http://localhost:7000`.
 
 ---
-*Dự án tâm huyết phát triển bởi HaiDang *
+*Dự án tâm huyết được phát triển và duy trì bởi **HaiDang**.* 
