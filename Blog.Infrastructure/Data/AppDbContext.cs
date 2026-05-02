@@ -22,6 +22,10 @@ public class AppDbContext : DbContext
     public DbSet<Report> Reports { get; set; }
     public DbSet<Block> Blocks { get; set; }
 
+    // Chat Entities
+    public DbSet<Conversation> Conversations { get; set; }
+    public DbSet<Message> Messages { get; set; }
+
     // Shopping Entities
     public DbSet<Category> Categories { get; set; }
     public DbSet<ShopApplication> ShopApplications { get; set; }
@@ -236,6 +240,39 @@ public class AppDbContext : DbContext
             .WithMany(r => r.Images)
             .HasForeignKey(i => i.ProductReviewId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // --- Chat Configurations ---
+
+        // Conversation
+        modelBuilder.Entity<Conversation>()
+            .HasOne(c => c.User1)
+            .WithMany()
+            .HasForeignKey(c => c.User1Id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Conversation>()
+            .HasOne(c => c.User2)
+            .WithMany()
+            .HasForeignKey(c => c.User2Id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Unique index so only 1 conversation per pair
+        modelBuilder.Entity<Conversation>()
+            .HasIndex(c => new { c.User1Id, c.User2Id })
+            .IsUnique();
+
+        // Message
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // --- Global DateTime UTC Converter ---
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo | Zynk</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .notifications-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .noti-header {
+            margin-bottom: 20px;
+        }
+
+        .noti-header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .noti-tabs {
+            display: flex;
+            gap: 20px;
+            border-bottom: 1px solid #efefef;
+            margin-bottom: 15px;
+        }
+
+        .noti-tab {
+            padding: 10px 5px;
+            font-weight: 600;
+            color: #8e8e8e;
+            cursor: pointer;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .noti-tab.active {
+            color: #000;
+        }
+
+        .noti-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #000;
+        }
+
+        .noti-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .mark-all-read {
+            color: #0095f6;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .noti-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .noti-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px;
+            border-radius: 12px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .noti-item:hover {
+            background: #f8f8f8;
+        }
+
+        .noti-item.unread {
+            background: #f0f7ff;
+        }
+
+        .noti-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #efefef;
+        }
+
+        .noti-info {
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .noti-user {
+            font-weight: 700;
+            color: #262626;
+        }
+
+        .noti-msg {
+            color: #262626;
+        }
+
+        .noti-time {
+            display: block;
+            color: #8e8e8e;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .noti-type-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f1f1;
+            border-radius: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .noti-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8e8e8e;
+        }
+
+        .noti-empty i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: block;
+            color: #dbdbdb;
+        }
+
+        @media (max-width: 768px) {
+            .notifications-container { padding: 15px; }
+        }
+    </style>
+</head>
+<body class="main-with-sidebar">
+    <div class="notifications-container">
+        <div class="noti-header">
+            <h1>Thông báo</h1>
+            <div class="noti-tabs">
+                <div class="noti-tab active" data-tab="social">Tương tác & Blog</div>
+                <div class="noti-tab" data-tab="orders">Đơn hàng & Mua sắm</div>
+            </div>
+        </div>
+        
+        <div class="noti-actions">
+            <span class="mark-all-read" id="mark-all-read">Đánh dấu đã đọc tất cả</span>
+        </div>
+
+        <div id="noti-list" class="noti-list">
+            <div class="noti-empty">
+                <i class="fa-regular fa-heart"></i>
+                <p>Đang tải thông báo...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const notiList = document.getElementById('noti-list');
+            const markAllBtn = document.getElementById('mark-all-read');
+            const tabs = document.querySelectorAll('.noti-tab');
+            let currentTab = 'social';
+            let allNotifications = [];
+
+            async function loadNotifications() {
+                try {
+                    allNotifications = await window.api.get('notifications');
+                    renderNotifications();
+                } catch (err) {
+                    console.error(err);
+                    notiList.innerHTML = '<p class="noti-empty">Lỗi tải thông báo.</p>';
+                }
+            }
+
+            function renderNotifications() {
+                const socialTypes = ['Like', 'Comment', 'Reply', 'Follow'];
+                const orderTypes = ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'];
+                
+                const filtered = allNotifications.filter(n => {
+                    if (currentTab === 'social') return socialTypes.includes(n.type);
+                    if (currentTab === 'orders') return orderTypes.includes(n.type);
+                    return true;
+                });
+
+                if (filtered.length === 0) {
+                    notiList.innerHTML = `
+                        <div class="noti-empty">
+                            <i class="${currentTab === 'social' ? 'fa-regular fa-heart' : 'fa-solid fa-box'}"></i>
+                            <p>Không có thông báo nào trong mục này.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                notiList.innerHTML = filtered.map(n => `
+                    <div class="noti-item ${n.isRead ? '' : 'unread'}" onclick="handleNotiClick('${n.id}', '${n.type}', '${n.targetId}', '${n.actorId}')">
+                        <img src="${n.actorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n.actorName)}" class="noti-avatar">
+                        <div class="noti-info">
+                            <span class="noti-user">${n.actorName}</span>
+                            <span class="noti-msg">${n.message}</span>
+                            <span class="noti-time">${typeof window.formatDate === 'function' ? window.formatDate(n.createdAt) : new Date(n.createdAt).toLocaleString()}</span>
+                        </div>
+                        <div class="noti-type-icon">
+                            ${getIconForType(n.type)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function getIconForType(type) {
+                switch(type) {
+                    case 'Like': return '<i class="fa-solid fa-heart" style="color: #ed4956;"></i>';
+                    case 'Comment': return '<i class="fa-solid fa-comment" style="color: #0095f6;"></i>';
+                    case 'Reply': return '<i class="fa-solid fa-reply"></i>';
+                    case 'Follow': return '<i class="fa-solid fa-user-plus" style="color: #000;"></i>';
+                    case 'NewOrder': return '<i class="fa-solid fa-shopping-bag" style="color: #ff9f43;"></i>';
+                    case 'OrderStatusUpdated': return '<i class="fa-solid fa-truck" style="color: #28c76f;"></i>';
+                    case 'OrderCancelled': return '<i class="fa-solid fa-circle-xmark" style="color: #ea5455;"></i>';
+                    default: return '<i class="fa-solid fa-bell"></i>';
+                }
+            }
+
+            tabs.forEach(tab => {
+                tab.onclick = () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTab = tab.dataset.tab;
+                    renderNotifications();
+                };
+            });
+
+            window.handleNotiClick = async (id, type, targetId, actorId) => {
+                try {
+                    await window.api.post(`notifications/${id}/read`);
+                    
+                    if (type === 'Like' || type === 'Comment' || type === 'Reply') {
+                        // Mở bài viết
+                        window.location.href = `index.html?postId=${targetId}`;
+                    } else if (type === 'Follow') {
+                        // Xem trang cá nhân người follow
+                        window.location.href = `profile.html?userId=${actorId}`;
+                    } else if (type === 'NewOrder' || type === 'OrderCancelled') {
+                        // Người bán xem chi tiết đơn hàng
+                        window.location.href = `seller-order-detail.html?id=${targetId}`;
+                    } else if (type === 'OrderStatusUpdated') {
+                        // Người mua xem chi tiết đơn hàng
+                        window.location.href = `order-detail.html?id=${targetId}`;
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+
+            markAllBtn.onclick = async () => {
+                try {
+                    await window.api.post('notifications/read-all');
+                    loadNotifications();
+                    if (window.loadNotiUnreadBadge) window.loadNotiUnreadBadge();
+                } catch (err) {
+                    alert('Lỗi khi cập nhật');
+                }
+            };
+
+            loadNotifications();
+        });
+    </script>
+</body>
+</html>

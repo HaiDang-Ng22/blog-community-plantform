@@ -56,10 +56,15 @@
     color: #262626;
 }
 
-.ph-actions { display: flex; gap: 8px; align-items: center; }
+.ph-actions { 
+    display: flex; 
+    gap: 8px; 
+    align-items: center; 
+}
 
 .ph-btn {
-    padding: 6px 18px;
+    height: 32px;
+    padding: 0 16px;
     font-size: 0.88rem;
     border-radius: 8px;
     font-weight: 600;
@@ -81,14 +86,32 @@
 .ph-btn.secondary-btn {
     background: #efefef;
     color: #262626;
+    border: 1px solid transparent;
 }
 .ph-btn.secondary-btn:hover { background: #e5e5e5; }
+
+#message-btn {
+    background: #efefef;
+    color: #262626;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+#message-btn:hover {
+    background: #dbdbdb;
+    transform: translateY(-1px);
+}
+
+#message-btn i {
+    font-size: 0.95rem;
+    margin-right: 4px;
+}
 
 /* Row 2: stats */
 .ph-stats-row {
     display: flex;
-    gap: 32px;
-    margin-bottom: 14px;
+    gap: 40px;
+    margin-bottom: 20px;
 }
 
 .ph-stat {

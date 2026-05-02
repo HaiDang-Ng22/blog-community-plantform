@@ -52,6 +52,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     await loadPosts('discover');
+
+    // Handle deep-linking from notifications (URL param ?postId=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('postId');
+    if (postId && window.openPostModal) {
+        // Wait a bit for the page to be ready
+        setTimeout(() => {
+            window.openPostModal(postId);
+        }, 500);
+    }
 });
 
 async function loadPosts(type = 'discover') {

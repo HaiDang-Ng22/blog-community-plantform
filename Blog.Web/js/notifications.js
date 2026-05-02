@@ -24,24 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function checkUnreadCount() {
-    if (!localStorage.getItem('auth_token')) return;
-    try {
-        const notis = await window.api.get('notifications');
-        if (!Array.isArray(notis)) return;
-        
-        const unreadCount = notis.filter(n => !n.isRead).length;
-        const badge = document.getElementById('noti-count');
-        
-        if (badge) {
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-    } catch (e) {
-        console.warn('Silent fail: Notification count check');
+    if (window.loadNotificationBadge) {
+        await window.loadNotificationBadge();
     }
 }
 

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tin nhắn – Zynk</title>
+    <meta name="description" content="Nhắn tin 1-1 realtime trên Zynk">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=2.7">
+    <link rel="stylesheet" href="css/chat.css?v=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="messages-page">
+
+<div class="messages-layout">
+    <!-- ══════ INBOX PANEL (left) ══════ -->
+    <div class="inbox-panel" id="inbox-panel">
+        <div class="inbox-header">
+            <div class="inbox-header-top">
+                <span class="inbox-username" id="inbox-my-username">Tin nhắn</span>
+                <button class="inbox-new-chat-btn" id="new-chat-btn" title="Tạo cuộc trò chuyện mới">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+            </div>
+            <!-- Tabs: Hộp thư | Đang chờ -->
+            <div class="inbox-tabs">
+                <div class="inbox-tab active" id="tab-inbox" onclick="switchInboxTab('inbox')">
+                    Hộp thư
+                    <span class="tab-badge hidden" id="inbox-badge"></span>
+                </div>
+                <div class="inbox-tab" id="tab-pending" onclick="switchInboxTab('pending')">
+                    Đang chờ
+                    <span class="tab-badge hidden" id="pending-badge"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation list -->
+        <div class="conv-list" id="conv-list">
+            <div class="inbox-empty" id="conv-loading">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem;opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════ CHAT PANEL (right) ══════ -->
+    <div class="chat-panel empty-state" id="chat-panel">
+        <div class="chat-empty-state" id="chat-empty-state">
+            <div class="chat-empty-icon">
+                <i class="fa-regular fa-paper-plane"></i>
+            </div>
+            <h3>Tin nhắn của bạn</h3>
+            <p>Gửi ảnh và tin nhắn riêng tư cho bạn bè hoặc nhóm.</p>
+            <button class="start-chat-btn" onclick="openNewChatModal()">
+                <i class="fa-solid fa-plus"></i> Nhắn tin mới
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════ NEW CHAT MODAL ══════ -->
+<div class="new-chat-modal-overlay hidden" id="new-chat-overlay">
+    <div class="new-chat-modal">
+        <div class="new-chat-modal-header">
+            <h3>Cuộc trò chuyện mới</h3>
+            <button class="modal-close-x" onclick="closeNewChatModal()">&times;</button>
+        </div>
+        <div class="new-chat-search-wrap">
+            <input
+                type="text"
+                class="new-chat-search-input"
+                id="new-chat-search"
+                placeholder="Tìm kiếm..."
+                oninput="searchUsersForChat(this.value)"
+                autocomplete="off"
+            >
+        </div>
+        <div class="new-chat-results" id="new-chat-results">
+            <div class="inbox-empty">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <p>Nhập tên để tìm người dùng</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/api.js?v=4.1"></script>
+<script src="js/lang.js?v=4.1"></script>
+<script src="js/i18n.js?v=4.1"></script>
+<script src="js/common.js?v=4.2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script src="js/chat.js?v=1.0"></script>
+
+</body>
+</html>

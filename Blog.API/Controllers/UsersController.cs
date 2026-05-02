@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
+using Blog.API.Services;
 
 namespace Blog.API.Controllers;
 
@@ -15,10 +16,12 @@ namespace Blog.API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly INotificationService _notiService;
 
-    public UsersController(AppDbContext context)
+    public UsersController(AppDbContext context, INotificationService notiService)
     {
         _context = context;
+        _notiService = notiService;
     }
 
     [HttpGet("{id}/profile")]
@@ -105,18 +108,8 @@ public class UsersController : ControllerBase
 
         _context.Follows.Add(follow);
 
-        // Tạo thông báo
-        var notification = new Notification
-        {
-            Id = Guid.NewGuid(),
-            ReceiverId = id,
-            ActorId = followerId,
-            Type = "Follow",
-            TargetId = null,
-            Message = "đã bắt đầu theo dõi bạn.",
-            CreatedAt = DateTime.UtcNow
-        };
-        _context.Notifications.Add(notification);
+        // Tạo thông báo realtime
+        await _notiService.SendNotificationAsync(id, followerId, "Follow", null, "đã bắt đầu theo dõi bạn.");
 
         await _context.SaveChangesAsync();
         return Ok(new { isFollowing = true, message = "Đã theo dõi" });

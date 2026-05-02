@@ -59,7 +59,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     renderSidebar();
     updateNav();
+    
+    // Load badges
+    try { 
+        await Promise.all([
+            loadChatUnreadBadge(),
+            loadNotificationBadge()
+        ]); 
+    } catch(e) {}
 });
+
+async function loadNotificationBadge() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    try {
+        const notis = await window.api.get('notifications');
+        if (!Array.isArray(notis)) return;
+        
+        const unreadCount = notis.filter(n => !n.isRead).length;
+        const badge = document.getElementById('sidebar-noti-badge');
+        const mobileBadge = document.getElementById('mth-noti-badge');
+        
+        const update = (el) => {
+            if (!el) return;
+            el.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            el.classList.toggle('hidden', unreadCount === 0);
+        };
+        update(badge);
+        update(mobileBadge);
+    } catch { /* silent fail */ }
+}
+window.loadNotificationBadge = loadNotificationBadge;
 
 
 
@@ -72,19 +102,74 @@ function renderSidebar() {
     window._sidebarRendered = true;
     
     const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-    
-    // Aggressively remove any existing sidebar or legacy header that might be lingering
-    document.querySelectorAll('.sidebar-nav, .main-header, header, .nav-container').forEach(el => el.remove());
-
-    const sidebar = document.createElement('div');
-    sidebar.className = 'sidebar-nav';
-    sidebar.id = 'zynk-main-sidebar';
-    
     const userName = userInfo.fullName || userInfo.username || 'User';
     const userAvatar = (userInfo.avatarUrl && userInfo.avatarUrl !== 'null')
             ? userInfo.avatarUrl
             : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random&color=fff`;
 
+    // Aggressively remove any existing sidebar or legacy header that might be lingering
+    document.querySelectorAll('.sidebar-nav, .mobile-top-header, .mobile-bottom-nav, .main-header, header, .nav-container').forEach(el => el.remove());
+
+    // ─── Mobile Premium UI Redesign ───────────────────────────
+    if (window.innerWidth <= 768) {
+        // 1. Top Header
+        const topHeader = document.createElement('div');
+        topHeader.className = 'mobile-top-header';
+        topHeader.innerHTML = `
+            <div class="mth-logo" onclick="window.location.href='index.html'">
+                <img src="assets/logo.png" onerror="this.src='https://via.placeholder.com/100x30?text=ZYNK'">
+                <span class="zynk-logo-text">Zynk</span>
+            </div>
+            <div class="mth-actions">
+                ${window.location.pathname.includes('profile.html') ? `
+                <a href="settings.html" class="mth-icon-link" title="Cài đặt">
+                    <i class="fa-solid fa-gear"></i>
+                </a>
+                <a href="#" class="mth-icon-link" onclick="logout(event)" title="Đăng xuất">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>` : ''}
+                <a href="notifications.html" class="mth-icon-link" id="mth-noti-link" style="position:relative;">
+                    <i class="fa-regular fa-heart"></i>
+                    <span id="mth-noti-badge" class="noti-badge hidden">0</span>
+                </a>
+                <a href="messages.html" class="mth-icon-link" id="mth-msg-link" style="position:relative;">
+                    <i class="fa-regular fa-paper-plane"></i>
+                    <span id="mth-msg-badge" class="noti-badge hidden">0</span>
+                </a>
+            </div>
+        `;
+        document.body.appendChild(topHeader);
+
+        // 2. Bottom Navigation Bar
+        const bottomNav = document.createElement('div');
+        bottomNav.className = 'mobile-bottom-nav';
+        bottomNav.innerHTML = `
+            <a href="index.html" class="mbn-link">
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <a href="search.html" class="mbn-link">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </a>
+            <a href="create-post.html" class="mbn-link mbn-create">
+                <i class="fa-solid fa-plus"></i>
+            </a>
+            <a href="marketplace.html" class="mbn-link">
+                <i class="fa-solid fa-compass"></i>
+            </a>
+            <a href="profile.html" class="mbn-link">
+                <img src="${userAvatar}" class="mbn-avatar" onerror="this.src='https://ui-avatars.com/api/?name=U'">
+            </a>
+        `;
+        document.body.appendChild(bottomNav);
+
+        // On mobile, we DON'T render the standard sidebar
+        return;
+    }
+
+    const sidebar = document.createElement('div');
+    sidebar.className = 'sidebar-nav';
+    sidebar.id = 'zynk-main-sidebar';
+    
     sidebar.innerHTML = `
         <div class="sidebar-logo" onclick="window.location.href='index.html'">
             <img src="assets/logo.png" onerror="this.src='https://via.placeholder.com/100x30?text=ZYNK'">
@@ -103,10 +188,16 @@ function renderSidebar() {
                 <i class="fa-solid fa-compass"></i>
                 <span>Khám phá</span>
             </a>
-            <div class="sidebar-link mobile-hide" id="sidebar-noti-trigger">
+            <div class="sidebar-link mobile-hide" id="sidebar-noti-trigger" style="position:relative;">
                 <i class="fa-regular fa-heart"></i>
                 <span>Thông báo</span>
+                <span id="sidebar-noti-badge" class="noti-badge hidden">0</span>
             </div>
+            <a href="messages.html" class="sidebar-link" id="sidebar-messages-link" style="position:relative;">
+                <i class="fa-regular fa-paper-plane"></i>
+                <span>Tin nhắn</span>
+                <span id="sidebar-msg-badge" class="noti-badge hidden">0</span>
+            </a>
             <a href="create-post.html" class="sidebar-link">
                 <i class="fa-regular fa-square-plus"></i>
                 <span>Tạo</span>
@@ -130,6 +221,8 @@ function renderSidebar() {
         </div>
     `;
     
+    document.body.appendChild(sidebar);
+    
     // Create search sub-panel separately to avoid overflow issues
     const searchPanel = document.createElement('div');
     searchPanel.className = 'sidebar-sub-panel';
@@ -151,7 +244,14 @@ function renderSidebar() {
     
     // Select elements after prepending
     const searchTrigger = document.getElementById('sidebar-search-trigger');
+    const notiTrigger = document.getElementById('sidebar-noti-trigger');
     const searchInput = document.getElementById('sidebar-search-input');
+    
+    if (notiTrigger) {
+        notiTrigger.onclick = () => {
+            window.location.href = 'notifications.html';
+        };
+    }
     const moreTrigger = document.getElementById('sidebar-more-trigger');
     const moreMenu = document.getElementById('sidebar-more-menu');
     let panelBackdrop = document.getElementById('sidebar-panel-backdrop');
@@ -1041,3 +1141,156 @@ window.common = {
 window.formatDate = formatDate;
 window.autoLink = autoLink;
 
+// ─── Chat Unread Badge ────────────────────────────────────────────────────────
+async function loadChatUnreadBadge() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    try {
+        const res = await fetch(window.API_BASE_URL + '/messages/unread-count', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const total = (data.count || 0) + (data.pendingCount || 0); // Count all unread for main badge
+        const badge = document.getElementById('sidebar-msg-badge');
+        const mobileBadge = document.getElementById('mth-msg-badge');
+        
+        const updateBadge = (el) => {
+            if (!el) return;
+            el.textContent = total > 99 ? '99+' : total;
+            el.classList.toggle('hidden', total === 0);
+        };
+
+        updateBadge(badge);
+        updateBadge(mobileBadge);
+    } catch { /* silent fail */ }
+}
+window.loadChatUnreadBadge = loadChatUnreadBadge;
+
+// ─── Global Chat Notifications (Realtime) ───────────────────────────────────
+(function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token || window.location.pathname.includes('messages.html')) return;
+
+    // Load SignalR dynamically if not present
+    if (typeof signalR === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js';
+        script.onload = () => initGlobalChatSignalR();
+        document.head.appendChild(script);
+    } else {
+        initGlobalChatSignalR();
+    }
+
+    async function initGlobalChatSignalR() {
+        const hubUrl = window.API_BASE_URL.replace('/api', '') + '/hubs/chat';
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl, { accessTokenFactory: () => token })
+            .withAutomaticReconnect()
+            .configureLogging(signalR.LogLevel.Error)
+            .build();
+
+        connection.on('ReceiveMessage', () => window.loadChatUnreadBadge());
+        connection.on('MessageRequest', () => window.loadChatUnreadBadge());
+
+        try {
+            await connection.start();
+            console.log('[GlobalChat] Realtime notifications active');
+        } catch (err) {
+            console.warn('[GlobalChat] Connection failed', err);
+        }
+    }
+})();
+// ─── Realtime Notifications Hub (Realtime) ──────────────────────────────────
+(function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    // Wait for SignalR to be loaded by the chat logic or load it if missing
+    const checkSignalR = setInterval(() => {
+        if (typeof signalR !== 'undefined') {
+            clearInterval(checkSignalR);
+            initNotificationHub();
+        }
+    }, 500);
+
+    async function initNotificationHub() {
+        const hubUrl = window.API_BASE_URL.replace('/api', '') + '/hubs/notification';
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl, { accessTokenFactory: () => token })
+            .withAutomaticReconnect()
+            .configureLogging(signalR.LogLevel.Error)
+            .build();
+
+        connection.on("ReceiveNotification", (noti) => {
+            console.log("[Notification] Received:", noti);
+            updateNotificationBadges(noti.unreadCount);
+            showNotificationToast(noti);
+        });
+
+        try {
+            await connection.start();
+            console.log('[NotificationHub] Connected');
+            loadNotiUnreadBadge();
+        } catch (err) {
+            console.warn('[NotificationHub] Connection failed', err);
+        }
+    }
+})();
+
+function updateNotificationBadges(count) {
+    const badges = document.querySelectorAll('#sidebar-noti-badge, #mth-noti-badge');
+    badges.forEach(badge => {
+        if (!badge) return;
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.toggle('hidden', count === 0);
+    });
+}
+
+function showNotificationToast(noti) {
+    // Create toast container if not exists
+    let container = document.getElementById('noti-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'noti-toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'noti-toast';
+    toast.innerHTML = `
+        <img src="${noti.actorAvatarUrl || 'https://ui-avatars.com/api/?name=U'}" class="noti-toast-avatar">
+        <div class="noti-toast-content">
+            <span class="noti-toast-user">${noti.actorName}</span>
+            <span class="noti-toast-msg">${noti.message}</span>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Click to view
+    toast.addEventListener('click', (e) => {
+        console.log("[Notification] Toast clicked");
+        clearTimeout(timer);
+        window.location.href = 'notifications.html';
+    });
+
+    // Auto remove
+    const timer = setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }
+    }, 5000);
+}
+
+async function loadNotiUnreadBadge() {
+    try {
+        const data = await window.api.get('notifications/unread-count');
+        updateNotificationBadges(data.count || 0);
+    } catch { /* silent */ }
+}
+window.loadNotiUnreadBadge = loadNotiUnreadBadge;

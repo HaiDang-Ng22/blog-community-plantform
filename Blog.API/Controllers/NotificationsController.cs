@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
+using Blog.API.Services;
 
 namespace Blog.API.Controllers;
 
@@ -15,10 +16,21 @@ namespace Blog.API.Controllers;
 public class NotificationsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly INotificationService _notiService;
 
-    public NotificationsController(AppDbContext context)
+    public NotificationsController(AppDbContext context, INotificationService notiService)
     {
         _context = context;
+        _notiService = notiService;
+    }
+
+    [HttpGet("unread-count")]
+    public async Task<IActionResult> GetUnreadCount()
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+        var count = await _notiService.GetUnreadCountAsync(userId);
+        return Ok(new { count });
     }
 
     [HttpGet]
