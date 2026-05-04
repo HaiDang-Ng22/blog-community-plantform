@@ -26,4 +26,5 @@ public class User
     public virtual ICollection<Follow> Following { get; set; } = new List<Follow>();
     public virtual ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
     public virtual ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
+    public virtual ICollection<Story> Stories { get; set; } = new List<Story>();
 }

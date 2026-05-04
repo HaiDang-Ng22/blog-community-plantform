@@ -50,16 +50,27 @@ public class ChatHub : Hub
     /// <summary>
     /// Client gọi để gửi tin nhắn. Server lưu DB rồi push realtime cho cả hai.
     /// </summary>
-    public async Task SendMessage(string recipientId, string? content, string? imageUrl = null)
+    public async Task SendMessage(string recipientId, string? content, string? imageUrl = null, Guid? replyToMessageId = null, Guid? sharedPostId = null)
     {
         var senderIdStr = Context.User?.GetUserIdStr();
-        if (string.IsNullOrEmpty(senderIdStr) || (string.IsNullOrEmpty(content?.Trim()) && string.IsNullOrEmpty(imageUrl)))
+        if (string.IsNullOrEmpty(senderIdStr) || (string.IsNullOrEmpty(content?.Trim()) && string.IsNullOrEmpty(imageUrl) && sharedPostId == null))
             return;
  
         var senderId = Guid.Parse(senderIdStr);
         var recipientGuid = Guid.Parse(recipientId);
  
         if (senderId == recipientGuid) return;
+
+        // Kiểm tra xem có bị block không
+        bool isBlocked = await _context.Blocks.AnyAsync(b => 
+            (b.BlockerId == senderId && b.BlockedId == recipientGuid) || 
+            (b.BlockerId == recipientGuid && b.BlockedId == senderId));
+        if (isBlocked)
+        {
+            // Gửi lại lỗi cho sender
+            await Clients.Caller.SendAsync("ErrorMessage", "Không thể gửi tin nhắn vì người dùng đã bị chặn.");
+            return;
+        }
  
         // Logic mới: Tin nhắn là "Request" chỉ khi Người nhận CHƯA follow Người gửi.
         // Nếu người nhận đã follow người gửi → Họ đã chấp nhận liên lạc này.
@@ -101,6 +112,8 @@ public class ChatHub : Hub
             ImageUrl = imageUrl,
             IsRead = false,
             IsRequestMessage = isRequest, 
+            ReplyToMessageId = replyToMessageId,
+            SharedPostId = sharedPostId,
             CreatedAt = DateTime.UtcNow
         };
         _context.Messages.Add(message);
@@ -111,6 +124,15 @@ public class ChatHub : Hub
             .Select(u => new { u.Id, u.FullName, u.Username, u.AvatarUrl })
             .FirstOrDefaultAsync(u => u.Id == senderId);
  
+        // Nạp thông tin reply và post nếu có
+        var replyToMsg = replyToMessageId.HasValue 
+            ? await _context.Messages.Where(m => m.Id == replyToMessageId).Select(m => new { m.Id, m.Content, m.SenderId }).FirstOrDefaultAsync() 
+            : null;
+
+        var sharedPost = sharedPostId.HasValue 
+            ? await _context.Posts.Include(p => p.Author).Include(p => p.Images).Where(p => p.Id == sharedPostId).FirstOrDefaultAsync() 
+            : null;
+
         var payload = new
         {
             id = message.Id,
@@ -123,7 +145,17 @@ public class ChatHub : Hub
             isRequestMessage = message.IsRequestMessage,
             createdAt = message.CreatedAt,
             senderName = sender?.FullName ?? sender?.Username ?? "User",
-            senderAvatar = sender?.AvatarUrl
+            senderAvatar = sender?.AvatarUrl,
+            replyToMessageId = message.ReplyToMessageId,
+            replyToMessage = replyToMsg,
+            sharedPostId = message.SharedPostId,
+            sharedPost = sharedPost == null ? null : new {
+                id = sharedPost.Id,
+                content = sharedPost.Content,
+                authorName = sharedPost.Author.FullName,
+                authorAvatar = sharedPost.Author.AvatarUrl,
+                firstImage = sharedPost.Images.FirstOrDefault()?.Url
+            }
         };
  
         // Push to sender

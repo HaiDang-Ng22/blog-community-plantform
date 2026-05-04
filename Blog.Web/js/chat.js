@@ -12,6 +12,8 @@ let activeTab = 'inbox'; // 'inbox' | 'pending'
 let searchTimer = null;
 let typingTimer = null;
 let isTyping = false;
+let replyingToMsgId = null;
+let replyingToMsgContent = null;
 
 const API = window.API_BASE_URL || '';
 
@@ -285,6 +287,9 @@ function buildChatPanel(conv) {
             <button class="chat-icon-btn" title="Trang cá nhân" onclick="window.location.href='profile.html?id=${other.id}'">
                 <i class="fa-solid fa-circle-info"></i>
             </button>
+            <button class="chat-icon-btn" title="Chặn người dùng" onclick="blockUser('${other.id}')">
+                <i class="fa-solid fa-ban"></i>
+            </button>
         </div>
     </div>
     ${requestBanner}
@@ -292,6 +297,10 @@ function buildChatPanel(conv) {
         <div class="inbox-empty">
             <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem;opacity:0.4;"></i>
         </div>
+    </div>
+    <div class="chat-reply-banner hidden" id="chat-reply-banner">
+        <div class="reply-banner-content">Đang trả lời: <span></span></div>
+        <button onclick="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="chat-input-area">
         <div class="chat-input-wrap">
@@ -375,14 +384,53 @@ function createMessageEl(msg, isConsecutive = false) {
 
     const time = formatMsgTime(msg.createdAt);
 
-    const msgContent = msg.imageUrl 
+    let msgContent = msg.imageUrl 
         ? `<img src="${msg.imageUrl}" class="msg-img" onclick="window.open('${msg.imageUrl}', '_blank')">`
         : escHtml(msg.content);
 
+    // Reply content
+    let replyHtml = '';
+    if (msg.replyToMessage) {
+        replyHtml = `<div class="msg-reply-ref" onclick="/* could scroll to msg */">
+            <div class="msg-reply-text">Đang trả lời: ${escHtml(msg.replyToMessage.content)}</div>
+        </div>`;
+    }
+
+    // Shared Post content
+    let sharedPostHtml = '';
+    if (msg.sharedPost) {
+        sharedPostHtml = `<div class="msg-shared-post" onclick="window.open('index.html?postId=${msg.sharedPost.id}', '_blank')">
+            <div class="msg-sp-author">
+                <img src="${msg.sharedPost.authorAvatar || 'assets/default-avatar.png'}" alt="Avatar">
+                <span>${escHtml(msg.sharedPost.authorName)}</span>
+            </div>
+            ${msg.sharedPost.firstImage ? `<img src="${msg.sharedPost.firstImage}" class="msg-sp-img">` : ''}
+            <div class="msg-sp-content">${escHtml(msg.sharedPost.content || '').substring(0, 50)}...</div>
+        </div>`;
+    }
+
+    const heartClass = msg.isHearted ? 'hearted' : '';
+    const actionsHtml = `
+        <div class="msg-actions">
+            <button onclick="toggleHeartMessage('${msg.id}')" class="msg-action-btn ${heartClass}">
+                <i class="${msg.isHearted ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+            </button>
+            <button onclick="setReplyToMessage('${msg.id}', '${escHtml(msg.content || 'Hình ảnh/Bài viết').replace(/'/g, "\\'")}')" class="msg-action-btn">
+                <i class="fa-solid fa-reply"></i>
+            </button>
+        </div>
+    `;
+
     if (isSent) {
         row.innerHTML = `
+        ${actionsHtml}
         <div class="msg-bubble-wrap">
-            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''}" title="${time}">${msgContent}</div>
+            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''}" title="${time}">
+                ${replyHtml}
+                ${sharedPostHtml}
+                ${msgContent}
+                ${msg.isHearted ? '<div class="msg-heart-indicator"><i class="fa-solid fa-heart"></i></div>' : ''}
+            </div>
             <span class="msg-time">${isConsecutive ? '' : time}</span>
         </div>`;
     } else {
@@ -390,9 +438,15 @@ function createMessageEl(msg, isConsecutive = false) {
         <img class="msg-avatar-sm" src="${otherAvatar}" alt="Avatar"
              onerror="this.src='https://ui-avatars.com/api/?name=U&background=6366f1&color=fff'">
         <div class="msg-bubble-wrap">
-            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''}" title="${time}">${msgContent}</div>
+            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''}" title="${time}">
+                ${replyHtml}
+                ${sharedPostHtml}
+                ${msgContent}
+                ${msg.isHearted ? '<div class="msg-heart-indicator"><i class="fa-solid fa-heart"></i></div>' : ''}
+            </div>
             <span class="msg-time">${isConsecutive ? '' : time}</span>
-        </div>`;
+        </div>
+        ${actionsHtml}`;
     }
     return row;
 }
@@ -405,26 +459,103 @@ function createDateSeparator(dateStr) {
 }
 
 // ── Send Message ──────────────────────────────────────────
-async function sendMessage(imageUrl = null) {
+async function sendMessage(imageUrl = null, sharedPostId = null) {
     const input = document.getElementById('chat-text-input');
     const content = input?.value?.trim() || "";
-    if (!imageUrl && !content && !currentOtherUser) return;
+    if (!imageUrl && !content && !sharedPostId && !currentOtherUser) return;
     if (!connection) return;
 
-    if (!imageUrl) {
+    if (!imageUrl && !sharedPostId) {
         input.value = '';
         input.style.height = 'auto';
         document.getElementById('chat-send-btn').disabled = true;
     }
 
+    const currentReplyId = replyingToMsgId;
+    cancelReply();
+
     try {
-        await connection.invoke('SendMessage', currentOtherUser.id, content, imageUrl);
+        await connection.invoke('SendMessage', currentOtherUser.id, content, imageUrl, currentReplyId, sharedPostId);
     } catch (err) {
         console.error('[Chat] Send error:', err);
-        showToast('Lỗi gửi tin nhắn', 'error');
+        showToast('Lỗi gửi tin nhắn (hoặc bị chặn)', 'error');
     }
 }
 window.sendMessage = sendMessage;
+
+function setReplyToMessage(msgId, content) {
+    replyingToMsgId = msgId;
+    replyingToMsgContent = content;
+    const banner = document.getElementById('chat-reply-banner');
+    if (banner) {
+        banner.classList.remove('hidden');
+        banner.querySelector('span').textContent = content.substring(0, 50) + (content.length > 50 ? '...' : '');
+    }
+    document.getElementById('chat-text-input')?.focus();
+}
+window.setReplyToMessage = setReplyToMessage;
+
+function cancelReply() {
+    replyingToMsgId = null;
+    replyingToMsgContent = null;
+    const banner = document.getElementById('chat-reply-banner');
+    if (banner) banner.classList.add('hidden');
+}
+window.cancelReply = cancelReply;
+
+async function toggleHeartMessage(msgId) {
+    try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API}/messages/${msgId}/heart`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            const row = document.querySelector(`.msg-row[data-msg-id="${msgId}"]`);
+            if (row) {
+                // Update icon visually
+                const btnIcon = row.querySelector('.msg-action-btn i.fa-heart');
+                if (btnIcon) {
+                    btnIcon.className = data.isHearted ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+                    btnIcon.parentElement.classList.toggle('hearted', data.isHearted);
+                }
+                let indicator = row.querySelector('.msg-heart-indicator');
+                if (data.isHearted && !indicator) {
+                    indicator = document.createElement('div');
+                    indicator.className = 'msg-heart-indicator';
+                    indicator.innerHTML = '<i class="fa-solid fa-heart"></i>';
+                    row.querySelector('.msg-bubble').appendChild(indicator);
+                } else if (!data.isHearted && indicator) {
+                    indicator.remove();
+                }
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+window.toggleHeartMessage = toggleHeartMessage;
+
+async function blockUser(userId) {
+    if (!confirm('Bạn có chắc chắn muốn chặn/bỏ chặn người này?')) return;
+    try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API}/messages/block/${userId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            showToast(data.message, 'success');
+        } else {
+            showToast('Có lỗi xảy ra', 'error');
+        }
+    } catch (e) {
+        showToast('Lỗi mạng', 'error');
+    }
+}
+window.blockUser = blockUser;
 
 async function uploadMessageImage(input) {
     const file = input.files[0];
@@ -466,7 +597,10 @@ function handleIncomingMessage(msg, isPending) {
             senderId: msg.senderId,
             content: msg.content,
             createdAt: msg.createdAt,
-            isRead: msg.isRead
+            isRead: msg.isRead,
+            imageUrl: msg.imageUrl,
+            replyToMessage: msg.replyToMessage,
+            sharedPost: msg.sharedPost
         }, isConsecutive);
         el.dataset.senderId = msg.senderId;
         area.appendChild(el);

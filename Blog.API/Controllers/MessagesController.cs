@@ -123,7 +123,22 @@ public class MessagesController : ControllerBase
                 m.ImageUrl,
                 m.IsRead,
                 m.IsRequestMessage,
-                m.CreatedAt
+                m.CreatedAt,
+                m.IsHearted,
+                m.ReplyToMessageId,
+                ReplyToMessage = m.ReplyToMessage == null ? null : new {
+                    m.ReplyToMessage.Id,
+                    m.ReplyToMessage.Content,
+                    m.ReplyToMessage.SenderId
+                },
+                m.SharedPostId,
+                SharedPost = m.SharedPost == null ? null : new {
+                    m.SharedPost.Id,
+                    m.SharedPost.Content,
+                    AuthorName = m.SharedPost.Author.FullName,
+                    AuthorAvatar = m.SharedPost.Author.AvatarUrl,
+                    FirstImage = m.SharedPost.Images.FirstOrDefault().Url
+                }
             })
             .ToListAsync();
 
@@ -186,6 +201,72 @@ public class MessagesController : ControllerBase
         });
     }
 
+    // ─── POST /api/messages/send ───────────────────────────────────────────
+    public class SendMessageDto
+    {
+        public Guid RecipientId { get; set; }
+        public string? Content { get; set; }
+        public string? ImageUrl { get; set; }
+        public Guid? ReplyToMessageId { get; set; }
+        public Guid? SharedPostId { get; set; }
+    }
+
+    [HttpPost("send")]
+    public async Task<IActionResult> SendMessageRest([FromBody] SendMessageDto dto)
+    {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+        var uid = userId.Value;
+
+        if (uid == dto.RecipientId) return BadRequest("Không thể nhắn tin với chính mình.");
+
+        bool isBlocked = await _context.Blocks.AnyAsync(b => 
+            (b.BlockerId == uid && b.BlockedId == dto.RecipientId) || 
+            (b.BlockerId == dto.RecipientId && b.BlockedId == uid));
+        if (isBlocked) return BadRequest("Không thể gửi tin nhắn vì người dùng đã bị chặn.");
+
+        bool isRequest = !await _context.Follows.AnyAsync(f => f.FollowerId == dto.RecipientId && f.FollowingId == uid);
+
+        var u1 = uid < dto.RecipientId ? uid : dto.RecipientId;
+        var u2 = uid < dto.RecipientId ? dto.RecipientId : uid;
+
+        var conv = await _context.Conversations.FirstOrDefaultAsync(c => c.User1Id == u1 && c.User2Id == u2);
+        if (conv == null)
+        {
+            conv = new Blog.Domain.Entities.Conversation
+            {
+                Id = Guid.NewGuid(),
+                User1Id = u1,
+                User2Id = u2,
+                CreatedAt = DateTime.UtcNow,
+                LastMessageAt = DateTime.UtcNow
+            };
+            _context.Conversations.Add(conv);
+        }
+        else
+        {
+            conv.LastMessageAt = DateTime.UtcNow;
+        }
+
+        var message = new Blog.Domain.Entities.Message
+        {
+            Id = Guid.NewGuid(),
+            ConversationId = conv.Id,
+            SenderId = uid,
+            Content = dto.Content?.Trim() ?? "",
+            ImageUrl = dto.ImageUrl,
+            IsRead = false,
+            IsRequestMessage = isRequest,
+            ReplyToMessageId = dto.ReplyToMessageId,
+            SharedPostId = dto.SharedPostId,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Messages.Add(message);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { success = true, messageId = message.Id });
+    }
+
     // ─── GET /api/messages/unread-count ─────────────────────────────────────
     [HttpGet("unread-count")]
     public async Task<IActionResult> GetUnreadCount()
@@ -221,5 +302,56 @@ public class MessagesController : ControllerBase
         }
 
         return Ok(new { count, pendingCount, total = count + pendingCount });
+    }
+
+    // ─── POST /api/messages/{messageId}/heart ──────────────────────────────────
+    [HttpPost("{messageId}/heart")]
+    public async Task<IActionResult> ToggleHeart(Guid messageId)
+    {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+
+        var message = await _context.Messages.FindAsync(messageId);
+        if (message == null) return NotFound();
+
+        // Optional: check if user is part of the conversation
+        var conv = await _context.Conversations.FindAsync(message.ConversationId);
+        if (conv == null || (conv.User1Id != userId && conv.User2Id != userId)) return Forbid();
+
+        message.IsHearted = !message.IsHearted;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { messageId = message.Id, isHearted = message.IsHearted });
+    }
+
+    // ─── POST /api/messages/block/{targetUserId} ───────────────────────────────
+    [HttpPost("block/{targetUserId}")]
+    public async Task<IActionResult> ToggleBlock(Guid targetUserId)
+    {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+        if (userId == targetUserId) return BadRequest("Không thể tự chặn chính mình.");
+
+        var block = await _context.Blocks.FirstOrDefaultAsync(b => b.BlockerId == userId && b.BlockedId == targetUserId);
+        
+        if (block != null)
+        {
+            // Unblock
+            _context.Blocks.Remove(block);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đã bỏ chặn người dùng.", isBlocked = false });
+        }
+        else
+        {
+            // Block
+            _context.Blocks.Add(new Blog.Domain.Entities.Block
+            {
+                BlockerId = userId.Value,
+                BlockedId = targetUserId,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đã chặn người dùng.", isBlocked = true });
+        }
     }
 }

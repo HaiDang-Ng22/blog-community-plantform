@@ -23,6 +23,14 @@ public class Message
 
     public DateTime CreatedAt { get; set; }
 
+    public Guid? ReplyToMessageId { get; set; }
+    public virtual Message? ReplyToMessage { get; set; }
+
+    public bool IsHearted { get; set; } = false;
+
+    public Guid? SharedPostId { get; set; }
+    public virtual Post? SharedPost { get; set; }
+
     // Navigation
     public virtual Conversation Conversation { get; set; } = null!;
     public virtual User Sender { get; set; } = null!;

@@ -19,6 +19,18 @@
         <div class="home-layout">
             <!-- Left: Feed -->
             <div class="feed-col">
+                <!-- Stories -->
+                <div class="stories-container" id="stories-container">
+                    <div class="story-item" id="my-story-item" onclick="handleMyStoryClick()">
+                        <div class="story-circle-wrapper my-story" id="my-story-circle">
+                            <img src="" id="my-story-avatar" class="story-avatar" alt="My Story">
+                            <div class="add-story-icon" id="add-story-indicator"><i class="fa-solid fa-plus"></i></div>
+                        </div>
+                        <span class="story-username">Tin của bạn</span>
+                    </div>
+                    <!-- Other stories will be injected here -->
+                </div>
+
                 <!-- Feed Tabs -->
                 <div class="home-tabs">
                     <div class="home-tab active" data-type="discover">Khám phá</div>
@@ -128,6 +140,135 @@
     <script src="js/notifications.js?v=4.1"></script>
     <script src="js/post-actions.js?v=4.1"></script>
     <script src="js/home.js?v=4.1"></script>
+    <script src="js/stories.js?v=4.1"></script>
+
+    <!-- Create Story Modal -->
+    <div id="create-story-modal" class="modal-overlay hidden">
+        <div class="story-modal-content">
+            <div class="modal-header">
+                <h3>Tạo tin mới</h3>
+                <button class="close-btn" onclick="closeCreateStoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Story Tabs -->
+                <div class="story-tabs">
+                    <button class="story-tab active" onclick="switchStoryType('Media')">
+                        <i class="fa-solid fa-image"></i> Ảnh/Video
+                    </button>
+                    <button class="story-tab" onclick="switchStoryType('Text')">
+                        <i class="fa-solid fa-font"></i> Văn bản
+                    </button>
+                </div>
+
+                <!-- Media Story Area -->
+                <div id="story-media-area">
+                    <div id="story-upload-zone" class="upload-zone" onclick="document.getElementById('story-file').click()">
+                        <div class="upload-placeholder">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <p>Chọn ảnh hoặc video để đăng tin</p>
+                        </div>
+                        <img id="story-preview" class="hidden">
+                        <video id="story-preview-video" class="hidden" controls></video>
+                    </div>
+                    <input type="file" id="story-file" accept="image/*,video/*" class="hidden" onchange="handleStoryFileSelect(this)">
+                </div>
+
+                <!-- Text Story Area -->
+                <div id="story-text-area" class="hidden">
+                    <div id="text-story-preview" class="text-story-preview" style="background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">
+                        <textarea id="story-text-input" placeholder="Bắt đầu nhập..." oninput="updateTextStoryPreview()"></textarea>
+                    </div>
+                    
+                    <div class="bg-selection">
+                        <p>Chọn phông nền</p>
+                        <div class="bg-options">
+                            <div class="bg-opt active" style="background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);" onclick="selectStoryBg(this)"></div>
+                            <div class="bg-opt" style="background: linear-gradient(135deg, #2196F3, #21CBF3);" onclick="selectStoryBg(this)"></div>
+                            <div class="bg-opt" style="background: linear-gradient(135deg, #00b09b, #96c93d);" onclick="selectStoryBg(this)"></div>
+                            <div class="bg-opt" style="background: linear-gradient(135deg, #6a11cb, #2575fc);" onclick="selectStoryBg(this)"></div>
+                            <div class="bg-opt" style="background: #1a1a1a;" onclick="selectStoryBg(this)"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="story-options">
+                    <div class="form-group">
+                        <label>Thời gian hiển thị</label>
+                        <select id="story-duration">
+                            <option value="12">12 giờ</option>
+                            <option value="18">18 giờ</option>
+                            <option value="24" selected>24 giờ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quyền riêng tư</label>
+                        <select id="story-privacy">
+                            <option value="Public">Công khai</option>
+                            <option value="Friends">Bạn bè (Followers)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button id="submit-story-btn" class="btn primary-btn" style="width: 100%; margin-top: 10px;" onclick="submitStory()">Đăng tin ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Viewer Modal -->
+    <div id="story-viewer-modal" class="story-viewer-overlay hidden">
+        <div class="story-viewer-container">
+            <div class="story-viewer-header">
+                <div class="story-progress-container" id="story-progress-bar"></div>
+                <div class="story-user-info">
+                    <img src="" id="story-viewer-avatar" class="mini-avatar">
+                    <span id="story-viewer-name" class="story-viewer-name"></span>
+                    <span id="story-viewer-time" class="story-viewer-time"></span>
+                </div>
+                <button class="story-close" onclick="closeStoryViewer()">&times;</button>
+            </div>
+            <div class="story-viewer-content" id="story-viewer-content">
+                <!-- Image or Video -->
+            </div>
+            <div class="story-nav prev" onclick="prevStory()"><i class="fa-solid fa-chevron-left"></i></div>
+            <div class="story-nav next" onclick="nextStory()"><i class="fa-solid fa-chevron-right"></i></div>
+            
+            <!-- Story Footer -->
+            <div class="story-viewer-footer">
+                <div class="story-reply-container">
+                    <input type="text" id="story-reply-input" placeholder="Gửi tin nhắn..." onfocus="pauseStory()" onblur="resumeStory()">
+                    <button class="story-send-reply" onclick="sendStoryReply()"><i class="fa-regular fa-paper-plane"></i></button>
+                </div>
+                <button class="story-like-btn" id="story-like-btn" onclick="toggleLikeStory()">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+            </div>
+
+            <!-- Author Tools (Visible only to owner) -->
+            <div id="story-author-tools" class="story-author-tools hidden">
+                <div class="story-stats" onclick="openStoryLikesModal()">
+                    <i class="fa-solid fa-eye"></i>
+                    <span id="story-like-count-display">0 người đã tim</span>
+                </div>
+                <button class="story-delete-btn" onclick="deleteCurrentStory()">
+                    <i class="fa-solid fa-trash-can"></i> Xóa tin
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Likes Modal (Bottom Sheet) -->
+    <div id="story-likes-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="bottom-sheet-handle"></div>
+            <div class="modal-header">
+                <h3>Người đã xem & tim</h3>
+                <button class="close-btn" onclick="closeStoryLikesModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="story-likes-list">
+                <!-- List of likers -->
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

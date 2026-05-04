@@ -141,6 +141,9 @@ async function loadUserProfile(userId) {
         document.getElementById('profile-avatar').src = largeAvatar;
         document.getElementById('profile-avatar').onerror = function() { this.src = 'https://via.placeholder.com/150'; };
         
+        // Load and show stories if exist
+        loadAndShowUserStories(userId);
+
         document.getElementById('profile-bio').textContent = profile.bio || 'Chưa có tiểu sử.';
         document.getElementById('follower-count').textContent = profile.followerCount;
         document.getElementById('following-count').textContent = profile.followingCount;
@@ -180,6 +183,38 @@ async function loadUserProfile(userId) {
         document.getElementById('profile-name').textContent = 'Lỗi tải hồ sơ';
         document.getElementById('profile-bio').textContent = 'Có thể người dùng không tồn tại hoặc bạn cần đăng nhập lại.';
         return null;
+    }
+}
+
+async function loadAndShowUserStories(userId) {
+    try {
+        const stories = await window.api.get(`stories/user/${userId}`);
+        if (stories && stories.length > 0) {
+            const avatar = document.getElementById('profile-avatar');
+            const avatarContainer = avatar.parentElement;
+            
+            // Add gradient ring
+            avatarContainer.style.position = 'relative';
+            avatarContainer.style.padding = '4px';
+            avatarContainer.style.background = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
+            avatarContainer.style.borderRadius = '50%';
+            avatarContainer.style.cursor = 'pointer';
+            
+            // Check if viewed
+            const viewed = JSON.parse(localStorage.getItem('zynk_viewed_stories') || '[]');
+            const allViewed = stories.every(s => viewed.includes(s.id));
+            if (allViewed) {
+                avatarContainer.style.background = '#dbdbdb';
+            }
+
+            avatarContainer.onclick = () => {
+                if (window.openStoryViewer) {
+                    window.openStoryViewer(stories);
+                }
+            };
+        }
+    } catch (err) {
+        console.error('Load user stories error:', err);
     }
 }
 
