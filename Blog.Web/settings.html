@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
     <style>
         /* Fix lang dropdown being obscured */
         .main-header { overflow: visible !important; }
@@ -356,6 +357,9 @@
                 <button class="settings-nav-item" onclick="switchTab('language')">
                     <i class="fa-solid fa-globe"></i> <span data-i18n="tab_language">Ngôn ngữ</span>
                 </button>
+                <button class="settings-nav-item" onclick="switchTab('mobile-app')">
+                    <i class="fa-solid fa-mobile-screen-button"></i> <span data-i18n="tab_mobile_app">Ứng dụng di động</span>
+                </button>
                 <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #f3f4f6;">
                 <button class="settings-nav-item" style="color: #dc2626;" onclick="switchTab('danger')">
                     <i class="fa-solid fa-triangle-exclamation"></i> <span data-i18n="tab_danger">Vùng nguy hiểm</span>
@@ -598,6 +602,36 @@
                                 </div>
                             </div>
                             <i class="fa-solid fa-circle-check lang-check hidden" id="lang-check-ja"></i>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Mobile App Section -->
+                <section id="section-mobile-app" class="settings-section">
+                    <h2 class="section-title" data-i18n="mobile_app_title">Ứng dụng di động</h2>
+                    <p class="section-desc" data-i18n="mobile_app_desc">Cài đặt Zynk trực tiếp lên điện thoại của bạn để có trải nghiệm tốt nhất.</p>
+
+                    <div class="theme-card" id="pwa-install-container" style="display: none;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;" data-i18n="install_zynk">Cài đặt Zynk</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="install_zynk_desc">Sử dụng Zynk như một ứng dụng gốc trên màn hình chính của bạn.</div>
+                        </div>
+                        <button class="btn primary-btn" id="pwa-install-btn" style="width: auto;">
+                            <i class="fa-solid fa-download" style="margin-right: 8px;"></i> Cài đặt ngay
+                        </button>
+                    </div>
+
+                    <div id="pwa-installed-msg" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 1.5rem; border-radius: 12px; text-align: center; color: #166534;">
+                        <i class="fa-solid fa-circle-check" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                        <span style="font-weight: 600;">Bạn đã cài đặt Zynk!</span>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Hãy mở Zynk từ màn hình chính để tận hưởng trải nghiệm mượt mà nhất.</p>
+                    </div>
+
+                    <div id="pwa-unavailable-msg" style="background: #fff; border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 12px; margin-top: 1rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Hướng dẫn cài đặt thủ công</h4>
+                        <div style="font-size: 0.9rem; color: #4b5563;">
+                            <p style="margin-bottom: 0.8rem;"><i class="fa-brands fa-apple" style="margin-right: 8px;"></i> <strong>iOS (iPhone/iPad):</strong> Nhấn nút <strong>Chia sẻ (Share)</strong> trên Safari và chọn <strong>Thêm vào MH chính (Add to Home Screen)</strong>.</p>
+                            <p><i class="fa-brands fa-android" style="margin-right: 8px;"></i> <strong>Android:</strong> Nhấn vào biểu tượng <strong>Ba chấm</strong> trên trình duyệt và chọn <strong>Cài đặt ứng dụng</strong> hoặc <strong>Thêm vào màn hình chính</strong>.</p>
                         </div>
                     </div>
                 </section>

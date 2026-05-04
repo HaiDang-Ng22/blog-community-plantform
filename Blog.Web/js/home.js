@@ -56,10 +56,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Handle deep-linking from notifications (URL param ?postId=...)
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('postId');
-    if (postId && window.openPostModal) {
+    if (postId && window.common && window.common.openPostModalByPostId) {
         // Wait a bit for the page to be ready
         setTimeout(() => {
-            window.openPostModal(postId);
+            window.common.openPostModalByPostId(postId);
         }, 500);
     }
 });

@@ -117,7 +117,61 @@
     <script src="js/common.js?v=2.2"></script>
     <script src="js/post-actions.js?v=1.3"></script>
     <script src="js/notifications.js?v=1.1"></script>
+    <script src="js/stories.js?v=2.2"></script>
     <script src="js/profile.js?v=2.2"></script>
+
+    <!-- Story Viewer Modal -->
+    <div id="story-viewer-modal" class="story-viewer-overlay hidden">
+        <div class="story-viewer-container">
+            <div class="story-viewer-header">
+                <div class="story-progress-container" id="story-progress-bar"></div>
+                <div class="story-user-info">
+                    <img src="" id="story-viewer-avatar" class="mini-avatar">
+                    <span id="story-viewer-name" class="story-viewer-name"></span>
+                    <span id="story-viewer-time" class="story-viewer-time"></span>
+                </div>
+                <button class="story-close" onclick="closeStoryViewer()">&times;</button>
+            </div>
+            <div class="story-viewer-content" id="story-viewer-content">
+                <!-- Image or Video -->
+            </div>
+            <div class="story-nav prev" onclick="prevStory()"><i class="fa-solid fa-chevron-left"></i></div>
+            <div class="story-nav next" onclick="nextStory()"><i class="fa-solid fa-chevron-right"></i></div>
+            
+            <div class="story-viewer-footer">
+                <div class="story-reply-container">
+                    <input type="text" id="story-reply-input" placeholder="Gửi tin nhắn..." onfocus="pauseStory()" onblur="resumeStory()">
+                    <button class="story-send-reply" onclick="sendStoryReply()"><i class="fa-regular fa-paper-plane"></i></button>
+                </div>
+                <button class="story-like-btn" id="story-like-btn" onclick="toggleLikeStory()">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+            </div>
+
+            <div id="story-author-tools" class="story-author-tools hidden">
+                <div class="story-stats" onclick="openStoryLikesModal()">
+                    <i class="fa-solid fa-eye"></i>
+                    <span id="story-like-count-display">0 người đã tim</span>
+                </div>
+                <button class="story-delete-btn" onclick="deleteCurrentStory()">
+                    <i class="fa-solid fa-trash-can"></i> Xóa tin
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Likes Modal (Bottom Sheet) -->
+    <div id="story-likes-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="bottom-sheet-handle"></div>
+            <div class="modal-header">
+                <h3>Người đã xem & tim</h3>
+                <button class="close-btn" onclick="closeStoryLikesModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="story-likes-list">
+            </div>
+        </div>
+    </div>
 
     <!-- User List Modal -->
     <div id="user-list-modal" class="modal-overlay hidden">

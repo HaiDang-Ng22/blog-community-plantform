@@ -3,6 +3,7 @@ using System;
 using Blog.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blog.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503082639_UpdateMessageFeaturesFinal")]
+    partial class UpdateMessageFeaturesFinal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -764,77 +767,6 @@ namespace Blog.Infrastructure.Migrations
                     b.ToTable("ShopApplications");
                 });
 
-            modelBuilder.Entity("Blog.Domain.Entities.Story", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Background")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("MediaType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("MediaUrl")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Privacy")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Stories");
-                });
-
-            modelBuilder.Entity("Blog.Domain.Entities.StoryLike", b =>
-                {
-                    b.Property<Guid>("StoryId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("StoryId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("StoryLikes");
-                });
-
-            modelBuilder.Entity("Blog.Domain.Entities.StoryView", b =>
-                {
-                    b.Property<Guid>("StoryId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("ViewedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("StoryId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("StoryViews");
-                });
-
             modelBuilder.Entity("Blog.Domain.Entities.Tag", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1314,55 +1246,6 @@ namespace Blog.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Blog.Domain.Entities.Story", b =>
-                {
-                    b.HasOne("Blog.Domain.Entities.User", "User")
-                        .WithMany("Stories")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Blog.Domain.Entities.StoryLike", b =>
-                {
-                    b.HasOne("Blog.Domain.Entities.Story", "Story")
-                        .WithMany("StoryLikes")
-                        .HasForeignKey("StoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Blog.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Story");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Blog.Domain.Entities.StoryView", b =>
-                {
-                    b.HasOne("Blog.Domain.Entities.Story", "Story")
-                        .WithMany("StoryViews")
-                        .HasForeignKey("StoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Blog.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Story");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Blog.Domain.Entities.UserAddress", b =>
                 {
                     b.HasOne("Blog.Domain.Entities.User", "User")
@@ -1424,13 +1307,6 @@ namespace Blog.Infrastructure.Migrations
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("Blog.Domain.Entities.Story", b =>
-                {
-                    b.Navigation("StoryLikes");
-
-                    b.Navigation("StoryViews");
-                });
-
             modelBuilder.Entity("Blog.Domain.Entities.Tag", b =>
                 {
                     b.Navigation("PostTags");
@@ -1451,8 +1327,6 @@ namespace Blog.Infrastructure.Migrations
                     b.Navigation("Posts");
 
                     b.Navigation("ReceivedNotifications");
-
-                    b.Navigation("Stories");
                 });
 #pragma warning restore 612, 618
         }

@@ -46,6 +46,32 @@ async function checkSellerStatus() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.error('Service Worker registration failed', err));
+        });
+    }
+
+    // Capture PWA Installation Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        window.deferredPrompt = e;
+        
+        // Custom event to notify settings page or other components
+        window.dispatchEvent(new CustomEvent('pwaPromptAvailable'));
+    });
+
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        window.deferredPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwaInstalled'));
+    });
+
     // Global theme initialization
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
@@ -1033,6 +1059,9 @@ function createPostCard(post) {
                         <button onclick="window.postActions.toggleComments('${postId}', this.closest('.zynk-post-card'))">
                             <i class="fa-regular fa-comment"></i>
                         </button>
+                        <button onclick="window.common.openShareModal('${postId}')" style="margin-left:auto;">
+                            <i class="fa-regular fa-paper-plane"></i>
+                        </button>
                     </div>
                     <div class="zynk-stats">${likeCount > 0 ? likeCount + ' lượt thích' : ''}</div>
                 </div>
@@ -1074,7 +1103,7 @@ function createPostCard(post) {
                 <button onclick="window.postActions.toggleComments('${postId}', this.closest('.zynk-post-card'))">
                     <i class="fa-regular fa-comment"></i>
                 </button>
-                <button onclick="navigator.share ? navigator.share({url: location.href + '#post-${postId}'}) : null" style="margin-left:auto;">
+                <button onclick="window.common.openShareModal('${postId}')" style="margin-left:auto;">
                     <i class="fa-regular fa-paper-plane"></i>
                 </button>
             </div>
@@ -1107,6 +1136,122 @@ function toggleMenu(btn) {
     setTimeout(() => document.addEventListener('click', close), 10);
 }
 
+window.openShareModal = async function(postId) {
+    let modal = document.getElementById('share-post-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'share-post-modal';
+        modal.className = 'share-modal-overlay hidden';
+        modal.innerHTML = `
+            <style>
+            .share-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+            .share-modal-overlay.hidden { display: none !important; }
+            .share-modal-box { background: var(--bg-primary, #fff); border-radius: 16px; width: 400px; max-width: 90%; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+            .share-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #efefef); }
+            .share-modal-header h3 { font-size: 1rem; font-weight: 700; margin: 0; color: var(--text-primary, #262626); }
+            .share-modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary, #8e8e8e); line-height: 1; }
+            .share-modal-body { overflow-y: auto; padding: 8px 0; }
+            .share-user-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; cursor: pointer; transition: background 0.15s; }
+            .share-user-item:hover { background: var(--bg-secondary, #f5f5f5); }
+            .share-user-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+            .share-user-info { flex: 1; min-width: 0; }
+            .share-user-name { font-size: 0.95rem; font-weight: 600; color: var(--text-primary, #262626); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .share-user-username { font-size: 0.8rem; color: var(--text-secondary, #8e8e8e); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .share-send-btn { background: #0095f6; color: #fff; border: none; padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: background 0.15s; }
+            .share-send-btn:hover { background: #0081d6; }
+            .dark-mode .share-modal-box { background: #1a1a2e; }
+            .dark-mode .share-modal-header { border-bottom-color: #333; }
+            .dark-mode .share-user-item:hover { background: #16213e; }
+            .dark-mode .share-user-name { color: #fff; }
+            </style>
+            <div class="share-modal-box">
+                <div class="share-modal-header">
+                    <h3>Gửi bài viết đến...</h3>
+                    <button class="share-modal-close" onclick="document.getElementById('share-post-modal').classList.add('hidden')">&times;</button>
+                </div>
+                <div class="share-modal-body" id="share-friends-list">
+                    <div style="text-align:center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    modal.classList.remove('hidden');
+    modal.dataset.postId = postId;
+
+    const list = document.getElementById('share-friends-list');
+    list.innerHTML = '<div style="text-align:center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+
+    try {
+        const token = localStorage.getItem('auth_token');
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const myId = userInfo.id || userInfo.Id;
+
+        // Lấy danh sách đang theo dõi
+        let res = await fetch(`${API_BASE_URL}/users/${myId}/following`, { headers: { 'Authorization': 'Bearer ' + token } });
+        let usersToShare = [];
+        if (res.ok) {
+            usersToShare = await res.json();
+        }
+
+        // Nếu chưa theo dõi ai, lấy gợi ý
+        if (usersToShare.length === 0) {
+            let resSug = await fetch(`${API_BASE_URL}/users/suggested`, { headers: { 'Authorization': 'Bearer ' + token } });
+            if (resSug.ok) {
+                usersToShare = await resSug.json();
+            }
+        }
+
+        if (usersToShare.length === 0) {
+            list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);"><p>Không tìm thấy người dùng nào để gửi.</p></div>';
+            return;
+        }
+
+        // Lọc trùng lặp
+        const uniqueUsers = Array.from(new Map(usersToShare.map(item => [item.id || item.Id, item])).values());
+
+        list.innerHTML = uniqueUsers.map(u => `
+            <div class="share-user-item" onclick="window.common.sendSharedPost('${u.id || u.Id}')">
+                <img class="share-user-avatar" src="${u.avatarUrl || u.AvatarUrl || 'https://ui-avatars.com/api/?name=U'}" alt="Avatar">
+                <div class="share-user-info">
+                    <div class="share-user-name">${u.fullName || u.FullName || 'Người dùng'}</div>
+                    <div class="share-user-username">@${u.username || u.Username || 'user'}</div>
+                </div>
+                <button class="share-send-btn">Gửi</button>
+            </div>
+        `).join('');
+    } catch(e) {
+        list.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;"><p>Lỗi tải danh sách</p></div>';
+    }
+}
+
+window.sendSharedPost = async function(userId) {
+    const modal = document.getElementById('share-post-modal');
+    const postId = modal.dataset.postId;
+    try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API_BASE_URL}/messages/send`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                recipientId: userId,
+                sharedPostId: postId
+            })
+        });
+        if (res.ok) {
+            alert('Đã chia sẻ bài viết!');
+            modal.classList.add('hidden');
+        } else {
+            alert('Lỗi: Có thể bạn đã bị chặn hoặc không thể gửi tin nhắn.');
+        }
+    } catch(e) {
+        alert('Lỗi gửi tin nhắn');
+    }
+}
+
 function scrollCarousel(btn, dir) {
     const carousel = btn.parentElement.querySelector('.zynk-carousel');
     if (carousel) {
@@ -1134,7 +1279,9 @@ window.common = {
     requireAuth,
     autoLink,
     toggleReadMore,
-    openPostModalByPostId
+    openPostModalByPostId,
+    openShareModal: window.openShareModal,
+    sendSharedPost: window.sendSharedPost
 };
 
 // Global shortcuts

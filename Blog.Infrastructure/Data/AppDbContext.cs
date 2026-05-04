@@ -25,6 +25,8 @@ public class AppDbContext : DbContext
     // Chat Entities
     public DbSet<Conversation> Conversations { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<StoryLike> StoryLikes { get; set; }
+    public DbSet<StoryView> StoryViews { get; set; }
 
     // Shopping Entities
     public DbSet<Category> Categories { get; set; }
@@ -37,6 +39,7 @@ public class AppDbContext : DbContext
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<ProductReview> ProductReviews { get; set; }
     public DbSet<ProductReviewImage> ProductReviewImages { get; set; }
+    public DbSet<Story> Stories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -272,6 +275,57 @@ public class AppDbContext : DbContext
             .HasOne(m => m.Sender)
             .WithMany()
             .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.ReplyToMessage)
+            .WithMany()
+            .HasForeignKey(m => m.ReplyToMessageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.SharedPost)
+            .WithMany()
+            .HasForeignKey(m => m.SharedPostId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Cấu hình Story
+        modelBuilder.Entity<Story>()
+            .HasOne(s => s.User)
+            .WithMany(u => u.Stories)
+            .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Cấu hình StoryLike
+        modelBuilder.Entity<StoryLike>()
+            .HasKey(sl => new { sl.StoryId, sl.UserId });
+
+        modelBuilder.Entity<StoryLike>()
+            .HasOne(sl => sl.Story)
+            .WithMany(s => s.StoryLikes)
+            .HasForeignKey(sl => sl.StoryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<StoryLike>()
+            .HasOne(sl => sl.User)
+            .WithMany()
+            .HasForeignKey(sl => sl.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Cấu hình StoryView
+        modelBuilder.Entity<StoryView>()
+            .HasKey(sv => new { sv.StoryId, sv.UserId });
+
+        modelBuilder.Entity<StoryView>()
+            .HasOne(sv => sv.Story)
+            .WithMany(s => s.StoryViews)
+            .HasForeignKey(sv => sv.StoryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<StoryView>()
+            .HasOne(sv => sv.User)
+            .WithMany()
+            .HasForeignKey(sv => sv.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // --- Global DateTime UTC Converter ---

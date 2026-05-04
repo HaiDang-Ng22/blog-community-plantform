@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCurrentSettings();
     await loadBlockedUsers();
     await updateMarketplaceTabUI();
+    initPWAInstallation();
 
     // Profile Form
     const profileForm = document.getElementById('settings-form');
@@ -534,4 +535,57 @@ async function unblockUser(userId, btn) {
         btn.innerHTML = originalHtml;
         showStatus('Lỗi khi bỏ chặn: ' + err.message, 'error');
     }
+}
+
+function initPWAInstallation() {
+    const installContainer = document.getElementById('pwa-install-container');
+    const installBtn = document.getElementById('pwa-install-btn');
+    const installedMsg = document.getElementById('pwa-installed-msg');
+    const unavailableMsg = document.getElementById('pwa-unavailable-msg');
+
+    if (!installContainer || !installBtn) return;
+
+    const updateUI = () => {
+        if (window.deferredPrompt) {
+            installContainer.style.display = 'flex';
+            unavailableMsg.style.display = 'none';
+            installedMsg.style.display = 'none';
+        } else if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            installContainer.style.display = 'none';
+            unavailableMsg.style.display = 'none';
+            installedMsg.style.display = 'block';
+        } else {
+            // If prompt is not available and not installed, show manual instructions for some browsers
+            installContainer.style.display = 'none';
+            unavailableMsg.style.display = 'block';
+            installedMsg.style.display = 'none';
+        }
+    };
+
+    // Initial check
+    updateUI();
+
+    // Listen for the custom event from common.js
+    window.addEventListener('pwaPromptAvailable', () => {
+        updateUI();
+    });
+
+    window.addEventListener('pwaInstalled', () => {
+        updateUI();
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (!window.deferredPrompt) return;
+
+        // Show the install prompt
+        window.deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await window.deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+
+        // We've used the prompt, and can't use it again, throw it away
+        window.deferredPrompt = null;
+        updateUI();
+    });
 }
