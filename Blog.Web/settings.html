@@ -503,11 +503,21 @@
                     <h2 class="section-title" data-i18n="settings_notifications_title">Thông báo</h2>
                     <p class="section-desc" data-i18n="notifications_desc">Cấu hình cách bạn nhận thông báo từ hệ thống.</p>
 
+                    <div class="theme-card" id="push-activation-card" style="background: #eff6ff; border-color: #bfdbfe;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #1e40af;">Kích hoạt Thông báo trình duyệt</div>
+                            <div style="font-size: 0.85rem; color: #1e40af; opacity: 0.8;">Nếu bạn chưa nhận được thông báo, hãy nhấn nút này để đăng ký với máy chủ.</div>
+                            <div id="push-status-text" style="font-size: 0.75rem; margin-top: 4px; font-weight: bold;"></div>
+                        </div>
+                        <button class="btn primary-btn" id="enable-push-btn" onclick="manualEnablePush()" style="width: auto; background: #2563eb;">
+                            Kích hoạt ngay
+                        </button>
+                    </div>
+
                     <div class="theme-card">
                         <div>
                             <div style="font-weight: 600;" data-i18n="push_notification">Thông báo đẩy (Web Push)</div>
-                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="push_notification_desc">Nhận thông báo trực tiếp trên web hoặc điện
-                                thoại.</div>
+                            <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="push_notification_desc">Nhận thông báo trực tiếp trên web hoặc điện thoại.</div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="push-notification-toggle" checked

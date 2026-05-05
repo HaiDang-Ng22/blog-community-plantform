@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadBlockedUsers();
     await updateMarketplaceTabUI();
     initPWAInstallation();
+    initNotificationSettings();
 
     // Profile Form
     const profileForm = document.getElementById('settings-form');
@@ -589,3 +590,67 @@ function initPWAInstallation() {
         updateUI();
     });
 }
+
+// =============================================
+// NOTIFICATION SETTINGS
+// =============================================
+async function initNotificationSettings() {
+    const card = document.getElementById('push-activation-card');
+    const statusText = document.getElementById('push-status-text');
+    const btn = document.getElementById('enable-push-btn');
+    if (!card || !statusText || !btn) return;
+
+    const permission = Notification.permission;
+    
+    if (permission === 'granted') {
+        statusText.textContent = "✓ Trạng thái: Đã kích hoạt";
+        statusText.style.color = "#166534";
+        btn.textContent = "Đã bật";
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        card.style.background = "#f0fdf4";
+        card.style.borderColor = "#bbf7d0";
+    } else if (permission === 'denied') {
+        statusText.textContent = "✕ Trạng thái: Đã bị chặn bởi trình duyệt";
+        statusText.style.color = "#991b1b";
+        btn.textContent = "Bị chặn";
+        btn.disabled = true;
+        card.style.background = "#fef2f2";
+        card.style.borderColor = "#fee2e2";
+    } else {
+        statusText.textContent = "● Trạng thái: Chưa kích hoạt";
+        statusText.style.color = "#92400e";
+    }
+}
+
+async function manualEnablePush() {
+    const btn = document.getElementById('enable-push-btn');
+    const statusText = document.getElementById('push-status-text');
+    if (!btn) return;
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Đang xử lý...';
+
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        const success = await window.initNotifications(reg);
+        
+        if (success) {
+            showStatus('Kích hoạt thông báo thành công!', 'success');
+            initNotificationSettings();
+        } else {
+            showStatus('Bạn đã từ chối cấp quyền thông báo.', 'error');
+            initNotificationSettings();
+        }
+    } catch (err) {
+        console.error("Manual push enable failed:", err);
+        showStatus('Lỗi: ' + err.message, 'error');
+    } finally {
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+}
+window.manualEnablePush = manualEnablePush;
