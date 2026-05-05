@@ -61,36 +61,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const VAPID_PUBLIC_KEY = 'BDkz2X8tYJlC9LMhpRWlAe10DmBQPSdoYJgyo-q9pxlsx_wGioY_mYl6AOilHSuEAqxUTF6_hLcvCzFgCPTUsgw';
+    window.VAPID_PUBLIC_KEY = 'BDkz2X8tYJlC9LMhpRWlAe10DmBQPSdoYJgyo-q9pxlsx_wGioY_mYl6AOilHSuEAqxUTF6_hLcvCzFgCPTUsgw';
 
-    async function initNotifications(reg) {
+    window.initNotifications = async function(reg) {
         if (!('Notification' in window)) return;
         
-        if (Notification.permission === 'default') {
-            // Chỉ hiện popup nếu trình duyệt chưa từng hỏi
-            console.log("Asking for notification permission...");
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                subscribeUser(reg);
-            }
-        } else if (Notification.permission === 'granted') {
-            // Đã cấp quyền, đảm bảo đã subscribe trên server
-            subscribeUser(reg);
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            await window.subscribeUser(reg);
+            return true;
         }
+        return false;
     }
 
-    async function subscribeUser(reg) {
+    window.subscribeUser = async function(reg) {
         try {
             let subscription = await reg.pushManager.getSubscription();
             if (!subscription) {
-                console.log("Creating new push subscription...");
                 subscription = await reg.pushManager.subscribe({
                     userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                    applicationServerKey: urlBase64ToUint8Array(window.VAPID_PUBLIC_KEY)
                 });
             }
 
-            // Gửi subscription lên server
             const token = localStorage.getItem('auth_token');
             await fetch(API_BASE_URL + '/push/subscribe', {
                 method: 'POST',
@@ -101,8 +94,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify(subscription)
             });
             console.log("Push subscription synchronized with server.");
+            return true;
         } catch (err) {
             console.error("Failed to subscribe to push notifications:", err);
+            throw err;
         }
     }
 
