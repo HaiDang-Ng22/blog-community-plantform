@@ -536,6 +536,416 @@
         body.dark-mode .modal-content {
             background: rgba(30, 41, 59, 0.95);
         }
+
+        /* =========================================
+           TREE BRANCHING UI STYLES (COMPACT MINDMAP)
+        ========================================= */
+        .tree-container {
+            width: 100%;
+            overflow: auto;
+            padding: 50px;
+            background: var(--card-bg, #f8fafc);
+            border-radius: 20px;
+            min-height: 600px;
+            position: relative;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            border: 1px solid var(--border-color, #e2e8f0);
+            cursor: grab;
+        }
+
+        .tree-container:active { cursor: grabbing; }
+
+        #tree-svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .tree-curve {
+            fill: none;
+            stroke: #cbd5e1;
+            stroke-width: 2;
+            stroke-linecap: round;
+            transition: all 0.3s;
+            opacity: 0.8;
+        }
+
+        .tree-curve.active {
+            stroke: #6366f1;
+            stroke-width: 3;
+            opacity: 1;
+            filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.3));
+        }
+
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-top: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .search-result-item:hover {
+            background: #f8fafc;
+        }
+
+        .search-result-item i {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .search-result-info {
+            flex: 1;
+        }
+
+        .search-result-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .search-result-path {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        body.dark-mode .search-results-dropdown {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        
+        body.dark-mode .search-result-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* Folder Grid Styles */
+        .cat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .cat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cat-card:hover {
+            transform: translateY(-4px);
+            border-color: #6366f1;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .cat-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .cat-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #f5f3ff;
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .cat-card-actions {
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1rem;
+            margin-top: auto;
+        }
+
+        .breadcrumb-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            background: rgba(99, 102, 241, 0.05);
+            padding: 10px 20px;
+            border-radius: 12px;
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item:hover {
+            color: #6366f1;
+        }
+
+        .breadcrumb-item.active {
+            font-weight: 700;
+            color: var(--text-primary);
+            pointer-events: none;
+        }
+
+        /* =========================================
+           TREE BRANCHING UI STYLES (VERTICAL COMPACT)
+        ========================================= */
+        .tree-container {
+            width: 100%;
+            overflow: auto;
+            padding: 40px;
+            background: var(--card-bg, #f8fafc);
+            border-radius: 20px;
+            min-height: 600px;
+            position: relative;
+            display: flex;
+            justify-content: center; /* Center the tree */
+            align-items: flex-start;
+            border: 1px solid var(--border-color, #e2e8f0);
+            cursor: grab;
+        }
+
+        .tree-container:active { cursor: grabbing; }
+
+        #tree-svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .tree-curve {
+            fill: none;
+            stroke: #cbd5e1;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            transition: all 0.3s;
+            opacity: 0.6;
+        }
+
+        .tree-curve.active {
+            stroke: #6366f1;
+            stroke-width: 2.5;
+            opacity: 1;
+            filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.3));
+        }
+
+        .tree-root-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 50px;
+            position: relative;
+            z-index: 2;
+            width: fit-content;
+        }
+
+        .tree-node-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 50px;
+            position: relative;
+        }
+
+        .tree-node {
+            width: 100px;
+            background: white;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 10px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .tree-node:hover {
+            transform: translateY(-2px);
+            border-color: #6366f1;
+            box-shadow: 0 6px 12px rgba(99, 102, 241, 0.1);
+        }
+
+        .tree-node-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .tree-node-name {
+            font-weight: 700;
+            font-size: 0.72rem;
+            color: var(--text-primary);
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tree-node-meta {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+        }
+
+        /* Node Actions (Mini) */
+        .node-actions-pill {
+            position: absolute;
+            top: -8px;
+            right: -15px;
+            background: white;
+            padding: 2px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: 0.2s;
+            z-index: 10;
+            border: 1px solid #f1f5f9;
+        }
+
+        .tree-node:hover .node-actions-pill {
+            opacity: 1;
+        }
+
+        .tree-sub-items {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow nodes to wrap into rows */
+            max-width: 900px; /* Limit width to keep it on screen */
+            gap: 12px;
+            position: relative;
+        }
+
+        .tree-root-container, .tree-node-group {
+            gap: 30px;
+        }
+
+        body.dark-mode .tree-node {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .node-actions-pill {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .tree-curve {
+            stroke: #475569;
+        }
+
+        .action-btn-sm {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .action-btn-sm.add { background: #10b981; color: white; }
+        .action-btn-sm.edit { background: #6366f1; color: white; }
+        .action-btn-sm.delete { background: #ef4444; color: white; }
+        .action-btn-sm:hover { transform: scale(1.1); filter: brightness(1.1); }
+
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        /* Empty state */
+        .tree-empty {
+            width: 100%;
+            text-align: center;
+            padding: 50px;
+            color: var(--text-secondary);
+        }
+
+        body.dark-mode .tree-node {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .node-actions-pill {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-mode .tree-curve {
+            stroke: #334155;
+        }
+
+        /* Skill tree style glow on hover */
+        .tree-node:hover .tree-node-icon {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
     </style>
 </head>
 
@@ -543,9 +953,9 @@
     <header class="main-header">
         <nav class="nav-container container-wide">
             <div class="logo">
-                <a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                <a href="admin.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
                     <div class="zynk-logo-clean logo-header"></div>
-                    <span style="font-size: 0.6em; background: #ef4444; color: white; padding: 2px 8px; border-radius: 6px; font-weight: 800;">ADMIN</span>
+                    <span style="font-size: 0.6em; background: #6366f1; color: white; padding: 2px 8px; border-radius: 6px; font-weight: 800;">ADMIN</span>
                 </a>
             </div>
             <div class="nav-actions" id="nav-actions"></div>
@@ -557,7 +967,10 @@
             <aside class="admin-sidebar">
                 <div class="admin-card">
                     <div class="admin-nav">
-                        <button class="admin-nav-item active" onclick="switchAdminTab('users')">
+                        <button class="admin-nav-item active" onclick="switchAdminTab('dashboard')">
+                            <i class="fa-solid fa-chart-pie"></i> <span data-i18n="dashboard">Tổng quan (Dashboard)</span>
+                        </button>
+                        <button class="admin-nav-item" onclick="switchAdminTab('users')">
                             <i class="fa-solid fa-users"></i> <span data-i18n="manage_users">Quản lý Người dùng</span>
                         </button>
                         <button class="admin-nav-item" onclick="switchAdminTab('reports')">
@@ -571,16 +984,85 @@
                             <i class="fa-solid fa-layer-group"></i> <span data-i18n="manage_categories">Quản lý Danh mục</span>
                         </button>
                         <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid var(--border-color);">
-                        <a href="index.html" class="admin-nav-item">
-                            <i class="fa-solid fa-arrow-left"></i> <span data-i18n="back_home">Quay lại Home</span>
-                        </a>
+                        <button class="admin-nav-item" onclick="logout(event)" style="color: #ef4444; border: none; background: none; width: 100%; text-align: left; cursor: pointer;">
+                            <i class="fa-solid fa-right-from-bracket"></i> <span>Đăng xuất</span>
+                        </button>
                     </div>
                 </div>
             </aside>
 
             <div class="admin-content">
+                <!-- Dashboard Section -->
+                <section id="section-dashboard" class="admin-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div>
+                            <h2 style="font-size: 1.5rem; font-weight: 700;">Tổng quan hệ thống</h2>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">Thống kê hoạt động thời gian thực</p>
+                        </div>
+                        <button class="btn secondary-btn" onclick="loadAdminStats()" style="width: auto; margin: 0;"><i class="fa-solid fa-rotate"></i> Cập nhật</button>
+                    </div>
+
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Tổng Người Dùng</div>
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);" id="stat-total-users">-</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <i class="fa-solid fa-shop"></i>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Cửa Hàng</div>
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);" id="stat-active-shops">-</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Đơn Mới Hôm Nay</div>
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);" id="stat-daily-orders">-</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Báo Cáo Chờ</div>
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);" id="stat-pending-reports">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem;">
+                        <div class="admin-card">
+                            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-chart-line"></i> Biểu đồ giao dịch</h3>
+                            <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+                                <div style="text-align: center; color: var(--text-secondary);">
+                                    <i class="fa-solid fa-chart-simple fa-3x" style="opacity: 0.3; margin-bottom: 1rem;"></i>
+                                    <p>Module biểu đồ (Chart.js) sẽ sớm được tích hợp</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-card">
+                            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-trophy"></i> Top Cửa Hàng</h3>
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <!-- Will be rendered via JS -->
+                                <p style="text-align: center; color: var(--text-secondary);">Đang tải dữ liệu...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Users Section -->
-                <section id="section-users" class="admin-section">
+                <section id="section-users" class="admin-section hidden">
                     <div class="admin-card">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -694,23 +1176,32 @@
                 <section id="section-categories" class="admin-section hidden">
                     <div class="admin-card">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <div>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 20px;">
+                            <div style="flex: 1;">
                                 <h2 style="font-size: 1.5rem; font-weight: 700;" data-i18n="manage_categories">Quản lý Danh mục Shop</h2>
-                                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;" data-i18n="categories_desc_admin">Bấm vào danh
-                                    mục để xem các mục con bên trong</p>
+                                <div class="search-box" style="margin-top: 12px; position: relative; max-width: 400px;">
+                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                                    <input type="text" id="category-search-input" class="form-control" 
+                                           style="padding-left: 40px; border-radius: 12px;"
+                                           placeholder="Tìm kiếm danh mục..." oninput="handleCategorySearch(this.value)">
+                                    <div id="category-search-results" class="search-results-dropdown hidden"></div>
+                                </div>
                             </div>
                             <button class="btn primary-btn" onclick="openCategoryModal()"
                                 style="width: auto; margin: 0; padding: 0.6rem 1.2rem;">
                                 <i class="fa-solid fa-plus"></i> <span data-i18n="add_category">Thêm Danh mục</span>
                             </button>
                         </div>
-                        <!-- Folder Drill-Down View -->
+                        
+                        <!-- Folder View (Main) -->
                         <div id="categories-folder-view">
-                            <div class="cat-empty">
-                                <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#6366f1;"></i>
-                                <p style="margin-top:1rem; color:var(--text-secondary);" data-i18n="loading">Đang tải...</p>
-                            </div>
+                            <!-- JS will inject grid here -->
+                        </div>
+
+                        <!-- Tree Visualization View (Drill-down) -->
+                        <div id="categories-tree-view" class="tree-container hidden">
+                            <svg id="tree-svg-layer"></svg>
+                            <div class="tree-root-container" id="tree-root-nodes"></div>
                         </div>
                     </div>
                 </section>

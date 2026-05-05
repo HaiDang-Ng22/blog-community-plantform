@@ -11,7 +11,7 @@ using Blog.API.Extensions;
 namespace Blog.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/admin")]
 [Authorize(Roles = "Admin")]
 public class AdminController : ControllerBase
 {
@@ -22,10 +22,111 @@ public class AdminController : ControllerBase
         _context = context;
     }
 
+    [HttpPost("cleanup-social-data")]
+    public async Task<IActionResult> CleanupSocialData()
+    {
+        return await PerformCleanup();
+    }
+
+    [HttpGet("ping")]
+    public IActionResult Ping() => Ok(new { message = "Admin Controller is active - v4" });
+
+    [HttpGet("cleanup-now")]
+    public async Task<IActionResult> CleanupNow()
+    {
+        return await PerformCleanup();
+    }
+
+    private async Task<IActionResult> PerformCleanup()
+    {
+        var adminId = User.GetUserId();
+        if (adminId == null) return Unauthorized();
+
+        var id = adminId.Value;
+
+        // 1. Delete all posts by this admin
+        var posts = await _context.Posts.Where(p => p.AuthorId == id).ToListAsync();
+        _context.Posts.RemoveRange(posts);
+
+        // 2. Delete all follows involving this admin
+        var follows = await _context.Follows
+            .Where(f => f.FollowerId == id || f.FollowingId == id)
+            .ToListAsync();
+        _context.Follows.RemoveRange(follows);
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Dữ liệu Social của Admin đã được dọn dẹp sạch sẽ." });
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats()
+    {
+        var totalUsers = await _context.Users.CountAsync();
+        var activeShops = await _context.Shops.CountAsync(s => !s.IsSuspended);
+        
+        var today = DateTime.UtcNow.Date;
+        var dailyOrders = await _context.Orders
+            .CountAsync(o => o.CreatedAt >= today);
+            
+        var pendingReports = await _context.Reports.CountAsync(r => !r.IsResolved);
+        var pendingShops = await _context.ShopApplications.CountAsync(s => s.Status == ShopApplicationStatus.Pending);
+
+        // Revenue per shop (top 5)
+        var topShops = await _context.OrderItems
+            .Include(oi => oi.Product)
+                .ThenInclude(p => p.Shop)
+            .GroupBy(oi => new { oi.Product.ShopId, oi.Product.Shop.Name })
+            .Select(g => new
+            {
+                ShopId = g.Key.ShopId,
+                ShopName = g.Key.Name,
+                OrderCount = g.Count(),
+                TotalRevenue = g.Sum(oi => oi.UnitPrice * oi.Quantity)
+            })
+            .OrderByDescending(x => x.TotalRevenue)
+            .Take(5)
+            .ToListAsync();
+
+        // Chart Data: Revenue last 7 days (Generate all 7 days even if 0)
+        var last7Days = Enumerable.Range(0, 7)
+            .Select(i => DateTime.UtcNow.Date.AddDays(-i))
+            .OrderBy(d => d)
+            .ToList();
+
+        var dailyStatsRaw = await _context.OrderItems
+            .Include(oi => oi.Order)
+            .Where(oi => oi.Order.CreatedAt >= last7Days.First())
+            .GroupBy(oi => oi.Order.CreatedAt.Date)
+            .Select(g => new
+            {
+                Date = g.Key,
+                Revenue = g.Sum(oi => oi.UnitPrice * oi.Quantity)
+            })
+            .ToListAsync();
+
+        var dailyStats = last7Days.Select(date => new
+        {
+            Date = date.ToString("dd/MM"),
+            Revenue = dailyStatsRaw.FirstOrDefault(d => d.Date == date)?.Revenue ?? 0
+        });
+
+        return Ok(new
+        {
+            totalUsers,
+            activeShops,
+            dailyOrders,
+            pendingReports,
+            pendingShops,
+            topShops,
+            dailyStats
+        });
+    }
+
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers()
     {
         var users = await _context.Users
+            .Where(u => u.Role.ToLower() != "admin")
             .Select(u => new
             {
                 u.Id,
@@ -33,6 +134,7 @@ public class AdminController : ControllerBase
                 u.Email,
                 u.FullName,
                 u.Role,
+                u.AvatarUrl,
                 u.CreatedAt,
                 PostCount = u.Posts.Count
             })
@@ -109,73 +211,80 @@ public class AdminController : ControllerBase
         });
     }
 
-    [HttpDelete("posts/{id}")]
-    public async Task<IActionResult> DeletePost(Guid id)
+    [HttpDelete("delete-post/{id}")]
+    public async Task<IActionResult> DeletePostAdmin(Guid id)
     {
-        var post = await _context.Posts.FindAsync(id);
+        var post = await _context.Posts
+            .Include(p => p.Images)
+            .Include(p => p.Comments)
+            .Include(p => p.PostLikes)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
         if (post == null) return NotFound();
 
-        var adminIdStr = User.GetUserIdStr();
-        if (string.IsNullOrEmpty(adminIdStr)) return Unauthorized();
-        var adminId = Guid.Parse(adminIdStr);
+        var adminId = User.GetUserId() ?? Guid.Empty;
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // Send notification to author before deleting
+            // Thông báo cho tác giả
             var notification = new Notification
             {
                 Id = Guid.NewGuid(),
                 ReceiverId = post.AuthorId,
                 ActorId = adminId,
                 Type = "System",
-                Message = "Bài viết của bạn đã vi phạm quy tắc cộng đồng và đã bị xóa.",
-                CreatedAt = DateTime.UtcNow,
-                TargetId = null // Target is deleted so set to null
+                Message = $"Bài viết '{post.Title}' của bạn đã bị xóa do vi phạm quy tắc cộng đồng.",
+                CreatedAt = DateTime.UtcNow
             };
             _context.Notifications.Add(notification);
 
-            // Safely delete all comments related to this post to avoid self-referencing Restrict constraints
-            var allComments = await _context.Comments.Select(c => new { c.Id, c.ParentCommentId, c.PostId }).ToListAsync();
-            var commentIdsToDelete = new HashSet<Guid>();
-            var queue = new Queue<Guid>();
+            // Xóa ảnh, bình luận, lượt thích liên quan
+            _context.PostImages.RemoveRange(post.Images);
+            _context.Comments.RemoveRange(post.Comments);
+            _context.PostLikes.RemoveRange(post.PostLikes);
             
-            foreach (var c in allComments.Where(x => x.PostId == id))
+            // Xử lý các báo cáo liên quan
+            var relatedReports = await _context.Reports.Where(r => r.PostId == id).ToListAsync();
+            foreach (var r in relatedReports)
             {
-                if (commentIdsToDelete.Add(c.Id))
-                    queue.Enqueue(c.Id);
+                r.IsResolved = true;
             }
 
-            while (queue.Count > 0)
-            {
-                var curr = queue.Dequeue();
-                foreach (var c in allComments.Where(x => x.ParentCommentId == curr))
-                {
-                    if (commentIdsToDelete.Add(c.Id))
-                        queue.Enqueue(c.Id);
-                }
-            }
-
-            if (commentIdsToDelete.Any())
-            {
-                var commentsToDeleteList = await _context.Comments
-                    .Where(c => commentIdsToDelete.Contains(c.Id))
-                    .ToListAsync();
-                _context.Comments.RemoveRange(commentsToDeleteList);
-            }
-
-            // Xóa post, EF Core sẽ tự cascade xóa Report, PostLike, PostImage, etc.
             _context.Posts.Remove(post);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return Ok(new { message = "Đã xóa bài viết và gửi cảnh báo đến người dùng." });
+            return Ok(new { message = "Đã xóa bài viết vĩnh viễn." });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return StatusCode(500, new { message = "Lỗi khi xóa bài viết: " + (ex.InnerException?.Message ?? ex.Message) });
+            return StatusCode(500, new { message = "Lỗi khi xóa bài viết: " + ex.Message });
         }
+    }
+
+    [HttpGet("users/{id}")]
+    public async Task<IActionResult> GetUserById(Guid id)
+    {
+        var user = await _context.Users
+            .Include(u => u.Posts)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null) return NotFound();
+
+        return Ok(new
+        {
+            user.Id,
+            user.Username,
+            user.FullName,
+            user.Email,
+            user.AvatarUrl,
+            user.Bio,
+            user.Role,
+            user.CreatedAt,
+            PostCount = user.Posts.Count
+        });
     }
 
     [HttpDelete("users/{id}")]
@@ -460,6 +569,13 @@ public class AdminController : ControllerBase
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory([FromBody] CategoryDto dto)
     {
+        // Check for unique name
+        var existing = await _context.Categories.AnyAsync(c => c.Name.ToLower() == dto.Name.ToLower().Trim());
+        if (existing)
+        {
+            return BadRequest(new { message = "Tên danh mục này đã tồn tại. Vui lòng chọn tên khác." });
+        }
+
         var category = new Category
         {
             Id = Guid.NewGuid(),
@@ -480,6 +596,13 @@ public class AdminController : ControllerBase
     {
         var category = await _context.Categories.FindAsync(id);
         if (category == null) return NotFound();
+
+        // Check for unique name (excluding self)
+        var existing = await _context.Categories.AnyAsync(c => c.Id != id && c.Name.ToLower() == dto.Name.ToLower().Trim());
+        if (existing)
+        {
+            return BadRequest(new { message = "Tên danh mục này đã tồn tại. Vui lòng chọn tên khác." });
+        }
 
         category.Name = dto.Name;
         category.Slug = dto.Name.ToLower().Trim().Replace(" ", "-");

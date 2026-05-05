@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Cửa hàng - Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .tabs { display: flex; gap: 2rem; margin-bottom: 2rem; border-bottom: 1px solid var(--admin-border); }
+        .tab { padding: 1rem 0.5rem; cursor: pointer; color: var(--admin-text-muted); font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab.active { color: var(--admin-primary); border-bottom-color: var(--admin-primary); }
+    </style>
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Quản lý Cửa hàng</h1>
+                <p>Phê duyệt và quản lý các Shop trên hệ thống.</p>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('pending', this)">Yêu cầu chờ duyệt</div>
+            <div class="tab" onclick="switchTab('active', this)">Cửa hàng đang hoạt động</div>
+        </div>
+
+        <div id="pending-section" class="card">
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tên Shop</th>
+                            <th>Chủ sở hữu</th>
+                            <th>Ngày đăng ký</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-list">
+                        <tr><td colspan="5" style="text-align: center; padding: 2rem;">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="active-section" class="card hidden">
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tên Shop</th>
+                            <th>Chủ sở hữu</th>
+                            <th>Sản phẩm</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="active-list">
+                        <tr><td colspan="5" style="text-align: center; padding: 2rem;">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        let allApps = [];
+        let allShops = [];
+
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            
+            if (tab === 'pending') {
+                document.getElementById('pending-section').classList.remove('hidden');
+                document.getElementById('active-section').classList.add('hidden');
+                loadApplications();
+            } else {
+                document.getElementById('pending-section').classList.add('hidden');
+                document.getElementById('active-section').classList.remove('hidden');
+                loadShops();
+            }
+        }
+
+        async function loadApplications() {
+            const list = document.getElementById('pending-list');
+            try {
+                allApps = await window.adminApi.get('admin/shop-applications');
+                const pending = allApps.filter(a => a.status === 0 || a.status === 'Pending');
+                list.innerHTML = pending.map(app => `
+                    <tr>
+                        <td style="font-weight: 700;">${app.shopName}</td>
+                        <td>${app.userName}</td>
+                        <td>${new Date(app.createdAt).toLocaleDateString('vi-VN')}</td>
+                        <td><span class="badge badge-warning">Chờ duyệt</span></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="viewApplication('${app.id}')">Xem hồ sơ</button>
+                        </td>
+                    </tr>
+                `).join('');
+                if (pending.length === 0) list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">Không có yêu cầu nào.</td></tr>';
+            } catch (err) { list.innerHTML = `<tr><td colspan="5">${err.message}</td></tr>`; }
+        }
+
+        async function loadShops() {
+            const list = document.getElementById('active-list');
+            try {
+                allShops = await window.adminApi.get('admin/shops');
+                list.innerHTML = allShops.map(shop => `
+                    <tr>
+                        <td style="font-weight: 700;">${shop.name}</td>
+                        <td>${shop.ownerName}</td>
+                        <td>${shop.productCount}</td>
+                        <td>
+                            <span class="badge ${shop.isSuspended ? 'badge-danger' : 'badge-success'}">
+                                ${shop.isSuspended ? 'Đã đình chỉ' : 'Đang hoạt động'}
+                            </span>
+                        </td>
+                        <td>
+                            ${shop.isSuspended 
+                                ? `<button class="btn btn-secondary" onclick="toggleShopStatus('${shop.id}', false)">Kích hoạt lại</button>`
+                                : `<button class="btn btn-danger" onclick="toggleShopStatus('${shop.id}', true)">Đình chỉ</button>`
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { list.innerHTML = `<tr><td colspan="5">${err.message}</td></tr>`; }
+        }
+
+        function viewApplication(id) {
+            const app = allApps.find(a => a.id === id);
+            window.adminModal.open(`
+                <h2 style="margin-bottom: 1.5rem;">Chi tiết hồ sơ mở Shop</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">TÊN CỬA HÀNG DỰ KIẾN</div>
+                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--admin-primary);">${app.shopName}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">HỌ VÀ TÊN NGƯỜI BÁN</div>
+                        <div style="font-weight: 700;">${app.fullName}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">SỐ CCCD / CMND</div>
+                        <div style="font-weight: 600;">${app.citizenId}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">QUÊ QUÁN</div>
+                        <div>${app.hometown}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">NGÀY SINH</div>
+                        <div>${new Date(app.dateOfBirth).toLocaleDateString('vi-VN')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">NGHỀ NGHIỆP</div>
+                        <div>${app.occupation}</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 5px;">MÔ TẢ SHOP</div>
+                    <p style="font-size: 0.9rem; line-height: 1.6;">${app.description || 'Không có mô tả.'}</p>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="adminModal.close()">Đóng</button>
+                    <button class="btn btn-danger" onclick="rejectApp('${app.id}')">Từ chối</button>
+                    <button class="btn btn-primary" onclick="approveApp('${app.id}')">Phê duyệt ngay</button>
+                </div>
+            `);
+        }
+
+        async function approveApp(id) {
+            if (!confirm('Xác nhận phê duyệt cho shop này đi vào hoạt động?')) return;
+            try {
+                await window.adminApi.post(`admin/shop-applications/${id}/approve`, {});
+                alert('Đã phê duyệt thành công!');
+                adminModal.close();
+                loadApplications();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function rejectApp(id) {
+            const reason = prompt('Lý do từ chối hồ sơ này:');
+            if (reason === null) return;
+            try {
+                await window.adminApi.post(`admin/shop-applications/${id}/reject`, reason);
+                alert('Đã từ chối hồ sơ.');
+                adminModal.close();
+                loadApplications();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function toggleShopStatus(id, suspend) {
+            const action = suspend ? 'đình chỉ' : 'kích hoạt lại';
+            if (!confirm(`Bạn có chắc chắn muốn ${action} cửa hàng này?`)) return;
+            try {
+                const endpoint = suspend ? `admin/shops/${id}/suspend` : `admin/shops/${id}/unsuspend`;
+                await window.adminApi.post(endpoint, {});
+                alert(`Đã ${action} thành công.`);
+                loadShops();
+            } catch (err) { alert(err.message); }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadApplications);
+    </script>
+</body>
+</html>

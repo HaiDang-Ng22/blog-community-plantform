@@ -117,8 +117,14 @@ function handleLoginSuccess(user) {
     
     showMessage('Đăng nhập thành công! Đang chuyển hướng...', 'success');
     
-    // Chuyển hướng về trang yêu cầu trước đó (nếu có)
     setTimeout(() => {
+        // Nếu là Admin, vào thẳng trang quản trị
+        if (user.role === 'Admin') {
+            window.location.href = 'admin/index.html';
+            return;
+        }
+
+        // Người dùng bình thường: Chuyển hướng về trang yêu cầu trước đó (nếu có)
         let target = 'index.html';
         try {
             const saved = sessionStorage.getItem('zynk_return_to');

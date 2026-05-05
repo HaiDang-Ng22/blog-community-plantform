@@ -40,6 +40,7 @@ public class AppDbContext : DbContext
     public DbSet<ProductReview> ProductReviews { get; set; }
     public DbSet<ProductReviewImage> ProductReviewImages { get; set; }
     public DbSet<Story> Stories { get; set; }
+    public DbSet<PushSubscription> PushSubscriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Danh mục - Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        /* Tree Styles (from previous iteration) */
+        .tree-container { width: 100%; overflow: auto; padding: 40px; background: #fff; border-radius: 16px; min-height: 500px; position: relative; display: flex; justify-content: center; align-items: flex-start; border: 1px solid var(--admin-border); cursor: grab; }
+        .tree-curve { fill: none; stroke: #cbd5e1; stroke-width: 1.5; stroke-linecap: round; transition: all 0.3s; opacity: 0.6; }
+        .tree-node { width: 100px; background: white; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); cursor: pointer; text-align: center; }
+        .tree-node-icon { width: 26px; height: 26px; border-radius: 6px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+        .tree-node-name { font-weight: 700; font-size: 0.72rem; color: var(--admin-text-main); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tree-node-meta { font-size: 0.6rem; color: var(--admin-text-muted); }
+        .tree-sub-items { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; position: relative; }
+        .tree-node-group { display: flex; flex-direction: column; align-items: center; gap: 30px; position: relative; }
+        .breadcrumb-container { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--admin-text-muted); background: #f8fafc; padding: 8px 16px; border-radius: 10px; width: fit-content; }
+        .breadcrumb-item { cursor: pointer; font-weight: 500; }
+        .breadcrumb-item:hover { color: var(--admin-primary); }
+        .breadcrumb-item.active { font-weight: 700; color: var(--admin-text-main); }
+        .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; }
+        .cat-card { background: white; border: 1px solid var(--admin-border); border-radius: 12px; padding: 1rem; transition: all 0.2s; }
+        .cat-card:hover { transform: translateY(-2px); border-color: var(--admin-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .cat-card-header { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 12px; }
+        .cat-card-icon { width: 40px; height: 40px; border-radius: 10px; background: #f5f3ff; color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Quản lý Danh mục</h1>
+                <p>Thiết lập hệ thống ngành hàng cho toàn bộ website.</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="position: relative; width: 300px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                    <input type="text" id="cat-search" oninput="searchCategories()" placeholder="Tìm tên danh mục..." 
+                           style="width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem; border-radius: 10px; border: 1px solid var(--admin-border); font-size: 0.9rem;">
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">
+                    <i class="fa-solid fa-plus"></i> Thêm Danh mục
+                </button>
+            </div>
+        </header>
+
+        <div id="search-results-view" class="card hidden" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 id="search-results-title">Kết quả tìm kiếm</h3>
+                <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.8rem;" onclick="clearSearch()">Đóng tìm kiếm</button>
+            </div>
+            <div id="search-results-grid" class="cat-grid"></div>
+        </div>
+
+        <div id="folder-view"></div>
+        
+        <div id="tree-view" class="hidden">
+            <div id="tree-breadcrumb"></div>
+            <div class="tree-container">
+                <svg id="tree-svg-layer" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></svg>
+                <div id="tree-content"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        let allCategories = [];
+        let currentCategory = null;
+        let currentPath = [];
+
+        async function loadCategories() {
+            try {
+                allCategories = await window.adminApi.get('admin/categories');
+                renderView();
+            } catch (err) { console.error(err); }
+        }
+
+        function searchCategories() {
+            const query = document.getElementById('cat-search').value.toLowerCase().trim();
+            const resultsView = document.getElementById('search-results-view');
+            const grid = document.getElementById('search-results-grid');
+            
+            if (!query) {
+                resultsView.classList.add('hidden');
+                return;
+            }
+
+            const results = allCategories.filter(c => c.name.toLowerCase().includes(query));
+            resultsView.classList.remove('hidden');
+            document.getElementById('search-results-title').textContent = `Kết quả tìm kiếm (${results.length})`;
+
+            grid.innerHTML = results.map(cat => {
+                // Find path for context
+                let path = [];
+                let temp = allCategories.find(c => c.id === cat.parentCategoryId);
+                while(temp) { path.unshift(temp.name); temp = allCategories.find(c => c.id === temp.parentCategoryId); }
+                const pathStr = path.length > 0 ? path.join(' > ') : 'Gốc';
+
+                return `
+                <div class="cat-card">
+                    <div class="cat-card-header" onclick="drillDown('${cat.id}'); clearSearch();">
+                        <div class="cat-card-icon"><i class="fa-solid ${cat.icon || 'fa-tag'}"></i></div>
+                        <div>
+                            <div style="font-weight:700; font-size:0.95rem;">${cat.name}</div>
+                            <div style="font-size:0.65rem; color:#94a3b8;">Nằm trong: ${pathStr}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            if (results.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 1rem;">Không tìm thấy danh mục nào khớp với từ khóa.</p>';
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('cat-search').value = '';
+            document.getElementById('search-results-view').classList.add('hidden');
+        }
+
+        function renderView() {
+            if (!currentCategory) renderGrid();
+            else renderTree();
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('folder-view');
+            document.getElementById('tree-view').classList.add('hidden');
+            container.classList.remove('hidden');
+            
+            const roots = allCategories.filter(c => !c.parentCategoryId);
+            container.innerHTML = `
+                <div class="breadcrumb-container"><span class="breadcrumb-item active">Gốc</span></div>
+                <div class="cat-grid">
+                    ${roots.map(cat => {
+                        const childCount = allCategories.filter(c => c.parentCategoryId === cat.id).length;
+                        return `
+                        <div class="cat-card">
+                            <div class="cat-card-header" onclick="drillDown('${cat.id}')">
+                                <div class="cat-card-icon"><i class="fa-solid ${cat.icon || 'fa-folder'}"></i></div>
+                                <div>
+                                    <div style="font-weight:700; font-size:0.95rem;">${cat.name}</div>
+                                    <div style="font-size:0.75rem; color:#64748b;">${childCount} mục con</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 8px;">
+                                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.7rem;" onclick="openModal('${cat.id}')"><i class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.7rem;" onclick="deleteCategory('${cat.id}')"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function drillDown(id) {
+            const cat = allCategories.find(c => c.id === id);
+            currentCategory = cat;
+            currentPath = [];
+            let temp = cat;
+            while(temp) { currentPath.unshift(temp); temp = allCategories.find(c => c.id === temp.parentCategoryId); }
+            renderView();
+        }
+
+        function goToLevel(idx) {
+            if (idx === -1) { currentCategory = null; currentPath = []; }
+            else { currentCategory = currentPath[idx]; currentPath = currentPath.slice(0, idx+1); }
+            renderView();
+        }
+
+        function renderTree() {
+            const container = document.getElementById('tree-view');
+            document.getElementById('folder-view').classList.add('hidden');
+            container.classList.remove('hidden');
+
+            const children = allCategories.filter(c => c.parentCategoryId === currentCategory.id);
+            
+            document.getElementById('tree-breadcrumb').innerHTML = `
+                <div class="breadcrumb-container">
+                    <span class="breadcrumb-item" onclick="goToLevel(-1)">Gốc</span>
+                    ${currentPath.map((p, i) => `
+                        <i class="fa-solid fa-chevron-right" style="font-size:0.7rem; opacity:0.5;"></i>
+                        <span class="breadcrumb-item ${i === currentPath.length-1 ? 'active' : ''}" onclick="goToLevel(${i})">${p.name}</span>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('tree-content').innerHTML = `
+                <div class="tree-node-group">
+                    <div class="tree-node" style="border-color:#6366f1; border-width:2px; padding-bottom: 35px;">
+                        <div class="tree-node-icon"><i class="fa-solid ${currentCategory.icon || 'fa-folder'}"></i></div>
+                        <div class="tree-node-name" style="color:#6366f1;">${currentCategory.name}</div>
+                        <div style="position: absolute; bottom: 6px; display: flex; gap: 6px;">
+                            <button onclick="openModal('${currentCategory.id}')" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:0.7rem;"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                    </div>
+                    <div class="tree-sub-items">
+                        ${children.map(child => `
+                            <div class="tree-node" style="padding-bottom: 35px;">
+                                <div onclick="drillDown('${child.id}')">
+                                    <div class="tree-node-icon" style="background:#94a3b8;"><i class="fa-solid ${child.icon || 'fa-tag'}"></i></div>
+                                    <div class="tree-node-name">${child.name}</div>
+                                </div>
+                                <div style="position: absolute; bottom: 6px; display: flex; gap: 6px;">
+                                    <button onclick="openModal('${child.id}')" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:0.7rem;"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteCategory('${child.id}')" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:0.7rem;"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            setTimeout(drawLines, 50);
+        }
+
+        function openModal(id = null) {
+            let cat = id ? allCategories.find(c => c.id === id) : null;
+            const parentId = currentCategory ? currentCategory.id : null;
+            
+            window.adminModal.open(`
+                <h2 style="margin-bottom: 1.5rem;">${id ? 'Chỉnh sửa' : 'Thêm mới'} Danh mục</h2>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px;">TÊN DANH MỤC</label>
+                        <input type="text" id="cat-name" value="${cat ? cat.name : ''}" placeholder="Ví dụ: Đồ gia dụng" 
+                               style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--admin-border);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px;">ICON (FontAwesome class)</label>
+                        <input type="text" id="cat-icon" value="${cat ? cat.icon : 'fa-tag'}" placeholder="Ví dụ: fa-laptop" 
+                               style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--admin-border);">
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
+                        <button class="btn btn-secondary" onclick="adminModal.close()">Hủy</button>
+                        <button class="btn btn-primary" onclick="saveCategory('${id}')">Lưu thay đổi</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        async function saveCategory(id) {
+            const name = document.getElementById('cat-name').value;
+            const icon = document.getElementById('cat-icon').value;
+            const parentId = currentCategory ? currentCategory.id : null;
+
+            if (!name) return alert('Vui lòng nhập tên danh mục');
+
+            const dto = { name, icon, parentCategoryId: parentId };
+            try {
+                if (id && id !== 'null') {
+                    await window.adminApi.put(`admin/categories/${id}`, dto);
+                } else {
+                    await window.adminApi.post('admin/categories', dto);
+                }
+                alert('Thành công!');
+                adminModal.close();
+                loadCategories();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function deleteCategory(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa danh mục này và tất cả danh mục con?')) return;
+            try {
+                const res = await window.adminApi.delete(`admin/categories/${id}`);
+                alert(res.message);
+                if (currentCategory && currentCategory.id === id) {
+                    currentCategory = null;
+                }
+                loadCategories();
+            } catch (err) { alert(err.message); }
+        }
+
+        function drawLines() {
+            // ... logic can be added here
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCategories);
+    </script>
+</body>
+</html>

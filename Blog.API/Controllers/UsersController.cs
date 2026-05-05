@@ -32,7 +32,7 @@ public class UsersController : ControllerBase
             .Include(u => u.Following)
             .FirstOrDefaultAsync(u => u.Id == id);
 
-        if (user == null) return NotFound();
+        if (user == null || user.Role == "Admin") return NotFound();
 
         var userIdStr = User.GetUserIdStr();
         bool isFollowing = false;
@@ -264,10 +264,9 @@ public class UsersController : ControllerBase
                 .Select(f => f.FollowingId)
                 .ToListAsync();
             
-            // Gợi ý những người chưa theo dõi, không phải bản thân
-            // Sử dụng Guid.NewGuid() nếu EF.Functions.Random() gặp vấn đề tùy phiên bản Provider
+            // Gợi ý những người chưa theo dõi, không phải bản thân và KHÔNG PHẢI ADMIN
             var suggested = await _context.Users
-                .Where(u => u.Id != userId && !followingIds.Contains(u.Id))
+                .Where(u => u.Id != userId && u.Role.ToLower() != "admin" && !followingIds.Contains(u.Id))
                 .OrderBy(u => EF.Functions.Random()) 
                 .Take(5)
                 .Select(u => new {

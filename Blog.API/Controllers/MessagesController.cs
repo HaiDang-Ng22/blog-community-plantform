@@ -12,10 +12,12 @@ namespace Blog.API.Controllers;
 public class MessagesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly Blog.Application.Services.IPushNotificationService _pushService;
 
-    public MessagesController(AppDbContext context)
+    public MessagesController(AppDbContext context, Blog.Application.Services.IPushNotificationService pushService)
     {
         _context = context;
+        _pushService = pushService;
     }
 
     // ─── GET /api/messages/conversations ─────────────────────────────────────
@@ -263,6 +265,22 @@ public class MessagesController : ControllerBase
         };
         _context.Messages.Add(message);
         await _context.SaveChangesAsync();
+
+        // Send Push Notification
+        try
+        {
+            var sender = await _context.Users.FindAsync(uid);
+            await _pushService.SendPushNotificationAsync(
+                dto.RecipientId,
+                $"Tin nhắn mới từ {sender?.FullName ?? "Ai đó"}",
+                message.Content ?? "Đã gửi một tin nhắn mới",
+                "/messages.html"
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Push Notification failed: {ex.Message}");
+        }
 
         return Ok(new { success = true, messageId = message.Id });
     }

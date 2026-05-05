@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng quan - Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Tổng quan Dashboard</h1>
+                <p>Thống kê hoạt động của hệ thống thời gian thực.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-danger" onclick="cleanupIdentity()">
+                    <i class="fa-solid fa-eraser"></i> Xóa dữ liệu Social
+                </button>
+                <button class="btn btn-secondary" onclick="loadStats()">
+                    <i class="fa-solid fa-rotate"></i> Cập nhật dữ liệu
+                </button>
+            </div>
+        </header>
+
+        <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="card stat-card" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: #eef2ff; color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--admin-text-muted); font-weight: 600;">Người dùng</div>
+                    <div id="stat-users" style="font-size: 1.5rem; font-weight: 800;">-</div>
+                </div>
+            </div>
+            <div class="card stat-card" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: #ecfdf5; color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    <i class="fa-solid fa-shop"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--admin-text-muted); font-weight: 600;">Cửa hàng</div>
+                    <div id="stat-shops" style="font-size: 1.5rem; font-weight: 800;">-</div>
+                </div>
+            </div>
+            <div class="card stat-card" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: #fffbeb; color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--admin-text-muted); font-weight: 600;">Đơn hàng hôm nay</div>
+                    <div id="stat-orders" style="font-size: 1.5rem; font-weight: 800;">-</div>
+                </div>
+            </div>
+            <div class="card stat-card" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: #fef2f2; color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    <i class="fa-solid fa-flag"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--admin-text-muted); font-weight: 600;">Báo cáo chờ</div>
+                    <div id="stat-reports" style="font-size: 1.5rem; font-weight: 800;">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem;">Biểu đồ doanh thu 7 ngày qua</h3>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem;">Top Cửa hàng</h3>
+                <div id="top-shops-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <p style="text-align: center; color: #94a3b8; padding: 2rem;">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        let revenueChart = null;
+
+        async function loadStats() {
+            try {
+                const stats = await window.adminApi.get('admin/stats');
+                document.getElementById('stat-users').textContent = stats.totalUsers || 0;
+                document.getElementById('stat-shops').textContent = stats.activeShops || 0;
+                document.getElementById('stat-orders').textContent = stats.dailyOrders || 0;
+                document.getElementById('stat-reports').textContent = stats.pendingReports || 0;
+
+                // Render Top Shops
+                const topShopsList = document.getElementById('top-shops-list');
+                if (stats.topShops && stats.topShops.length > 0) {
+                    topShopsList.innerHTML = stats.topShops.map((shop, index) => `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f8fafc; border-radius: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--admin-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">
+                                    ${index + 1}
+                                </div>
+                                <div style="font-weight: 700; font-size: 0.9rem;">${shop.shopName}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 800; color: #10b981;">${shop.totalRevenue.toLocaleString('vi-VN')}đ</div>
+                                <div style="font-size: 0.7rem; color: #94a3b8;">${shop.orderCount} đơn hàng</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    topShopsList.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Chưa có dữ liệu giao dịch.</p>';
+                }
+
+                // Render Chart
+                console.log("Chart Data:", stats.dailyStats);
+                renderChart(stats.dailyStats || []);
+            } catch (err) {
+                console.error("Lỗi tải stats:", err);
+            }
+        }
+
+        function renderChart(dailyData) {
+            const canvas = document.getElementById('revenueChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            if (revenueChart) {
+                revenueChart.destroy();
+            }
+
+            const labels = dailyData.length > 0 ? dailyData.map(d => d.date) : ['N/A'];
+            const values = dailyData.length > 0 ? dailyData.map(d => d.revenue) : [0];
+
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: values,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#6366f1',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Doanh thu: ' + context.parsed.y.toLocaleString('vi-VN') + 'đ';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                callback: value => value.toLocaleString('vi-VN') + 'đ'
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function cleanupIdentity() {
+            if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ bài đăng và lượt theo dõi của Admin? Thao tác này không thể hoàn tác.')) return;
+            try {
+                // Sử dụng endpoint mới nhất
+                const res = await window.adminApi.get('admin/cleanup-now');
+                alert(res.message || 'Đã xóa dữ liệu thành công.');
+                loadStats();
+            } catch (err) {
+                alert('Lỗi: ' + err.message + '\nNếu vẫn gặp lỗi 404, bạn HÃY TẮT VÀ MỞ LẠI backend (.NET) để nó nhận diện hàm mới.');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>
