@@ -64,6 +64,9 @@ function renderSellerOrder(order) {
 
     // 4. Actions
     renderSellerActions(order.id || order.Id, status);
+
+    // 5. Invoice
+    renderInvoicePreview(order);
 }
 
 function updateSellerStepper(status) {
@@ -98,7 +101,7 @@ function renderSellerActions(orderId, status) {
 
     if (status === 'awaitingshipment') {
         container.innerHTML = `
-            <button class="btn-action btn-confirm" onclick="updateStatus('${orderId}', 'AwaitingCollection')">
+            <button class="btn-action btn-confirm" onclick="openPrintModal('${orderId}')">
                 <i class="fa fa-check"></i> Xác nhận & Chuẩn bị hàng
             </button>
             <button class="btn-action btn-reject" onclick="rejectOrder('${orderId}')">
@@ -162,6 +165,80 @@ function formatCurrency(val) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 }
 
+// Invoice & Modal Logic
+let currentOrderForPrint = null;
+
+function renderInvoicePreview(order) {
+    const invoiceCard = document.getElementById('invoice-preview-card');
+    const invoiceContent = document.getElementById('invoice-preview-content');
+    const modalInvoiceContent = document.getElementById('modal-invoice-content');
+    
+    if (!order || !order.items) return;
+    
+    const itemsHtml = order.items.map(i => `
+        <tr>
+            <td>${i.productName} ${i.variantName ? `(${i.variantName})` : ''}</td>
+            <td class="right">x${i.quantity}</td>
+        </tr>
+    `).join('');
+
+    const html = `
+        <div class="invoice-header">
+            <strong>ZYNK SHOP - HÓA ĐƠN BÁN LẺ</strong><br>
+            Mã đơn: ${(order.id || order.Id).substring(0, 8).toUpperCase()}<br>
+            Ngày: ${new Date(order.createdAt || order.CreatedAt).toLocaleDateString('vi-VN')}
+        </div>
+        <div style="margin-bottom: 10px;">
+            <strong>Khách hàng:</strong> ${order.customerName || order.CustomerName}<br>
+            <strong>SĐT:</strong> ${order.phoneNumber || order.PhoneNumber}<br>
+            <strong>Địa chỉ:</strong> ${order.shippingAddress || order.ShippingAddress}
+        </div>
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th class="right">SL</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${itemsHtml}
+            </tbody>
+        </table>
+        <div class="invoice-total">
+            <span>Tổng cộng:</span>
+            <span>${formatCurrency(order.totalAmount || order.TotalAmount)}</span>
+        </div>
+    `;
+
+    invoiceContent.innerHTML = html;
+    modalInvoiceContent.innerHTML = html;
+    invoiceCard.style.display = 'block';
+    
+    currentOrderForPrint = order.id || order.Id;
+}
+
+function openPrintModal(orderId) {
+    document.getElementById('print-modal').classList.remove('hidden');
+}
+
+function closePrintModal() {
+    document.getElementById('print-modal').classList.add('hidden');
+}
+
+async function confirmPrintAndPrepare() {
+    if (!currentOrderForPrint) return;
+    
+    // Simulate printing
+    window.print();
+    
+    // Update status
+    await updateStatus(currentOrderForPrint, 'AwaitingCollection');
+    closePrintModal();
+}
+
 // Global exposure
 window.updateStatus = updateStatus;
 window.rejectOrder = rejectOrder;
+window.openPrintModal = openPrintModal;
+window.closePrintModal = closePrintModal;
+window.confirmPrintAndPrepare = confirmPrintAndPrepare;

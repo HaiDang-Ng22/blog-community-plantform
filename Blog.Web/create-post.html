@@ -30,16 +30,21 @@
 
             <div class="cp-modal-body">
                 <form id="form-create-post" style="display: contents;">
-                    
+
                     <!-- Step 0: Select Files (Initial State) -->
-                    <div id="step-0" class="cp-step active" style="flex:1; display:flex; align-items:center; justify-content:center; padding: 2rem;">
+                    <div id="step-0" class="cp-step active"
+                        style="flex:1; display:flex; align-items:center; justify-content:center; padding: 2rem;">
                         <div id="cp-dropzone" class="cp-dropzone">
-                        <i class="fa-solid fa-images" style="font-size: 4rem; margin-bottom: 1.25rem; color: #262626;"></i>
-                        <h2 style="font-size: 1.2rem; font-weight: 500; margin-bottom: 1.2rem;">Kéo ảnh vào đây</h2>
-                        <button type="button" class="btn primary-btn" onclick="document.getElementById('post-image-file').click()" style="width: auto; padding: 0.6rem 1.5rem;">
-                            Chọn từ máy tính
-                        </button>
-                        <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;" onchange="initWizard(this)">
+                            <i class="fa-solid fa-images"
+                                style="font-size: 4rem; margin-bottom: 1.25rem; color: #262626;"></i>
+                            <h2 style="font-size: 1.2rem; font-weight: 500; margin-bottom: 1.2rem;">Kéo ảnh vào đây</h2>
+                            <button type="button" class="btn primary-btn"
+                                onclick="document.getElementById('post-image-file').click()"
+                                style="width: auto; padding: 0.6rem 1.5rem;">
+                                Tải ảnh lên
+                            </button>
+                            <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;"
+                                onchange="initWizard(this)">
                         </div>
                     </div>
 
@@ -54,7 +59,8 @@
                             <h4 style="margin-bottom: 1rem;">Sắp xếp & Thu phóng</h4>
                             <div class="control-group" style="margin-bottom: 1.5rem;">
                                 <label>Thu phóng</label>
-                                <input type="range" id="adj-zoom" min="1" max="3" step="0.1" value="1" oninput="applyZoom()">
+                                <input type="range" id="adj-zoom" min="1" max="3" step="0.1" value="1"
+                                    oninput="applyZoom()">
                             </div>
                             <div id="reorder-list" class="cp-thumb-list"></div>
                         </div>
@@ -74,19 +80,23 @@
                             <div class="cp-adjust-controls">
                                 <div class="control-group">
                                     <label>Độ sáng</label>
-                                    <input type="range" id="adj-brightness" min="0" max="200" value="100" oninput="applyFilters()">
+                                    <input type="range" id="adj-brightness" min="0" max="200" value="100"
+                                        oninput="applyFilters()">
                                 </div>
                                 <div class="control-group">
                                     <label>Độ tương phản</label>
-                                    <input type="range" id="adj-contrast" min="0" max="200" value="100" oninput="applyFilters()">
+                                    <input type="range" id="adj-contrast" min="0" max="200" value="100"
+                                        oninput="applyFilters()">
                                 </div>
                                 <div class="control-group">
                                     <label>Độ bão hòa</label>
-                                    <input type="range" id="adj-saturate" min="0" max="200" value="100" oninput="applyFilters()">
+                                    <input type="range" id="adj-saturate" min="0" max="200" value="100"
+                                        oninput="applyFilters()">
                                 </div>
                                 <div class="control-group">
                                     <label>Độ mờ</label>
-                                    <input type="range" id="adj-blur" min="0" max="10" value="0" oninput="applyFilters()">
+                                    <input type="range" id="adj-blur" min="0" max="10" value="0"
+                                        oninput="applyFilters()">
                                 </div>
                             </div>
                         </div>
@@ -100,13 +110,16 @@
                             </div>
                         </div>
                         <div class="cp-pane-right cp-caption-pane">
-                            <div class="post-create-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+                            <div class="post-create-header"
+                                style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
                                 <img id="user-avatar-mini" src="https://via.placeholder.com/32" class="mini-avatar">
                                 <span id="user-name-mini" style="font-weight: 600;">User</span>
                             </div>
-                            <textarea id="post-content" class="post-editor-textarea" placeholder="Viết chú thích..." required></textarea>
+                            <textarea id="post-content" class="post-editor-textarea" placeholder="Viết chú thích..."
+                                required></textarea>
                             <div class="cp-caption-meta">
-                                <button type="button" class="cp-icon-btn"><i class="fa-regular fa-face-smile"></i></button>
+                                <button type="button" class="cp-icon-btn"><i
+                                        class="fa-regular fa-face-smile"></i></button>
                                 <span id="char-count">0/2200</span>
                             </div>
                         </div>

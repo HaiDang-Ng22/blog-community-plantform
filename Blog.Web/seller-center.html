@@ -8,7 +8,7 @@
     <title data-i18n="seller_center">Kênh người bán - Zynk Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.7">
-    <link rel="stylesheet" href="css/seller.css?v=2.0">
+    <link rel="stylesheet" href="css/seller.css?v=3.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -111,69 +111,94 @@
         </div>
     </template>
 
-    <!-- 3. Template Dashboard -->
     <template id="tpl-dashboard">
-        <div class="seller-header" style="text-align: left;">
-            <h1><span data-i18n="seller_center_title">Kênh Người Bán</span>: <span id="shop-title-display">---</span></h1>
+        <!-- Top Bar -->
+        <div class="seller-topbar">
+            <div class="seller-topbar-left">
+                <div class="seller-topbar-badge"><i class="fa-solid fa-store"></i> Seller</div>
+                <h1><span data-i18n="seller_center_title">Kênh Người Bán</span>: <span id="shop-title-display">---</span></h1>
+            </div>
         </div>
 
         <div class="seller-dashboard">
+            <!-- Tabs -->
             <nav class="dashboard-tabs">
-                <div class="tab-link active" onclick="switchSellerTab('overview')" data-i18n="overview">Tổng quan</div>
-                <div class="tab-link" onclick="switchSellerTab('products')" data-i18n="products">Sản phẩm</div>
-                <div class="tab-link" onclick="switchSellerTab('orders')" data-i18n="orders">Đơn hàng</div>
-                <div class="tab-link" onclick="switchSellerTab('payment')" data-i18n="payment_settings_tab">Thanh toán</div>
+                <div class="tab-link active" onclick="switchSellerTab('overview')">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span data-i18n="overview">Tổng quan</span>
+                </div>
+                <div class="tab-link" onclick="switchSellerTab('products')">
+                    <i class="fa-solid fa-box"></i>
+                    <span data-i18n="products">Sản phẩm</span>
+                </div>
+                <div class="tab-link" onclick="switchSellerTab('orders')">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span data-i18n="orders">Đơn hàng</span>
+                </div>
+                <div class="tab-link" onclick="switchSellerTab('payment')">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span data-i18n="payment_settings_tab">Thanh toán</span>
+                </div>
             </nav>
 
             <!-- Overview Section -->
             <section id="section-overview" class="dashboard-section active">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
-                    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                        <h4 style="color: #64748b;" data-i18n="total_orders">Tổng đơn hàng</h4>
-                        <div style="font-size: 2rem; font-weight: 800;" id="stat-orders">0</div>
+                <div class="stat-cards-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-card-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <div class="stat-card-body">
+                            <div class="stat-card-label" data-i18n="total_orders">Tổng đơn hàng</div>
+                            <div class="stat-card-value" id="stat-orders">0</div>
+                        </div>
                     </div>
-                    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                        <h4 style="color: #64748b;" data-i18n="revenue_est">Doanh thu (Giả lập)</h4>
-                        <div style="font-size: 2rem; font-weight: 800; color: #2563eb;" id="stat-revenue">0đ</div>
+                    <div class="stat-card green">
+                        <div class="stat-card-icon"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="stat-card-body">
+                            <div class="stat-card-label" data-i18n="revenue_est">Doanh thu</div>
+                            <div class="stat-card-value" id="stat-revenue">0đ</div>
+                        </div>
                     </div>
-                    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-                        <h4 style="color: #64748b;" data-i18n="total_products">Số lượng sản phẩm</h4>
-                        <div style="font-size: 2rem; font-weight: 800;" id="stat-products">0</div>
+                    <div class="stat-card purple">
+                        <div class="stat-card-icon"><i class="fa-solid fa-box-open"></i></div>
+                        <div class="stat-card-body">
+                            <div class="stat-card-label" data-i18n="total_products">Sản phẩm</div>
+                            <div class="stat-card-value" id="stat-products">0</div>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- Products Section -->
             <section id="section-products" class="dashboard-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div class="section-header-row">
                     <h3 data-i18n="product_list">Danh sách sản phẩm</h3>
-                    <button class="btn primary-btn" style="width: auto; margin: 0;" onclick="openAddProductModal()" data-i18n="add_new_product">+
-                        Thêm sản phẩm mới</button>
+                    <button class="btn-add-product" onclick="openAddProductModal()" data-i18n="add_new_product">
+                        <i class="fa-solid fa-plus"></i> Thêm sản phẩm
+                    </button>
                 </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th data-i18n="th_image">Ảnh</th>
-                            <th data-i18n="th_name">Tên sản phẩm</th>
-                            <th data-i18n="th_price">Giá</th>
-                            <th data-i18n="th_stock">Kho</th>
-                            <th data-i18n="th_status">Trạng thái</th>
-                            <th data-i18n="th_actions">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="product-list-body">
-                        <!-- Data inject by JS -->
-                    </tbody>
-                </table>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="th_image">Ảnh</th>
+                                <th data-i18n="th_name">Tên sản phẩm</th>
+                                <th data-i18n="th_price">Giá</th>
+                                <th data-i18n="th_stock">Kho</th>
+                                <th data-i18n="th_status">Trạng thái</th>
+                                <th data-i18n="th_actions">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-list-body">
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <!-- Orders Section -->
             <section id="section-orders" class="dashboard-section">
-                <div class="orders-header-row" style="margin-bottom: 1.5rem;">
+                <div class="section-header-row" style="margin-bottom: 16px;">
                     <h3 data-i18n="manage_orders">Quản lý đơn hàng</h3>
-                    <div style="font-size: 0.85rem; color: #64748b;" data-i18n="manage_orders_desc">
-                        Quản lý và xử lý các đơn hàng của bạn
-                    </div>
+                    <span style="font-size: 0.82rem; color: #94a3b8;" data-i18n="manage_orders_desc">Xử lý và theo dõi đơn hàng của bạn</span>
                 </div>
 
                 <!-- Status Filter Tabs -->
@@ -189,35 +214,33 @@
                     </nav>
                 </div>
 
-                <!-- Search & Filters -->
-                <div class="order-search-bar glassmorphism" style="margin-bottom: 2rem; padding: 1rem; border-radius: 12px; display: flex; gap: 1rem; align-items: center;">
-                    <div class="search-input-group" style="flex: 1; position: relative;">
-                        <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
-                        <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng, Tên hoặc SĐT khách hàng..." data-i18n="order_search_placeholder_full"
-                            style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.8rem; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; font-size: 0.9rem; outline: none; transition: 0.2s;">
+                <!-- Search -->
+                <div class="order-search-bar">
+                    <div class="search-input-group">
+                        <i class="fa fa-search"></i>
+                        <input type="text" id="order-search-input" placeholder="Tìm theo Mã đơn hàng, Tên hoặc SĐT..." data-i18n="order_search_placeholder_full">
                     </div>
-                    <button class="btn primary-btn" onclick="applyOrderFilters()" style="width: auto; margin: 0; padding: 0.75rem 1.5rem; height: 100%;" data-i18n="search">
-                        Tìm kiếm
+                    <button class="btn-search" onclick="applyOrderFilters()" data-i18n="search">
+                        <i class="fa-solid fa-magnifying-glass"></i> Tìm
                     </button>
                 </div>
 
-                <div id="order-list-container">
-                    <!-- Premium cards will be injected here by JS -->
-                </div>
+                <div id="order-list-container"></div>
             </section>
 
             <!-- Payment Settings Section -->
             <section id="section-payment" class="dashboard-section">
-                <div class="seller-header" style="text-align: left; margin-bottom: 2rem;">
-                    <h3 data-i18n="payment_config_title">Cấu hình Thanh toán VietQR</h3>
-                    <p style="font-size: 0.9rem; color: #64748b;">Thiết lập thông tin ngân hàng để nhận thanh toán từ khách hàng qua mã QR tự động.</p>
+                <div class="section-header-row" style="margin-bottom: 24px;">
+                    <div>
+                        <h3 data-i18n="payment_config_title">Cấu hình Thanh toán VietQR</h3>
+                        <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Thiết lập thông tin ngân hàng để nhận thanh toán tự động qua mã QR.</p>
+                    </div>
                 </div>
-
-                <div class="glass-card" style="max-width: 600px; padding: 2rem;">
+                <div class="payment-config-card">
                     <form id="form-payment-settings">
                         <div class="input-group">
                             <label data-i18n="bank_name">Ngân hàng</label>
-                            <select id="bank-name" class="glass-select" style="width: 100%; height: 45px;" required>
+                            <select id="bank-name" required>
                                 <option value="" disabled selected>Chọn ngân hàng</option>
                                 <option value="MB">MB Bank (Ngân hàng Quân đội)</option>
                                 <option value="VCB">Vietcombank</option>
@@ -239,15 +262,11 @@
                             <label data-i18n="bank_account_name">Tên chủ tài khoản (Không dấu)</label>
                             <input type="text" id="bank-account-name" placeholder="Ví dụ: NGUYEN VAN A" required>
                         </div>
-
-                        <div style="margin-top: 2rem; background: #f0f9ff; padding: 1rem; border-radius: 12px; border: 1px solid #e0f2fe; display: flex; gap: 1rem; align-items: flex-start;">
-                            <i class="fa fa-info-circle" style="color: #0ea5e9; margin-top: 3px;"></i>
-                            <div style="font-size: 0.85rem; color: #0369a1; line-height: 1.5;">
-                                Thông tin này sẽ được dùng để tạo mã VietQR tự động tại trang thanh toán. Đảm bảo thông tin chính xác để nhận được tiền từ khách hàng.
-                            </div>
+                        <div class="payment-info-box">
+                            <i class="fa fa-info-circle"></i>
+                            <div>Thông tin này sẽ được dùng để tạo mã VietQR tự động tại trang thanh toán. Đảm bảo thông tin chính xác để nhận được tiền từ khách hàng.</div>
                         </div>
-
-                        <button type="submit" class="btn primary-btn" style="margin-top: 2rem;" data-i18n="save_payment_config">Lưu cấu hình thanh toán</button>
+                        <button type="submit" class="btn primary-btn" style="margin-top: 1.5rem;" data-i18n="save_payment_config">Lưu cấu hình thanh toán</button>
                     </form>
                 </div>
             </section>
@@ -456,8 +475,7 @@
         </div>
     </footer>
 
-    <link rel="stylesheet" href="css/common.css?v=1.7">
-    <link rel="stylesheet" href="css/seller.css?v=1.0.2">
+    <link rel="stylesheet" href="css/seller.css?v=3.0">
     <script src="js/api.js?v=2.0"></script>
     <script src="js/lang.js"></script>
     <script src="js/i18n.js"></script>

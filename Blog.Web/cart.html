@@ -145,7 +145,9 @@
         </div>
     </main>
 
-    <script src="js/api.js?v=1.5"></script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/common.js?v=2.5"></script>
     <script>
         let provincesData = [];
@@ -377,86 +379,97 @@
         }
 
         async function checkout() {
-            const name = document.getElementById('ship-name').value;
-            const phone = document.getElementById('ship-phone').value;
-            const specific = document.getElementById('ship-specific').value;
-            
-            let provinceText = "";
-            let districtText = document.getElementById('ship-district').value;
-            
-            const provSel = document.getElementById('ship-province');
-            if (provSel.selectedIndex > 0) {
-                provinceText = provSel.options[provSel.selectedIndex].text;
-            }
-
-            if (!name || !phone || !specific) {
-                return window.common?.showToast ? window.common.showToast('Vui lòng điền đủ thông tin nhận hàng', 'error') : alert('Vui lòng nhập đủ thông tin');
-            }
-
-            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-            const saveAddress = document.getElementById('save-address-cb').checked;
-            const note = document.getElementById('ship-note').value;
-
-            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
-            const checkedBoxes = document.querySelectorAll('.item-cb:checked');
-            
-            if (checkedBoxes.length === 0) {
-                return window.common?.showToast ? window.common.showToast('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán', 'error') : alert('Vui lòng chọn ít nhất 1 sản phẩm');
-            }
-
-            const itemsToBuy = [];
-            const indicesToRemove = [];
-            
-            checkedBoxes.forEach(cb => {
-                const idx = parseInt(cb.getAttribute('data-index'));
-                itemsToBuy.push({ productId: cart[idx].id, quantity: cart[idx].qty });
-                indicesToRemove.push(idx);
-            });
-            
-            const fullAddress = `${specific}, ${districtText}, ${provinceText}`.replace(/, ,/g, ',');
-
-            const data = {
-                customerName: name,
-                phoneNumber: phone,
-                province: provinceText,
-                districtWard: districtText,
-                specificAddress: specific,
-                shippingAddress: fullAddress, // legacy
-                paymentMethod: paymentMethod,
-                shippingFee: 25000, // Matching the UI calculation
-                saveAddress: saveAddress,
-                customerNote: note,
-                items: itemsToBuy
-            };
-
-            const btn = document.querySelector('button[onclick="checkout()"]');
-            const orig = btn.innerHTML;
-            btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> ${window.t('processing')}`;
-            btn.disabled = true;
-
             try {
-                await window.api.post('orders/checkout', data);
-                if (window.common?.showToast) window.common.showToast('Đặt hàng thành công!', 'success');
-                else alert('Đặt hàng thành công!');
+                const name = document.getElementById('ship-name').value;
+                const phone = document.getElementById('ship-phone').value;
+                const specific = document.getElementById('ship-specific').value;
                 
-                // Only remove the bought items from cart
-                const newCart = cart.filter((_, idx) => !indicesToRemove.includes(idx));
-                localStorage.setItem('zynk_cart', JSON.stringify(newCart));
+                let provinceText = "";
+                let districtText = document.getElementById('ship-district').value;
                 
-                setTimeout(() => {
-                    window.location.href = 'my-orders.html';
-                }, 1500);
-            } catch (e) {
-                if (window.common?.showToast) window.common.showToast('Lỗi đặt hàng: ' + e.message, 'error');
-                else alert('Lỗi đặt hàng: ' + e.message);
-                btn.innerHTML = orig;
-                btn.disabled = false;
+                const provSel = document.getElementById('ship-province');
+                if (provSel && provSel.selectedIndex > 0) {
+                    provinceText = provSel.options[provSel.selectedIndex].text;
+                }
+
+                if (!name || !phone || !specific) {
+                    return window.common?.showToast ? window.common.showToast('Vui lòng điền đủ thông tin nhận hàng', 'error') : alert('Vui lòng nhập đủ thông tin');
+                }
+
+                const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+                const saveAddressCb = document.getElementById('save-address-cb');
+                const saveAddress = saveAddressCb ? saveAddressCb.checked : false;
+                const noteEl = document.getElementById('ship-note');
+                const note = noteEl ? noteEl.value : "";
+
+                const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+                const checkedBoxes = document.querySelectorAll('.item-cb:checked');
+                
+                if (checkedBoxes.length === 0) {
+                    return window.common?.showToast ? window.common.showToast('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán', 'error') : alert('Vui lòng chọn ít nhất 1 sản phẩm');
+                }
+
+                const itemsToBuy = [];
+                const indicesToRemove = [];
+                
+                checkedBoxes.forEach(cb => {
+                    const idx = parseInt(cb.getAttribute('data-index'));
+                    const item = cart[idx];
+                    itemsToBuy.push({ 
+                        productId: item.id, 
+                        variantId: item.variantId || null,
+                        quantity: item.qty 
+                    });
+                    indicesToRemove.push(idx);
+                });
+                
+                const fullAddress = `${specific}, ${districtText}, ${provinceText}`.replace(/, ,/g, ',');
+
+                const data = {
+                    customerName: name,
+                    phoneNumber: phone,
+                    province: provinceText,
+                    districtWard: districtText,
+                    specificAddress: specific,
+                    shippingAddress: fullAddress, // legacy
+                    paymentMethod: paymentMethod,
+                    shippingFee: 25000, // Matching the UI calculation
+                    saveAddress: saveAddress,
+                    customerNote: note,
+                    items: itemsToBuy
+                };
+
+                const btn = document.querySelector('button[onclick="checkout()"]');
+                if (btn) {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Đang xử lý`;
+                    btn.disabled = true;
+
+                    try {
+                        await window.api.post('orders/checkout', data);
+                        if (window.common?.showToast) window.common.showToast('Đặt hàng thành công!', 'success');
+                        else alert('Đặt hàng thành công!');
+                        
+                        // Only remove the bought items from cart
+                        const newCart = cart.filter((_, idx) => !indicesToRemove.includes(idx));
+                        localStorage.setItem('zynk_cart', JSON.stringify(newCart));
+                        
+                        setTimeout(() => {
+                            window.location.href = 'my-orders.html';
+                        }, 1500);
+                    } catch (e) {
+                        if (window.common?.showToast) window.common.showToast('Lỗi đặt hàng: ' + e.message, 'error');
+                        else alert('Lỗi đặt hàng: ' + e.message);
+                        btn.innerHTML = orig;
+                        btn.disabled = false;
+                    }
+                } else {
+                    alert('Lỗi: Không tìm thấy nút đặt hàng');
+                }
+            } catch (err) {
+                alert('JS Error in checkout: ' + err.message);
             }
         }
     </script>
-    <script src="js/api.js?v=2.0"></script>
-    <script src="js/lang.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/common.js?v=2.5"></script>
 </body>
 </html>
