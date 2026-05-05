@@ -50,9 +50,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('Service Worker registered', reg))
+                .then(reg => {
+                    console.log('Service Worker registered', reg);
+                    // Sau khi SW đăng ký xong, kiểm tra quyền thông báo
+                    if (localStorage.getItem('auth_token')) {
+                        initNotifications(reg);
+                    }
+                })
                 .catch(err => console.error('Service Worker registration failed', err));
         });
+    }
+
+    const VAPID_PUBLIC_KEY = 'BDkz2X8tYJlC9LMhpRWlAe10DmBQPSdoYJgyo-q9pxlsx_wGioY_mYl6AOilHSuEAqxUTF6_hLcvCzFgCPTUsgw';
+
+    async function initNotifications(reg) {
+        if (!('Notification' in window)) return;
+        
+        if (Notification.permission === 'default') {
+            // Chỉ hiện popup nếu trình duyệt chưa từng hỏi
+            console.log("Asking for notification permission...");
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                subscribeUser(reg);
+            }
+        } else if (Notification.permission === 'granted') {
+            // Đã cấp quyền, đảm bảo đã subscribe trên server
+            subscribeUser(reg);
+        }
+    }
+
+    async function subscribeUser(reg) {
+        try {
+            let subscription = await reg.pushManager.getSubscription();
+            if (!subscription) {
+                console.log("Creating new push subscription...");
+                subscription = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                });
+            }
+
+            // Gửi subscription lên server
+            const token = localStorage.getItem('auth_token');
+            await fetch(API_BASE_URL + '/push/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(subscription)
+            });
+            console.log("Push subscription synchronized with server.");
+        } catch (err) {
+            console.error("Failed to subscribe to push notifications:", err);
+        }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
     }
 
     // Capture PWA Installation Prompt
