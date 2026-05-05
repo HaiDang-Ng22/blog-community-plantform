@@ -48,26 +48,6 @@ public class OrdersController : ControllerBase
         var userId = User.GetUserId() ?? Guid.Empty;
         if (userId == Guid.Empty) return Unauthorized();
         
-        var order = new Order
-        {
-            Id = Guid.NewGuid(),
-            BuyerId = userId,
-            CustomerName = dto.CustomerName,
-            PhoneNumber = dto.PhoneNumber,
-            Province = dto.Province,
-            DistrictWard = dto.DistrictWard,
-            SpecificAddress = dto.SpecificAddress,
-            ShippingAddress = dto.ShippingAddress,
-            CustomerNote = dto.CustomerNote,
-            PaymentMethod = string.IsNullOrEmpty(dto.PaymentMethod) ? "COD" : dto.PaymentMethod,
-            Status = (string.IsNullOrEmpty(dto.PaymentMethod) || dto.PaymentMethod == "COD") 
-                ? OrderStatus.AwaitingShipment 
-                : OrderStatus.Unpaid,
-            CreatedAt = DateTime.UtcNow,
-            ShippingFee = dto.ShippingFee,
-            Items = new List<OrderItem>()
-        };
-
         // Handle SaveAddress
         if (dto.SaveAddress)
         {
@@ -88,62 +68,98 @@ public class OrdersController : ControllerBase
             await _addressRepository.AddAsync(newAddress);
         }
 
-        decimal total = 0;
+        // Pre-load all products to group by ShopId
+        var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
+        var products = await _context.Products.Include(p => p.Shop).Where(p => productIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
 
-        foreach (var itemDto in dto.Items)
+        var shopGroups = dto.Items.GroupBy(i => 
         {
-            var product = await _context.Products.Include(p => p.Shop).FirstOrDefaultAsync(p => p.Id == itemDto.ProductId);
-            if (product == null) continue;
-            
-            if (product.Shop != null && product.Shop.IsSuspended)
-            {
-                return BadRequest(new { message = $"Sản phẩm '{product.Name}' thuộc về cửa hàng đang bị đình chỉ. Không thể thanh toán." });
-            }
+            if (products.TryGetValue(i.ProductId, out var p)) return p.ShopId;
+            return Guid.Empty;
+        }).Where(g => g.Key != Guid.Empty).ToList();
 
-            decimal unitPrice = product.Price;
-            if (itemDto.VariantId.HasValue)
-            {
-                var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId.Value);
-                if (variant != null && variant.PriceOverride > 0)
-                {
-                    unitPrice = variant.PriceOverride;
-                }
-            }
+        if (!shopGroups.Any()) return BadRequest(new { message = "Không tìm thấy sản phẩm hợp lệ." });
 
-            var orderItem = new OrderItem
+        var createdOrderIds = new List<Guid>();
+
+        foreach (var group in shopGroups)
+        {
+            var shopId = group.Key;
+            var order = new Order
             {
                 Id = Guid.NewGuid(),
-                OrderId = order.Id,
-                ProductId = itemDto.ProductId,
-                VariantId = itemDto.VariantId,
-                Quantity = itemDto.Quantity,
-                UnitPrice = unitPrice
+                BuyerId = userId,
+                CustomerName = dto.CustomerName,
+                PhoneNumber = dto.PhoneNumber,
+                Province = dto.Province,
+                DistrictWard = dto.DistrictWard,
+                SpecificAddress = dto.SpecificAddress,
+                ShippingAddress = dto.ShippingAddress,
+                CustomerNote = dto.CustomerNote,
+                PaymentMethod = string.IsNullOrEmpty(dto.PaymentMethod) ? "COD" : dto.PaymentMethod,
+                Status = (string.IsNullOrEmpty(dto.PaymentMethod) || dto.PaymentMethod == "COD") 
+                    ? OrderStatus.AwaitingShipment 
+                    : OrderStatus.Unpaid,
+                CreatedAt = DateTime.UtcNow,
+                ShippingFee = 25000, // Split fee or fixed fee per shop
+                Items = new List<OrderItem>()
             };
 
-            order.Items.Add(orderItem);
-            total += unitPrice * itemDto.Quantity;
-            
-            // Update stock (Simplified)
-            product.Stock -= itemDto.Quantity;
-            product.SalesCount += itemDto.Quantity;
-            await _productRepository.UpdateAsync(product);
-            
-            // Keep track of shop ID for notification
-            if (product.ShopId != Guid.Empty && !order.Items.Any(i => i.Id != orderItem.Id && i.Product?.ShopId == product.ShopId))
+            decimal total = 0;
+
+            foreach (var itemDto in group)
             {
-                var shop = await _shopRepository.GetByIdAsync(product.ShopId);
-                if (shop != null)
+                var product = products[itemDto.ProductId];
+                
+                if (product.Shop != null && product.Shop.IsSuspended)
                 {
-                    await _notiService.SendNotificationAsync(shop.UserId, userId, "NewOrder", order.Id, "đã đặt một đơn hàng mới từ shop của bạn.");
+                    return BadRequest(new { message = $"Sản phẩm '{product.Name}' thuộc về cửa hàng đang bị đình chỉ. Không thể thanh toán." });
                 }
+
+                decimal unitPrice = product.Price;
+                if (itemDto.VariantId.HasValue)
+                {
+                    var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId.Value);
+                    if (variant != null && variant.PriceOverride > 0)
+                    {
+                        unitPrice = variant.PriceOverride;
+                    }
+                }
+
+                var orderItem = new OrderItem
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id,
+                    ProductId = itemDto.ProductId,
+                    VariantId = itemDto.VariantId,
+                    Quantity = itemDto.Quantity,
+                    UnitPrice = unitPrice
+                };
+
+                order.Items.Add(orderItem);
+                total += unitPrice * itemDto.Quantity;
+                
+                // Update stock
+                product.Stock -= itemDto.Quantity;
+                product.SalesCount += itemDto.Quantity;
+                _context.Products.Update(product);
+            }
+
+            order.TotalAmount = total + order.ShippingFee;
+            await _orderRepository.AddAsync(order);
+            createdOrderIds.Add(order.Id);
+
+            // Notification
+            var shop = await _shopRepository.GetByIdAsync(shopId);
+            if (shop != null)
+            {
+                await _notiService.SendNotificationAsync(shop.UserId, userId, "NewOrder", order.Id, "đã đặt một đơn hàng mới từ shop của bạn.");
             }
         }
 
-        order.TotalAmount = total + dto.ShippingFee;
-        await _orderRepository.AddAsync(order);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Đặt hàng thành công", orderId = order.Id });
+        return Ok(new { message = "Đặt hàng thành công", orderIds = createdOrderIds });
     }
 
     [HttpGet("my-orders")]
@@ -220,6 +236,21 @@ public class OrdersController : ControllerBase
             order.Status = newStatus;
             order.UpdatedAt = DateTime.UtcNow;
             await _orderRepository.UpdateAsync(order);
+
+            // Restore stock when order is cancelled
+            if (newStatus == OrderStatus.Cancelled)
+            {
+                foreach (var item in order.Items)
+                {
+                    var product = await _context.Products.FindAsync(item.ProductId);
+                    if (product != null)
+                    {
+                        product.Stock += item.Quantity;
+                        product.SalesCount = Math.Max(0, product.SalesCount - item.Quantity);
+                        _context.Products.Update(product);
+                    }
+                }
+            }
 
             // Generate Notifications
             if (isBuyer && !isSeller && newStatus == OrderStatus.Cancelled)

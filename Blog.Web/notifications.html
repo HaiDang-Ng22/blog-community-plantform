@@ -154,8 +154,8 @@
         <div class="noti-header">
             <h1>Thông báo</h1>
             <div class="noti-tabs">
-                <div class="noti-tab active" data-tab="social">Tương tác & Blog</div>
-                <div class="noti-tab" data-tab="orders">Đơn hàng & Mua sắm</div>
+                <div class="noti-tab active" data-tab="social">Tương tác & Blog <span class="tab-badge" id="badge-social" style="display:none; width:8px; height:8px; background:#ef4444; border-radius:50%; position:absolute; top:5px; right:-5px;"></span></div>
+                <div class="noti-tab" data-tab="orders">Đơn hàng & Mua sắm <span class="tab-badge" id="badge-orders" style="display:none; width:8px; height:8px; background:#ef4444; border-radius:50%; position:absolute; top:5px; right:-5px;"></span></div>
             </div>
         </div>
         
@@ -192,9 +192,18 @@
             }
 
             function renderNotifications() {
-                const socialTypes = ['Like', 'Comment', 'Reply', 'Follow'];
+                const socialTypes = ['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'];
                 const orderTypes = ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'];
                 
+                // Cập nhật chấm đỏ cho các tab
+                const unreadSocial = allNotifications.filter(n => !n.isRead && socialTypes.includes(n.type)).length;
+                const unreadOrders = allNotifications.filter(n => !n.isRead && orderTypes.includes(n.type)).length;
+                
+                const badgeSocial = document.getElementById('badge-social');
+                const badgeOrders = document.getElementById('badge-orders');
+                if (badgeSocial) badgeSocial.style.display = unreadSocial > 0 ? 'inline-block' : 'none';
+                if (badgeOrders) badgeOrders.style.display = unreadOrders > 0 ? 'inline-block' : 'none';
+
                 const filtered = allNotifications.filter(n => {
                     if (currentTab === 'social') return socialTypes.includes(n.type);
                     if (currentTab === 'orders') return orderTypes.includes(n.type);
@@ -229,6 +238,7 @@
             function getIconForType(type) {
                 switch(type) {
                     case 'Like': return '<i class="fa-solid fa-heart" style="color: #ed4956;"></i>';
+                    case 'LikeStory': return '<i class="fa-solid fa-heart" style="color: #e1306c;"></i>';
                     case 'Comment': return '<i class="fa-solid fa-comment" style="color: #0095f6;"></i>';
                     case 'Reply': return '<i class="fa-solid fa-reply"></i>';
                     case 'Follow': return '<i class="fa-solid fa-user-plus" style="color: #000;"></i>';
@@ -255,9 +265,12 @@
                     if (type === 'Like' || type === 'Comment' || type === 'Reply') {
                         // Mở bài viết
                         window.location.href = `index.html?postId=${targetId}`;
+                    } else if (type === 'LikeStory') {
+                        // Xem trang cá nhân của chính mình để xem story
+                        window.location.href = `profile.html?id=${actorId}`;
                     } else if (type === 'Follow') {
                         // Xem trang cá nhân người follow
-                        window.location.href = `profile.html?userId=${actorId}`;
+                        window.location.href = `profile.html?id=${actorId}`;
                     } else if (type === 'NewOrder' || type === 'OrderCancelled') {
                         // Người bán xem chi tiết đơn hàng
                         window.location.href = `seller-order-detail.html?id=${targetId}`;

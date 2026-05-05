@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Blog.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Blog.API.Extensions;
+using Blog.API.Services;
 
 namespace Blog.API.Controllers;
 
@@ -13,10 +14,12 @@ namespace Blog.API.Controllers;
 public class StoriesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly INotificationService _notiService;
 
-    public StoriesController(AppDbContext context)
+    public StoriesController(AppDbContext context, INotificationService notiService)
     {
         _context = context;
+        _notiService = notiService;
     }
 
     // GET: api/stories/feed
@@ -220,24 +223,19 @@ public class StoriesController : ControllerBase
 
         var like = new StoryLike { StoryId = id, UserId = userId };
         _context.StoryLikes.Add(like);
+        await _context.SaveChangesAsync();
         
         if (story.UserId != userId)
         {
-            var notification = new Notification
-            {
-                Id = Guid.NewGuid(),
-                ReceiverId = story.UserId,
-                ActorId = userId,
-                Type = "LikeStory",
-                Message = "đã thả tim tin của bạn",
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false,
-                TargetId = story.Id
-            };
-            _context.Notifications.Add(notification);
+            await _notiService.SendNotificationAsync(
+                story.UserId,
+                userId,
+                "LikeStory",
+                story.Id,
+                "đã thả tim tin của bạn ❤️"
+            );
         }
 
-        await _context.SaveChangesAsync();
         return Ok(new { liked = true });
     }
 

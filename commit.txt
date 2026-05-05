@@ -1,0 +1,8 @@
+Refactor: Cập nhật luồng xử lý đơn hàng, giao diện người bán và thông báo
+
+- Tách logic xử lý thanh toán giỏ hàng theo từng cửa hàng (ShopId).
+- Cập nhật toàn diện giao diện Kênh người bán (Seller Center).
+- Thêm tính năng hiển thị mẫu hóa đơn và xác nhận in hóa đơn khi chuẩn bị hàng.
+- Thêm chỉ báo chấm đỏ cho các thông báo chưa đọc phân theo tab Tương tác và Mua sắm.
+- Bổ sung khối try/catch để bắt lỗi đồng bộ tại hàm checkout trên frontend.
+- Bổ sung tính năng hoàn lại số lượng tồn kho khi đơn hàng bị hủy.
