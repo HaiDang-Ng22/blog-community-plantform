@@ -9,6 +9,8 @@ using Blog.Domain.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Hubs;
 using Blog.API.Services;
+using Blog.Application.Services;
+using Blog.Infrastructure.Services;
 
 // Clear default inbound claim type mapping to prevent mapping 'role' to long XML schema URIs
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -85,6 +87,7 @@ builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IShopRepository, ShopRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPushNotificationService, Blog.Infrastructure.Services.PushNotificationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSignalR();
 

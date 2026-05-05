@@ -1,13 +1,13 @@
-// Admin Categories - Folder Drill-Down View
+// Admin Categories - Hybrid Grid/Tree View
 let allCategories = [];
-let currentParentId = null; // null = root level
-let navigationStack = []; // breadcrumb [{id, name}]
+let currentPath = []; // Array of category objects for breadcrumb
+let currentCategory = null; // Currently viewed category object
 
 async function loadAdminCategories() {
     try {
         const response = await window.api.get(`admin/categories?t=${Date.now()}`);
         allCategories = response;
-        renderFolderView();
+        renderView();
         updateParentDropdown();
     } catch (error) {
         console.error('Failed to load categories:', error);
@@ -29,119 +29,384 @@ function buildCategoryTree(categories) {
     return { map, roots };
 }
 
+function renderView() {
+    if (!currentCategory) {
+        renderGrid();
+    } else {
+        renderDrillDownTree();
+    }
+}
+
+// --- Grid View (Main Level) ---
+function renderGrid() {
+    const folderView = document.getElementById('categories-folder-view');
+    const treeView = document.getElementById('categories-tree-view');
+    folderView.classList.remove('hidden');
+    treeView.classList.add('hidden');
+
+    const roots = allCategories.filter(c => !c.parentCategoryId);
+    
+    let html = '';
+    
+    // Breadcrumb (Only if deep, but here we are at root)
+    html += `
+        <div class="breadcrumb-container">
+            <span class="breadcrumb-item active"><i class="fa-solid fa-house"></i> Tất cả danh mục</span>
+        </div>
+    `;
+
+    if (roots.length === 0) {
+        html += `
+            <div class="tree-empty">
+                <i class="fa-solid fa-folder-open" style="font-size:3rem; color:#cbd5e1; display:block; margin-bottom:1rem;"></i>
+                <p>Chưa có danh mục nào.</p>
+            </div>`;
+    } else {
+        html += `<div class="cat-grid">`;
+        roots.forEach(cat => {
+            const childCount = allCategories.filter(c => c.parentCategoryId === cat.id).length;
+            const iconClass = cat.icon || (childCount > 0 ? 'fa-folder' : 'fa-tag');
+            html += `
+                <div class="cat-card">
+                    <div class="cat-card-header" onclick="drillDown('${cat.id}')">
+                        <div class="cat-card-icon">
+                            <i class="fa-solid ${iconClass}"></i>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <div class="tree-node-name" style="font-size:1rem;">${cat.name}</div>
+                            <div class="tree-node-meta">${childCount} mục con</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color:#cbd5e1; font-size:0.8rem;"></i>
+                    </div>
+                    <div class="cat-card-actions">
+                        <button class="action-btn-sm add" onclick="openAddSubModal('${cat.id}')" title="Thêm mục con">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <button class="action-btn-sm edit" onclick="editCategory('${cat.id}')" title="Sửa">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="action-btn-sm delete" onclick="deleteCategory('${cat.id}')" title="Xóa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    folderView.innerHTML = html;
+}
+
+// --- Drill-down Tree View ---
 function drillDown(id) {
     const cat = allCategories.find(c => c.id === id);
     if (!cat) return;
-    navigationStack.push({ id: currentParentId, name: currentParentId ? allCategories.find(c => c.id === currentParentId)?.name : 'Tất cả danh mục' });
-    currentParentId = id;
-    renderFolderView();
+    
+    currentCategory = cat;
+    // Build path
+    currentPath = [];
+    let temp = cat;
+    while (temp) {
+        currentPath.unshift(temp);
+        temp = allCategories.find(c => c.id === temp.parentCategoryId);
+    }
+    
+    renderView();
 }
 
-function navigateTo(index) {
-    // index = -1 means root, 0..n means a breadcrumb item
+function goBack() {
+    if (currentPath.length > 1) {
+        const parent = currentPath[currentPath.length - 2];
+        drillDown(parent.id);
+    } else {
+        currentCategory = null;
+        currentPath = [];
+        renderView();
+    }
+}
+
+function goToLevel(index) {
     if (index === -1) {
-        currentParentId = null;
-        navigationStack = [];
+        currentCategory = null;
+        currentPath = [];
     } else {
-        const target = navigationStack[index];
-        currentParentId = target.id;
-        navigationStack = navigationStack.slice(0, index);
+        const cat = currentPath[index];
+        currentCategory = cat;
+        currentPath = currentPath.slice(0, index + 1);
     }
-    renderFolderView();
+    renderView();
 }
 
-function renderFolderView() {
-    const container = document.getElementById('categories-folder-view');
-    if (!container) return;
+function renderDrillDownTree() {
+    const folderView = document.getElementById('categories-folder-view');
+    const treeView = document.getElementById('categories-tree-view');
+    folderView.classList.add('hidden');
+    treeView.classList.remove('hidden');
 
-    const { map, roots } = buildCategoryTree(allCategories);
+    const treeRoot = document.getElementById('tree-root-nodes');
+    
+    // Breadcrumb (Global context)
+    const bcHtml = `
+        <div class="breadcrumb-container" style="margin-bottom: 2.5rem; width: 100%; max-width: 900px;">
+            <span class="breadcrumb-item" onclick="goToLevel(-1)"><i class="fa-solid fa-house"></i> Gốc</span>
+            ${currentPath.map((p, i) => `
+                <i class="fa-solid fa-chevron-right" style="font-size:0.7rem; opacity:0.5;"></i>
+                <span class="breadcrumb-item ${i === currentPath.length - 1 ? 'active' : ''}" onclick="goToLevel(${i})">${p.name}</span>
+            `).join('')}
+        </div>
+    `;
 
-    // Get children of current level
-    let items;
-    if (currentParentId === null) {
-        items = roots;
-    } else {
-        const parentNode = map.get(currentParentId);
-        items = parentNode ? parentNode.children : [];
-    }
+    // Only render the CURRENT category and its IMMEDIATE children
+    const children = allCategories.filter(c => c.parentCategoryId === currentCategory.id);
+    const iconClass = currentCategory.icon || (children.length > 0 ? 'fa-folder' : 'fa-tag');
 
-    // --- Breadcrumb ---
-    let breadcrumbHtml = `<div class="cat-breadcrumb">
-        <button class="crumb-btn ${currentParentId === null ? 'active' : ''}" onclick="navigateTo(-1)">
-            <i class="fa-solid fa-layer-group"></i> Tất cả danh mục
-        </button>`;
-    navigationStack.forEach((crumb, i) => {
-        if (crumb.id !== null) {
-            breadcrumbHtml += `<span class="crumb-sep"><i class="fa-solid fa-chevron-right"></i></span>
-            <button class="crumb-btn" onclick="navigateTo(${i})">${crumb.name}</button>`;
-        }
-    });
-    if (currentParentId !== null) {
-        const currentCat = allCategories.find(c => c.id === currentParentId);
-        breadcrumbHtml += `<span class="crumb-sep"><i class="fa-solid fa-chevron-right"></i></span>
-            <span class="crumb-current">${currentCat?.name || ''}</span>`;
-    }
-    breadcrumbHtml += `</div>`;
-
-    // --- Folder Grid ---
-    let gridHtml = '';
-    if (items.length === 0) {
-        gridHtml = `<div class="cat-empty">
-            <i class="fa-solid fa-folder-open" style="font-size:3rem; color:#cbd5e1; display:block; margin-bottom:1rem;"></i>
-            <p style="color:var(--text-secondary);">Chưa có danh mục con nào</p>
-            <button class="btn primary-btn" style="width:auto; margin-top:1rem; padding: 0.6rem 1.4rem;" onclick="openAddSubModal('${currentParentId || ''}')">
-                <i class="fa-solid fa-plus"></i> Thêm danh mục con
-            </button>
-        </div>`;
-    } else {
-        gridHtml = `<div class="cat-grid">`;
-        items.forEach(item => {
-            const childCount = item.children ? item.children.length : 0;
-            const iconClass = item.icon || (childCount > 0 ? 'fa-folder' : 'fa-tag');
-            gridHtml += `
-            <div class="cat-card">
-                <div class="cat-card-body" onclick="drillDown('${item.id}')" title="Mở danh mục">
-                    <div class="cat-card-icon">
+    treeRoot.innerHTML = `
+        <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            ${bcHtml}
+            
+            <div class="tree-node-group">
+                <!-- Parent Node (Current) -->
+                <div class="tree-node" id="node-${currentCategory.id}" style="background: white; border-color: #6366f1; border-width: 2px;">
+                    <div class="node-actions-pill">
+                        <button class="action-btn-sm add" onclick="openAddSubModal('${currentCategory.id}')" title="Thêm mục con">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <button class="action-btn-sm edit" onclick="editCategory('${currentCategory.id}')" title="Sửa">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="action-btn-sm delete" onclick="deleteCategory('${currentCategory.id}')" title="Xóa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="tree-node-icon">
                         <i class="fa-solid ${iconClass}"></i>
                     </div>
-                    <div class="cat-card-info">
-                        <div class="cat-card-name">${item.name}</div>
-                        <div class="cat-card-meta">
-                            ${childCount > 0
-                                ? `<span class="cat-chip chip-folder"><i class="fa-solid fa-folder"></i> ${childCount} danh mục con</span>`
-                                : `<span class="cat-chip chip-leaf"><i class="fa-solid fa-tag"></i> Không có mục con</span>`
-                            }
-                            <span class="cat-chip chip-slug">${item.slug}</span>
-                        </div>
+                    <div class="tree-node-content">
+                        <div class="tree-node-name" style="color:#6366f1;">${currentCategory.name}</div>
+                        <div class="tree-node-meta">${children.length} mục con</div>
                     </div>
-                    ${childCount > 0 ? `<i class="fa-solid fa-chevron-right cat-card-arrow"></i>` : ''}
                 </div>
-                <div class="cat-card-actions">
-                    <button class="btn-action" onclick="openAddSubModal('${item.id}')" title="Thêm mục con" style="color:#10b981;border-color:#10b981;">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <button class="btn-action" onclick="editCategory('${item.id}')" title="Sửa">
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
-                    <button class="btn-action danger" onclick="deleteCategory('${item.id}')" title="Xóa">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </div>`;
-        });
-        gridHtml += `</div>`;
-    }
 
-    container.innerHTML = breadcrumbHtml + gridHtml;
+                <!-- Immediate Children -->
+                ${children.length > 0 ? `
+                    <div class="tree-sub-items">
+                        ${children.map(child => `
+                            <div class="tree-node" id="node-${child.id}" onclick="drillDown('${child.id}')">
+                                <div class="node-actions-pill">
+                                    <button class="action-btn-sm add" onclick="openAddSubModal('${child.id}'); event.stopPropagation();" title="Thêm mục con">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <button class="action-btn-sm edit" onclick="editCategory('${child.id}'); event.stopPropagation();" title="Sửa">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="action-btn-sm delete" onclick="deleteCategory('${child.id}'); event.stopPropagation();" title="Xóa">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="tree-node-icon" style="background: #94a3b8;">
+                                    <i class="fa-solid ${child.icon || 'fa-tag'}"></i>
+                                </div>
+                                <div class="tree-node-content">
+                                    <div class="tree-node-name">${child.name}</div>
+                                    <div class="tree-node-meta">Nhấn để xem mục con</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : `
+                    <div style="margin-top: 20px; color: var(--text-secondary); font-style: italic; font-size: 0.85rem;">
+                        Chưa có mục con trong danh mục này
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        drawTreeLines();
+        setupDragToScroll();
+    }, 50);
 }
 
-// --- Modal helpers ---
+function renderNodeGroup(node) {
+    const childCount = node.children ? node.children.length : 0;
+    const iconClass = node.icon || (childCount > 0 ? 'fa-folder' : 'fa-tag');
+    
+    return `
+    <div class="tree-node-group" id="group-${node.id}">
+        <div class="tree-node" id="node-${node.id}" 
+             onmouseenter="highlightBranch('${node.id}', true)" 
+             onmouseleave="highlightBranch('${node.id}', false)">
+            <div class="node-actions-pill">
+                <button class="action-btn-sm add" onclick="openAddSubModal('${node.id}')" title="Thêm mục con">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <button class="action-btn-sm edit" onclick="editCategory('${node.id}')" title="Sửa">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="action-btn-sm delete" onclick="deleteCategory('${node.id}')" title="Xóa">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+            <div class="tree-node-icon">
+                <i class="fa-solid ${iconClass}"></i>
+            </div>
+            <div class="tree-node-content" onclick="drillDown('${node.id}')">
+                <div class="tree-node-name">${node.name}</div>
+                <div class="tree-node-meta">${childCount} mục con</div>
+            </div>
+        </div>
+        ${childCount > 0 ? `
+            <div class="tree-sub-items">
+                ${node.children.map(child => renderNodeGroup(child)).join('')}
+            </div>
+        ` : ''}
+    </div>`;
+}
+
+// --- Search Logic ---
+function handleCategorySearch(query) {
+    const resultsDiv = document.getElementById('category-search-results');
+    if (!query || query.length < 1) {
+        resultsDiv.classList.add('hidden');
+        return;
+    }
+
+    const filtered = allCategories.filter(c => 
+        c.name.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 8);
+
+    if (filtered.length === 0) {
+        resultsDiv.innerHTML = '<div class="search-result-item">Không tìm thấy kết quả</div>';
+    } else {
+        resultsDiv.innerHTML = filtered.map(c => {
+            const path = getCategoryPathString(c.id);
+            return `
+                <div class="search-result-item" onclick="selectSearchResult('${c.id}')">
+                    <i class="fa-solid ${c.icon || 'fa-tag'}"></i>
+                    <div class="search-result-info">
+                        <div class="search-result-name">${c.name}</div>
+                        <div class="search-result-path">${path}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    resultsDiv.classList.remove('hidden');
+}
+
+function getCategoryPathString(id) {
+    let path = [];
+    let temp = allCategories.find(c => c.id === id);
+    while (temp) {
+        path.unshift(temp.name);
+        temp = allCategories.find(c => c.id === temp.parentCategoryId);
+    }
+    return path.join(' > ');
+}
+
+function selectSearchResult(id) {
+    document.getElementById('category-search-results').classList.add('hidden');
+    document.getElementById('category-search-input').value = '';
+    drillDown(id);
+}
+
+// Close search on click outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-box')) {
+        document.getElementById('category-search-results').classList.add('hidden');
+    }
+});
+
+// --- Existing Tree Logic (Modified for Vertical SVG) ---
+function drawTreeLines() {
+    const svg = document.getElementById('tree-svg-layer');
+    const container = document.getElementById('categories-tree-view');
+    if (!svg || !container || container.classList.contains('hidden')) return;
+
+    svg.innerHTML = '';
+    svg.setAttribute('width', container.scrollWidth);
+    svg.setAttribute('height', container.scrollHeight);
+
+    // Only draw lines for the visible subtree starting from currentCategory
+    const visibleNodes = container.querySelectorAll('.tree-node');
+    const nodeIds = Array.from(visibleNodes).map(n => n.id.replace('node-', ''));
+
+    nodeIds.forEach(id => {
+        const cat = allCategories.find(c => c.id === id);
+        if (cat && cat.parentCategoryId && nodeIds.includes(cat.parentCategoryId)) {
+            const parentNode = document.getElementById(`node-${cat.parentCategoryId}`);
+            const childNode = document.getElementById(`node-${cat.id}`);
+            
+            if (parentNode && childNode) {
+                const pRect = parentNode.getBoundingClientRect();
+                const cRect = childNode.getBoundingClientRect();
+                const contRect = container.getBoundingClientRect();
+
+                // Vertical logic: Parent bottom center -> Child top center
+                const startX = (pRect.left - contRect.left) + (pRect.width / 2) + container.scrollLeft;
+                const startY = (pRect.top - contRect.top) + pRect.height + container.scrollTop;
+                
+                const endX = (cRect.left - contRect.left) + (cRect.width / 2) + container.scrollLeft;
+                const endY = (cRect.top - contRect.top) + container.scrollTop;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const cp1y = startY + (endY - startY) / 2;
+                const cp2y = startY + (endY - startY) / 2;
+                
+                const d = `M ${startX} ${startY} C ${startX} ${cp1y}, ${endX} ${cp2y}, ${endX} ${endY}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'tree-curve');
+                path.setAttribute('data-from', cat.parentCategoryId);
+                path.setAttribute('data-to', cat.id);
+                svg.appendChild(path);
+            }
+        }
+    });
+}
+
+function highlightBranch(nodeId, active) {
+    const lines = document.querySelectorAll(`path[data-from="${nodeId}"], path[data-to="${nodeId}"]`);
+    lines.forEach(line => {
+        if (active) line.classList.add('active');
+        else line.classList.remove('active');
+    });
+}
+
+function setupDragToScroll() {
+    const container = document.getElementById('categories-tree-view');
+    if (!container) return;
+    let isDown = false, startX, startY, scrollLeft, scrollTop;
+
+    container.onmousedown = (e) => {
+        if (e.target.closest('.tree-node')) return;
+        isDown = true;
+        startX = e.pageX - container.offsetLeft;
+        startY = e.pageY - container.offsetTop;
+        scrollLeft = container.scrollLeft;
+        scrollTop = container.scrollTop;
+    };
+    container.onmouseleave = () => isDown = false;
+    container.onmouseup = () => isDown = false;
+    container.onmousemove = (e) => {
+        if (!isDown) return;
+        const x = e.pageX - container.offsetLeft;
+        const y = e.pageY - container.offsetTop;
+        container.scrollLeft = scrollLeft - (x - startX);
+        container.scrollTop = scrollTop - (y - startY);
+    };
+}
+
+window.addEventListener('resize', drawTreeLines);
+
+// --- Modal & API helpers ---
 function openAddSubModal(parentId) {
     const modal = document.getElementById('category-modal');
     const form = document.getElementById('category-form');
     form.reset();
     document.getElementById('category-id').value = '';
-    document.getElementById('category-modal-title').textContent = parentId ? 'Thêm Danh mục con' : 'Thêm Danh mục mới';
+    document.getElementById('category-modal-title').textContent = 'Thêm Danh mục con';
     updateParentDropdown();
     if (parentId) document.getElementById('category-parent').value = parentId;
     modal.classList.remove('hidden');
@@ -152,12 +417,18 @@ function updateParentDropdown() {
     if (!select) return;
     const currentId = document.getElementById('category-id').value;
     select.innerHTML = '<option value="">-- Không có (Danh mục gốc) --</option>';
-    allCategories.filter(c => c.id !== currentId).forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat.id;
-        option.textContent = cat.name;
-        select.appendChild(option);
-    });
+    const { roots } = buildCategoryTree(allCategories);
+    function addOptions(nodes, level = 0) {
+        nodes.forEach(node => {
+            if (node.id === currentId) return;
+            const option = document.createElement('option');
+            option.value = node.id;
+            option.textContent = '  '.repeat(level) + (level > 0 ? '└─ ' : '') + node.name;
+            select.appendChild(option);
+            if (node.children && node.children.length > 0) addOptions(node.children, level + 1);
+        });
+    }
+    addOptions(roots);
 }
 
 function openCategoryModal(cat = null) {
@@ -175,10 +446,8 @@ function openCategoryModal(cat = null) {
     } else {
         document.getElementById('category-modal-title').textContent = 'Thêm Danh mục mới';
         updateParentDropdown();
-        // Pre-select current folder as parent
-        if (currentParentId) {
-            document.getElementById('category-parent').value = currentParentId;
-        }
+        // If we are currently in a category, default parent to it
+        if (currentCategory) document.getElementById('category-parent').value = currentCategory.id;
     }
     modal.classList.remove('hidden');
 }
@@ -190,15 +459,27 @@ function closeCategoryModal() {
 async function handleCategorySubmit(event) {
     event.preventDefault();
     const id = document.getElementById('category-id').value;
+    const name = document.getElementById('category-name').value.trim();
+    const parentId = document.getElementById('category-parent').value || null;
+    
+    // Local check for duplicates in same parent (though backend handles global, this is specifically requested)
+    const siblings = allCategories.filter(c => c.parentCategoryId === parentId && c.id !== id);
+    if (siblings.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+        window.common.showToast('Tên danh mục con này đã tồn tại trong nhóm này', 'error');
+        return;
+    }
+
     const data = {
-        name: document.getElementById('category-name').value,
+        name: name,
         icon: document.getElementById('category-icon').value,
-        parentCategoryId: document.getElementById('category-parent').value || null
+        parentCategoryId: parentId
     };
+    
     const submitBtn = event.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang lưu...';
+    
     try {
         if (id) {
             await window.api.put(`admin/categories/${id}`, data);
@@ -224,47 +505,29 @@ function editCategory(id) {
 }
 
 async function deleteCategory(id) {
-    const cat = allCategories.find(c => c.id === id);
     const descendants = getAllDescendants(id);
-    const childCount = descendants.length;
-
-    let msg;
-    if (childCount > 0) {
-        msg = `⚠️ Danh mục "${cat?.name}" có ${childCount} danh mục con.\n\nXóa sẽ xóa toàn bộ danh mục con theo.\nBạn có chắc chắn muốn xóa không?`;
-    } else {
-        msg = `Bạn có chắc muốn xóa danh mục "${cat?.name}"?`;
-    }
-    if (!confirm(msg)) return;
+    if (!confirm(`Bạn có chắc muốn xóa danh mục này? ${descendants.length > 0 ? `Toàn bộ ${descendants.length} mục con sẽ bị xóa theo.` : ''}`)) return;
 
     try {
-        const result = await window.api.delete(`admin/categories/${id}`);
-        const successMsg = result?.message || (childCount > 0
-            ? `Đã xóa "${cat?.name}" và ${childCount} danh mục con`
-            : `Đã xóa danh mục "${cat?.name}"`);
-        window.common.showToast(successMsg, 'success');
-        // If we deleted the current folder we're viewing, go back up
-        if (currentParentId === id || descendants.includes(currentParentId)) {
-            currentParentId = null;
-            navigationStack = [];
+        await window.api.delete(`admin/categories/${id}`);
+        window.common.showToast('Đã xóa thành công', 'success');
+        if (currentCategory && (currentCategory.id === id || descendants.includes(currentCategory.id))) {
+            currentCategory = null;
+            currentPath = [];
         }
         await loadAdminCategories();
     } catch (error) {
-        console.error('Delete category error:', error);
-        window.common.showToast(error.message || 'Không thể xóa danh mục', 'error');
+        window.common.showToast(error.message || 'Không thể xóa', 'error');
     }
 }
 
-// Get all descendant IDs of a given category id
 function getAllDescendants(id) {
     const result = [];
     const queue = [id];
     while (queue.length > 0) {
         const current = queue.shift();
         const children = allCategories.filter(c => c.parentCategoryId === current);
-        children.forEach(c => {
-            result.push(c.id);
-            queue.push(c.id);
-        });
+        children.forEach(c => { result.push(c.id); queue.push(c.id); });
     }
     return result;
 }
@@ -278,4 +541,7 @@ window.openCategoryModal = openCategoryModal;
 window.closeCategoryModal = closeCategoryModal;
 window.openAddSubModal = openAddSubModal;
 window.drillDown = drillDown;
-window.navigateTo = navigateTo;
+window.goToLevel = goToLevel;
+window.handleCategorySearch = handleCategorySearch;
+window.selectSearchResult = selectSearchResult;
+window.highlightBranch = highlightBranch;

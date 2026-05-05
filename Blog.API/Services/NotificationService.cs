@@ -16,11 +16,13 @@ public class NotificationService : INotificationService
 {
     private readonly AppDbContext _context;
     private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly Blog.Application.Services.IPushNotificationService _pushService;
 
-    public NotificationService(AppDbContext context, IHubContext<NotificationHub> hubContext)
+    public NotificationService(AppDbContext context, IHubContext<NotificationHub> hubContext, Blog.Application.Services.IPushNotificationService pushService)
     {
         _context = context;
         _hubContext = hubContext;
+        _pushService = pushService;
     }
 
     public async Task SendNotificationAsync(Guid receiverId, Guid actorId, string type, Guid? targetId, string message)
@@ -57,6 +59,21 @@ public class NotificationService : INotificationService
             ActorAvatarUrl = actor?.AvatarUrl,
             UnreadCount = await GetUnreadCountAsync(receiverId)
         });
+
+        // Send Web Push
+        try
+        {
+            await _pushService.SendPushNotificationAsync(
+                receiverId, 
+                "Thông báo mới từ Zynk", 
+                message, 
+                "/notifications.html"
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Push Notification failed: {ex.Message}");
+        }
     }
 
     public async Task<int> GetUnreadCountAsync(Guid userId)

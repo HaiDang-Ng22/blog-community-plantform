@@ -76,6 +76,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
     }
+
+    // --- Admin Redirection Logic ---
+    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const isLoginPage = window.location.pathname.includes('auth.html');
+    const isAdminPage = window.location.pathname.includes('/admin/');
+
+    if (userInfo && userInfo.role === 'Admin' && !isAdminPage && !isLoginPage) {
+        window.location.href = 'admin/index.html';
+        return;
+    }
     
     try {
         await checkSellerStatus();
@@ -93,6 +103,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadNotificationBadge()
         ]); 
     } catch(e) {}
+
+    // Init Push Notifications
+    if (localStorage.getItem('auth_token')) {
+        initPushNotifications();
+    }
 });
 
 async function loadNotificationBadge() {
@@ -756,6 +771,23 @@ async function updateNav() {
             ? userInfo.avatarUrl
             : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random&color=fff`;
 
+        // --- Admin Minimal Header ---
+        if (userInfo.role === 'Admin') {
+            navActions.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 5px 15px; background: rgba(99, 102, 241, 0.05); border-radius: 20px;">
+                        <span style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">Chào Admin, ${userName}</span>
+                        <img src="${userAvatar}" class="mini-avatar" style="width:30px; height:30px; border: 2px solid #6366f1;">
+                    </div>
+                    <button onclick="logout(event)" class="btn secondary-btn" style="width:auto; margin:0; padding: 6px 15px; font-size: 0.85rem; border-radius: 10px;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        // --- Regular User Header ---
         // Update home page avatar if present
         const homeAvatar = document.getElementById('current-user-avatar');
         if (homeAvatar) homeAvatar.src = userAvatar;
@@ -1441,3 +1473,92 @@ async function loadNotiUnreadBadge() {
     } catch { /* silent */ }
 }
 window.loadNotiUnreadBadge = loadNotiUnreadBadge;
+// --- Push Notification Functions ---
+async function initPushNotifications() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('Push Notifications not supported');
+        return;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (!subscription) {
+            // Request permission if not granted
+            if (Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    await subscribeToPush(registration);
+                }
+            } else if (Notification.permission === 'granted') {
+                await subscribeToPush(registration);
+            }
+        } else {
+            // Sync with backend in case the server lost the record
+            await syncPushSubscription(subscription);
+        }
+    } catch (err) {
+        console.error('Push Init Error:', err);
+    }
+}
+
+async function subscribeToPush(registration) {
+    const publicKey = 'BDkz2X8tYJlC9LMhpRWlAe10DmBQPSdoYJgyo-q9pxlsx_wGioY_mYl6AOilHSuEAqxUTF6_hLcvCzFgCPTUsgw';
+    const applicationServerKey = urlBase64ToUint8Array(publicKey);
+    
+    try {
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+        });
+        
+        await syncPushSubscription(subscription);
+        console.log('User is subscribed to Push Notifications');
+    } catch (err) {
+        console.error('Failed to subscribe to Push:', err);
+    }
+}
+
+async function syncPushSubscription(subscription) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    const subJson = subscription.toJSON();
+    const payload = {
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth
+    };
+
+    try {
+        await fetch(API_BASE_URL + '/push/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        console.error('Failed to sync push subscription with backend', err);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+window.initPushNotifications = initPushNotifications;
+window.subscribeToPush = subscribeToPush;
