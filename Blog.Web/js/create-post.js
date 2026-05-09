@@ -3,6 +3,10 @@
 let postImages = []; // Array of objects: { url, filters, transforms }
 let currentStep = 0;
 let currentImageIndex = 0;
+let isTextOnly = false;
+let isPoll = false;
+let isReel = false;
+let reelUrl = '';
 
 // Pan state
 let isDraggingImage = false;
@@ -30,7 +34,13 @@ function initUI() {
 
     // Header buttons
     document.getElementById('cp-back-btn').addEventListener('click', () => {
-        if (currentStep > 0) goToStep(currentStep - 1);
+        if (currentStep > 0) {
+            if (isTextOnly && currentStep === 3) {
+                goToStep(0);
+            } else {
+                goToStep(currentStep - 1);
+            }
+        }
     });
 
     document.getElementById('cp-next-btn').addEventListener('click', () => {
@@ -78,7 +88,7 @@ function initDropzone() {
         });
     });
     dz.addEventListener('drop', (e) => {
-        const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/'));
+        const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
         if (!files.length) return;
         const dt = new DataTransfer();
         files.forEach(f => dt.items.add(f));
@@ -92,11 +102,37 @@ async function initWizard(input) {
     const files = Array.from(input.files);
     if (files.length === 0) return;
 
+    isTextOnly = false;
+    isPoll = false;
+    isReel = false;
+    postImages = [];
+    reelUrl = '';
+
     const step0 = document.getElementById('step-0');
     const originalContent = step0.innerHTML;
-    step0.innerHTML = '<div class="loading-spinner"></div><p style="margin-top:1rem">Đang tải ảnh...</p>';
+    step0.innerHTML = '<div class="loading-spinner"></div><p style="margin-top:1rem">Đang tải tệp tin...</p>';
 
+    // Check if there's a video in the selection
+    const videoFile = files.find(f => f.type.startsWith('video/'));
+    
+    if (videoFile) {
+        // Video mode (Reel)
+        isReel = true;
+        try {
+            const result = await window.api.uploadImage(videoFile); // uploadImage helper handles FormData, works for videos too
+            reelUrl = result.url;
+            goToStep(3);
+        } catch (error) {
+            console.error('Error uploading video:', error);
+            step0.innerHTML = originalContent;
+            alert('Không thể tải video. Vui lòng thử lại.');
+        }
+        return;
+    }
+
+    // Image mode
     for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
         try {
             const result = await window.api.uploadImage(file);
             postImages.push({
@@ -105,7 +141,7 @@ async function initWizard(input) {
                 transforms: { zoom: 1, x: 0, y: 0 }
             });
         } catch (error) {
-            console.error('Error uploading file:', file.name, error);
+            console.error('Error uploading image:', file.name, error);
         }
     }
 
@@ -115,6 +151,34 @@ async function initWizard(input) {
         step0.innerHTML = originalContent;
         alert('Không thể tải ảnh. Vui lòng thử lại.');
     }
+}
+
+function initTextOnlyPost() {
+    isTextOnly = true;
+    isPoll = false;
+    postImages = [];
+    goToStep(3);
+}
+
+function initPollPost() {
+    isPoll = true;
+    isTextOnly = true;
+    postImages = [];
+    goToStep(3);
+}
+
+function addPollOption() {
+    const list = document.getElementById('poll-options-list');
+    const count = list.querySelectorAll('input').length;
+    if (count >= 10) {
+        alert('Tối đa 10 lựa chọn.');
+        return;
+    }
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'poll-option-input';
+    input.placeholder = `Lựa chọn ${count + 1}`;
+    list.appendChild(input);
 }
 
 function goToStep(step) {
@@ -132,6 +196,42 @@ function goToStep(step) {
     nextBtn.classList.toggle('hidden', step === 0 || step === 3);
     shareBtn.classList.toggle('hidden', step !== 3);
 
+    // Text only adjustments
+    if (step === 3) {
+        const step3 = document.getElementById('step-3');
+        const pollEditor = document.getElementById('poll-editor');
+        const finalImg = document.getElementById('final-preview-img');
+        const finalVideo = document.getElementById('final-preview-video');
+        
+        if (isTextOnly) {
+            step3.classList.add('cp-text-only');
+            title.textContent = isPoll ? 'Tạo thăm dò ý kiến' : 'Bài viết văn bản';
+            
+            const textarea = document.getElementById('post-content');
+            textarea.placeholder = isPoll ? 'Đặt câu hỏi...' : 'Viết gì đó...';
+            
+            pollEditor.classList.toggle('hidden', !isPoll);
+            finalImg.classList.add('hidden');
+            finalVideo.classList.add('hidden');
+        } else if (isReel) {
+            step3.classList.remove('cp-text-only');
+            title.textContent = 'Tạo Reel';
+            pollEditor.classList.add('hidden');
+            
+            finalImg.classList.add('hidden');
+            finalVideo.classList.remove('hidden');
+            finalVideo.src = reelUrl;
+        } else {
+            step3.classList.remove('cp-text-only');
+            title.textContent = 'Tạo bài viết mới';
+            pollEditor.classList.add('hidden');
+            
+            finalImg.classList.remove('hidden');
+            finalVideo.classList.add('hidden');
+            showPreview(3, currentImageIndex);
+        }
+    }
+
     if (step === 1) {
         title.textContent = 'Cắt';
         renderReorderList();
@@ -142,8 +242,9 @@ function goToStep(step) {
         showPreview(2, currentImageIndex);
         updateFilterSliders();
     } else if (step === 3) {
-        title.textContent = 'Tạo bài viết mới';
-        showPreview(3, currentImageIndex);
+        if (!isTextOnly) {
+            showPreview(3, currentImageIndex);
+        }
     }
 }
 
@@ -306,11 +407,29 @@ async function handlePublish() {
     shareBtn.textContent = 'Đang chia sẻ...';
 
     try {
+        const pollData = isPoll ? {
+            question: content,
+            options: Array.from(document.querySelectorAll('.poll-option-input'))
+                .map(i => i.value.trim())
+                .filter(v => v.length > 0),
+            durationHours: 24 // Default 24h
+        } : null;
+
+        if (isPoll && pollData.options.length < 2) {
+            alert('Vui lòng nhập ít nhất 2 lựa chọn.');
+            shareBtn.disabled = false;
+            shareBtn.textContent = 'Chia sẻ';
+            return;
+        }
+
         await window.api.post('posts', {
-            title: 'Social Post',
+            title: isPoll ? 'Poll' : (isReel ? 'Reel' : 'Social Post'),
             content,
             summary: '',
-            imageUrls: postImages.map(p => p.url)
+            imageUrls: isReel ? [] : postImages.map(p => p.url),
+            videoUrl: isReel ? reelUrl : null,
+            type: isReel ? 'Reel' : (isPoll ? 'Poll' : 'Standard'),
+            poll: pollData
         });
 
         alert('Đã chia sẻ bài viết thành công!');
@@ -323,6 +442,9 @@ async function handlePublish() {
 }
 
 window.initWizard = initWizard;
+window.initTextOnlyPost = initTextOnlyPost;
 window.removeImage = removeImage;
 window.applyFilters = applyFilters;
 window.applyZoom = applyZoom;
+window.initPollPost = initPollPost;
+window.addPollOption = addPollOption;

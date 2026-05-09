@@ -18,7 +18,37 @@ public class PostDto
     public DateTime? PublishedAt { get; set; }
     public int CommentCount { get; set; }
     public bool IsLikedByMe { get; set; }
+    public bool IsSavedByMe { get; set; }
     public List<string> ImageUrls { get; set; } = new List<string>();
+    public string Type { get; set; } = "Standard";
+    public string? VideoUrl { get; set; }
+    public PollDto? Poll { get; set; }
+}
+
+public class PollDto
+{
+    public Guid Id { get; set; }
+    public string Question { get; set; } = string.Empty;
+    public List<PollOptionDto> Options { get; set; } = new();
+    public bool HasVoted { get; set; }
+    public Guid? SelectedOptionId { get; set; }
+    public int TotalVotes { get; set; }
+    public bool IsExpired { get; set; }
+}
+
+public class PollOptionDto
+{
+    public Guid Id { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public int VoteCount { get; set; }
+    public double Percentage { get; set; }
+}
+
+public class CreatePollDto
+{
+    public string Question { get; set; } = string.Empty;
+    public List<string> Options { get; set; } = new();
+    public int? DurationHours { get; set; }
 }
 
 public class CreatePostDto
@@ -28,6 +58,9 @@ public class CreatePostDto
     public string? Summary { get; set; }
     public string? FeaturedImageUrl { get; set; }
     public List<string> ImageUrls { get; set; } = new List<string>();
+    public string? VideoUrl { get; set; }
+    public string Type { get; set; } = "Standard";
+    public CreatePollDto? Poll { get; set; }
 }
 
 public class UpdatePostDto

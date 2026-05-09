@@ -120,7 +120,7 @@
     margin-bottom: 1.5rem;
     position: sticky;
     top: 0;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--bg-color);
     backdrop-filter: blur(10px);
     z-index: 100;
 }
@@ -338,7 +338,7 @@
 }
 
 .quick-post-card:hover {
-    background: #fff;
+    background: var(--input-bg);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
@@ -359,7 +359,7 @@
 
 /* Post Card Styles */
 .zynk-post-card {
-    background: #fff;
+    background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
     margin-bottom: 24px;
@@ -406,7 +406,7 @@
 .zynk-media-container {
     position: relative;
     width: 100%;
-    background: #fff;
+    background: var(--bg-color);
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -441,7 +441,7 @@
     aspect-ratio: 1 / 1;
     object-fit: cover;
     display: block;
-    background: #fafafa;
+    background: var(--input-bg);
 }
 
 /* Carousel Nav */
@@ -449,7 +449,7 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--glass-bg);
     border: none;
     width: 30px;
     height: 30px;
@@ -602,8 +602,8 @@
     position: absolute;
     right: 0;
     top: 100%;
-    background: white;
-    border: 1px solid #efefef;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     z-index: 1000;
@@ -623,7 +623,7 @@
 }
 
 .zynk-menu button:hover {
-    background: #fafafa;
+    background: var(--input-bg);
 }
 
 .zynk-menu button.delete {

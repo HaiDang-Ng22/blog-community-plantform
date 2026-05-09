@@ -32,39 +32,66 @@ public class UploadController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest(new { message = "Không có tập tin nào được chọn." });
 
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        var allowedVideoExtensions = new[] { ".mp4", ".mov", ".avi", ".mkv" };
         var extension = Path.GetExtension(file.FileName).ToLower();
 
-        if (!allowedExtensions.Contains(extension))
-            return BadRequest("Định dạng tập tin không hỗ trợ.");
+        bool isVideo = allowedVideoExtensions.Contains(extension);
+        bool isImage = allowedImageExtensions.Contains(extension);
+
+        if (!isImage && !isVideo)
+            return BadRequest(new { message = "Định dạng tập tin không hỗ trợ." });
 
         try
         {
             using var stream = file.OpenReadStream();
-            var uploadParams = new ImageUploadParams
-            {
-                File = new FileDescription(file.FileName, stream),
-                Folder = "zynk_uploads",
-                UseFilename = true,
-                UniqueFilename = true,
-                Overwrite = false
-            };
+            string? secureUrl = null;
+            string? errorMessage = null;
 
-            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-
-            if (uploadResult.Error != null)
+            if (isVideo)
             {
-                Console.WriteLine($"Cloudinary Error: {uploadResult.Error.Message}");
-                return StatusCode(500, new { message = "Lỗi khi tải ảnh lên Cloudinary." });
+                var uploadParams = new VideoUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "zynk_reels",
+                    UniqueFilename = true,
+                    Overwrite = false
+                };
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.Error != null) errorMessage = uploadResult.Error.Message;
+                else secureUrl = uploadResult.SecureUrl?.ToString();
+            }
+            else
+            {
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "zynk_uploads",
+                    UniqueFilename = true,
+                    Overwrite = false
+                };
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.Error != null) errorMessage = uploadResult.Error.Message;
+                else secureUrl = uploadResult.SecureUrl?.ToString();
             }
 
-            // Trả về URL bảo mật (HTTPS) từ Cloudinary để frontend sử dụng
-            return Ok(new { url = uploadResult.SecureUrl.ToString() });
+            if (errorMessage != null)
+            {
+                Console.WriteLine($"Cloudinary Error: {errorMessage}");
+                return StatusCode(500, new { message = "Lỗi khi tải tập tin lên Cloudinary: " + errorMessage });
+            }
+
+            if (secureUrl == null)
+            {
+                return StatusCode(500, new { message = "Không nhận được URL từ máy chủ lưu trữ." });
+            }
+
+            return Ok(new { url = secureUrl });
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception during upload: {ex.Message}");
-            return StatusCode(500, new { message = "Lỗi hệ thống khi tải ảnh." });
+            return StatusCode(500, new { message = "Lỗi hệ thống khi tải tập tin." });
         }
     }
 }

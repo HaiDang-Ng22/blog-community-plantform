@@ -1,3 +1,9 @@
+// Apply theme as soon as possible
+(function() {
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark') document.body.classList.add('dark-mode');
+})();
+
 // js/common.js
 
 // Cache seller status in memory for the page session
@@ -251,6 +257,9 @@ function renderSidebar() {
             <a href="create-post.html" class="mbn-link mbn-create">
                 <i class="fa-solid fa-plus"></i>
             </a>
+            <a href="reels.html" class="mbn-link">
+                <i class="fa-solid fa-play"></i>
+            </a>
             <a href="marketplace.html" class="mbn-link">
                 <i class="fa-solid fa-compass"></i>
             </a>
@@ -277,6 +286,10 @@ function renderSidebar() {
             <a href="index.html" class="sidebar-link">
                 <i class="fa-solid fa-house"></i>
                 <span>Trang chủ</span>
+            </a>
+            <a href="reels.html" class="sidebar-link">
+                <i class="fa-solid fa-play"></i>
+                <span>Reels</span>
             </a>
             <a href="search.html" class="sidebar-link" id="sidebar-search-trigger">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -311,7 +324,13 @@ function renderSidebar() {
             
             <!-- More Menu Popup -->
             <div id="sidebar-more-menu" class="sidebar-more-menu hidden">
+                <a href="#" onclick="toggleDarkMode(event)">
+                    <i class="fa-solid fa-moon"></i> 
+                    <span>Chế độ tối</span>
+                    <div id="dark-mode-toggle-switch" class="theme-toggle-indicator ${localStorage.getItem('theme') === 'dark' ? 'active' : ''}"></div>
+                </a>
                 <a href="settings.html"><i class="fa-solid fa-gear"></i> Cài đặt</a>
+                <a href="saved.html"><i class="fa-solid fa-bookmark"></i> Đã lưu</a>
                 ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<a href="admin.html" style="color: #6366f1;"><i class="fa-solid fa-user-shield"></i> Quản trị</a>` : ''}
                 <div class="menu-divider"></div>
                 <a href="#" onclick="logout(event)"><i class="fa-solid fa-sign-out-alt"></i> Đăng xuất</a>
@@ -952,6 +971,23 @@ async function updateNav() {
     }
 }
 
+window.toggleDarkMode = function(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    
+    const indicator = document.getElementById('dark-mode-toggle-switch');
+    if (indicator) {
+        indicator.classList.toggle('active', isDark);
+    }
+
+    // Optional: Notify other components
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: isDark ? 'dark' : 'light' } }));
+};
+
 function logout(e) {
     if (e) e.preventDefault();
     if (e) e.stopPropagation();
@@ -1037,7 +1073,13 @@ window.addEventListener('languageChanged', () => {
 function autoLink(text) {
     if (!text) return '';
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0095f6; text-decoration: none;">${url}</a>`);
+    let result = text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0095f6; text-decoration: none;">${url}</a>`);
+    
+    // Convert #hashtags to links
+    const hashtagRegex = /(^|\s)#([\p{L}\p{N}_]+)/gu;
+    result = result.replace(hashtagRegex, '$1<a href="search.html?q=%23$2" class="hashtag">#$2</a>');
+    
+    return result;
 }
 
 // Truncate text with Read More
@@ -1119,8 +1161,51 @@ function createPostCard(post) {
     const postTime = formatDate(post.createdAt);
     const likeCount = post.likeCount || 0;
     const isLiked = post.isLikedByMe;
+    const isSaved = post.isSavedByMe;
 
-    if (!hasImages) {
+    const isReel = post.type === 'Reel' || !!post.videoUrl;
+
+    if (isReel) {
+        // ---- REEL STYLE (Video post) ----
+        card.classList.add('style-reel');
+        card.innerHTML = `
+            <div class="zynk-header">
+                <img src="${avatarUrl}" class="zynk-avatar-mini" alt="${authorName}">
+                <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                <div class="zynk-options" onclick="window.common.toggleMenu(this)" style="margin-left:auto;">
+                    <i class="fa-solid fa-ellipsis"></i>
+                    <div class="zynk-menu hidden">${menuItems}</div>
+                </div>
+            </div>
+            <div class="zynk-media-container zynk-reel-container" style="background: #000; min-height: 400px; aspect-ratio: 9/16; max-height: 600px;">
+                <video src="${post.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;" loading="lazy"></video>
+            </div>
+            <div class="zynk-actions">
+                <button class="${isLiked ? 'liked' : ''}" onclick="window.postActions.toggleLike('${postId}', this)">
+                    <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                </button>
+                <button onclick="window.postActions.toggleComments('${postId}', this.closest('.zynk-post-card'))">
+                    <i class="fa-regular fa-comment"></i>
+                </button>
+                <button onclick="window.common.openShareModal('${postId}')">
+                    <i class="fa-regular fa-paper-plane"></i>
+                </button>
+                <button class="save-btn ${isSaved ? 'saved' : ''}" data-post-id="${postId}" onclick="window.postActions.toggleSave('${postId}', this)" style="margin-left:auto;">
+                    <i class="${isSaved ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
+                </button>
+            </div>
+            <div class="zynk-body">
+                <div class="zynk-stats">${likeCount > 0 ? likeCount + ' lượt thích' : ''}</div>
+                <div class="zynk-caption">
+                    <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                    ${truncateText(post.content || '')}
+                </div>
+                ${renderPollHtml(post)}
+                <span class="zynk-time">${postTime}</span>
+            </div>
+            <div class="comments-container" id="comments-${postId}"></div>
+        `;
+    } else if (!hasImages) {
         // ---- THREADS STYLE (Text-only post) ----
         card.classList.add('style-threads');
         card.innerHTML = `
@@ -1141,6 +1226,7 @@ function createPostCard(post) {
                         </div>
                     </div>
                     <div class="zynk-content">${truncateText(post.content || '')}</div>
+                    ${renderPollHtml(post)}
                     <div class="zynk-actions">
                         <button class="${isLiked ? 'liked' : ''}" onclick="window.postActions.toggleLike('${postId}', this)">
                             <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
@@ -1148,8 +1234,11 @@ function createPostCard(post) {
                         <button onclick="window.postActions.toggleComments('${postId}', this.closest('.zynk-post-card'))">
                             <i class="fa-regular fa-comment"></i>
                         </button>
-                        <button onclick="window.common.openShareModal('${postId}')" style="margin-left:auto;">
+                        <button onclick="window.common.openShareModal('${postId}')">
                             <i class="fa-regular fa-paper-plane"></i>
+                        </button>
+                        <button class="save-btn ${isSaved ? 'saved' : ''}" data-post-id="${postId}" onclick="window.postActions.toggleSave('${postId}', this)" style="margin-left:auto;">
+                            <i class="${isSaved ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
                         </button>
                     </div>
                     <div class="zynk-stats">${likeCount > 0 ? likeCount + ' lượt thích' : ''}</div>
@@ -1192,8 +1281,11 @@ function createPostCard(post) {
                 <button onclick="window.postActions.toggleComments('${postId}', this.closest('.zynk-post-card'))">
                     <i class="fa-regular fa-comment"></i>
                 </button>
-                <button onclick="window.common.openShareModal('${postId}')" style="margin-left:auto;">
+                <button onclick="window.common.openShareModal('${postId}')">
                     <i class="fa-regular fa-paper-plane"></i>
+                </button>
+                <button class="save-btn ${isSaved ? 'saved' : ''}" data-post-id="${postId}" onclick="window.postActions.toggleSave('${postId}', this)" style="margin-left:auto;">
+                    <i class="${isSaved ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
                 </button>
             </div>
             <div class="zynk-body">
@@ -1202,6 +1294,7 @@ function createPostCard(post) {
                     <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
                     ${truncateText(post.content || '')}
                 </div>
+                ${renderPollHtml(post)}
                 <span class="zynk-time">${postTime}</span>
             </div>
             <div class="comments-container" id="comments-${postId}"></div>
@@ -1370,7 +1463,8 @@ window.common = {
     toggleReadMore,
     openPostModalByPostId,
     openShareModal: window.openShareModal,
-    sendSharedPost: window.sendSharedPost
+    sendSharedPost: window.sendSharedPost,
+    renderPollHtml
 };
 
 // Global shortcuts
@@ -1619,3 +1713,33 @@ function urlBase64ToUint8Array(base64String) {
 
 window.initPushNotifications = initPushNotifications;
 window.subscribeToPush = subscribeToPush;
+
+function renderPollHtml(post) {
+    if (!post.poll) return '';
+    const p = post.poll;
+    const optionsHtml = p.options.map(o => {
+        const isSelected = p.selectedOptionId === o.id;
+        return `
+            <div class="poll-option ${p.hasVoted ? 'voted' : ''} ${isSelected ? 'selected' : ''}" 
+                 data-poll-id="${p.id}" data-option-id="${o.id}"
+                 onclick="event.stopPropagation(); window.postActions.votePoll('${p.id}', '${o.id}', this)">
+                <div class="poll-bar" style="width: ${p.hasVoted ? o.percentage : 0}%"></div>
+                <span class="poll-text">${o.text}</span>
+                <span class="poll-percent">${p.hasVoted ? Math.round(o.percentage) + '%' : ''}</span>
+            </div>
+        `;
+    }).join('');
+    
+    return `
+        <div class="zynk-poll-container" id="poll-${p.id}">
+            <h4 class="poll-question">${p.question}</h4>
+            <div class="poll-options">
+                ${optionsHtml}
+            </div>
+            <div class="poll-meta">
+                <span>${p.totalVotes} bình chọn</span>
+                ${p.isExpired ? '<span> • Đã kết thúc</span>' : ''}
+            </div>
+        </div>
+    `;
+}
