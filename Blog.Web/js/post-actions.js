@@ -438,6 +438,111 @@ window.postActions = {
                 container.innerHTML = '<p style="color:#8e8e8e; text-align:center; padding:20px;">Không thể tải bình luận lúc này.</p>';
             }
         }
+    },
+
+    async toggleSave(postId, btnElement) {
+        if (!localStorage.getItem('auth_token')) {
+            window.location.href = 'auth.html';
+            return;
+        }
+
+        try {
+            const result = await window.api.post(`SavedPosts/${postId}`);
+            
+            // 1. Update Modal icon if it exists
+            const modalSaveIcon = document.getElementById('modal-save-icon');
+            if (modalSaveIcon) {
+                if (result.saved) {
+                    modalSaveIcon.classList.replace('fa-regular', 'fa-solid');
+                    modalSaveIcon.style.color = '#2563EB';
+                } else {
+                    modalSaveIcon.classList.replace('fa-solid', 'fa-regular');
+                    modalSaveIcon.style.color = '';
+                }
+            }
+
+            // 2. Update all card icons for this post on the page
+            const btns = document.querySelectorAll(`.save-btn[data-post-id="${postId}"]`);
+            btns.forEach(btn => {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    if (result.saved) {
+                        icon.classList.replace('fa-regular', 'fa-solid');
+                        btn.classList.add('saved');
+                    } else {
+                        icon.classList.replace('fa-solid', 'fa-regular');
+                        btn.classList.remove('saved');
+                    }
+                }
+            });
+            
+            // Specific button passed to function
+            if (btnElement) {
+                const icon = btnElement.querySelector('i');
+                if (icon) {
+                    if (result.saved) {
+                        icon.classList.replace('fa-regular', 'fa-solid');
+                        btnElement.classList.add('saved');
+                    } else {
+                        icon.classList.replace('fa-solid', 'fa-regular');
+                        btnElement.classList.remove('saved');
+                    }
+                }
+            }
+
+            // If we are on the "Saved" page, we might want to remove the card if unsaved
+            if (!result.saved && window.location.pathname.includes('saved.html')) {
+                const card = document.getElementById(`post-${postId}`) || btnElement?.closest('.zynk-post-card');
+                if (card) card.remove();
+            }
+
+        } catch (error) {
+            console.error('Save error:', error);
+        }
+    },
+
+    async votePoll(pollId, optionId, el) {
+        if (!localStorage.getItem('auth_token')) {
+            window.location.href = 'auth.html';
+            return;
+        }
+
+        const container = el.closest('.zynk-poll-container');
+        if (container.classList.contains('voting')) return;
+        
+        // Basic optimistic UI
+        const isVoted = el.classList.contains('selected');
+        
+        container.classList.add('voting');
+
+        try {
+            const result = await window.api.post(`Polls/${pollId}/vote/${optionId}`);
+            
+            // Re-render logic or simple update
+            // For now, let's update the bars and text
+            const options = container.querySelectorAll('.poll-option');
+            options.forEach(opt => {
+                const optId = opt.dataset.optionId;
+                const optData = result.options.find(o => o.id === optId);
+                
+                opt.classList.add('voted');
+                opt.classList.toggle('selected', result.selectedOptionId === optId);
+                
+                const bar = opt.querySelector('.poll-bar');
+                const percent = opt.querySelector('.poll-percent');
+                
+                if (bar) bar.style.width = `${optData.percentage}%`;
+                if (percent) percent.textContent = `${Math.round(optData.percentage)}%`;
+            });
+            
+            const meta = container.querySelector('.poll-meta span');
+            if (meta) meta.textContent = `${result.totalVotes} bình chọn`;
+
+        } catch (error) {
+            alert(error.message || 'Lỗi khi bình chọn');
+        } finally {
+            container.classList.remove('voting');
+        }
     }
 };
 

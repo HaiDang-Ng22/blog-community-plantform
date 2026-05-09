@@ -59,6 +59,13 @@ public class PostsController : ControllerBase
                 .Where(b => b.BlockerId == currentUserId.Value)
                 .Select(b => b.BlockedId)
                 .ToListAsync();
+
+            var savedPostIds = await _context.SavedPosts
+                .Where(sp => sp.UserId == currentUserId.Value)
+                .Select(sp => sp.PostId)
+                .ToListAsync();
+
+            HttpContext.Items["SavedPostIds"] = savedPostIds;
         }
 
         IQueryable<Post> query = _context.Posts
@@ -66,6 +73,8 @@ public class PostsController : ControllerBase
             .Include(p => p.Images)
             .Include(p => p.PostLikes)
             .Include(p => p.Comments)
+            .Include(p => p.Poll)
+                .ThenInclude(poll => poll.Options)
             .Where(p => p.Status == PostStatus.Published && !blockedIds.Contains(p.AuthorId));
 
         if (type == "following")
@@ -129,7 +138,26 @@ public class PostsController : ControllerBase
             PublishedAt = p.PublishedAt,
             CommentCount = p.Comments.Count,
             IsLikedByMe = currentUserId.HasValue && p.PostLikes.Any(l => l.UserId == currentUserId.Value),
-            ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
+            IsSavedByMe = currentUserId.HasValue && ((List<Guid>?)HttpContext.Items["SavedPostIds"])?.Contains(p.Id) == true,
+            ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
+            Type = p.Type.ToString(),
+            VideoUrl = p.VideoUrl,
+            Poll = p.Poll == null ? null : new PollDto
+            {
+                Id = p.Poll.Id,
+                Question = p.Poll.Question,
+                IsExpired = p.Poll.EndsAt.HasValue && p.Poll.EndsAt.Value < DateTime.UtcNow,
+                TotalVotes = p.Poll.Options.Sum(o => o.VoteCount),
+                Options = p.Poll.Options.Select(o => new PollOptionDto
+                {
+                    Id = o.Id,
+                    Text = o.Text,
+                    VoteCount = o.VoteCount,
+                    Percentage = p.Poll.Options.Sum(x => x.VoteCount) == 0 ? 0 : (double)o.VoteCount / p.Poll.Options.Sum(x => x.VoteCount) * 100
+                }).ToList(),
+                HasVoted = currentUserId.HasValue && _context.PollVotes.Any(pv => pv.PollId == p.Poll.Id && pv.UserId == currentUserId.Value),
+                SelectedOptionId = currentUserId.HasValue ? _context.PollVotes.FirstOrDefault(pv => pv.PollId == p.Poll.Id && pv.UserId == currentUserId.Value)?.OptionId : null
+            }
         });
         
         return Ok(postDtos);
@@ -227,7 +255,17 @@ public class PostsController : ControllerBase
                 Id = Guid.NewGuid(),
                 Url = url,
                 OrderIndex = index
-            }).ToList()
+            }).ToList(),
+            Type = Enum.TryParse<PostType>(createPostDto.Type, true, out var postType) ? postType : PostType.Standard,
+            VideoUrl = createPostDto.VideoUrl,
+            Poll = createPostDto.Poll == null ? null : new Poll
+            {
+                Question = createPostDto.Poll.Question,
+                EndsAt = createPostDto.Poll.DurationHours.HasValue 
+                    ? DateTime.UtcNow.AddHours(createPostDto.Poll.DurationHours.Value) 
+                    : null,
+                Options = createPostDto.Poll.Options.Select(o => new PollOption { Text = o }).ToList()
+            }
         };
         
         await _postRepository.AddAsync(post);

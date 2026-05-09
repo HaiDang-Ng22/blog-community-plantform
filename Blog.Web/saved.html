@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài viết đã lưu - Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=2.2">
+    <link rel="stylesheet" href="css/home.css?v=2.2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .saved-header {
+            padding: 2rem 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 1.5rem;
+        }
+        .saved-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .collections-nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        .collection-chip {
+            padding: 0.5rem 1.25rem;
+            border-radius: 20px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+        .collection-chip.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body class="home-page">
+    <main class="main-content">
+        <div class="home-layout">
+            <div class="feed-col">
+                <div class="saved-header">
+                    <h2 class="saved-title">Đã lưu</h2>
+                    <div id="collections-list" class="collections-nav">
+                        <div class="collection-chip active" data-collection="">Tất cả</div>
+                    </div>
+                </div>
+                <div id="saved-feed" class="post-feed">
+                    <div class="loader-container" style="padding: 3rem; text-align: center;">
+                        <i class="fa-solid fa-spinner fa-spin fa-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="side-col">
+                <!-- Suggestions or Info -->
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/post-actions.js"></script>
+    <script src="js/saved.js"></script>
+</body>
+</html>

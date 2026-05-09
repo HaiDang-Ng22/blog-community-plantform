@@ -38,12 +38,26 @@
                             <i class="fa-solid fa-images"
                                 style="font-size: 4rem; margin-bottom: 1.25rem; color: #262626;"></i>
                             <h2 style="font-size: 1.2rem; font-weight: 500; margin-bottom: 1.2rem;">Kéo ảnh vào đây</h2>
-                            <button type="button" class="btn primary-btn"
-                                onclick="document.getElementById('post-image-file').click()"
-                                style="width: auto; padding: 0.6rem 1.5rem;">
-                                Tải ảnh lên
-                            </button>
-                            <input type="file" id="post-image-file" accept="image/*" multiple style="display: none;"
+                            
+                            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                <button type="button" class="btn primary-btn"
+                                    onclick="document.getElementById('post-image-file').click()"
+                                    style="width: auto; padding: 0.6rem 1.5rem;">
+                                    Tải ảnh lên
+                                </button>
+                                <button type="button" class="btn outline-btn"
+                                    onclick="initTextOnlyPost()"
+                                    style="width: auto; padding: 0.6rem 1.5rem; border: 1px solid #dbdbdb;">
+                                    Chỉ văn bản
+                                </button>
+                                <button type="button" class="btn outline-btn"
+                                    onclick="initPollPost()"
+                                    style="width: auto; padding: 0.6rem 1.5rem; border: 1px solid #dbdbdb;">
+                                    Thăm dò ý kiến
+                                </button>
+                            </div>
+
+                            <input type="file" id="post-image-file" accept="image/*,video/*" multiple style="display: none;"
                                 onchange="initWizard(this)">
                         </div>
                     </div>
@@ -107,6 +121,7 @@
                         <div class="cp-pane-left">
                             <div class="cp-preview-full">
                                 <img id="final-preview-img" src="" alt="Final Preview">
+                                <video id="final-preview-video" src="" controls class="hidden" style="width: 100%; height: 100%; object-fit: cover;"></video>
                             </div>
                         </div>
                         <div class="cp-pane-right cp-caption-pane">
@@ -117,6 +132,15 @@
                             </div>
                             <textarea id="post-content" class="post-editor-textarea" placeholder="Viết chú thích..."
                                 required></textarea>
+                            
+                            <div id="poll-editor" class="hidden" style="margin-top: 1rem; border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem;">
+                                <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Thăm dò ý kiến</h4>
+                                <div id="poll-options-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <input type="text" class="poll-option-input" placeholder="Lựa chọn 1">
+                                    <input type="text" class="poll-option-input" placeholder="Lựa chọn 2">
+                                </div>
+                                <button type="button" onclick="addPollOption()" style="margin-top: 0.5rem; border: none; background: none; color: var(--primary-blue); font-size: 0.85rem; cursor: pointer; font-weight: 600;">+ Thêm lựa chọn</button>
+                            </div>
                             <div class="cp-caption-meta">
                                 <button type="button" class="cp-icon-btn"><i
                                         class="fa-regular fa-face-smile"></i></button>

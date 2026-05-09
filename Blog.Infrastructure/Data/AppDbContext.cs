@@ -41,10 +41,62 @@ public class AppDbContext : DbContext
     public DbSet<ProductReviewImage> ProductReviewImages { get; set; }
     public DbSet<Story> Stories { get; set; }
     public DbSet<PushSubscription> PushSubscriptions { get; set; }
+    public DbSet<SavedPost> SavedPosts { get; set; }
+    public DbSet<Poll> Polls { get; set; }
+    public DbSet<PollOption> PollOptions { get; set; }
+    public DbSet<PollVote> PollVotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Cấu hình Poll
+        modelBuilder.Entity<Poll>()
+            .HasOne(p => p.Post)
+            .WithOne(post => post.Poll)
+            .HasForeignKey<Poll>(p => p.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PollOption>()
+            .HasOne(po => po.Poll)
+            .WithMany(p => p.Options)
+            .HasForeignKey(po => po.PollId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PollVote>()
+            .HasKey(pv => new { pv.PollId, pv.UserId });
+
+        modelBuilder.Entity<PollVote>()
+            .HasOne(pv => pv.Poll)
+            .WithMany()
+            .HasForeignKey(pv => pv.PollId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PollVote>()
+            .HasOne(pv => pv.Option)
+            .WithMany()
+            .HasForeignKey(pv => pv.OptionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Cấu hình SavedPost
+        modelBuilder.Entity<SavedPost>()
+            .HasKey(sp => sp.Id);
+
+        modelBuilder.Entity<SavedPost>()
+            .HasOne(sp => sp.User)
+            .WithMany()
+            .HasForeignKey(sp => sp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SavedPost>()
+            .HasOne(sp => sp.Post)
+            .WithMany()
+            .HasForeignKey(sp => sp.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SavedPost>()
+            .HasIndex(sp => new { sp.UserId, sp.PostId })
+            .IsUnique();
 
         // Cấu hình Block
         modelBuilder.Entity<Block>()

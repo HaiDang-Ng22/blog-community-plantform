@@ -21,6 +21,22 @@
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+body.dark-mode {
+    --bg-color: #000000;
+    --bg-gradient: #000000;
+    --glass-bg: #121212;
+    --glass-border: 1px solid #262626;
+    --text-primary: #f5f5f5;
+    --text-secondary: #a8a8a8;
+    --text-light: #737373;
+    --input-bg: #121212;
+    --input-border: #262626;
+    --input-focus: #ffffff;
+    --shadow-sm: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.8);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -1589,19 +1605,193 @@ body.mobile-search-open {
     padding: 12px;
     border-radius: 8px;
     text-decoration: none;
-    color: #000;
+    color: var(--text-primary);
     font-size: 0.95rem;
     transition: background 0.2s;
 }
 
 .sidebar-more-menu a:hover {
-    background: #fafafa;
+    background: var(--input-bg);
 }
 
 .sidebar-more-menu .menu-divider {
     height: 1px;
     background: #efefef;
     margin: 4px 0;
+}
+
+/* --- Dark Mode & Theme Toggle --- */
+.theme-toggle-indicator {
+    width: 36px;
+    height: 18px;
+    background: #dbdbdb;
+    border-radius: 20px;
+    position: relative;
+    transition: var(--transition);
+    margin-left: auto;
+}
+
+.theme-toggle-indicator::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.theme-toggle-indicator.active {
+    background: var(--primary-blue);
+}
+
+.theme-toggle-indicator.active::after {
+    left: 20px;
+}
+
+.dark-mode .sidebar-nav {
+    background: #000;
+    border-right-color: #262626;
+}
+
+.dark-mode .sidebar-link:hover {
+    background: #121212;
+}
+
+.dark-mode .sidebar-link span {
+    color: #f5f5f5;
+}
+
+.dark-mode .sidebar-more-menu {
+    background: #262626;
+    border: 1px solid #333;
+}
+
+.dark-mode .sidebar-more-menu a {
+    color: #f5f5f5;
+}
+
+.dark-mode .sidebar-more-menu a:hover {
+    background: #333;
+}
+
+.dark-mode .sidebar-more-menu .menu-divider {
+    background: #333;
+}
+
+/* Save Button */
+.save-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.save-btn:hover {
+    opacity: 0.7;
+}
+
+.save-btn.saved i {
+    color: #2563EB;
+}
+
+.dark-mode .save-btn.saved i {
+    color: #3B82F6;
+}
+
+/* --- Poll Styles --- */
+.zynk-poll-container {
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: var(--input-bg);
+}
+
+.poll-question {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.poll-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.poll-option {
+    position: relative;
+    padding: 10px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-color);
+    transition: var(--transition);
+}
+
+.poll-option:hover:not(.voted) {
+    border-color: var(--primary-blue);
+}
+
+.poll-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--primary-blue);
+    opacity: 0.15;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.poll-text {
+    position: relative;
+    z-index: 2;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.poll-percent {
+    position: relative;
+    z-index: 2;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.poll-option.selected {
+    border-color: var(--primary-blue);
+    font-weight: 600;
+}
+
+.poll-option.selected::after {
+    content: '\f058';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-left: 8px;
+    color: var(--primary-blue);
+    position: relative;
+    z-index: 2;
+}
+
+.poll-meta {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    display: flex;
+    gap: 8px;
 }
 
 /* Search Sub Panel & Results */
@@ -1861,4 +2051,17 @@ button {
         min-width: 280px;
         padding: 10px 14px;
     }
+}
+
+/* --- Hashtags --- */
+.hashtag {
+    color: #0095f6;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.hashtag:hover {
+    color: #00376b;
+    text-decoration: underline;
 }

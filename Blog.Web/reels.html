@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zynk Reels</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=2.2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            overflow: hidden;
+            background: #000;
+            margin: 0;
+            padding: 0;
+        }
+        .reels-wrapper {
+            display: flex;
+            height: 100vh;
+        }
+        .reels-container {
+            flex: 1;
+            height: 100vh;
+            overflow-y: scroll;
+            snap-type: y mandatory;
+            scrollbar-width: none;
+            position: relative;
+        }
+        .reels-container::-webkit-scrollbar { display: none; }
+        
+        .reel-item {
+            height: 100vh;
+            width: 100%;
+            snap-align: start;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .reel-video {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+        }
+        
+        .reel-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 40px 20px 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            z-index: 10;
+        }
+        
+        .reel-actions {
+            position: absolute;
+            right: 15px;
+            bottom: 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            z-index: 20;
+        }
+        
+        .reel-action-btn {
+            background: none;
+            border: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .reel-action-btn i { font-size: 1.8rem; }
+        .reel-action-btn span { font-size: 0.8rem; font-weight: 500; }
+        .reel-action-btn.liked i { color: #ff3040; }
+        
+        .reel-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .reel-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .reel-username { font-weight: 700; font-size: 1.05rem; }
+        .reel-follow-btn {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 4px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .reel-caption {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            max-width: 85%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .reels-nav {
+            width: 72px;
+            background: #000;
+            border-right: 1px solid #262626;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+        }
+        
+        .reels-nav a {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+        .reels-nav a:hover, .reels-nav a.active { opacity: 1; }
+
+        @media (max-width: 767px) {
+            .reels-nav { display: none; }
+        }
+
+        @media (min-width: 768px) {
+            .reels-container {
+                max-width: 480px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="reels-wrapper">
+        <aside class="reels-nav">
+            <a href="index.html"><i class="fa-solid fa-house"></i></a>
+            <a href="reels.html" class="active"><i class="fa-solid fa-play"></i></a>
+            <a href="notifications.html"><i class="fa-solid fa-heart"></i></a>
+            <a href="profile.html"><i class="fa-solid fa-user"></i></a>
+        </aside>
+
+        <main id="reels-feed" class="reels-container">
+            <!-- Reels will be injected here -->
+            <div class="loader-container" style="height: 100vh; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-spinner fa-spin fa-2xl" style="color: white;"></i>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/post-actions.js"></script>
+    <script src="js/reels.js"></script>
+</body>
+</html>
