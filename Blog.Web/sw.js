@@ -2,7 +2,7 @@ const CACHE_NAME = 'zynk-cache-v1';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
-    '/settings/index.html',
+    '/settings.html',
     '/css/style.css',
     '/js/common.js',
     '/assets/logo-icon.png'
@@ -27,7 +27,7 @@ self.addEventListener('fetch', (event) => {
 // Push Notification Handler
 self.addEventListener('push', (event) => {
     let data = { title: 'Zynk', message: 'Bạn có thông báo mới!', url: '/' };
-    
+
     if (event.data) {
         try {
             data = event.data.json();
