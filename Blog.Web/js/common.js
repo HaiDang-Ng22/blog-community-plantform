@@ -1001,7 +1001,7 @@ function logout(e) {
         sessionStorage.removeItem('zynk_return_to');
         sessionStorage.removeItem('zynk_has_shop');
     } catch { /* ignore */ }
-    window.location.href = 'auth.html';
+    window.location.href = '/auth.html';
 }
 
 // Utility to format dates based on language

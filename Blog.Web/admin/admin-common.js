@@ -62,6 +62,9 @@
                     <a href="categories.html" class="nav-item ${currentPage === 'categories.html' ? 'active' : ''}">
                         <i class="fa-solid fa-layer-group"></i> <span>Quản lý Danh mục</span>
                     </a>
+                    <a href="verifications.html" class="nav-item ${currentPage === 'verifications.html' ? 'active' : ''}">
+                        <i class="fa-solid fa-circle-check"></i> <span>Duyệt tích xanh</span>
+                    </a>
                 </nav>
                 <div class="sidebar-footer">
                     <button onclick="adminLogout()" class="nav-item" style="background: none; border: none; width: 100%; color: #ef4444; cursor: pointer;">

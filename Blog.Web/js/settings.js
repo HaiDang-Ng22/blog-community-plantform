@@ -7,7 +7,7 @@ const _t = (key) => {
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
-        window.location.href = 'auth.html';
+        window.location.href = '/auth.html';
         return;
     }
 
@@ -209,7 +209,7 @@ async function deleteAccount() {
                 await window.api.delete('users/me');
                 alert('Tài khoản của bạn đã được xóa. Tạm biệt!');
                 localStorage.clear();
-                window.location.href = 'auth.html';
+                window.location.href = '/auth.html';
             } catch (error) {
                 alert('Lỗi khi xóa tài khoản: ' + error.message);
             }

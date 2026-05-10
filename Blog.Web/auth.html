@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.7">
     <link rel="stylesheet" href="css/auth.css?v=1.5">
+    <meta name="google-signin-client_id" content="202612503485-hd4eopni01gadqphfpb194b6ga93vb7f.apps.googleusercontent.com">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
@@ -17,8 +17,7 @@
         <div class="auth-left">
             <div class="auth-brand">
                 <div class="auth-main-logo"></div>
-                <p data-i18n="auth_slogan">Nền tảng mạng xã hội kết nối, chia sẻ kiến thức số 1 dành cho cộng đồng yêu
-                    công nghệ và sáng tạo.</p>
+                <p data-i18n="auth_slogan">Nền tảng mạng xã hội kết nối, chia sẻ kiến thức số 1 dành cho cộng đồng yêu công nghệ và sáng tạo.</p>
             </div>
         </div>
 
@@ -31,10 +30,8 @@
                 </div>
 
                 <div class="tabs">
-                    <button id="tab-login" class="tab-btn active" onclick="switchTab('login')" data-i18n="login">Đăng
-                        Nhập</button>
-                    <button id="tab-register" class="tab-btn" onclick="switchTab('register')" data-i18n="register">Đăng
-                        Ký</button>
+                    <button id="tab-login" class="tab-btn active" onclick="switchTab('login')" data-i18n="login">Đăng Nhập</button>
+                    <button id="tab-register" class="tab-btn" onclick="switchTab('register')" data-i18n="register">Đăng Ký</button>
                 </div>
 
                 <div id="message-box" class="message-box hidden"></div>
@@ -42,19 +39,19 @@
                 <form id="form-login" class="auth-form active">
                     <h2 data-i18n="auth_welcome">Chào mừng trở lại!</h2>
                     <div class="input-group">
-                        <input type="email" id="login-email" placeholder="Email của bạn" data-i18n="email_placeholder"
-                            required>
+                        <input type="email" id="login-email" placeholder="Email của bạn" data-i18n="email_placeholder" required>
                     </div>
                     <div class="input-group password-group">
-                        <input type="password" id="login-password" placeholder="Mật khẩu"
-                            data-i18n="password_placeholder" required>
+                        <input type="password" id="login-password" placeholder="Mật khẩu" data-i18n="password_placeholder" required>
                         <button type="button" class="password-toggle" onclick="togglePassword('login-password', this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                         </button>
+                    </div>
+                    <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1.5rem;">
+                        <a href="javascript:void(0)" onclick="switchTab('forgot')" class="forgot-link">Quên mật khẩu?</a>
                     </div>
                     <button type="submit" class="btn primary-btn" data-i18n="login">Đăng nhập ngay</button>
 
@@ -72,8 +69,7 @@
                 <form id="form-register" class="auth-form hidden">
                     <h2 data-i18n="create_account">Tạo tài khoản mới</h2>
                     <div class="input-group">
-                        <input type="text" id="reg-fullname" placeholder="Họ và Tên" data-i18n="fullname_placeholder"
-                            required>
+                        <input type="text" id="reg-fullname" placeholder="Họ và Tên" data-i18n="fullname_placeholder" required>
                     </div>
                     <div class="input-group">
                         <select id="reg-gender" required>
@@ -84,35 +80,67 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <input type="email" id="reg-email" placeholder="Email của bạn" data-i18n="email_placeholder"
-                            required>
+                        <input type="email" id="reg-email" placeholder="Email của bạn" data-i18n="email_placeholder" required>
                     </div>
                     <div class="input-group password-group">
-                        <input type="password" id="reg-password" placeholder="Mật khẩu (Gồm chữ hoa, chữ thường và số)"
-                            data-i18n="password_req_placeholder" required>
+                        <input type="password" id="reg-password" placeholder="Mật khẩu" data-i18n="password_req_placeholder" required>
                         <button type="button" class="password-toggle" onclick="togglePassword('reg-password', this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                         </button>
                     </div>
                     <div class="input-group password-group">
-                        <input type="password" id="reg-confirm-password" placeholder="Xác nhận mật khẩu"
-                            data-i18n="confirm_password_placeholder" required>
-                        <button type="button" class="password-toggle"
-                            onclick="togglePassword('reg-confirm-password', this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
+                        <input type="password" id="reg-confirm-password" placeholder="Xác nhận mật khẩu" data-i18n="confirm_password_placeholder" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('reg-confirm-password', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                         </button>
                     </div>
-                    <button type="submit" class="btn primary-btn" data-i18n="create_account_btn">Tạo tài khoản</button>
-
+                    <button type="submit" class="btn primary-btn" data-i18n="create_account_btn">Gửi mã xác thực</button>
                     <a href="index.html" class="back-link" data-i18n="back_to_home">← Quay lại trang chủ</a>
+                </form>
+
+                <form id="form-otp" class="auth-form hidden">
+                    <h2 data-i18n="verify_otp">Xác thực Email</h2>
+                    <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Mã OTP 6 số đã được gửi tới email của bạn.</p>
+                    <div class="otp-container">
+                        <input type="text" id="otp-code" placeholder="000000" maxlength="6" class="otp-input" required>
+                    </div>
+                    <button type="submit" class="btn primary-btn">Xác minh & Đăng ký</button>
+                    <button type="button" class="back-link-btn" onclick="switchTab('register')">← Quay lại</button>
+                </form>
+
+                <form id="form-forgot" class="auth-form hidden">
+                    <h2>Quên mật khẩu?</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Nhập email đã đăng ký để nhận mã khôi phục mật khẩu.</p>
+                    <div class="input-group">
+                        <input type="email" id="forgot-email" placeholder="Email của bạn" required>
+                    </div>
+                    <button type="submit" class="btn primary-btn">Tiếp tục</button>
+                    <button type="button" class="back-link-btn" onclick="switchTab('login')">← Quay lại đăng nhập</button>
+                </form>
+
+                <form id="form-reset" class="auth-form hidden">
+                    <h2>Đặt lại mật khẩu</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Nhập mã OTP từ email và mật khẩu mới của bạn.</p>
+                    <div class="input-group">
+                        <input type="text" id="reset-otp" placeholder="Mã OTP 6 số" maxlength="6" class="otp-small" required>
+                    </div>
+                    <div class="input-group password-group">
+                        <input type="password" id="reset-new-password" placeholder="Mật khẩu mới" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('reset-new-password', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                    <button type="submit" class="btn primary-btn">Đổi mật khẩu</button>
+                    <button type="button" class="back-link-btn" onclick="switchTab('forgot')">← Quay lại</button>
                 </form>
             </div>
         </div>
@@ -124,39 +152,4 @@
     <script src="js/common.js?v=2.5"></script>
     <script src="js/auth.js?v=2.1"></script>
 </body>
-
-</html>
-</form>
-
-<form id="form-reset" class="auth-form hidden">
-    <h2>Đặt lại mật khẩu</h2>
-    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Nhập mã OTP từ email và mật khẩu mới
-        của bạn.</p>
-    <div class="input-group">
-        <input type="text" id="reset-otp" placeholder="Mã OTP 6 số" maxlength="6" class="otp-small" required>
-    </div>
-    <div class="input-group password-group">
-        <input type="password" id="reset-new-password" placeholder="Mật khẩu mới" required>
-        <button type="button" class="password-toggle" onclick="togglePassword('reset-new-password', this)">
-            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-        </button>
-    </div>
-    <button type="submit" class="btn primary-btn">Đổi mật khẩu</button>
-    <button type="button" class="back-link-btn" onclick="switchTab('forgot')">← Quay lại</button>
-</form>
-</div>
-</div>
-</div>
-
-<script src="js/api.js?v=2.0"></script>
-<script src="js/lang.js"></script>
-<script src="js/i18n.js"></script>
-<script src="js/common.js?v=2.5"></script>
-<script src="js/auth.js?v=2.1"></script>
-</body>
-
 </html>
