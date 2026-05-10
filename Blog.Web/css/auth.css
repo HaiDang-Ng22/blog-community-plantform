@@ -314,9 +314,83 @@ body.auth-page {
     height: 20px;
 }
 
-/* Dark mode generic overrides just in case auth supports dark mode */
-body.dark-mode .auth-right { background: #0f172a; }
-body.dark-mode .auth-form h2 { color: #f8fafc; }
-body.dark-mode .tab-btn { color: #94a3b8; }
-body.dark-mode .tabs { background: #1e293b; }
-body.dark-mode .tab-btn.active { background: #334155; color: #38bdf8; }
+/* Custom Styles for New Forms */
+.forgot-link {
+    color: #3b82f6;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.otp-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.otp-input {
+    width: 100%;
+    text-align: center;
+    letter-spacing: 12px;
+    font-size: 2.2rem;
+    font-weight: 800;
+    padding: 1rem !important;
+    border: 2px solid #3b82f6 !important;
+    border-radius: 1rem !important;
+    background: #f0f9ff !important;
+    color: #1e3a8a !important;
+    box-shadow: 0 10px 20px rgba(59,130,246,0.1);
+}
+
+.otp-small {
+    text-align: center;
+    letter-spacing: 5px;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.back-link-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    transition: color 0.2s;
+}
+
+.back-link-btn:hover {
+    color: #1e293b;
+}
+
+/* Auth Animation Enhancements */
+.auth-form {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-form.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Improve Tabs on small screens */
+@media (max-width: 480px) {
+    .auth-box {
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+    }
+    .auth-form h2 { font-size: 1.5rem; }
+}

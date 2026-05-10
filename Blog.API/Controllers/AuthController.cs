@@ -207,6 +207,49 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Đổi mật khẩu thành công." });
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null)
+            return BadRequest(new { message = "Email này không tồn tại trên hệ thống." });
+
+        var otp = new Random().Next(100000, 999999).ToString();
+        _cache.Set($"RESET_OTP_{request.Email}", otp, TimeSpan.FromMinutes(10));
+
+        try
+        {
+            await _emailService.SendEmailAsync(request.Email, "Khôi phục mật khẩu Zynk Social",
+                $@"<div style='font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
+                    <h2 style='color: #6366f1;'>Yêu cầu khôi phục mật khẩu</h2>
+                    <p>Mã xác thực của bạn là:</p>
+                    <div style='font-size: 2rem; font-weight: 800; color: #ef4444; letter-spacing: 5px; margin: 20px 0;'>{otp}</div>
+                    <p style='color: #64748b; font-size: 0.85rem;'>Nếu không phải bạn yêu cầu, hãy bỏ qua email này.</p>
+                   </div>");
+            return Ok(new { message = "Mã xác thực đã được gửi về email của bạn." });
+        }
+        catch (Exception ex) { return BadRequest(new { message = "Lỗi gửi mail: " + ex.Message }); }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        if (!_cache.TryGetValue($"RESET_OTP_{request.Email}", out string? cachedOtp) || cachedOtp != request.Otp)
+            return BadRequest(new { message = "Mã xác thực không chính xác hoặc đã hết hạn." });
+
+        if (request.NewPassword.Length < 8 || !request.NewPassword.Any(char.IsUpper) || !request.NewPassword.Any(ch => !char.IsLetterOrDigit(ch)))
+            return BadRequest(new { message = "Mật khẩu mới không đủ mạnh." });
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null) return NotFound();
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _context.SaveChangesAsync();
+
+        _cache.Remove($"RESET_OTP_{request.Email}");
+        return Ok(new { message = "Đổi mật khẩu thành công. Hãy đăng nhập lại." });
+    }
+
     private string GenerateJwtToken(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
