@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyệt tích xanh - Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Duyệt tích xanh</h1>
+                <p>Xem xét và phê duyệt các yêu cầu xác minh danh tính.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="loadVerifications()">
+                    <i class="fa-solid fa-rotate"></i> Làm mới
+                </button>
+            </div>
+        </header>
+
+        <div class="card">
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Người dùng</th>
+                            <th>Họ tên thật</th>
+                            <th>Loại giấy tờ</th>
+                            <th>Ảnh minh chứng</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="verification-list">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">Đang tải dữ liệu...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        async function loadVerifications() {
+            const list = document.getElementById('verification-list');
+            let requests = JSON.parse(localStorage.getItem('zynk_pending_verifications') || '[]');
+            
+            // Xóa dữ liệu mẫu cũ nếu có
+            requests = requests.filter(r => r.id !== 1 && r.id !== 2);
+            localStorage.setItem('zynk_pending_verifications', JSON.stringify(requests));
+
+            renderVerifications(requests);
+        }
+
+        function renderVerifications(requests) {
+            const list = document.getElementById('verification-list');
+            if (requests.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">Hiện không có yêu cầu nào.</td></tr>';
+                return;
+            }
+
+            list.innerHTML = requests.map((req, index) => `
+                <tr>
+                    <td>
+                        <div style="font-weight: 600;">@${req.username}</div>
+                    </td>
+                    <td>${req.fullName}</td>
+                    <td><span class="badge badge-warning">${req.docType}</span></td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 4px 8px;" onclick="viewDoc('${req.docUrl}')">
+                            <i class="fa-solid fa-image"></i> Xem ảnh
+                        </button>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.8rem; background: #10b981;" onclick="handleAction(${index}, 'approve')">Duyệt</button>
+                            <button class="btn btn-danger" style="padding: 4px 12px; font-size: 0.8rem;" onclick="handleAction(${index}, 'reject')">Từ chối</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function viewDoc(url) {
+            window.adminModal.open(`
+                <h2 style="margin-bottom: 1rem;">Ảnh minh chứng</h2>
+                <div style="text-align: center;">
+                    <img src="${url}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                </div>
+                <div style="margin-top: 1.5rem; text-align: right;">
+                    <button class="btn btn-secondary" onclick="adminModal.close()">Đóng</button>
+                </div>
+            `);
+        }
+
+        function handleAction(index, action) {
+            let requests = JSON.parse(localStorage.getItem('zynk_pending_verifications') || '[]');
+            const req = requests[index];
+
+            if (action === 'approve') {
+                alert(`Đã cấp Tích xanh cho @${req.username}`);
+            } else {
+                alert(`Đã từ chối yêu cầu của @${req.username}`);
+            }
+
+            requests.splice(index, 1);
+            localStorage.setItem('zynk_pending_verifications', JSON.stringify(requests));
+            renderVerifications(requests);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadVerifications);
+    </script>
+</body>
+</html>

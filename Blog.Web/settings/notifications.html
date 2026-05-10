@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo - Zynk Settings</title>
+    <link rel="icon" href="../assets/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/settings-v2.css">
+</head>
+<body>
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="../index.html"><div class="zynk-logo-clean logo-header"></div></a>
+            </div>
+            <div class="nav-actions" id="nav-actions"></div>
+        </nav>
+    </header>
+
+    <div class="settings-container">
+        <aside class="s-sidebar" id="s-sidebar"></aside>
+
+        <main class="s-content">
+            <div class="s-header">
+                <h1 class="s-title">Thông báo</h1>
+                <p class="s-subtitle">Cấu hình cách bạn nhận cập nhật từ bạn bè và hệ thống.</p>
+            </div>
+
+            <div class="s-card">
+                <h2 class="s-card-title"><i class="fa-solid fa-bell"></i> Thông báo trình duyệt</h2>
+                <div style="background: #eff6ff; padding: 1.5rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #bfdbfe;">
+                    <div>
+                        <h4 style="color: #1e40af; margin: 0 0 4px 0;">Kích hoạt Web Push</h4>
+                        <p style="color: #1e40af; opacity: 0.8; margin: 0; font-size: 0.85rem;">Nhận thông báo ngay cả khi bạn không mở trình duyệt.</p>
+                    </div>
+                    <button class="s-btn s-btn-primary" style="white-space: nowrap;">Bật ngay</button>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <h2 class="s-card-title"><i class="fa-solid fa-envelope"></i> Email & SMS</h2>
+                <div class="s-form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                    <label class="s-label">Thông báo qua Email</label>
+                    <input type="checkbox" checked>
+                </div>
+                <div class="s-form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                    <label class="s-label">Thông báo tin nhắn mới</label>
+                    <input type="checkbox" checked>
+                </div>
+            </div>
+
+            <div id="settings-msg" class="message-box hidden"></div>
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/settings-core.js"></script>
+</body>
+</html>
