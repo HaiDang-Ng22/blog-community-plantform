@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giao diện - Zynk Settings</title>
+    <link rel="icon" href="../assets/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/settings-v2.css">
+    <style>
+        .theme-card {
+            cursor: pointer;
+            border: 2px solid var(--s-border);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .theme-card.active {
+            border-color: var(--s-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .toggle-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border: 1px solid var(--s-border);
+            border-radius: 12px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--s-primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <aside class="s-sidebar" id="s-sidebar"></aside>
+
+        <main class="s-content">
+            <div class="s-header">
+                <h1 class="s-title">Giao diện</h1>
+                <p class="s-subtitle">Tùy chỉnh màu sắc và cách hiển thị của Zynk theo sở thích.</p>
+            </div>
+
+            <div class="s-card">
+                <h2 class="s-card-title"><i class="fa-solid fa-moon"></i> Chế độ hiển thị</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div id="theme-light" onclick="setTheme('light')" class="theme-card">
+                        <div style="height: 60px; background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px;"></div>
+                        <span style="font-weight: 600;">Chế độ sáng</span>
+                    </div>
+                    
+                    <div id="theme-dark" onclick="setTheme('dark')" class="theme-card">
+                        <div style="height: 60px; background: #1e293b; border-radius: 8px; margin-bottom: 10px;"></div>
+                        <span style="font-weight: 600;">Chế độ tối</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <h2 class="s-card-title"><i class="fa-solid fa-database"></i> Tiết kiệm dữ liệu</h2>
+                <div class="toggle-card">
+                    <div class="toggle-info">
+                        <h4 style="margin:0 0 4px 0;">Chế độ tiết kiệm dữ liệu</h4>
+                        <p style="margin:0; font-size: 0.85rem; color: var(--s-text-muted);">Giảm chất lượng ảnh để tiết kiệm dung lượng 4G/5G.</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="data-saver-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <h2 class="s-card-title"><i class="fa-solid fa-font"></i> Kích thước chữ</h2>
+                <div class="s-form-group">
+                    <input type="range" min="12" max="20" value="16" id="font-size-range" class="s-input" style="padding:0">
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.8rem; color: var(--s-text-muted);">
+                        <span>Nhỏ</span>
+                        <span>Mặc định</span>
+                        <span>Lớn</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings-msg" class="message-box hidden"></div>
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/settings-core.js"></script>
+    <script>
+        // Init theme
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        updateThemeUI(currentTheme);
+
+        function updateThemeUI(theme) {
+            document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`theme-${theme}`).classList.add('active');
+        }
+
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+            updateThemeUI(theme);
+            showSettingsStatus('Đã cập nhật giao diện!');
+        }
+
+        // Data Saver
+        const dsToggle = document.getElementById('data-saver-toggle');
+        dsToggle.checked = localStorage.getItem('zynk_data_saver') === 'true';
+        dsToggle.onchange = (e) => {
+            localStorage.setItem('zynk_data_saver', e.target.checked);
+            showSettingsStatus('Đã cập nhật chế độ tiết kiệm dữ liệu');
+        };
+
+        // Font size
+        document.getElementById('font-size-range').oninput = (e) => {
+            document.documentElement.style.fontSize = e.target.value + 'px';
+            localStorage.setItem('zynk_font_size', e.target.value);
+        };
+    </script>
+</body>
+</html>

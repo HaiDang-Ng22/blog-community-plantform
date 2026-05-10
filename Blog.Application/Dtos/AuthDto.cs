@@ -93,6 +93,7 @@ public class PostSearchResult
     public int LikeCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
 public class ForgotPasswordRequest
 {
     public string Email { get; set; } = string.Empty;
