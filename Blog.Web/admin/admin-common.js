@@ -1,6 +1,6 @@
 // admin/admin-common.js
 
-(function() {
+(function () {
     // 1. Mobile Block Logic
     function checkDevice() {
         if (window.innerWidth < 1024) {
@@ -9,7 +9,7 @@
                     <i class="fa-solid fa-desktop" style="font-size: 4rem; color: #ef4444; margin-bottom: 1.5rem;"></i>
                     <h2 style="margin-bottom: 1rem;">Truy cập bị từ chối</h2>
                     <p style="color: #64748b; line-height: 1.6;">Hệ thống quản trị Zynk chỉ khả dụng trên máy tính để bàn (Desktop) để đảm bảo tính an toàn và trải nghiệm tốt nhất.</p>
-                    <button onclick="window.location.href='/auth.html'" style="margin-top: 2rem; padding: 0.75rem 1.5rem; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Quay lại đăng nhập</button>
+                    <button onclick="window.location.href='../auth.html'" style="margin-top: 2rem; padding: 0.75rem 1.5rem; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Quay lại đăng nhập</button>
                 </div>
             `;
             return false;
@@ -21,12 +21,12 @@
     function checkAuth() {
         const token = localStorage.getItem('auth_token');
         const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-        
+
         console.log("Admin Auth Check:", { hasToken: !!token, role: userInfo.role });
 
         if (!token || userInfo.role !== 'Admin') {
             console.warn("Unauthorized access to admin. Redirecting to auth.html");
-            window.location.href = '/auth.html';
+            window.location.href = '../auth.html';
             return false;
         }
         return true;
@@ -62,9 +62,6 @@
                     <a href="categories.html" class="nav-item ${currentPage === 'categories.html' ? 'active' : ''}">
                         <i class="fa-solid fa-layer-group"></i> <span>Quản lý Danh mục</span>
                     </a>
-                    <a href="verifications.html" class="nav-item ${currentPage === 'verifications.html' ? 'active' : ''}">
-                        <i class="fa-solid fa-certificate"></i> <span>Duyệt tích xanh</span>
-                    </a>
                 </nav>
                 <div class="sidebar-footer">
                     <button onclick="adminLogout()" class="nav-item" style="background: none; border: none; width: 100%; color: #ef4444; cursor: pointer;">
@@ -79,10 +76,10 @@
         setInterval(updateAdminBadges, 30000);
     });
 
-    window.updateAdminBadges = async function() {
+    window.updateAdminBadges = async function () {
         try {
             const stats = await window.adminApi.get('admin/stats');
-            
+
             const reportsBadge = document.getElementById('badge-reports');
             if (reportsBadge) {
                 if (stats.pendingReports > 0) {
@@ -107,10 +104,10 @@
         }
     };
 
-    window.adminLogout = function() {
+    window.adminLogout = function () {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_info');
-        window.location.href = '/auth.html';
+        window.location.href = '../auth.html';
     };
 
     window.adminApi = window.api;
