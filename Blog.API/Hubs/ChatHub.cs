@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Blog.API.Extensions;
+using Blog.Domain.Interfaces;
 
 namespace Blog.API.Hubs;
 
@@ -11,12 +12,14 @@ namespace Blog.API.Hubs;
 public class ChatHub : Hub
 {
     private readonly AppDbContext _context;
+    private readonly IFirebaseChatService _firebaseChatService;
     // Map userId -> connectionId (in-memory, single server; replace with IUserIdProvider for production)
     private static readonly Dictionary<string, string> _connections = new();
 
-    public ChatHub(AppDbContext context)
+    public ChatHub(AppDbContext context, IFirebaseChatService firebaseChatService)
     {
         _context = context;
+        _firebaseChatService = firebaseChatService;
     }
 
     public override async Task OnConnectedAsync()
@@ -116,7 +119,9 @@ public class ChatHub : Hub
             SharedPostId = sharedPostId,
             CreatedAt = DateTime.UtcNow
         };
-        _context.Messages.Add(message);
+        
+        // Save to Firebase
+        await _firebaseChatService.SaveMessageAsync(message);
         await _context.SaveChangesAsync();
  
         // Load sender info
@@ -125,9 +130,15 @@ public class ChatHub : Hub
             .FirstOrDefaultAsync(u => u.Id == senderId);
  
         // Nạp thông tin reply và post nếu có
-        var replyToMsg = replyToMessageId.HasValue 
-            ? await _context.Messages.Where(m => m.Id == replyToMessageId).Select(m => new { m.Id, m.Content, m.SenderId }).FirstOrDefaultAsync() 
+        var replyToMsgEntity = replyToMessageId.HasValue 
+            ? await _firebaseChatService.GetMessageByIdAsync(conv.Id, replyToMessageId.Value)
             : null;
+        
+        var replyToMsg = replyToMsgEntity == null ? null : new { 
+            replyToMsgEntity.Id, 
+            replyToMsgEntity.Content, 
+            replyToMsgEntity.SenderId 
+        };
 
         var sharedPost = sharedPostId.HasValue 
             ? await _context.Posts.Include(p => p.Author).Include(p => p.Images).Where(p => p.Id == sharedPostId).FirstOrDefaultAsync() 
@@ -183,11 +194,6 @@ public class ChatHub : Hub
         var userId = Guid.Parse(userIdStr);
         var convId = Guid.Parse(conversationId);
 
-        var unread = await _context.Messages
-            .Where(m => m.ConversationId == convId && m.SenderId != userId && !m.IsRead)
-            .ToListAsync();
-
-        foreach (var m in unread) m.IsRead = true;
-        await _context.SaveChangesAsync();
+        await _firebaseChatService.MarkAsReadAsync(convId, userId);
     }
 }

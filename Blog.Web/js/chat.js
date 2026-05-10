@@ -220,6 +220,9 @@ async function openConversation(conv) {
     const found = findConvById(conv.conversationId);
     if (found) found.unreadCount = 0;
     renderConvList();
+
+    // Mobile: add chat-open class to layout
+    document.querySelector('.messages-layout').classList.add('chat-open');
 }
 
 async function openOrCreateConversation(targetUserId) {
@@ -332,6 +335,11 @@ function buildChatPanel(conv) {
     }
 }
 
+function closeChatPanelMobile() {
+    document.querySelector('.messages-layout').classList.remove('chat-open');
+    currentConversationId = null;
+}
+
 // ── Load Messages ─────────────────────────────────────────
 async function loadMessages(conversationId, page = 1) {
     const token = localStorage.getItem('auth_token');
@@ -339,7 +347,7 @@ async function loadMessages(conversationId, page = 1) {
     if (!area) return;
 
     try {
-        const res = await fetch(`${API}/messages/conversations/${conversationId}/messages?page=${page}&pageSize=50`, {
+        const res = await fetch(`${API}/messages/conversations/${conversationId}/messages`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed');
@@ -423,7 +431,6 @@ function createMessageEl(msg, isConsecutive = false) {
 
     if (isSent) {
         row.innerHTML = `
-        ${actionsHtml}
         <div class="msg-bubble-wrap">
             <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''}" title="${time}">
                 ${replyHtml}
@@ -432,7 +439,8 @@ function createMessageEl(msg, isConsecutive = false) {
                 ${msg.isHearted ? '<div class="msg-heart-indicator"><i class="fa-solid fa-heart"></i></div>' : ''}
             </div>
             <span class="msg-time">${isConsecutive ? '' : time}</span>
-        </div>`;
+        </div>
+        ${actionsHtml}`;
     } else {
         row.innerHTML = `
         <img class="msg-avatar-sm" src="${otherAvatar}" alt="Avatar"
@@ -506,7 +514,11 @@ window.cancelReply = cancelReply;
 async function toggleHeartMessage(msgId) {
     try {
         const token = localStorage.getItem('auth_token');
-        const res = await fetch(`${API}/messages/${msgId}/heart`, {
+        const row = document.querySelector(`.msg-row[data-msg-id="${msgId}"]`);
+        const isHeartedNow = row && row.querySelector('.msg-action-btn i.fa-heart').classList.contains('fa-solid');
+        const newHeartState = !isHeartedNow;
+
+        const res = await fetch(`${API}/messages/conversations/${currentConversationId}/messages/${msgId}/heart?isHearted=${newHeartState}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
         });

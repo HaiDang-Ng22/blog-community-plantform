@@ -1,7 +1,7 @@
 // js/auth.js
 
 // GOOGLE CLIENT ID
-const GOOGLE_CLIENT_ID = 'THAY_CLIENT_ID_CUA_BAN_VAO_DAY.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '202612503485-hd4eopni01gadqphfpb194b6ga93vb7f.apps.googleusercontent.com';
 
 const loginForm = document.getElementById('form-login');
 const registerForm = document.getElementById('form-register');
@@ -45,7 +45,10 @@ function switchTab(tab) {
     }
 }
 
-// Xử lý Đăng ký
+const otpForm = document.getElementById('form-otp');
+let pendingRegistrationData = null;
+
+// Xử lý Đăng ký (Gửi OTP)
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -55,7 +58,6 @@ if (registerForm) {
         const password = document.getElementById('reg-password').value;
         const confirmPassword = document.getElementById('reg-confirm-password').value;
 
-        // Validation logic
         if (password !== confirmPassword) {
             showMessage('Mật khẩu nhập lại không khớp.', 'error');
             return;
@@ -68,11 +70,43 @@ if (registerForm) {
         }
 
         try {
+            // Bước 1: Gửi yêu cầu (Backend sẽ gửi mail OTP)
             const data = await window.api.post('auth/register', { email, password, fullName, gender });
-            showMessage(data.message || 'Đăng ký thành công! Hãy đăng nhập.', 'success');
-            setTimeout(() => switchTab('login'), 2000);
+            
+            // Lưu tạm thông tin để dùng cho bước verify
+            pendingRegistrationData = { email, password, fullName, gender };
+            
+            // Hiện khung OTP
+            showMessage(data.message, 'success');
+            registerForm.classList.add('hidden');
+            otpForm.classList.remove('hidden');
         } catch (error) {
             showMessage(error.message || 'Đăng ký thất bại.', 'error');
+        }
+    });
+}
+
+// Xử lý Xác thực OTP
+if (otpForm) {
+    otpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const otp = document.getElementById('otp-code').value;
+        const email = pendingRegistrationData.email;
+
+        try {
+            const data = await window.api.post('auth/verify-otp', { 
+                email, 
+                otp, 
+                registrationData: pendingRegistrationData 
+            });
+            
+            showMessage(data.message, 'success');
+            setTimeout(() => {
+                otpForm.classList.add('hidden');
+                switchTab('login');
+            }, 2000);
+        } catch (error) {
+            showMessage(error.message || 'Mã xác thực không đúng.', 'error');
         }
     });
 }

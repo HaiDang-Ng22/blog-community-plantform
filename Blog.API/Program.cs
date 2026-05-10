@@ -11,6 +11,8 @@ using Blog.API.Hubs;
 using Blog.API.Services;
 using Blog.Application.Services;
 using Blog.Infrastructure.Services;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 // Clear default inbound claim type mapping to prevent mapping 'role' to long XML schema URIs
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -100,7 +102,22 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPushNotificationService, Blog.Infrastructure.Services.PushNotificationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IFirebaseChatService, FirebaseChatService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
+
+// Initialize Firebase
+var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "firebase-key.json");
+if (File.Exists(firebaseKeyPath))
+{
+    FirebaseApp.Create(new AppOptions()
+    {
+        Credential = GoogleCredential.FromFile(firebaseKeyPath),
+    });
+    // Set Firestore environment variable
+    Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", firebaseKeyPath);
+}
 
 var app = builder.Build();
 

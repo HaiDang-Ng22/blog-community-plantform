@@ -9,7 +9,7 @@
                     <i class="fa-solid fa-desktop" style="font-size: 4rem; color: #ef4444; margin-bottom: 1.5rem;"></i>
                     <h2 style="margin-bottom: 1rem;">Truy cập bị từ chối</h2>
                     <p style="color: #64748b; line-height: 1.6;">Hệ thống quản trị Zynk chỉ khả dụng trên máy tính để bàn (Desktop) để đảm bảo tính an toàn và trải nghiệm tốt nhất.</p>
-                    <button onclick="window.location.href='../auth.html'" style="margin-top: 2rem; padding: 0.75rem 1.5rem; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Quay lại đăng nhập</button>
+                    <button onclick="window.location.href='/auth.html'" style="margin-top: 2rem; padding: 0.75rem 1.5rem; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Quay lại đăng nhập</button>
                 </div>
             `;
             return false;
@@ -26,7 +26,7 @@
 
         if (!token || userInfo.role !== 'Admin') {
             console.warn("Unauthorized access to admin. Redirecting to auth.html");
-            window.location.href = '../auth.html';
+            window.location.href = '/auth.html';
             return false;
         }
         return true;
@@ -61,6 +61,9 @@
                     </a>
                     <a href="categories.html" class="nav-item ${currentPage === 'categories.html' ? 'active' : ''}">
                         <i class="fa-solid fa-layer-group"></i> <span>Quản lý Danh mục</span>
+                    </a>
+                    <a href="verifications.html" class="nav-item ${currentPage === 'verifications.html' ? 'active' : ''}">
+                        <i class="fa-solid fa-certificate"></i> <span>Duyệt tích xanh</span>
                     </a>
                 </nav>
                 <div class="sidebar-footer">
@@ -107,7 +110,7 @@
     window.adminLogout = function() {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_info');
-        window.location.href = '../auth.html';
+        window.location.href = '/auth.html';
     };
 
     window.adminApi = window.api;

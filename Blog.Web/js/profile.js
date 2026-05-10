@@ -165,7 +165,7 @@ async function loadUserProfile(userId) {
             friendsTabBtn.classList.remove('hidden');
             followBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa hồ sơ';
             followBtn.className = 'btn secondary-btn';
-            followBtn.onclick = () => window.location.href = 'settings.html';
+            followBtn.onclick = () => window.location.href = 'settings/index.html';
             document.getElementById('message-btn').classList.add('hidden');
         } else {
             friendsTabBtn.classList.add('hidden');

@@ -114,6 +114,17 @@
 
                     <a href="index.html" class="back-link" data-i18n="back_to_home">← Quay lại trang chủ</a>
                 </form>
+
+                <form id="form-otp" class="auth-form hidden">
+                    <h2 data-i18n="verify_otp">Xác thực Email</h2>
+                    <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Chúng tôi đã gửi mã OTP gồm 6 chữ số đến email của bạn. Vui lòng kiểm tra hộp thư đến (hoặc thư rác).</p>
+                    <div class="input-group">
+                        <input type="text" id="otp-code" placeholder="000000" maxlength="6" 
+                               style="text-align: center; letter-spacing: 10px; font-size: 2rem; font-weight: 800; border: 2px solid var(--primary-color);" required>
+                    </div>
+                    <button type="submit" class="btn primary-btn">Xác minh & Đăng ký</button>
+                    <button type="button" class="back-link" style="background: none; border: none; cursor: pointer; display: block; margin: 1rem auto; width: 100%;" onclick="switchTab('register')">← Quay lại thay đổi email</button>
+                </form>
             </div>
         </div>
     </div>

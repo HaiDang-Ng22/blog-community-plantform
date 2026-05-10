@@ -205,6 +205,10 @@ function renderSidebar() {
 
     window._sidebarRendered = true;
     
+    // Detect if we are in a subfolder (like /settings/)
+    const isSubfolder = window.location.pathname.includes('/settings/');
+    const pathPrefix = isSubfolder ? '../' : '';
+
     const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
     const userName = userInfo.fullName || userInfo.username || 'User';
     const userAvatar = (userInfo.avatarUrl && userInfo.avatarUrl !== 'null')
@@ -220,23 +224,23 @@ function renderSidebar() {
         const topHeader = document.createElement('div');
         topHeader.className = 'mobile-top-header';
         topHeader.innerHTML = `
-            <div class="mth-logo" onclick="window.location.href='index.html'">
-                <img src="assets/logo.png" onerror="this.src='https://via.placeholder.com/100x30?text=ZYNK'">
+            <div class="mth-logo" onclick="window.location.href='${pathPrefix}index.html'">
+                <img src="${pathPrefix}assets/logo.png" onerror="this.src='https://via.placeholder.com/100x30?text=ZYNK'">
                 <span class="zynk-logo-text">Zynk</span>
             </div>
             <div class="mth-actions">
                 ${window.location.pathname.includes('profile.html') ? `
-                <a href="settings.html" class="mth-icon-link" title="Cài đặt">
+                <a href="${pathPrefix}settings/index.html" class="mth-icon-link" title="Cài đặt">
                     <i class="fa-solid fa-gear"></i>
                 </a>
                 <a href="#" class="mth-icon-link" onclick="logout(event)" title="Đăng xuất">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </a>` : ''}
-                <a href="notifications.html" class="mth-icon-link" id="mth-noti-link" style="position:relative;">
+                <a href="${pathPrefix}notifications.html" class="mth-icon-link" id="mth-noti-link" style="position:relative;">
                     <i class="fa-regular fa-heart"></i>
                     <span id="mth-noti-badge" class="noti-badge hidden">0</span>
                 </a>
-                <a href="messages.html" class="mth-icon-link" id="mth-msg-link" style="position:relative;">
+                <a href="${pathPrefix}messages.html" class="mth-icon-link" id="mth-noti-link" style="position:relative;">
                     <i class="fa-regular fa-paper-plane"></i>
                     <span id="mth-msg-badge" class="noti-badge hidden">0</span>
                 </a>
@@ -248,22 +252,22 @@ function renderSidebar() {
         const bottomNav = document.createElement('div');
         bottomNav.className = 'mobile-bottom-nav';
         bottomNav.innerHTML = `
-            <a href="index.html" class="mbn-link">
+            <a href="${pathPrefix}index.html" class="mbn-link">
                 <i class="fa-solid fa-house"></i>
             </a>
-            <a href="search.html" class="mbn-link">
+            <a href="${pathPrefix}search.html" class="mbn-link">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </a>
-            <a href="create-post.html" class="mbn-link mbn-create">
+            <a href="${pathPrefix}create-post.html" class="mbn-link mbn-create">
                 <i class="fa-solid fa-plus"></i>
             </a>
-            <a href="reels.html" class="mbn-link">
+            <a href="${pathPrefix}reels.html" class="mbn-link">
                 <i class="fa-solid fa-play"></i>
             </a>
-            <a href="marketplace.html" class="mbn-link">
+            <a href="${pathPrefix}marketplace.html" class="mbn-link">
                 <i class="fa-solid fa-compass"></i>
             </a>
-            <a href="profile.html" class="mbn-link">
+            <a href="${pathPrefix}profile.html" class="mbn-link">
                 <img src="${userAvatar}" class="mbn-avatar" onerror="this.src='https://ui-avatars.com/api/?name=U'">
             </a>
         `;
@@ -278,24 +282,24 @@ function renderSidebar() {
     sidebar.id = 'zynk-main-sidebar';
     
     sidebar.innerHTML = `
-        <div class="sidebar-logo" onclick="window.location.href='index.html'">
-            <img src="assets/logo.png" onerror="this.src='https://via.placeholder.com/100x30?text=ZYNK'">
+        <div class="sidebar-logo" onclick="window.location.href='${pathPrefix}index.html'">
+            <img src="${pathPrefix}assets/logo.png" onerror="this.src='https://via.placeholder.com/100x30?text=ZYNK'">
             <span class="zynk-logo-text">Zynk</span>
         </div>
         <div class="sidebar-links">
-            <a href="index.html" class="sidebar-link">
+            <a href="${pathPrefix}index.html" class="sidebar-link">
                 <i class="fa-solid fa-house"></i>
                 <span>Trang chủ</span>
             </a>
-            <a href="reels.html" class="sidebar-link">
+            <a href="${pathPrefix}reels.html" class="sidebar-link">
                 <i class="fa-solid fa-play"></i>
                 <span>Reels</span>
             </a>
-            <a href="search.html" class="sidebar-link" id="sidebar-search-trigger">
+            <a href="${pathPrefix}search.html" class="sidebar-link" id="sidebar-search-trigger">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <span>Tìm kiếm</span>
             </a>
-            <a href="marketplace.html" class="sidebar-link">
+            <a href="${pathPrefix}marketplace.html" class="sidebar-link">
                 <i class="fa-solid fa-compass"></i>
                 <span>Khám phá</span>
             </a>
@@ -304,16 +308,16 @@ function renderSidebar() {
                 <span>Thông báo</span>
                 <span id="sidebar-noti-badge" class="noti-badge hidden">0</span>
             </div>
-            <a href="messages.html" class="sidebar-link" id="sidebar-messages-link" style="position:relative;">
+            <a href="${pathPrefix}messages.html" class="sidebar-link" id="sidebar-messages-link" style="position:relative;">
                 <i class="fa-regular fa-paper-plane"></i>
                 <span>Tin nhắn</span>
                 <span id="sidebar-msg-badge" class="noti-badge hidden">0</span>
             </a>
-            <a href="create-post.html" class="sidebar-link">
+            <a href="${pathPrefix}create-post.html" class="sidebar-link">
                 <i class="fa-regular fa-square-plus"></i>
                 <span>Tạo</span>
             </a>
-            <a href="profile.html" class="sidebar-link">
+            <a href="${pathPrefix}profile.html" class="sidebar-link">
                 <img src="${userAvatar}" class="mini-avatar" style="width:24px; height:24px; margin:0; border: 1px solid #dbdbdb;">
                 <span>Trang cá nhân</span>
             </a>
@@ -329,8 +333,8 @@ function renderSidebar() {
                     <span>Chế độ tối</span>
                     <div id="dark-mode-toggle-switch" class="theme-toggle-indicator ${localStorage.getItem('theme') === 'dark' ? 'active' : ''}"></div>
                 </a>
-                <a href="settings.html"><i class="fa-solid fa-gear"></i> Cài đặt</a>
-                <a href="saved.html"><i class="fa-solid fa-bookmark"></i> Đã lưu</a>
+                <a href="${pathPrefix}settings/index.html"><i class="fa-solid fa-gear"></i> Cài đặt</a>
+                <a href="${pathPrefix}saved.html"><i class="fa-solid fa-bookmark"></i> Đã lưu</a>
                 ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<a href="admin.html" style="color: #6366f1;"><i class="fa-solid fa-user-shield"></i> Quản trị</a>` : ''}
                 <div class="menu-divider"></div>
                 <a href="#" onclick="logout(event)"><i class="fa-solid fa-sign-out-alt"></i> Đăng xuất</a>
