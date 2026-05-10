@@ -21,27 +21,52 @@ window.onload = function() {
     }
 };
 
-// Chuyển đổi tab
+const forgotForm = document.getElementById('form-forgot');
+const resetForm = document.getElementById('form-reset');
+
+// Chuyển đổi tab / Trạng thái form
 function switchTab(tab) {
     if (messageBox) messageBox.classList.add('hidden');
     
     const tabLogin = document.getElementById('tab-login');
     const tabRegister = document.getElementById('tab-register');
+    const tabsContainer = document.querySelector('.tabs');
     
+    // Ẩn tất cả form
+    const allForms = [loginForm, registerForm, otpForm, forgotForm, resetForm];
+    allForms.forEach(f => {
+        if(f) {
+            f.classList.add('hidden');
+            f.classList.remove('active');
+        }
+    });
+
+    // Hiện/Ẩn thanh Tab tùy theo trạng thái
+    if (tab === 'login' || tab === 'register') {
+        tabsContainer.classList.remove('hidden');
+    } else {
+        tabsContainer.classList.add('hidden');
+    }
+
     if (tab === 'login') {
         tabLogin.classList.add('active');
         tabRegister.classList.remove('active');
         loginForm.classList.add('active');
         loginForm.classList.remove('hidden');
-        registerForm.classList.remove('active');
-        registerForm.classList.add('hidden');
-    } else {
+    } else if (tab === 'register') {
         tabRegister.classList.add('active');
         tabLogin.classList.remove('active');
         registerForm.classList.add('active');
         registerForm.classList.remove('hidden');
-        loginForm.classList.remove('active');
-        loginForm.classList.add('hidden');
+    } else if (tab === 'otp') {
+        otpForm.classList.add('active');
+        otpForm.classList.remove('hidden');
+    } else if (tab === 'forgot') {
+        forgotForm.classList.add('active');
+        forgotForm.classList.remove('hidden');
+    } else if (tab === 'reset') {
+        resetForm.classList.add('active');
+        resetForm.classList.remove('hidden');
     }
 }
 
@@ -78,15 +103,14 @@ if (registerForm) {
             
             // Hiện khung OTP
             showMessage(data.message, 'success');
-            registerForm.classList.add('hidden');
-            otpForm.classList.remove('hidden');
+            switchTab('otp');
         } catch (error) {
             showMessage(error.message || 'Đăng ký thất bại.', 'error');
         }
     });
 }
 
-// Xử lý Xác thực OTP
+// Xử lý Xác thực OTP Đăng ký
 if (otpForm) {
     otpForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -101,12 +125,52 @@ if (otpForm) {
             });
             
             showMessage(data.message, 'success');
-            setTimeout(() => {
-                otpForm.classList.add('hidden');
-                switchTab('login');
-            }, 2000);
+            setTimeout(() => switchTab('login'), 2000);
         } catch (error) {
             showMessage(error.message || 'Mã xác thực không đúng.', 'error');
+        }
+    });
+}
+
+// Xử lý Gửi yêu cầu Quên mật khẩu
+if (forgotForm) {
+    forgotForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('forgot-email').value;
+        try {
+            const data = await window.api.post('auth/forgot-password', { email });
+            showMessage(data.message, 'success');
+            
+            // Lưu email để dùng cho bước reset
+            sessionStorage.setItem('reset_email', email);
+            setTimeout(() => switchTab('reset'), 1500);
+        } catch (error) {
+            showMessage(error.message || 'Lỗi gửi yêu cầu khôi phục.', 'error');
+        }
+    });
+}
+
+// Xử lý Đặt lại mật khẩu mới
+if (resetForm) {
+    resetForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const otp = document.getElementById('reset-otp').value;
+        const newPassword = document.getElementById('reset-new-password').value;
+        const email = sessionStorage.getItem('reset_email');
+
+        if (!email) {
+            showMessage('Lỗi: Không tìm thấy Email yêu cầu. Hãy bắt đầu lại.', 'error');
+            switchTab('forgot');
+            return;
+        }
+
+        try {
+            const data = await window.api.post('auth/reset-password', { email, otp, newPassword });
+            showMessage(data.message, 'success');
+            sessionStorage.removeItem('reset_email');
+            setTimeout(() => switchTab('login'), 2000);
+        } catch (error) {
+            showMessage(error.message || 'Lỗi đặt lại mật khẩu.', 'error');
         }
     });
 }
