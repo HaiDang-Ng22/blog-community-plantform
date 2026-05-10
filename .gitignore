@@ -17,3 +17,6 @@ Blog.Web/uploads/*
 # Operating System
 [Th]umbs.db
 *.DS_Store
+# Secrets
+firebase-key.json
+Blog.API/firebase-key.json

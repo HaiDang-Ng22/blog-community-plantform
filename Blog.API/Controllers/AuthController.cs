@@ -19,11 +19,15 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly Blog.Domain.Interfaces.IEmailService _emailService;
+    private readonly Microsoft.Extensions.Caching.MemoryCache.IMemoryCache _cache;
 
-    public AuthController(AppDbContext context, IConfiguration configuration)
+    public AuthController(AppDbContext context, IConfiguration configuration, Blog.Domain.Interfaces.IEmailService emailService, Microsoft.Extensions.Caching.MemoryCache.IMemoryCache cache)
     {
         _context = context;
         _configuration = configuration;
+        _emailService = emailService;
+        _cache = cache;
     }
 
     [HttpPost("register")]
@@ -39,21 +43,60 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Mật khẩu không thỏa mãn yêu cầu bảo mật (8 ký tự, có chữ hoa và ký tự đặc biệt)." });
         }
 
+        // Generate 6-digit OTP
+        var otp = new Random().Next(100000, 999999).ToString();
+        
+        // Store in cache for 5 minutes
+        _cache.Set($"OTP_{request.Email}", new { Otp = otp, Data = request }, TimeSpan.FromMinutes(5));
+
+        try 
+        {
+            await _emailService.SendEmailAsync(request.Email, "Mã xác thực đăng ký Zynk Social", 
+                $@"<div style='font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
+                    <h2 style='color: #6366f1;'>Chào mừng bạn đến với Zynk!</h2>
+                    <p>Mã xác thực đăng ký của bạn là:</p>
+                    <div style='font-size: 2rem; font-weight: 800; color: #1e293b; letter-spacing: 5px; margin: 20px 0;'>{otp}</div>
+                    <p style='color: #64748b; font-size: 0.85rem;'>Mã này sẽ hết hạn sau 5 phút.</p>
+                   </div>");
+
+            return Ok(new { message = "Mã xác thực đã được gửi về email của bạn." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Không thể gửi mail xác thực: " + ex.Message });
+        }
+    }
+
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+    {
+        if (!_cache.TryGetValue($"OTP_{request.Email}", out dynamic cachedData))
+            return BadRequest(new { message = "Mã xác thực đã hết hạn hoặc không tồn tại." });
+
+        if (cachedData.Otp != request.Otp)
+            return BadRequest(new { message = "Mã xác thực không chính xác." });
+
+        // OTP is correct, create user
+        var regData = (RegisterRequest)cachedData.Data;
         var user = new User
         {
             Id = Guid.NewGuid(),
-            Email = request.Email,
-            Username = request.Email.Split('@')[0],
-            FullName = request.FullName,
-            Gender = request.Gender,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Email = regData.Email,
+            Username = regData.Email.Split('@')[0],
+            FullName = regData.FullName,
+            Gender = regData.Gender,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(regData.Password),
+            IsEmailConfirmed = true, // Marked as confirmed
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Đăng ký thành công." });
+        // Clear cache
+        _cache.Remove($"OTP_{request.Email}");
+
+        return Ok(new { message = "Xác thực thành công. Tài khoản của bạn đã được tạo." });
     }
 
     [HttpPost("login")]

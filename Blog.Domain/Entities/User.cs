@@ -16,6 +16,7 @@ public class User
     public DateTime CreatedAt { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsPrivate { get; set; } = false;
+    public bool IsEmailConfirmed { get; set; } = false;
     public string Role { get; set; } = "User"; // User, Admin
 
 
