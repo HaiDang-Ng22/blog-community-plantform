@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Blog.API.Extensions;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Caching.Memory;
+using Blog.Domain.Interfaces;
 
 namespace Blog.API.Controllers;
 
@@ -19,10 +21,10 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
-    private readonly Blog.Domain.Interfaces.IEmailService _emailService;
-    private readonly Microsoft.Extensions.Caching.MemoryCache.IMemoryCache _cache;
+    private readonly IEmailService _emailService;
+    private readonly IMemoryCache _cache;
 
-    public AuthController(AppDbContext context, IConfiguration configuration, Blog.Domain.Interfaces.IEmailService emailService, Microsoft.Extensions.Caching.MemoryCache.IMemoryCache cache)
+    public AuthController(AppDbContext context, IConfiguration configuration, IEmailService emailService, IMemoryCache cache)
     {
         _context = context;
         _configuration = configuration;
@@ -46,8 +48,8 @@ public class AuthController : ControllerBase
         // Generate 6-digit OTP
         var otp = new Random().Next(100000, 999999).ToString();
         
-        // Store in cache for 5 minutes
-        _cache.Set($"OTP_{request.Email}", new { Otp = otp, Data = request }, TimeSpan.FromMinutes(5));
+        // Store in cache for 5 minutes (Tuple: Code, RegistrationData)
+        _cache.Set($"OTP_{request.Email}", (Otp: otp, Data: request), TimeSpan.FromMinutes(5));
 
         try 
         {
@@ -70,14 +72,14 @@ public class AuthController : ControllerBase
     [HttpPost("verify-otp")]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
     {
-        if (!_cache.TryGetValue($"OTP_{request.Email}", out dynamic cachedData))
+        if (!_cache.TryGetValue($"OTP_{request.Email}", out (string Otp, RegisterRequest Data) cachedData))
             return BadRequest(new { message = "Mã xác thực đã hết hạn hoặc không tồn tại." });
 
         if (cachedData.Otp != request.Otp)
             return BadRequest(new { message = "Mã xác thực không chính xác." });
 
         // OTP is correct, create user
-        var regData = (RegisterRequest)cachedData.Data;
+        var regData = cachedData.Data;
         var user = new User
         {
             Id = Guid.NewGuid(),
