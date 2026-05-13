@@ -200,6 +200,7 @@ public class CreateOrderDto
     public decimal ShippingFee { get; set; }
     public bool SaveAddress { get; set; }
     public string? CustomerNote { get; set; }
+    public string? VoucherCode { get; set; }
     public List<CreateOrderItemDto> Items { get; set; } = new();
 }
 
@@ -208,4 +209,76 @@ public class CreateOrderItemDto
     public Guid ProductId { get; set; }
     public Guid? VariantId { get; set; }
     public int Quantity { get; set; }
+}
+
+// Voucher DTOs
+public class VoucherDto
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string DiscountType { get; set; } = string.Empty; // Percentage, FixedAmount
+    public decimal DiscountValue { get; set; }
+    public decimal? MinOrderValue { get; set; }
+    public decimal? MaxDiscountAmount { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public int? UsageLimit { get; set; }
+    public int UsedCount { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class CreateVoucherDto
+{
+    public string Code { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string DiscountType { get; set; } = "Percentage";
+    public decimal DiscountValue { get; set; }
+    public decimal? MinOrderValue { get; set; }
+    public decimal? MaxDiscountAmount { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public int? UsageLimit { get; set; }
+}
+
+// Seller Dashboard DTOs
+public class SellerDashboardDto
+{
+    public decimal TotalRevenue { get; set; }
+    public int TotalOrders { get; set; }
+    public int PendingOrders { get; set; }
+    public int TotalProducts { get; set; }
+    public List<RevenueChartDataDto> RevenueChart { get; set; } = new();
+}
+
+public class RevenueChartDataDto
+{
+    public string Date { get; set; } = string.Empty;
+    public decimal Revenue { get; set; }
+}
+
+// Shop Chat DTOs
+public class ShopConversationDto
+{
+    public Guid Id { get; set; }
+    public Guid BuyerId { get; set; }
+    public string BuyerName { get; set; } = string.Empty;
+    public string? BuyerAvatar { get; set; }
+    public Guid ShopId { get; set; }
+    public string ShopName { get; set; } = string.Empty;
+    public string? ShopLogo { get; set; }
+    public string LastMessage { get; set; } = string.Empty;
+    public DateTime LastMessageAt { get; set; }
+    public int UnreadCount { get; set; }
+}
+
+public class ShopMessageDto
+{
+    public Guid Id { get; set; }
+    public Guid ConversationId { get; set; }
+    public Guid SenderId { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public bool IsMe { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

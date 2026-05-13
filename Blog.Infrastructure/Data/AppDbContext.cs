@@ -45,6 +45,10 @@ public class AppDbContext : DbContext
     public DbSet<Poll> Polls { get; set; }
     public DbSet<PollOption> PollOptions { get; set; }
     public DbSet<PollVote> PollVotes { get; set; }
+    public DbSet<VerificationRequest> VerificationRequests { get; set; }
+    public DbSet<Voucher> Vouchers { get; set; }
+    public DbSet<ShopConversation> ShopConversations { get; set; }
+    public DbSet<ShopMessage> ShopMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -277,6 +281,19 @@ public class AppDbContext : DbContext
             .HasForeignKey(oi => oi.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Voucher
+        modelBuilder.Entity<Voucher>()
+            .HasOne(v => v.Shop)
+            .WithMany()
+            .HasForeignKey(v => v.ShopId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Voucher)
+            .WithMany()
+            .HasForeignKey(o => o.VoucherId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // ProductReview
         modelBuilder.Entity<ProductReview>()
             .HasOne(r => r.Product)
@@ -342,6 +359,31 @@ public class AppDbContext : DbContext
             .HasForeignKey(m => m.SharedPostId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Shop Chat
+        modelBuilder.Entity<ShopConversation>()
+            .HasOne(c => c.Buyer)
+            .WithMany()
+            .HasForeignKey(c => c.BuyerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ShopConversation>()
+            .HasOne(c => c.Shop)
+            .WithMany()
+            .HasForeignKey(c => c.ShopId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ShopMessage>()
+            .HasOne(m => m.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ShopMessage>()
+            .HasOne(m => m.Sender)
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Cấu hình Story
         modelBuilder.Entity<Story>()
             .HasOne(s => s.User)
@@ -380,6 +422,13 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(sv => sv.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // --- Verification Requests ---
+        modelBuilder.Entity<VerificationRequest>()
+            .HasOne(vr => vr.User)
+            .WithMany(u => u.VerificationRequests)
+            .HasForeignKey(vr => vr.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // --- Global DateTime UTC Converter ---
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

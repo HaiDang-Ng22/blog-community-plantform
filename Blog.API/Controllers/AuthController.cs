@@ -101,7 +101,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
 
         var token = GenerateJwtToken(user);
-        return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, Username = user.Username, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
+        return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, Username = user.Username, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role, IsVerified = user.IsVerified });
     }
 
     [HttpPost("forgot-password")]
@@ -168,7 +168,8 @@ public class AuthController : ControllerBase
             Gender = user.Gender,
             CreatedAt = user.CreatedAt,
             IsPrivate = user.IsPrivate,
-            Role = user.Role
+            Role = user.Role,
+            IsVerified = user.IsVerified
         });
     }
 
@@ -223,7 +224,7 @@ public class AuthController : ControllerBase
             }
 
             var token = GenerateJwtToken(user);
-            return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, Username = user.Username, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role });
+            return Ok(new AuthResponse { Id = user.Id, Token = token, Email = user.Email, Username = user.Username, FullName = user.FullName, AvatarUrl = user.AvatarUrl, Role = user.Role, IsVerified = user.IsVerified });
         }
         catch (InvalidJwtException)
         {

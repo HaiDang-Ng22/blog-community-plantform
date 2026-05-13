@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
+using Blog.API.Services;
 
 namespace Blog.API.Controllers;
 
@@ -16,10 +17,12 @@ namespace Blog.API.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public AdminController(AppDbContext context)
+    public AdminController(AppDbContext context, INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     [HttpPost("cleanup-social-data")]
@@ -227,17 +230,14 @@ public class AdminController : ControllerBase
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // Thông báo cho tác giả
-            var notification = new Notification
-            {
-                Id = Guid.NewGuid(),
-                ReceiverId = post.AuthorId,
-                ActorId = adminId,
-                Type = "System",
-                Message = $"Bài viết '{post.Title}' của bạn đã bị xóa do vi phạm quy tắc cộng đồng.",
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.Notifications.Add(notification);
+            // Thông báo cho tác giả (Real-time)
+            await _notificationService.SendNotificationAsync(
+                post.AuthorId,
+                adminId,
+                "System",
+                post.Id,
+                $"Bài viết '{post.Title}' của bạn đã bị xóa do vi phạm quy tắc cộng đồng."
+            );
 
             // Xóa ảnh, bình luận, lượt thích liên quan
             _context.PostImages.RemoveRange(post.Images);
@@ -413,7 +413,17 @@ public class AdminController : ControllerBase
         report.IsResolved = true;
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Đã đánh dấu báo cáo là đã xử lý." });
+        // Notify the reporter
+        var adminId = User.GetUserId() ?? Guid.Empty;
+        await _notificationService.SendNotificationAsync(
+            report.ReporterId,
+            adminId,
+            "System",
+            report.PostId,
+            "Báo cáo của bạn về một bài viết đã được xử lý. Cảm ơn bạn đã góp ý!"
+        );
+
+        return Ok(new { message = "Đã đánh dấu báo cáo là đã xử lý và thông báo cho người gửi." });
     }
 
     [HttpGet("shop-applications")]
@@ -470,7 +480,18 @@ public class AdminController : ControllerBase
 
         shop.IsSuspended = true;
         await _context.SaveChangesAsync();
-        return Ok(new { message = "Đã đình chỉ cửa hàng." });
+
+        // Notify Shop Owner
+        var adminId = User.GetUserId() ?? Guid.Empty;
+        await _notificationService.SendNotificationAsync(
+            shop.UserId,
+            adminId,
+            "System",
+            shop.Id,
+            $"Cửa hàng '{shop.Name}' của bạn đã bị tạm đình chỉ do vi phạm chính sách."
+        );
+
+        return Ok(new { message = "Đã đình chỉ cửa hàng và thông báo cho chủ shop." });
     }
 
     [HttpPost("shops/{id}/unsuspend")]
@@ -481,7 +502,18 @@ public class AdminController : ControllerBase
 
         shop.IsSuspended = false;
         await _context.SaveChangesAsync();
-        return Ok(new { message = "Đã gỡ đình chỉ cửa hàng." });
+
+        // Notify Shop Owner
+        var adminId = User.GetUserId() ?? Guid.Empty;
+        await _notificationService.SendNotificationAsync(
+            shop.UserId,
+            adminId,
+            "System",
+            shop.Id,
+            $"Cửa hàng '{shop.Name}' của bạn đã được gỡ bỏ lệnh đình chỉ. Bạn có thể tiếp tục kinh doanh."
+        );
+
+        return Ok(new { message = "Đã gỡ đình chỉ cửa hàng và thông báo cho chủ shop." });
     }
 
     [HttpPost("shop-applications/{id}/approve")]
@@ -506,20 +538,17 @@ public class AdminController : ControllerBase
         };
 
         _context.Shops.Add(shop);
-
-        // Send Notification
-        var notification = new Notification
-        {
-            Id = Guid.NewGuid(),
-            ReceiverId = app.UserId,
-            ActorId = User.GetUserId() ?? Guid.Empty,
-            Type = "System",
-            Message = $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã được phê duyệt!",
-            CreatedAt = DateTime.UtcNow
-        };
-        _context.Notifications.Add(notification);
-
         await _context.SaveChangesAsync();
+
+        // Send Notification (Real-time)
+        await _notificationService.SendNotificationAsync(
+            app.UserId,
+            User.GetUserId() ?? Guid.Empty,
+            "System",
+            shop.Id,
+            $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã được phê duyệt!"
+        );
+
         return Ok(new { message = "Đã duyệt yêu cầu mở cửa hàng." });
     }
 
@@ -533,19 +562,17 @@ public class AdminController : ControllerBase
         app.AdminNote = note;
         app.UpdatedAt = DateTime.UtcNow;
 
-        // Send Notification
-        var notification = new Notification
-        {
-            Id = Guid.NewGuid(),
-            ReceiverId = app.UserId,
-            ActorId = User.GetUserId() ?? Guid.Empty,
-            Type = "System",
-            Message = $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã bị từ chối. Lý do: {note}",
-            CreatedAt = DateTime.UtcNow
-        };
-        _context.Notifications.Add(notification);
-
         await _context.SaveChangesAsync();
+
+        // Send Notification (Real-time)
+        await _notificationService.SendNotificationAsync(
+            app.UserId,
+            User.GetUserId() ?? Guid.Empty,
+            "System",
+            app.Id,
+            $"yêu cầu mở cửa hàng '{app.ShopName}' của bạn đã bị từ chối. Lý do: {note}"
+        );
+
         return Ok(new { message = "Đã từ chối yêu cầu mở cửa hàng." });
     }
 
@@ -661,5 +688,87 @@ public class AdminController : ControllerBase
                 : $"Đã xóa danh mục \"{category.Name}\".",
             count = allIdsToDelete.Count
         });
+    }
+
+    // ─── Verification (Tích xanh) ─────────────────────────────────────────
+
+    [HttpGet("verifications")]
+    public async Task<IActionResult> GetVerifications()
+    {
+        var list = await _context.VerificationRequests
+            .Include(v => v.User)
+            .OrderByDescending(v => v.CreatedAt)
+            .Select(v => new
+            {
+                v.Id,
+                v.UserId,
+                Username = v.User.Username,
+                FullName = v.FullName,
+                DocumentType = v.DocumentType,
+                DocumentUrl = v.DocumentUrl,
+                v.Status,
+                v.CreatedAt
+            })
+            .ToListAsync();
+        return Ok(list);
+    }
+
+    [HttpPost("verifications/{id}/approve")]
+    public async Task<IActionResult> ApproveVerification(Guid id)
+    {
+        var req = await _context.VerificationRequests
+            .Include(v => v.User)
+            .FirstOrDefaultAsync(v => v.Id == id);
+        if (req == null) return NotFound();
+
+        req.Status = "Approved";
+
+        // Cấp tích xanh cho user
+        var user = await _context.Users.FindAsync(req.UserId);
+        if (user != null) user.IsVerified = true;
+
+        await _context.SaveChangesAsync();
+
+        // Gửi thông báo cho user (Real-time)
+        await _notificationService.SendNotificationAsync(
+            req.UserId,
+            User.GetUserId() ?? Guid.Empty,
+            "System",
+            req.Id,
+            "Chúc mừng! Yêu cầu xác minh danh tính của bạn đã được phê duyệt. Tài khoản của bạn đã được cấp tích xanh ✅."
+        );
+
+        return Ok(new { message = "Đã duyệt và cấp tích xanh cho người dùng." });
+    }
+
+    [HttpPost("verifications/{id}/reject")]
+    public async Task<IActionResult> RejectVerification(Guid id)
+    {
+        var req = await _context.VerificationRequests
+            .FirstOrDefaultAsync(v => v.Id == id);
+        if (req == null) return NotFound();
+
+        req.Status = "Rejected";
+
+        await _context.SaveChangesAsync();
+
+        // Gửi thông báo cho user (Real-time)
+        await _notificationService.SendNotificationAsync(
+            req.UserId,
+            User.GetUserId() ?? Guid.Empty,
+            "System",
+            req.Id,
+            "Yêu cầu xác minh danh tính của bạn đã bị từ chối. Vui lòng kiểm tra lại thông tin và thử lại."
+        );
+
+        return Ok(new { message = "Đã từ chối yêu cầu xác minh." });
+    }
+
+    [HttpGet("verifications/pending-count")]
+    public async Task<IActionResult> GetPendingVerificationsCount()
+    {
+        var count = await _context.VerificationRequests
+            .CountAsync(v => v.Status == "Pending");
+        return Ok(new { count });
     }
 }

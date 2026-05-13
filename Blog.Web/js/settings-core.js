@@ -85,7 +85,7 @@ async function loadSettingsData() {
     if (!token) return;
 
     try {
-        const res = await fetch(`${BASE_URL}/users/me`, {
+        const res = await fetch(`${BASE_URL}/auth/profile`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {

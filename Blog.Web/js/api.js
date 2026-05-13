@@ -3,7 +3,11 @@
 // Cấu hình URL của Backend API.
 // Khi chạy ở localhost, gọi đến server .NET (cổng 5142).
 // Khi deploy Frontend lên Render, thay 'YOUR_BACKEND_URL' bằng URL thực tế của Backend (ví dụ: 'https://api.ten-ban.onrender.com')
-const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+// Xác định môi trường local
+const IS_LOCAL = window.location.hostname === 'localhost' || 
+                 window.location.hostname === '127.0.0.1' || 
+                 window.location.hostname.startsWith('192.168.') ||
+                 window.location.protocol === 'file:';
 
 // 👇👇👇 NẾU BẠN DEPLOY BACKEND Ở ĐÂU, HÃY ĐIỀN URL VÀO ĐÂY 👇👇👇
 const PRODUCTION_BACKEND_URL = 'https://blog-community-plantform.onrender.com';
@@ -11,7 +15,7 @@ const PRODUCTION_BACKEND_URL = 'https://blog-community-plantform.onrender.com';
 // Xác định API_BASE_URL
 const API_BASE_URL = IS_LOCAL
     ? 'http://localhost:7000/api'
-    : (PRODUCTION_BACKEND_URL !== 'https://blog-community-plantform.onrender.com'
+    : (PRODUCTION_BACKEND_URL && PRODUCTION_BACKEND_URL !== 'https://blog-community-plantform.onrender.com'
         ? `${PRODUCTION_BACKEND_URL}/api`
         : `${window.location.origin}/api`); // Mặc định về origin nếu chưa cấu hình
 

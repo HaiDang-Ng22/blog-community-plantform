@@ -18,6 +18,7 @@ public class User
     public bool IsPrivate { get; set; } = false;
     public bool IsEmailConfirmed { get; set; } = false;
     public string Role { get; set; } = "User"; // User, Admin
+    public bool IsVerified { get; set; } = false;
 
 
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
@@ -28,4 +29,5 @@ public class User
     public virtual ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
     public virtual ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
     public virtual ICollection<Story> Stories { get; set; } = new List<Story>();
+    public virtual ICollection<VerificationRequest> VerificationRequests { get; set; } = new List<VerificationRequest>();
 }
