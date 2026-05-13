@@ -139,14 +139,8 @@
                     throw new Error(`Lỗi xóa bài viết: ${delErr.message}`);
                 }
 
-                // 2. Resolve report
-                try {
-                    await window.adminApi.post(`admin/reports/${reportId}/resolve`, {});
-                } catch (resErr) {
-                    throw new Error(`Đã xóa bài viết nhưng lỗi khi đóng báo cáo: ${resErr.message}`);
-                }
-                
-                alert('Đã xóa bài viết và hoàn tất báo cáo.');
+                // 2. The backend already resolves reports when a post is deleted
+                alert('Đã xóa bài viết và hoàn tất các báo cáo liên quan.');
                 adminModal.close();
                 loadReports();
             } catch (err) { 

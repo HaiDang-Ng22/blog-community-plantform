@@ -34,6 +34,7 @@ public class AuthResponse
     public string FullName { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
     public string Role { get; set; } = "User";
+    public bool IsVerified { get; set; } = false;
 }
 
 public class UserProfileResponse
@@ -49,6 +50,7 @@ public class UserProfileResponse
     public DateTime CreatedAt { get; set; }
     public bool IsPrivate { get; set; }
     public string Role { get; set; } = "User";
+    public bool IsVerified { get; set; } = false;
 }
 
 public class UpdatePrivacyRequest

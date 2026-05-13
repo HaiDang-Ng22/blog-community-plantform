@@ -269,11 +269,20 @@ async function openProductModal(productId) {
                         </div>
                     </div>
 
+                    <!-- Shop Vouchers -->
+                    <div id="shop-vouchers-container" style="margin-bottom: 1.5rem;"></div>
+
                     <div class="modal-btns">
                         <button class="btn secondary-btn" id="btn-add-cart" onclick="addToCart('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
                             <i class="fa fa-cart-plus"></i> Thêm vào giỏ
                         </button>
                         <button class="btn primary-btn" id="btn-buy-now" onclick="buyNow('${p.id}')">Mua ngay</button>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button class="btn" style="background: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; width: 100%; border-radius: 12px; font-weight: 600;" onclick="openShopChat('${p.shopId}', '${p.shopName.replace(/'/g, "\\'")}')">
+                            <i class="fa-regular fa-comment-dots"></i> Nhắn tin cho Shop
+                        </button>
                     </div>
 
                     <!-- Reviews Section -->
@@ -297,11 +306,12 @@ async function openProductModal(productId) {
             if (btn) selectAttr(2, options2[0], btn);
         }
 
-        // Load reviews
+        // Load extra data
         loadReviewStats(productId);
         loadReviews(productId);
         checkReviewEligibility(productId);
         checkShopFollowStatus(p.shopOwnerId);
+        loadShopVouchers(p.shopOwnerId);
 
     } catch (e) {
         console.error('Failed to load product details', e);
@@ -791,3 +801,35 @@ async function checkShopFollowStatus(userId) {
         console.error('Failed to check follow status', e);
     }
 }
+
+async function loadShopVouchers(shopOwnerId) {
+    const container = document.getElementById('shop-vouchers-container');
+    if (!container) return;
+    try {
+        const vouchers = await window.api.get(`marketplace/shops/${shopOwnerId}/vouchers`);
+        if (vouchers.length === 0) return;
+        
+        container.innerHTML = `
+            <label style="font-weight: 700; color: #64748b; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 8px; display: block;">Ưu đãi của Shop</label>
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;">
+                ${vouchers.map(v => `
+                    <div style="background: #fff5f5; border: 1px dashed #feb2b2; padding: 4px 10px; border-radius: 6px; white-space: nowrap;">
+                        <span style="color: #e53e3e; font-weight: 800; font-size: 0.85rem;">${v.code}</span>
+                        <div style="font-size: 0.7rem; color: #718096;">Giảm ${v.discountType === 'Percentage' ? v.discountValue + '%' : formatCurrency(v.discountValue)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {}
+}
+
+async function openShopChat(shopId, shopName) {
+    if (!localStorage.getItem('auth_token')) {
+        window.location.href = 'auth.html';
+        return;
+    }
+    // Redirect to separate shop messages page
+    window.location.href = `shop-messages.html?shopId=${shopId}&shopName=${encodeURIComponent(shopName)}`;
+}
+
+window.openShopChat = openShopChat;

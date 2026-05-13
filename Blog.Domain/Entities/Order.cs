@@ -31,10 +31,13 @@ public class Order
     public string ShippingAddress { get; set; } = string.Empty;
     
     public string? CustomerNote { get; set; }
+    public Guid? VoucherId { get; set; }
+    public decimal DiscountAmount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
     public virtual User Buyer { get; set; } = null!;
+    public virtual Voucher? Voucher { get; set; }
     public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }
 

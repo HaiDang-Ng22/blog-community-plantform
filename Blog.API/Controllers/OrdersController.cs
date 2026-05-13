@@ -106,6 +106,18 @@ public class OrdersController : ControllerBase
             };
 
             decimal total = 0;
+            Voucher? appliedVoucher = null;
+
+            if (!string.IsNullOrEmpty(dto.VoucherCode))
+            {
+                appliedVoucher = await _context.Vouchers.FirstOrDefaultAsync(v => 
+                    v.ShopId == shopId && 
+                    v.Code == dto.VoucherCode.ToUpper() && 
+                    v.IsActive && 
+                    v.StartDate <= DateTime.UtcNow && 
+                    v.EndDate >= DateTime.UtcNow &&
+                    (v.UsageLimit == null || v.UsedCount < v.UsageLimit));
+            }
 
             foreach (var itemDto in group)
             {
@@ -145,7 +157,31 @@ public class OrdersController : ControllerBase
                 _context.Products.Update(product);
             }
 
-            order.TotalAmount = total + order.ShippingFee;
+            // Apply Voucher
+            if (appliedVoucher != null)
+            {
+                if (appliedVoucher.MinOrderValue == null || total >= appliedVoucher.MinOrderValue.Value)
+                {
+                    decimal discount = 0;
+                    if (appliedVoucher.DiscountType == DiscountType.Percentage)
+                    {
+                        discount = total * (appliedVoucher.DiscountValue / 100);
+                        if (appliedVoucher.MaxDiscountAmount.HasValue)
+                            discount = Math.Min(discount, appliedVoucher.MaxDiscountAmount.Value);
+                    }
+                    else
+                    {
+                        discount = appliedVoucher.DiscountValue;
+                    }
+
+                    order.VoucherId = appliedVoucher.Id;
+                    order.DiscountAmount = Math.Min(discount, total); // Cannot discount more than total
+                    appliedVoucher.UsedCount++;
+                    _context.Vouchers.Update(appliedVoucher);
+                }
+            }
+
+            order.TotalAmount = Math.Max(0, total - order.DiscountAmount) + order.ShippingFee;
             await _orderRepository.AddAsync(order);
             createdOrderIds.Add(order.Id);
 

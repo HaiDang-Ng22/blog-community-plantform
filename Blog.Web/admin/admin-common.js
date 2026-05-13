@@ -62,8 +62,9 @@
                     <a href="categories.html" class="nav-item ${currentPage === 'categories.html' ? 'active' : ''}">
                         <i class="fa-solid fa-layer-group"></i> <span>Quản lý Danh mục</span>
                     </a>
-                    <a href="verifications.html" class="nav-item ${currentPage === 'verifications.html' ? 'active' : ''}">
+                    <a href="verifications.html" class="nav-item ${currentPage === 'verifications.html' ? 'active' : ''}" style="position: relative;">
                         <i class="fa-solid fa-circle-check"></i> <span>Duyệt tích xanh</span>
+                        <span id="badge-verifications" class="admin-badge hidden">0</span>
                     </a>
                 </nav>
                 <div class="sidebar-footer">
@@ -104,6 +105,22 @@
             }
         } catch (err) {
             console.error("Lỗi cập nhật badge:", err);
+        }
+
+        // Badge xác minh tích xanh (gọi riêng để không ảnh hưởng stats)
+        try {
+            const vData = await window.adminApi.get('admin/verifications/pending-count');
+            const vBadge = document.getElementById('badge-verifications');
+            if (vBadge) {
+                if (vData.count > 0) {
+                    vBadge.textContent = vData.count;
+                    vBadge.classList.remove('hidden');
+                } else {
+                    vBadge.classList.add('hidden');
+                }
+            }
+        } catch (err) {
+            console.error("Lỗi badge xác minh:", err);
         }
     };
 

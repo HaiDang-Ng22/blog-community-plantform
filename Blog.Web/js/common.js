@@ -1058,6 +1058,20 @@ style.textContent = `
         from { transform: translateY(100%); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
+    .zynk-custom-modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center; z-index: 30000;
+        animation: fadeIn 0.3s ease;
+    }
+    .zynk-custom-modal {
+        background: var(--bg-color); width: 90%; max-width: 400px;
+        border-radius: 20px; padding: 24px; box-shadow: var(--shadow-lg);
+        text-align: center; border: 1px solid var(--input-border);
+    }
+    .zynk-custom-modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; }
+    .zynk-custom-modal-body { margin: 20px 0; color: var(--text-secondary); line-height: 1.6; }
+    .zynk-custom-modal-footer .btn { height: 48px; border-radius: 12px; font-weight: 700; }
 `;
 document.head.appendChild(style);
 
@@ -1468,7 +1482,62 @@ window.common = {
     openPostModalByPostId,
     openShareModal: window.openShareModal,
     sendSharedPost: window.sendSharedPost,
-    renderPollHtml
+    renderPollHtml,
+    zynkModal: {
+        alert: (message, title = 'Thông báo') => {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'zynk-custom-modal-overlay';
+                modal.innerHTML = `
+                    <div class="zynk-custom-modal">
+                        <div class="zynk-custom-modal-header">
+                            <h3>${title}</h3>
+                        </div>
+                        <div class="zynk-custom-modal-body">
+                            <p>${message}</p>
+                        </div>
+                        <div class="zynk-custom-modal-footer">
+                            <button class="btn primary-btn" id="zynk-modal-ok">Đồng ý</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.getElementById('zynk-modal-ok').onclick = () => {
+                    modal.remove();
+                    resolve();
+                };
+            });
+        },
+        confirm: (message, title = 'Xác nhận') => {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'zynk-custom-modal-overlay';
+                modal.innerHTML = `
+                    <div class="zynk-custom-modal">
+                        <div class="zynk-custom-modal-header">
+                            <h3>${title}</h3>
+                        </div>
+                        <div class="zynk-custom-modal-body">
+                            <p>${message}</p>
+                        </div>
+                        <div class="zynk-custom-modal-footer" style="display: flex; gap: 10px;">
+                            <button class="btn secondary-btn" id="zynk-modal-cancel">Hủy</button>
+                            <button class="btn primary-btn" id="zynk-modal-confirm">Đồng ý</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.getElementById('zynk-modal-cancel').onclick = () => {
+                    modal.remove();
+                    resolve(false);
+                };
+                document.getElementById('zynk-modal-confirm').onclick = () => {
+                    modal.remove();
+                    resolve(true);
+                };
+            });
+        }
+    }
 };
 
 // Global shortcuts

@@ -74,6 +74,14 @@
                 <span data-i18n="total_label">Tổng cộng:</span>
                 <span id="total-price" style="color: #ef4444;">0đ</span>
             </div>
+
+            <!-- Voucher Section -->
+            <div class="voucher-input-group" style="margin-top: 1.5rem; display: flex; gap: 8px;">
+                <input type="text" id="voucher-code" placeholder="Mã giảm giá (nếu có)" style="flex: 1; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; outline: none;">
+                <button class="btn" style="background: #3b82f6; color: #fff; padding: 0 1.5rem; border-radius: 0.75rem;" onclick="applyVoucher()">Áp dụng</button>
+            </div>
+            <div id="voucher-msg" style="font-size: 0.8rem; margin-top: 5px;"></div>
+
             <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
             
             <h3 style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
@@ -152,6 +160,7 @@
     <script>
         let provincesData = [];
         let savedAddresses = [];
+        let appliedVoucher = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderCart();
@@ -280,11 +289,63 @@
                 shipping = 25000;
             }
 
-            const total = subtotal + shipping;
+            const total = subtotal + shipping - (appliedVoucher ? appliedVoucher.discountAmount : 0);
 
             document.getElementById('subtotal-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal);
             document.getElementById('shipping-fee').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping);
-            document.getElementById('total-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+            
+            if (appliedVoucher) {
+                const discEl = document.getElementById('voucher-discount-row');
+                if (!discEl) {
+                    const row = document.createElement('div');
+                    row.className = 'cart-total';
+                    row.id = 'voucher-discount-row';
+                    row.style = 'font-size: 1.1rem; color: #10b981; margin-bottom: 0.5rem; border: none;';
+                    row.innerHTML = `<span>Giảm giá:</span><span id="voucher-discount-val">-${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appliedVoucher.discountAmount)}</span>`;
+                    document.getElementById('total-price').parentElement.insertAdjacentElement('beforebegin', row);
+                } else {
+                    document.getElementById('voucher-discount-val').textContent = `-${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appliedVoucher.discountAmount)}`;
+                }
+            }
+
+            document.getElementById('total-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.max(0, total));
+        }
+
+        async function applyVoucher() {
+            const code = document.getElementById('voucher-code').value.trim();
+            if (!code) return;
+            
+            const msg = document.getElementById('voucher-msg');
+            msg.textContent = 'Đang kiểm tra...';
+            msg.style.color = '#64748b';
+
+            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+            const checkedBoxes = document.querySelectorAll('.item-cb:checked');
+            let subtotal = 0;
+            checkedBoxes.forEach(cb => {
+                const idx = parseInt(cb.getAttribute('data-index'));
+                const item = cart[idx];
+                if (item) subtotal += item.price * item.qty;
+            });
+
+            try {
+                // We need to send the subtotal to check if minOrderValue is met
+                const res = await window.api.post('orders/validate-voucher', { code, orderValue: subtotal });
+                appliedVoucher = {
+                    code: code,
+                    discountAmount: res.discountAmount
+                };
+                msg.textContent = `Đã áp dụng mã! Giảm ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(res.discountAmount)}`;
+                msg.style.color = '#10b981';
+                updateTotalPrice();
+            } catch (e) {
+                msg.textContent = e.message || 'Mã không hợp lệ hoặc không đủ điều kiện';
+                msg.style.color = '#ef4444';
+                appliedVoucher = null;
+                const discEl = document.getElementById('voucher-discount-row');
+                if (discEl) discEl.remove();
+                updateTotalPrice();
+            }
         }
 
         function removeFromCart(index) {
@@ -436,6 +497,7 @@
                     shippingFee: 25000, // Matching the UI calculation
                     saveAddress: saveAddress,
                     customerNote: note,
+                    voucherCode: appliedVoucher ? appliedVoucher.code : null,
                     items: itemsToBuy
                 };
 

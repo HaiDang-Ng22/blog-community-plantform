@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="css/common.css?v=1.7">
     <link rel="stylesheet" href="css/seller.css?v=3.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="home-page" data-i18n-title="seller_center">
@@ -135,6 +136,14 @@
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span data-i18n="orders">Đơn hàng</span>
                 </div>
+                <div class="tab-link" onclick="switchSellerTab('vouchers')">
+                    <i class="fa-solid fa-ticket-weighted"></i>
+                    <span data-i18n="vouchers">Mã giảm giá</span>
+                </div>
+                <div class="tab-link" onclick="switchSellerTab('messages')">
+                    <i class="fa-solid fa-comments"></i>
+                    <span data-i18n="shop_messages">Tin nhắn Shop</span>
+                </div>
                 <div class="tab-link" onclick="switchSellerTab('payment')">
                     <i class="fa-solid fa-qrcode"></i>
                     <span data-i18n="payment_settings_tab">Thanh toán</span>
@@ -164,6 +173,13 @@
                             <div class="stat-card-label" data-i18n="total_products">Sản phẩm</div>
                             <div class="stat-card-value" id="stat-products">0</div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts" style="margin-top: 2rem;">
+                    <div class="chart-card glassmorphism" style="padding: 1.5rem; border-radius: 16px;">
+                        <h3 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-chart-line"></i> Doanh thu 7 ngày qua</h3>
+                        <canvas id="revenueChart" style="max-height: 300px;"></canvas>
                     </div>
                 </div>
             </section>
@@ -226,6 +242,46 @@
                 </div>
 
                 <div id="order-list-container"></div>
+            </section>
+
+            <!-- Vouchers Section -->
+            <section id="section-vouchers" class="dashboard-section">
+                <div class="section-header-row">
+                    <h3>Quản lý Mã giảm giá</h3>
+                    <button class="btn-add-product" onclick="openAddVoucherModal()">
+                        <i class="fa-solid fa-plus"></i> Tạo mã mới
+                    </button>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Mô tả</th>
+                                <th>Giảm giá</th>
+                                <th>Hạn dùng</th>
+                                <th>Lượt dùng</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="voucher-list-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Messages Section -->
+            <section id="section-messages" class="dashboard-section">
+                <div class="shop-chat-container">
+                    <div class="shop-chat-sidebar" id="chat-sidebar">
+                        <!-- Conversation list -->
+                    </div>
+                    <div class="shop-chat-main" id="chat-main">
+                        <div class="chat-empty-state">
+                            <i class="fa-solid fa-comments"></i>
+                            <p>Chọn một cuộc hội thoại để bắt đầu</p>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Payment Settings Section -->
@@ -465,6 +521,69 @@
                     style="width: auto; margin: 0; padding: 0.75rem 1.25rem;" data-i18n="cancel">
                     Huỷ
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tạo Voucher -->
+    <div id="voucher-add-modal" class="modal-overlay hidden">
+        <div class="modal-content glassmorphism" style="max-width: 500px; width: 95%;">
+            <div class="modal-header">
+                <h3>Tạo mã giảm giá mới</h3>
+                <button onclick="closeAddVoucherModal()"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <form id="form-add-voucher">
+                    <div class="input-group">
+                        <label>Mã giảm giá (VD: ZYNK20)</label>
+                        <input type="text" id="v-code" required placeholder="Nhập mã không dấu, viết hoa">
+                    </div>
+                    <div class="input-group">
+                        <label>Mô tả</label>
+                        <input type="text" id="v-desc" required placeholder="Ví dụ: Giảm 20k cho đơn từ 200k">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Loại giảm giá</label>
+                            <select id="v-type">
+                                <option value="FixedAmount">Số tiền cố định</option>
+                                <option value="Percentage">Phần trăm</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Giá trị giảm</label>
+                            <input type="number" id="v-value" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Đơn tối thiểu</label>
+                            <input type="number" id="v-min-order" placeholder="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Giảm tối đa (nếu %)</label>
+                            <input type="number" id="v-max-discount">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Ngày bắt đầu</label>
+                            <input type="date" id="v-start" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Ngày kết thúc</label>
+                            <input type="date" id="v-end" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Giới hạn lượt dùng</label>
+                        <input type="number" id="v-limit" placeholder="Không giới hạn">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button type="submit" class="btn primary-btn" style="flex: 1;">Lưu mã giảm giá</button>
+                        <button type="button" onclick="closeAddVoucherModal()" class="btn secondary-btn">Hủy</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

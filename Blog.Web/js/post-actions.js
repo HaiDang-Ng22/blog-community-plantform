@@ -196,7 +196,9 @@ window.postActions = {
     },
 
     async deleteComment(postId, commentId) {
-        if (!confirm('Bạn có chắc chắn muốn xóa bình luận này không?')) return;
+        const confirmed = await window.common.zynkModal.confirm('Bạn có chắc chắn muốn xóa bình luận này không?');
+        if (!confirmed) return;
+        
         console.log(`Deleting comment ${commentId} from post ${postId}`);
         try {
             await window.api.delete(`posts/${postId}/comments/${commentId}`);
@@ -204,12 +206,14 @@ window.postActions = {
             const el = document.getElementById(`comment-${commentId}`);
             if (el) el.remove();
         } catch (error) {
-            alert('Lỗi: ' + error.message);
+            window.common.zynkModal.alert('Lỗi: ' + error.message);
         }
     },
 
     async deletePost(postId) {
-        if (!confirm('Bạn có chắc chắn muốn xóa BÀI VIẾT này vĩnh viễn khỏi SQL không? Thao tác này không thể hoàn tác!')) return;
+        const confirmed = await window.common.zynkModal.confirm('Bạn có chắc chắn muốn xóa BÀI VIẾT này vĩnh viễn không? Thao tác này không thể hoàn tác!');
+        if (!confirmed) return;
+        
         try {
             const btnDelete = document.querySelector(`.post-card[data-id="${postId}"] .options-menu .delete`);
             if (btnDelete) btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Xóa...';
@@ -226,7 +230,7 @@ window.postActions = {
                 window.location.reload();
             }
         } catch (error) {
-            alert('Lỗi: ' + error.message);
+            window.common.zynkModal.alert('Lỗi: ' + error.message);
         }
     },
 
@@ -281,7 +285,7 @@ window.postActions = {
                 e.preventDefault();
                 const selectedReasonEl = reportForm.querySelector('input[name="report-reason"]:checked');
                 if (!selectedReasonEl) {
-                    alert('Vui lòng chọn một lý do.');
+                    window.common.zynkModal.alert('Vui lòng chọn một lý do.');
                     return;
                 }
                 
@@ -291,7 +295,7 @@ window.postActions = {
                 if (selectedReason === 'Khác') {
                     const detail = otherText ? otherText.value.trim() : '';
                     if (!detail) {
-                        alert('Vui lòng nhập lý do cụ thể.');
+                        window.common.zynkModal.alert('Vui lòng nhập lý do cụ thể.');
                         return;
                     }
                     finalReason = `Khác: ${detail}`;
@@ -303,16 +307,17 @@ window.postActions = {
                     
                     // Block Suggestion
                     if (authorId && authorId !== 'undefined' && authorId !== 'null') {
-                        setTimeout(() => {
-                            if (confirm(`${result.message}\n\nBạn có muốn chặn người dùng này để không bao giờ thấy bài viết của họ nữa không?`)) {
+                        setTimeout(async () => {
+                            const blockConfirmed = await window.common.zynkModal.confirm(`${result.message}\n\nBạn có muốn chặn người dùng này để không bao giờ thấy bài viết của họ nữa không?`, 'Báo cáo thành công');
+                            if (blockConfirmed) {
                                 window.postActions.blockUser(authorId);
                             }
                         }, 500);
                     } else {
-                        alert(result.message);
+                        window.common.zynkModal.alert(result.message, 'Thành công');
                     }
                 } catch (error) {
-                    alert('Lỗi gửi báo cáo: ' + error.message);
+                    window.common.zynkModal.alert('Lỗi gửi báo cáo: ' + error.message);
                 }
             };
         }
@@ -326,9 +331,9 @@ window.postActions = {
     async _submitReport(postId, reason) {
         try {
             const result = await window.api.post('reports', { postId, reason });
-            alert(result.message);
+            window.common.zynkModal.alert(result.message, 'Thành công');
         } catch (error) {
-            alert('Lỗi: ' + error.message);
+            window.common.zynkModal.alert('Lỗi: ' + error.message);
         }
     },
 
@@ -336,10 +341,10 @@ window.postActions = {
         if (!authorId || authorId === 'undefined') return;
         try {
             const result = await window.api.post(`users/${authorId}/block`);
-            alert(result.message);
+            window.common.zynkModal.alert(result.message, 'Đã chặn');
             window.location.reload();
         } catch (error) {
-            alert('Lỗi khi chặn người dùng: ' + error.message);
+            window.common.zynkModal.alert('Lỗi khi chặn người dùng: ' + error.message);
         }
     },
 
@@ -349,12 +354,14 @@ window.postActions = {
         const modalHtml = `
             <div id="report-modal" class="modal-overlay hidden">
                 <div class="modal-content report-modal-content">
-                    <div class="modal-header">
-                        <h3>Báo cáo vi phạm</h3>
+                    <div class="modal-header" style="margin-bottom: 20px;">
+                        <h3 style="font-size: 1.25rem; font-weight: 700;">Báo cáo vi phạm</h3>
                         <button class="close-btn" onclick="closeReportModal()">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">Chúng tôi sẽ xem xét bài viết này dựa trên lý do bạn cung cấp.</p>
+                        <p style="margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">
+                            Chúng tôi sẽ xem xét bài viết này dựa trên lý do bạn cung cấp. Hành động của bạn giúp cộng đồng Zynk an toàn hơn.
+                        </p>
                         <form id="report-form">
                             <input type="hidden" id="report-post-id">
                             <input type="hidden" id="report-author-id">
@@ -382,11 +389,11 @@ window.postActions = {
                                 </label>
                             </div>
 
-                            <textarea id="report-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin..." rows="3" style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
+                            <textarea id="report-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin chi tiết..." rows="3" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--input-border); background: var(--input-bg); font-family: inherit; font-size: 0.9rem;"></textarea>
                             
-                            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
-                                <button type="button" class="btn secondary-btn" style="width: 100%;" onclick="closeReportModal()">Hủy</button>
-                                <button type="submit" class="btn primary-btn" style="width: 100%;" id="submit-report-btn">Gửi báo cáo</button>
+                            <div style="margin-top: 2rem; display: flex; gap: 12px;">
+                                <button type="button" class="btn secondary-btn" style="flex: 1; height: 48px; border-radius: 12px;" onclick="closeReportModal()">Hủy</button>
+                                <button type="submit" class="btn primary-btn" style="flex: 2; height: 48px; border-radius: 12px; background: var(--primary-gradient);" id="submit-report-btn">Gửi báo cáo</button>
                             </div>
                         </form>
                     </div>

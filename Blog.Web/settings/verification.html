@@ -3,145 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác minh danh tính - Zynk Settings</title>
+    <title>Xác minh danh tính - Zynk</title>
     <link rel="icon" href="../assets/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/common.css">
     <link rel="stylesheet" href="../css/settings-v2.css">
+    <style>
+        /* Overlay Animation */
+        #success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        #success-overlay.active { display: flex; }
+        .success-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.8);
+            opacity: 0;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #success-overlay.active .success-card { transform: scale(1); opacity: 1; }
+        
+        .check-icon {
+            width: 80px;
+            height: 80px;
+            background: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 40px;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+            animation: bounce 0.6s ease;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
 </head>
 <body>
+    <div id="success-overlay">
+        <div class="success-card">
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <h2 style="margin-bottom: 10px;">Gửi thành công!</h2>
+            <p style="color: #64748b; margin-bottom: 25px;">Yêu cầu của bạn đã được chuyển tới Admin. Chúng tôi sẽ phản hồi sớm nhất.</p>
+            <button class="s-btn s-btn-primary" style="width: 100%;" onclick="location.reload()">Đóng</button>
+        </div>
+    </div>
+
     <div class="settings-container">
         <aside class="s-sidebar" id="s-sidebar"></aside>
-
         <main class="s-content">
             <div class="s-header">
-                <h1 class="s-title">Xác minh danh tính</h1>
-                <p class="s-subtitle">Đăng ký biểu tượng xác minh (Tích xanh) để khẳng định uy tín của bạn trên Zynk.</p>
+                <h1 class="s-title">Xác minh danh tính (v2.1)</h1>
+                <p class="s-subtitle">Điền thông tin chính xác để được cấp tích xanh xác minh.</p>
             </div>
 
-            <div class="s-card" style="border-left: 4px solid var(--s-primary);">
-                <div style="display: flex; gap: 20px; align-items: flex-start;">
-                    <div style="font-size: 2.5rem; color: var(--s-primary);">
-                        <i class="fa-solid fa-certificate"></i>
-                    </div>
-                    <div>
-                        <h3 style="font-weight: 700; margin-bottom: 8px;">Lợi ích của việc xác minh</h3>
-                        <ul style="color: var(--s-text-muted); font-size: 0.95rem; line-height: 1.6; padding-left: 1.2rem;">
-                            <li>Tăng độ tin cậy và nhận diện thương hiệu.</li>
-                            <li>Ưu tiên hiển thị trong kết quả tìm kiếm.</li>
-                            <li>Bảo vệ tài khoản khỏi việc bị mạo danh.</li>
-                            <li>Truy cập sớm vào các tính năng mới của Zynk.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+            <div id="status-area"></div>
 
-            <div class="s-card">
-                <h2 class="s-card-title"><i class="fa-solid fa-file-signature"></i> Gửi yêu cầu xác minh</h2>
-                <form id="verification-form">
+            <div id="form-container" class="s-card" style="display: none;">
+                <form id="v-form">
                     <div class="s-form-group">
-                        <label class="s-label">Họ và tên (như trên giấy tờ)</label>
-                        <input type="text" id="verify-fullname" class="s-input" required placeholder="Nguyễn Văn A">
+                        <label class="s-label">Họ tên thật</label>
+                        <input type="text" id="fullname" class="s-input" required placeholder="Ví dụ: Nguyễn Văn A">
                     </div>
-
                     <div class="s-form-group">
-                        <label class="s-label">Loại giấy tờ xác minh</label>
-                        <select id="doc-type" class="s-input">
-                            <option value="id_card">Căn cước công dân (ID Card)</option>
-                            <option value="passport">Hộ chiếu (Passport)</option>
-                            <option value="driver_license">Bằng lái xe (Driver License)</option>
+                        <label class="s-label">Giấy tờ tùy thân</label>
+                        <select id="doctype" class="s-input">
+                            <option value="ID_CARD">Căn cước công dân</option>
+                            <option value="PASSPORT">Hộ chiếu</option>
                         </select>
                     </div>
-
                     <div class="s-form-group">
-                        <label class="s-label">Tải lên ảnh mặt trước giấy tờ</label>
-                        <div id="upload-box" style="border: 2px dashed var(--s-border); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: 0.3s;">
-                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; color: var(--s-text-muted); margin-bottom: 10px;"></i>
-                            <p style="color: var(--s-text-muted); font-size: 0.9rem;">Nhấn để chọn ảnh hoặc kéo thả vào đây</p>
-                            <input type="file" id="doc-file" hidden accept="image/*">
+                        <label class="s-label">Ảnh minh chứng (Mặt trước)</label>
+                        <div id="drop-zone" style="border: 2px dashed #ddd; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer;">
+                            <i class="fa-solid fa-image" style="font-size: 2rem; color: #ccc;"></i>
+                            <p style="color: #999; margin-top: 10px;">Nhấn để chọn hoặc kéo ảnh vào đây</p>
+                            <input type="file" id="file-input" hidden accept="image/*">
                         </div>
-                        <div id="file-preview" class="hidden" style="margin-top: 1rem; position: relative;">
-                            <img id="preview-img" src="#" style="max-width: 100%; border-radius: 10px; border: 1px solid var(--s-border);">
-                            <button type="button" id="remove-file" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                        <div id="preview-wrap" style="display: none; margin-top: 15px;">
+                            <img id="preview-img" style="width: 100%; border-radius: 12px; border: 1px solid #eee;">
+                            <button type="button" class="s-btn" style="margin-top: 10px; color: #ef4444;" onclick="resetFile()">Chọn lại ảnh</button>
                         </div>
                     </div>
-
-                    <button type="submit" class="s-btn s-btn-primary" style="width: 100%; justify-content: center; padding: 14px;">
+                    <button type="submit" id="submit-btn" class="s-btn s-btn-primary" style="width: 100%; height: 50px;" disabled>
                         Gửi yêu cầu xác minh
                     </button>
                 </form>
             </div>
-
-            <div id="settings-msg" class="message-box hidden"></div>
         </main>
     </div>
 
-    <script src="../js/api.js"></script>
-    <script src="../js/common.js"></script>
-    <script src="../js/settings-core.js"></script>
+    <script src="../js/api.js?v=2"></script>
+    <script src="../js/common.js?v=2"></script>
+    <script src="../js/settings-core.js?v=2"></script>
     <script>
-        const uploadBox = document.getElementById('upload-box');
-        const fileInput = document.getElementById('doc-file');
-        const preview = document.getElementById('file-preview');
-        const previewImg = document.getElementById('preview-img');
-        const removeBtn = document.getElementById('remove-file');
+        let uploadedUrl = null;
 
-        uploadBox.onclick = () => fileInput.click();
+        async function checkStatus() {
+            try {
+                const status = await window.api.get('verifications/my-status');
+                const area = document.getElementById('status-area');
+                const form = document.getElementById('form-container');
+                
+                if (status.isVerified) {
+                    area.innerHTML = `<div class="s-card" style="background: #ecfdf5; color: #065f46; border: 1px solid #10b981;">
+                        <i class="fa-solid fa-circle-check"></i> Tài khoản đã được xác minh tích xanh.
+                    </div>`;
+                    form.style.display = 'none';
+                } else if (status.status === 'Pending') {
+                    area.innerHTML = `<div class="s-card" style="background: #fffbeb; color: #92400e; border: 1px solid #f59e0b;">
+                        <i class="fa-solid fa-clock"></i> Đang chờ Admin duyệt. Bạn không thể gửi thêm yêu cầu lúc này.
+                    </div>`;
+                    form.style.display = 'none';
+                } else {
+                    form.style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('form-container').style.display = 'block';
+            }
+        }
 
-        fileInput.onchange = (e) => {
+        document.getElementById('drop-zone').onclick = () => document.getElementById('file-input').click();
+        
+        document.getElementById('file-input').onchange = async (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImg.src = e.target.result;
-                    preview.classList.remove('hidden');
-                    uploadBox.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = 'Đang tải ảnh lên...';
+
+            try {
+                const res = await window.api.uploadImage(file);
+                uploadedUrl = res.url;
+                document.getElementById('preview-img').src = res.url;
+                document.getElementById('preview-wrap').style.display = 'block';
+                document.getElementById('drop-zone').style.display = 'none';
+                btn.disabled = false;
+                btn.innerText = 'Gửi yêu cầu xác minh';
+            } catch (err) {
+                alert('Lỗi tải ảnh');
+                btn.innerText = 'Gửi yêu cầu xác minh';
             }
         };
 
-        removeBtn.onclick = () => {
-            fileInput.value = '';
-            preview.classList.add('hidden');
-            uploadBox.classList.remove('hidden');
-        };
+        function resetFile() {
+            uploadedUrl = null;
+            document.getElementById('preview-wrap').style.display = 'none';
+            document.getElementById('drop-zone').style.display = 'block';
+            document.getElementById('submit-btn').disabled = true;
+        }
 
-        document.getElementById('verification-form').onsubmit = async (e) => {
+        document.getElementById('v-form').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const fullName = document.getElementById('verify-fullname').value;
-            const docType = document.getElementById('doc-type').options[document.getElementById('doc-type').selectedIndex].text;
-            const docUrl = previewImg.src;
+            if (!uploadedUrl) return;
 
+            const btn = document.getElementById('submit-btn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi yêu cầu...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
 
-            const user = JSON.parse(localStorage.getItem('user_info') || '{}');
-
-            // Save to shared storage for Admin to see
-            const pending = JSON.parse(localStorage.getItem('zynk_pending_verifications') || '[]');
-            pending.unshift({
-                id: Date.now(),
-                userId: user.id || 'unknown',
-                username: user.username || 'user',
-                fullName: fullName,
-                docType: docType,
-                docUrl: docUrl,
-                status: 'pending',
-                time: 'Vừa xong'
-            });
-            localStorage.setItem('zynk_pending_verifications', JSON.stringify(pending));
-
-            setTimeout(() => {
-                showSettingsStatus('Yêu cầu đã được gửi! Admin sẽ xem xét và phản hồi sớm nhất.', 'success');
-                e.target.reset();
-                removeBtn.click();
+            try {
+                await window.api.post('verifications', {
+                    fullName: document.getElementById('fullname').value,
+                    documentType: document.getElementById('doctype').value,
+                    documentUrl: uploadedUrl
+                });
+                document.getElementById('success-overlay').classList.add('active');
+            } catch (err) {
+                alert(err.message || 'Lỗi gửi yêu cầu');
                 btn.disabled = false;
-                btn.innerHTML = 'Gửi yêu cầu xác minh';
-            }, 1500);
+                btn.innerText = 'Gửi yêu cầu xác minh';
+            }
         };
+
+        document.addEventListener('DOMContentLoaded', checkStatus);
     </script>
 </body>
 </html>

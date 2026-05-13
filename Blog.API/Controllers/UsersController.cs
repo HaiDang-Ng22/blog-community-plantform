@@ -52,6 +52,7 @@ public class UsersController : ControllerBase
             user.Bio,
             user.Gender,
             user.IsPrivate,
+            user.IsVerified,
             FollowerCount = user.Followers.Count,
             FollowingCount = user.Following.Count,
             IsFollowing = isFollowing

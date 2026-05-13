@@ -319,4 +319,98 @@ public class SellerController : ControllerBase
         await _shopRepository.UpdateAsync(shop);
         return Ok(new { message = "Cập nhật cấu hình thanh toán thành công." });
     }
+
+    [HttpGet("dashboard-stats")]
+    public async Task<IActionResult> GetDashboardStats()
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return NotFound();
+
+        var orders = await _orderRepository.FindAsync(o => o.Items.Any(i => i.Product.ShopId == shop.Id));
+        var products = await _productRepository.GetProductsByShopIdAsync(shop.Id);
+
+        var completedOrders = orders.Where(o => o.Status == OrderStatus.Completed || o.Status == OrderStatus.Delivered).ToList();
+        
+        var stats = new SellerDashboardDto
+        {
+            TotalRevenue = completedOrders.Sum(o => o.TotalAmount - o.ShippingFee),
+            TotalOrders = orders.Count(),
+            PendingOrders = orders.Count(o => o.Status == OrderStatus.AwaitingShipment || o.Status == OrderStatus.Unpaid),
+            TotalProducts = products.Count(),
+            RevenueChart = completedOrders
+                .GroupBy(o => o.CreatedAt.Date)
+                .OrderBy(g => g.Key)
+                .TakeLast(7)
+                .Select(g => new RevenueChartDataDto
+                {
+                    Date = g.Key.ToString("dd/MM"),
+                    Revenue = g.Sum(o => o.TotalAmount - o.ShippingFee)
+                }).ToList()
+        };
+
+        return Ok(stats);
+    }
+
+    [HttpGet("vouchers")]
+    public async Task<IActionResult> GetVouchers()
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return NotFound();
+
+        var vouchers = await _context.Vouchers.Where(v => v.ShopId == shop.Id).OrderByDescending(v => v.CreatedAt).ToListAsync();
+        return Ok(vouchers);
+    }
+
+    [HttpPost("vouchers")]
+    public async Task<IActionResult> CreateVoucher([FromBody] CreateVoucherDto dto)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return NotFound();
+
+        if (await _context.Vouchers.AnyAsync(v => v.ShopId == shop.Id && v.Code == dto.Code))
+            return BadRequest(new { message = "Mã giảm giá này đã tồn tại trong shop của bạn." });
+
+        var voucher = new Voucher
+        {
+            Id = Guid.NewGuid(),
+            ShopId = shop.Id,
+            Code = dto.Code.ToUpper(),
+            Description = dto.Description,
+            DiscountType = Enum.Parse<DiscountType>(dto.DiscountType),
+            DiscountValue = dto.DiscountValue,
+            MinOrderValue = dto.MinOrderValue,
+            MaxDiscountAmount = dto.MaxDiscountAmount,
+            StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc),
+            EndDate = DateTime.SpecifyKind(dto.EndDate, DateTimeKind.Utc),
+            UsageLimit = dto.UsageLimit,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Vouchers.Add(voucher);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Tạo mã giảm giá thành công." });
+    }
+
+    [HttpDelete("vouchers/{id}")]
+    public async Task<IActionResult> DeleteVoucher(Guid id)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return NotFound();
+
+        var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Id == id && v.ShopId == shop.Id);
+        if (voucher == null) return NotFound();
+
+        _context.Vouchers.Remove(voucher);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã xóa mã giảm giá." });
+    }
 }
