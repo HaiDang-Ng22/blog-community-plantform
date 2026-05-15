@@ -217,6 +217,18 @@ public class PostsController : ControllerBase
         if (userId == null)
             return Unauthorized(new { message = "Không xác định được người dùng" });
 
+        // Check for banned words
+        var bannedWords = await _context.BannedWords.Select(b => b.Word.ToLower()).ToListAsync();
+        var postTextToHheck = $"{createPostDto.Title} {createPostDto.Summary} {createPostDto.Content}".ToLower();
+        
+        foreach (var word in bannedWords)
+        {
+            if (!string.IsNullOrWhiteSpace(word) && postTextToHheck.Contains(word))
+            {
+                return BadRequest(new { message = "Bài viết chứa ngôn từ không phù hợp." });
+            }
+        }
+
         var postId = Guid.NewGuid();
         // Improved slug generation - Version 2 (Robust Fix)
         var titleForSlug = string.IsNullOrWhiteSpace(createPostDto.Title) || createPostDto.Title == "Post"
@@ -352,6 +364,18 @@ public class PostsController : ControllerBase
         if (userId == Guid.Empty) return Unauthorized();
         if (post.AuthorId != userId)
             return Forbid();
+            
+        // Check for banned words
+        var bannedWords = await _context.BannedWords.Select(b => b.Word.ToLower()).ToListAsync();
+        var postTextToHheck = $"{updatePostDto.Title} {updatePostDto.Summary} {updatePostDto.Content}".ToLower();
+        
+        foreach (var word in bannedWords)
+        {
+            if (!string.IsNullOrWhiteSpace(word) && postTextToHheck.Contains(word))
+            {
+                return BadRequest(new { message = "Bài viết chứa ngôn từ không phù hợp." });
+            }
+        }
         
         post.Title = updatePostDto.Title;
         post.Content = updatePostDto.Content;

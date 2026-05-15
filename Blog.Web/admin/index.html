@@ -70,6 +70,15 @@
                     <div id="stat-reports" style="font-size: 1.5rem; font-weight: 800;">-</div>
                 </div>
             </div>
+            <div class="card stat-card" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: #fdf4ff; color: #d946ef; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--admin-text-muted); font-weight: 600;">Lợi nhuận nền tảng</div>
+                    <div id="stat-platform-fee" style="font-size: 1.5rem; font-weight: 800;">-</div>
+                </div>
+            </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
@@ -101,6 +110,9 @@
                 document.getElementById('stat-shops').textContent = stats.activeShops || 0;
                 document.getElementById('stat-orders').textContent = stats.dailyOrders || 0;
                 document.getElementById('stat-reports').textContent = stats.pendingReports || 0;
+                
+                const platformFee = stats.totalPlatformFee || 0;
+                document.getElementById('stat-platform-fee').textContent = platformFee.toLocaleString('vi-VN') + 'đ';
 
                 // Load pending verifications from shared storage
                 const pendingVerifications = JSON.parse(localStorage.getItem('zynk_pending_verifications') || '[]');

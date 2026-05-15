@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
 using Blog.API.Services;
+using PayOS;
+using PayOS.Models;
+using PayOS.Models.V2.PaymentRequests;
+using PayOS.Models.Webhooks;
 
 namespace Blog.API.Controllers;
 
@@ -23,6 +27,7 @@ public class OrdersController : ControllerBase
     private readonly IShopRepository _shopRepository;
     private readonly Blog.Infrastructure.Data.AppDbContext _context;
     private readonly INotificationService _notiService;
+    private readonly PayOSClient? _payOS;
 
     public OrdersController(
         IOrderRepository orderRepository,
@@ -31,7 +36,8 @@ public class OrdersController : ControllerBase
         IRepository<UserAddress> addressRepository,
         IShopRepository shopRepository,
         Blog.Infrastructure.Data.AppDbContext context,
-        INotificationService notiService)
+        INotificationService notiService,
+        PayOSClient? payOS = null)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
@@ -40,6 +46,7 @@ public class OrdersController : ControllerBase
         _shopRepository = shopRepository;
         _context = context;
         _notiService = notiService;
+        _payOS = payOS;
     }
 
     [HttpPost("checkout")]
@@ -181,7 +188,10 @@ public class OrdersController : ControllerBase
                 }
             }
 
-            order.TotalAmount = Math.Max(0, total - order.DiscountAmount) + order.ShippingFee;
+            decimal finalItemsTotal = Math.Max(0, total - order.DiscountAmount);
+            order.PlatformFeeRate = 0.05m;
+            order.PlatformFeeAmount = finalItemsTotal * order.PlatformFeeRate;
+            order.TotalAmount = finalItemsTotal + order.ShippingFee;
             await _orderRepository.AddAsync(order);
             createdOrderIds.Add(order.Id);
 
@@ -194,6 +204,89 @@ public class OrdersController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+        // Handle PayOS Payment
+        if (dto.PaymentMethod?.ToUpper() == "PAYOS" && _payOS != null)
+        {
+            var orders = await _context.Orders
+                .Where(o => createdOrderIds.Contains(o.Id))
+                .ToListAsync();
+
+            if (orders.Any())
+            {
+                long orderCode = long.Parse(DateTimeOffset.Now.ToString("yyMMddHHmmssfff"));
+                int totalAmount = (int)orders.Sum(o => o.TotalAmount);
+                
+                // Update orders with the same orderCode
+                foreach (var o in orders)
+                {
+                    o.OrderCode = orderCode;
+                }
+                await _context.SaveChangesAsync();
+
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var paymentData = new CreatePaymentLinkRequest
+                {
+                    OrderCode = orderCode,
+                    Amount = totalAmount,
+                    Description = "Thanh toán Zynk Shop",
+                    CancelUrl = $"{baseUrl}/index.html",
+                    ReturnUrl = $"{baseUrl}/index.html?payment=success"
+                };
+
+                try
+                {
+                    var result = await _payOS.PaymentRequests.CreateAsync(paymentData);
+                    return Ok(new { 
+                        message = "Tiến hành thanh toán", 
+                        checkoutUrl = result.CheckoutUrl,
+                        orderIds = createdOrderIds 
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { message = "Lỗi khởi tạo thanh toán: " + ex.Message });
+                }
+            }
+        }
+
+        // Handle Bank Transfer (VietQR)
+        if (dto.PaymentMethod?.ToUpper() == "BANK_TRANSFER")
+        {
+            var orders = await _context.Orders
+                .Include(o => o.Items)
+                .Where(o => createdOrderIds.Contains(o.Id))
+                .ToListAsync();
+
+            var paymentDetails = new List<object>();
+            foreach (var order in orders)
+            {
+                // Find shop for this order
+                var firstItem = order.Items.FirstOrDefault();
+                if (firstItem != null)
+                {
+                    var product = await _context.Products.Include(p => p.Shop).FirstOrDefaultAsync(p => p.Id == firstItem.ProductId);
+                    if (product?.Shop != null)
+                    {
+                        paymentDetails.Add(new {
+                            orderId = order.Id,
+                            shopName = product.Shop.Name,
+                            bankName = product.Shop.BankName,
+                            accountNumber = product.Shop.BankAccountNumber,
+                            accountName = product.Shop.BankAccountName,
+                            amount = order.TotalAmount,
+                            description = $"ZYNK {order.Id.ToString().Substring(0,8).ToUpper()}"
+                        });
+                    }
+                }
+            }
+
+            return Ok(new { 
+                message = "Vui lòng chuyển khoản cho các Shop", 
+                paymentDetails = paymentDetails,
+                orderIds = createdOrderIds 
+            });
+        }
 
         return Ok(new { message = "Đặt hàng thành công", orderIds = createdOrderIds });
     }
@@ -434,5 +527,48 @@ public class OrdersController : ControllerBase
         }).ToList();
 
         return Ok(dtos);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("payos-webhook")]
+    public async Task<IActionResult> PayOSWebhook([FromBody] Webhook request)
+    {
+        if (_payOS == null) return BadRequest();
+
+        try
+        {
+            // Verify webhook signature
+            var verifiedData = await _payOS.Webhooks.VerifyAsync(request);
+
+            if (verifiedData.Description == "Ma giao dich thu nghiem")
+            {
+                // This is a test transaction
+            }
+
+            // Find orders with this OrderCode
+            long orderCodeToFind = verifiedData.OrderCode;
+            var orders = await _context.Orders
+                .Where(o => o.OrderCode == orderCodeToFind)
+                .ToListAsync();
+
+            if (orders.Any())
+            {
+                foreach (var order in orders)
+                {
+                    if (order.Status == OrderStatus.Unpaid)
+                    {
+                        order.Status = OrderStatus.AwaitingShipment;
+                        order.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Blog.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blog.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260515112543_AddBannedWords")]
+    partial class AddBannedWords
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -286,9 +289,6 @@ namespace Blog.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<long?>("OrderCode")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("text");
@@ -296,12 +296,6 @@ namespace Blog.Infrastructure.Migrations
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<decimal>("PlatformFeeAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("PlatformFeeRate")
-                        .HasColumnType("numeric");
 
                     b.Property<string>("Province")
                         .IsRequired()

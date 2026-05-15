@@ -260,9 +260,13 @@ async function updateMarketplaceTabUI() {
     if (!tabLabel || !section) return;
 
     try {
-        // 1. Check for active shop
         const shop = await window.api.get('seller/my-shop');
         
+        const tabBtn = document.getElementById('tab-marketplace-btn');
+        if (tabBtn) {
+            const icon = tabBtn.querySelector('i');
+            if (icon) icon.className = 'fa-solid fa-shop-lock'; // Status: Active
+        }
         tabLabel.textContent = _t('seller_center');
         section.innerHTML = `
             <h2 class="section-title" data-i18n="seller_center">${_t('seller_center')}</h2>
@@ -283,6 +287,11 @@ async function updateMarketplaceTabUI() {
                 const app = await window.api.get('seller/application-status');
                 
                 if (app && app.status === 'Pending') {
+                    const tabBtn = document.getElementById('tab-marketplace-btn');
+                    if (tabBtn) {
+                        const icon = tabBtn.querySelector('i');
+                        if (icon) icon.className = 'fa-solid fa-clock-rotate-left'; 
+                    }
                     tabLabel.textContent = "Đang chờ duyệt";
                     section.innerHTML = `
                         <h2 class="section-title">Trạng thái đăng ký</h2>
@@ -293,6 +302,11 @@ async function updateMarketplaceTabUI() {
                         </div>
                     `;
                 } else if (app && app.status === 'Rejected') {
+                    const tabBtn = document.getElementById('tab-marketplace-btn');
+                    if (tabBtn) {
+                        const icon = tabBtn.querySelector('i');
+                        if (icon) icon.className = 'fa-solid fa-circle-exclamation'; 
+                    }
                     tabLabel.textContent = "Đã bị từ chối";
                     section.innerHTML = `
                         <h2 class="section-title">Trạng thái đăng ký</h2>
@@ -305,6 +319,11 @@ async function updateMarketplaceTabUI() {
                     `;
                 } else {
                     // No shop AND no app (or app is null)
+                    const tabBtn = document.getElementById('tab-marketplace-btn');
+                    if (tabBtn) {
+                        const icon = tabBtn.querySelector('i');
+                        if (icon) icon.className = 'fa-solid fa-store'; 
+                    }
                     tabLabel.textContent = _t('register_seller') || "Đăng ký bán hàng";
                     section.innerHTML = `
                         <h2 class="section-title">Đăng ký người bán</h2>

@@ -66,6 +66,9 @@
                         <i class="fa-solid fa-circle-check"></i> <span>Duyệt tích xanh</span>
                         <span id="badge-verifications" class="admin-badge hidden">0</span>
                     </a>
+                    <a href="banned-words.html" class="nav-item ${currentPage === 'banned-words.html' ? 'active' : ''}">
+                        <i class="fa-solid fa-ban"></i> <span>Từ khóa cấm</span>
+                    </a>
                 </nav>
                 <div class="sidebar-footer">
                     <button onclick="adminLogout()" class="nav-item" style="background: none; border: none; width: 100%; color: #ef4444; cursor: pointer;">
