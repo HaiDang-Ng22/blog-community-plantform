@@ -113,6 +113,10 @@ public class AdminController : ControllerBase
             Revenue = dailyStatsRaw.FirstOrDefault(d => d.Date == date)?.Revenue ?? 0
         });
 
+        var totalPlatformFee = await _context.Orders
+            .Where(o => o.Status == OrderStatus.Completed)
+            .SumAsync(o => o.PlatformFeeAmount);
+
         return Ok(new
         {
             totalUsers,
@@ -121,7 +125,8 @@ public class AdminController : ControllerBase
             pendingReports,
             pendingShops,
             topShops,
-            dailyStats
+            dailyStats,
+            totalPlatformFee
         });
     }
 
@@ -770,5 +775,115 @@ public class AdminController : ControllerBase
         var count = await _context.VerificationRequests
             .CountAsync(v => v.Status == "Pending");
         return Ok(new { count });
+    }
+
+    // ─── Banned Words Management ─────────────────────────────────────────
+
+    [HttpGet("banned-words")]
+    public async Task<IActionResult> GetBannedWords()
+    {
+        var words = await _context.BannedWords.OrderByDescending(b => b.CreatedAt).ToListAsync();
+        return Ok(words);
+    }
+
+    public class BannedWordDto { public string Word { get; set; } }
+
+    [HttpPost("banned-words")]
+    public async Task<IActionResult> AddBannedWord([FromBody] BannedWordDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Word))
+            return BadRequest(new { message = "Từ khóa không hợp lệ." });
+
+        var wordLower = dto.Word.ToLower().Trim();
+        var exists = await _context.BannedWords.AnyAsync(b => b.Word.ToLower() == wordLower);
+        if (exists)
+            return BadRequest(new { message = "Từ này đã có trong danh sách." });
+
+        var bannedWord = new BannedWord
+        {
+            Word = dto.Word.Trim(),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.BannedWords.Add(bannedWord);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Thêm từ khóa thành công.", data = bannedWord });
+    }
+
+    [HttpDelete("banned-words/{id}")]
+    public async Task<IActionResult> DeleteBannedWord(int id)
+    {
+        var word = await _context.BannedWords.FindAsync(id);
+        if (word == null) return NotFound();
+
+        _context.BannedWords.Remove(word);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Xóa từ khóa thành công." });
+    }
+
+    [HttpPost("banned-words/scan")]
+    public async Task<IActionResult> ScanAndRemoveBadPosts()
+    {
+        var bannedWords = await _context.BannedWords.Select(b => b.Word.ToLower()).ToListAsync();
+        if (!bannedWords.Any())
+            return Ok(new { message = "Không có từ cấm nào để quét." });
+
+        var posts = await _context.Posts
+            .Include(p => p.Images)
+            .Include(p => p.Comments)
+            .Include(p => p.PostLikes)
+            .ToListAsync();
+
+        int removedCount = 0;
+        var adminId = User.GetUserId() ?? Guid.Empty;
+
+        foreach (var post in posts)
+        {
+            var contentToCheck = $"{post.Title} {post.Summary} {post.Content}".ToLower();
+            bool containsBadWord = false;
+
+            foreach (var word in bannedWords)
+            {
+                if (!string.IsNullOrWhiteSpace(word) && contentToCheck.Contains(word))
+                {
+                    containsBadWord = true;
+                    break;
+                }
+            }
+
+            if (containsBadWord)
+            {
+                // Send notification
+                if (adminId != Guid.Empty)
+                {
+                    await _notificationService.SendNotificationAsync(
+                        post.AuthorId,
+                        adminId,
+                        "System",
+                        post.Id,
+                        $"Bài viết '{post.Title}' của bạn đã bị hệ thống xóa tự động do chứa ngôn từ không phù hợp."
+                    );
+                }
+
+                // Delete related data
+                var relatedReports = await _context.Reports.Where(r => r.PostId == post.Id).ToListAsync();
+                foreach (var r in relatedReports) r.IsResolved = true;
+
+                _context.PostImages.RemoveRange(post.Images);
+                _context.Comments.RemoveRange(post.Comments);
+                _context.PostLikes.RemoveRange(post.PostLikes);
+                
+                _context.Posts.Remove(post);
+                removedCount++;
+            }
+        }
+
+        if (removedCount > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok(new { message = $"Đã quét xong. Xóa thành công {removedCount} bài viết vi phạm." });
     }
 }

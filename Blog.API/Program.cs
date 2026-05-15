@@ -13,7 +13,7 @@ using Blog.Application.Services;
 using Blog.Infrastructure.Services;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-
+using PayOS;
 // Clear default inbound claim type mapping to prevent mapping 'role' to long XML schema URIs
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -106,6 +106,16 @@ builder.Services.AddScoped<IFirebaseChatService, FirebaseChatService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
+
+// Initialize PayOS
+var payOsClientId = builder.Configuration["PayOSSettings:ClientId"];
+var payOsApiKey = builder.Configuration["PayOSSettings:ApiKey"];
+var payOsChecksumKey = builder.Configuration["PayOSSettings:ChecksumKey"];
+if (!string.IsNullOrEmpty(payOsClientId) && payOsClientId != "YOUR_CLIENT_ID_HERE")
+{
+    var payOS = new PayOSClient(payOsClientId, payOsApiKey, payOsChecksumKey);
+    builder.Services.AddSingleton(payOS);
+}
 
 // Initialize Firebase
 var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "firebase-key.json");

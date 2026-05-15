@@ -19,6 +19,7 @@ public class Order
     public decimal TotalAmount { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.Unpaid;
     public string PaymentMethod { get; set; } = "COD";
+    public long? OrderCode { get; set; } // Added for PayOS
     public decimal ShippingFee { get; set; } = 0;
     
     // Address detail fields
@@ -33,6 +34,8 @@ public class Order
     public string? CustomerNote { get; set; }
     public Guid? VoucherId { get; set; }
     public decimal DiscountAmount { get; set; }
+    public decimal PlatformFeeRate { get; set; } = 0.05m; // 5% by default
+    public decimal PlatformFeeAmount { get; set; } = 0;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

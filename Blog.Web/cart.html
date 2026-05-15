@@ -140,10 +140,16 @@
                     <i class="fa-solid fa-money-bill-wave" style="color: #10b981; font-size: 1.2rem;"></i>
                     <span data-i18n="payment_cod">Thanh toán khi nhận hàng (COD)</span>
                 </label>
+
                 <label class="payment-label">
-                    <input type="radio" name="payment_method" value="BANK">
-                    <i class="fa-solid fa-credit-card" style="color: #3b82f6; font-size: 1.2rem;"></i>
-                    <span data-i18n="payment_bank">Thẻ ngân hàng / Chuyển khoản</span>
+                    <input type="radio" name="payment_method" value="PAYOS">
+                    <i class="fa-solid fa-qrcode" style="color: #000; font-size: 1.2rem;"></i>
+                    <span data-i18n="payment_payos">Thanh toán PayOS (Tự động)</span>
+                </label>
+                <label class="payment-label">
+                    <input type="radio" name="payment_method" value="BANK_TRANSFER">
+                    <i class="fa-solid fa-building-columns" style="color: #6366f1; font-size: 1.2rem;"></i>
+                    <span style="font-weight: 600;">Chuyển khoản VietQR (Trực tiếp Shop)</span>
                 </label>
             </div>
 
@@ -152,6 +158,23 @@
             </button>
         </div>
     </main>
+    
+    <!-- Modal Thanh toán VietQR -->
+    <div id="vietqr-modal" class="modal-overlay hidden">
+        <div class="modal-content glassmorphism" style="max-width: 500px; width: 95%; text-align: center;">
+            <div class="modal-header">
+                <h3>Thanh toán VietQR</h3>
+                <button onclick="closeVietQRModal()"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;" id="vietqr-container">
+                <!-- QR codes will be injected here -->
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid #e2e8f0;">
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Sau khi chuyển khoản thành công, vui lòng nhấn nút bên dưới.</p>
+                <button class="btn primary-btn" onclick="confirmVietQR()" style="width: 100%;">Tôi đã chuyển khoản xong</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/api.js?v=2.0"></script>
     <script src="js/lang.js"></script>
@@ -508,7 +531,32 @@
                     btn.disabled = true;
 
                     try {
-                        await window.api.post('orders/checkout', data);
+                        const response = await window.api.post('orders/checkout', data);
+                        
+                        // Handle PayOS Redirect
+                        if (response.checkoutUrl) {
+                            if (window.common?.showToast) window.common.showToast('Đang chuyển hướng đến trang thanh toán...', 'info');
+                            
+                            // Clear cart items that were bought
+                            const newCart = cart.filter((_, idx) => !indicesToRemove.includes(idx));
+                            localStorage.setItem('zynk_cart', JSON.stringify(newCart));
+                            
+                            setTimeout(() => {
+                                window.location.href = response.checkoutUrl;
+                            }, 1000);
+                            return;
+                        }
+
+                        // Handle Bank Transfer (VietQR)
+                        if (response.paymentDetails && response.paymentDetails.length > 0) {
+                            renderVietQRModal(response.paymentDetails, response.orderIds);
+                            
+                            // Clear cart items that were bought
+                            const newCart = cart.filter((_, idx) => !indicesToRemove.includes(idx));
+                            localStorage.setItem('zynk_cart', JSON.stringify(newCart));
+                            return;
+                        }
+
                         if (window.common?.showToast) window.common.showToast('Đặt hàng thành công!', 'success');
                         else alert('Đặt hàng thành công!');
                         
@@ -531,6 +579,60 @@
             } catch (err) {
                 alert('JS Error in checkout: ' + err.message);
             }
+        }
+        let _currentPendingOrderIds = [];
+        function renderVietQRModal(details, orderIds) {
+            _currentPendingOrderIds = orderIds;
+            const container = document.getElementById('vietqr-container');
+            container.innerHTML = details.map(d => `
+                <div style="margin-bottom: 2rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Shop: ${d.shopName}</h4>
+                    <p style="font-size: 0.9rem; margin-bottom: 1rem;">Số tiền: <strong style="color: #2563eb;">${formatCurrency(d.amount)}</strong></p>
+                    
+                    <div style="background: white; padding: 1rem; border-radius: 12px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                        <img src="https://img.vietqr.io/image/${d.bankName}-${d.accountNumber}-compact.png?amount=${d.amount}&addInfo=${encodeURIComponent(d.description)}&accountName=${encodeURIComponent(d.accountName)}" 
+                             style="width: 100%; max-width: 280px; display: block;" 
+                             alt="VietQR for ${d.shopName}">
+                    </div>
+                    
+                    <div style="margin-top: 1rem; font-size: 0.85rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; text-align: left;">
+                        <div><strong>Ngân hàng:</strong> ${d.bankName}</div>
+                        <div><strong>STK:</strong> ${d.accountNumber}</div>
+                        <div><strong>Chủ TK:</strong> ${d.accountName}</div>
+                        <div><strong>Nội dung:</strong> <span style="color: #ef4444; font-weight: 700;">${d.description}</span></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('vietqr-modal').classList.remove('hidden');
+        }
+
+        function closeVietQRModal() {
+            document.getElementById('vietqr-modal').classList.add('hidden');
+        }
+
+        async function confirmVietQR() {
+            if (window.common?.showToast) window.common.showToast('Đang xác nhận thanh toán...', 'info');
+            
+            try {
+                // For VietQR, we simulate the automated check by letting user confirm
+                // In a real production app, this would be handled by a bank monitoring service
+                for (const id of _currentPendingOrderIds) {
+                    await window.api.patch(`orders/${id}/status`, { status: 'AwaitingShipment' });
+                }
+                
+                if (window.common?.showToast) window.common.showToast('Thanh toán thành công! Đơn hàng đã được chuyển sang Chờ giao hàng.', 'success');
+                setTimeout(() => {
+                    window.location.href = 'my-orders.html';
+                }, 1500);
+            } catch (e) {
+                console.error('Error confirming VietQR', e);
+                window.location.href = 'my-orders.html';
+            }
+        }
+
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
         }
     </script>
 </body>

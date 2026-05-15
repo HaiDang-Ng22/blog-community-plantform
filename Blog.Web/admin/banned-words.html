@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Từ khóa cấm - Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .add-word-form {
+            display: flex;
+            gap: 10px;
+        }
+        .add-word-form input {
+            padding: 10px;
+            border: 1px solid var(--admin-border);
+            border-radius: 8px;
+            min-width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Quản lý Từ khóa cấm</h1>
+                <p>Cập nhật danh sách từ ngữ không phù hợp. Các bài viết chứa từ khóa này sẽ bị chặn tự động.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="scanPosts()">
+                <i class="fa-solid fa-microscope"></i> Quét hệ thống
+            </button>
+        </header>
+
+        <div class="card">
+            <div class="actions-bar">
+                <form class="add-word-form" onsubmit="addWord(event)">
+                    <input type="text" id="new-word" placeholder="Nhập từ khóa cấm..." required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> Thêm từ khóa
+                    </button>
+                </form>
+            </div>
+
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Từ khóa</th>
+                            <th>Ngày thêm</th>
+                            <th style="width: 100px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="words-list">
+                        <tr><td colspan="3" style="text-align: center; padding: 2rem;">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        async function loadWords() {
+            const list = document.getElementById('words-list');
+            try {
+                const words = await window.adminApi.get('admin/banned-words');
+                if (words.length === 0) {
+                    list.innerHTML = '<tr><td colspan="3" style="text-align:center;">Chưa có từ khóa nào.</td></tr>';
+                    return;
+                }
+                list.innerHTML = words.map(w => `
+                    <tr>
+                        <td style="font-weight: bold; color: #ef4444;">${w.word}</td>
+                        <td>${new Date(w.createdAt).toLocaleString('vi-VN')}</td>
+                        <td>
+                            <button class="btn btn-danger" style="padding: 4px 12px; font-size: 0.75rem;" onclick="deleteWord(${w.id}, '${w.word}')">
+                                Xóa
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<tr><td colspan="3">${err.message}</td></tr>`;
+            }
+        }
+
+        async function addWord(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-word');
+            const word = input.value.trim();
+            if (!word) return;
+
+            try {
+                const res = await window.adminApi.post('admin/banned-words', { word });
+                alert(res.message);
+                input.value = '';
+                loadWords();
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
+        }
+
+        async function deleteWord(id, word) {
+            if (!confirm(`Bạn có chắc muốn xóa từ khóa "${word}" khỏi danh sách cấm?`)) return;
+            try {
+                const res = await window.adminApi.delete(`admin/banned-words/${id}`);
+                alert(res.message);
+                loadWords();
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
+        }
+
+        async function scanPosts() {
+            if (!confirm('Hành động này sẽ quét TOÀN BỘ bài viết và TỰ ĐỘNG XÓA các bài chứa từ khóa cấm. Bạn có chắc chắn muốn thực hiện?')) return;
+            
+            // Show loading state
+            const btn = document.querySelector('button[onclick="scanPosts()"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang quét...';
+            btn.disabled = true;
+
+            try {
+                const res = await window.adminApi.post('admin/banned-words/scan', {});
+                alert(res.message);
+            } catch (err) {
+                alert('Lỗi khi quét: ' + err.message);
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadWords);
+    </script>
+</body>
+</html>

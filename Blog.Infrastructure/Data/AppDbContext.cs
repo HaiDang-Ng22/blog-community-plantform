@@ -49,6 +49,7 @@ public class AppDbContext : DbContext
     public DbSet<Voucher> Vouchers { get; set; }
     public DbSet<ShopConversation> ShopConversations { get; set; }
     public DbSet<ShopMessage> ShopMessages { get; set; }
+    public DbSet<BannedWord> BannedWords { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
