@@ -148,6 +148,10 @@
                     <i class="fa-solid fa-qrcode"></i>
                     <span data-i18n="payment_settings_tab">Thanh toán</span>
                 </div>
+                <div class="tab-link" onclick="switchSellerTab('marketing')">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span data-i18n="marketing_tools">Công cụ Marketing</span>
+                </div>
             </nav>
 
             <!-- Overview Section -->
@@ -324,6 +328,54 @@
                         </div>
                         <button type="submit" class="btn primary-btn" style="margin-top: 1.5rem;" data-i18n="save_payment_config">Lưu cấu hình thanh toán</button>
                     </form>
+                </div>
+            </section>
+
+            <!-- Marketing Section -->
+            <section id="section-marketing" class="dashboard-section">
+                <div class="section-header-row" style="margin-bottom: 24px;">
+                    <div>
+                        <h3 data-i18n="marketing_tools_title">Công cụ Marketing</h3>
+                        <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Tăng doanh số bán hàng bằng các chương trình khuyến mãi hấp dẫn.</p>
+                    </div>
+                </div>
+
+                <div class="marketing-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <!-- Flash Sale Card -->
+                    <div class="marketing-tool-card glassmorphism" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #fee2e2; display: flex; gap: 1rem; align-items: flex-start; cursor: pointer; transition: 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="background: #fee2e2; color: #ef4444; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Flash Sale của Shop</h4>
+                            <p style="font-size: 0.85rem; color: #64748b; line-height: 1.4;">Tạo các đợt giảm giá chớp nhoáng để thu hút khách hàng trong khung giờ nhất định.</p>
+                            <button class="btn primary-btn" style="width: auto; margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.8rem; background: #ef4444;">Tạo ngay</button>
+                        </div>
+                    </div>
+
+                    <!-- Combo Deal Card -->
+                    <div class="marketing-tool-card glassmorphism" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #dcfce7; display: flex; gap: 1rem; align-items: flex-start; cursor: pointer; transition: 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="background: #dcfce7; color: #22c55e; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Combo Khuyến Mãi</h4>
+                            <p style="font-size: 0.85rem; color: #64748b; line-height: 1.4;">Mua nhiều giảm sâu. Thiết lập chương trình mua 2 giảm 10% hoặc mua combo tặng quà.</p>
+                            <button class="btn primary-btn" style="width: auto; margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.8rem; background: #22c55e;">Thiết lập</button>
+                        </div>
+                    </div>
+
+                    <!-- Follower Voucher Card -->
+                    <div class="marketing-tool-card glassmorphism" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #e0e7ff; display: flex; gap: 1rem; align-items: flex-start; cursor: pointer; transition: 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="background: #e0e7ff; color: #4338ca; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Ưu đãi Follower</h4>
+                            <p style="font-size: 0.85rem; color: #64748b; line-height: 1.4;">Tặng voucher đặc biệt cho khách hàng mới bấm theo dõi Shop của bạn.</p>
+                            <button class="btn primary-btn" style="width: auto; margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.8rem; background: #4338ca;">Cấu hình</button>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>

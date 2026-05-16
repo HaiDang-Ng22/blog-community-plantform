@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Banners - Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        :root {
+            --shopee-orange: #ee4d2d;
+        }
+        
+        /* Marketplace Preview Simulation */
+        .preview-container {
+            background: #f5f5f5;
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            border: 2px dashed #cbd5e1;
+        }
+        
+        .preview-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .market-header-sim {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+            max-width: 1000px;
+            margin: 0 auto;
+            transition: all 0.4s ease;
+        }
+
+        .main-slider-sim {
+            background: #e2e8f0;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 16 / 6.5;
+        }
+
+        .side-banners-sim {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            aspect-ratio: 16 / 13; /* Consistent with main slider height */
+        }
+
+        .side-item-sim {
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .banner-sim-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Banner Management List */
+        .banner-manage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .draggable-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            cursor: grab;
+            transition: 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .draggable-banner:active { cursor: grabbing; }
+        .draggable-banner.dragging { opacity: 0.5; border-color: var(--admin-primary); }
+
+        .handle { color: #cbd5e1; cursor: grab; }
+        
+        .banner-thumb {
+            width: 120px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .banner-details { flex: 1; }
+        .banner-url-text { font-size: 0.8rem; color: #64748b; word-break: break-all; }
+
+        .btn-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .config-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed #cbd5e1;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .dropzone:hover { border-color: var(--admin-primary); background: #f8fafc; }
+        .dropzone i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Quản lý Marketplace Banners</h1>
+                <p>Kéo thả để sắp xếp thứ tự và cấu hình thời gian chuyển slide.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="loadBanners()">
+                    <i class="fa-solid fa-rotate"></i> Làm mới
+                </button>
+                <button class="btn btn-primary" onclick="openUploadModal()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Tải ảnh/Thêm Link
+                </button>
+            </div>
+        </header>
+
+        <!-- Configuration Bar -->
+        <div class="config-bar">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: var(--admin-primary);"></i>
+                <div>
+                    <span style="font-size: 0.85rem; font-weight: 700;">Tốc độ chuyển slide:</span>
+                    <input type="number" id="rotation-interval" value="5" min="1" max="60" style="width: 60px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; margin-left: 8px;">
+                    <span style="font-size: 0.8rem; color: #64748b;">giây</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 16px;" onclick="saveConfig()">
+                Lưu cấu hình
+            </button>
+        </div>
+
+        <!-- Live Preview Simulation -->
+        <div class="preview-container">
+            <div class="preview-title">
+                <i class="fa-solid fa-eye"></i> CHẾ ĐỘ XEM TRƯỚC (GIẢ LẬP MARKETPLACE)
+                <span style="font-weight: 400; font-size: 0.75rem; margin-left: auto;">* Click vào các ô trống để thêm ảnh nhanh</span>
+            </div>
+            <div class="market-header-sim">
+                <div class="main-slider-sim" id="preview-slider" onclick="openUploadModal(true)">
+                    <!-- Preview images injected here -->
+                    <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8;">
+                        <i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <span>Thêm Banner chính</span>
+                    </div>
+                </div>
+                <div class="side-banners-sim" id="preview-side">
+                    <div class="side-item-sim" onclick="openUploadModal(false)" style="cursor:pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #cbd5e1; border: 2px dashed #e2e8f0; background: #f8fafc;">
+                        <i class="fa-solid fa-plus" style="font-size: 1.2rem; margin-bottom: 5px;"></i>
+                        <span style="font-size: 0.6rem; font-weight: 700;">BANNER PHỤ 1</span>
+                    </div>
+                    <div class="side-item-sim" onclick="openUploadModal(false)" style="cursor:pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #cbd5e1; border: 2px dashed #e2e8f0; background: #f8fafc;">
+                        <i class="fa-solid fa-plus" style="font-size: 1.2rem; margin-bottom: 5px;"></i>
+                        <span style="font-size: 0.6rem; font-weight: 700;">BANNER PHỤ 2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Draggable List -->
+        <div class="card">
+            <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3>Danh sách Banner</h3>
+                <span style="font-size: 0.75rem; color: #94a3b8;">* Nhấn giữ và kéo để thay đổi thứ tự hiển thị</span>
+            </div>
+            <div id="banner-list" class="banner-manage-list">
+                <p style="text-align: center; color: #94a3b8; padding: 2rem;">Đang tải dữ liệu...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div class="card" style="width: 90%; max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                <h2>Thêm Banner</h2>
+                <button onclick="closeUploadModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem;">Vị trí hiển thị:</label>
+                <select id="modal-is-main" class="admin-input" style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 8px;">
+                    <option value="true">Banner Chính (Slider lớn)</option>
+                    <option value="false">Banner Phụ (2 ô bên phải)</option>
+                </select>
+            </div>
+
+            <div class="dropzone" onclick="document.getElementById('file-input').click()" id="dropzone">
+                <i class="fa-solid fa-images"></i>
+                <p>Kéo thả ảnh vào đây hoặc <b>nhấn để chọn tệp</b></p>
+                <input type="file" id="file-input" multiple accept="image/*" style="display: none" onchange="handleFiles(this.files)">
+            </div>
+
+            <div style="margin: 1.5rem 0; position: relative; text-align: center;">
+                <hr style="border: none; border-top: 1px solid #eee;">
+                <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #94a3b8; font-size: 0.8rem;">HOẶC DÁN LINK</span>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <input type="url" id="link-input" class="admin-input" placeholder="https://example.com/banner.jpg" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 10px;">
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="addFromLink()">Thêm từ Link</button>
+            </div>
+
+            <div id="upload-progress" style="display: none; margin-bottom: 1rem;">
+                <div style="height: 6px; background: #eee; border-radius: 3px; overflow: hidden;">
+                    <div id="progress-bar" style="width: 0%; height: 100%; background: var(--admin-primary); transition: 0.3s;"></div>
+                </div>
+                <p id="progress-text" style="font-size: 0.75rem; color: #64748b; margin-top: 5px; text-align: center;">Đang tải lên...</p>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeUploadModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        let allBanners = [];
+        let previewIndex = 0;
+        let previewTimer = null;
+
+        async function loadBanners() {
+            const list = document.getElementById('banner-list');
+            try {
+                allBanners = await window.adminApi.get('admin/banners');
+                
+                // Get rotation interval from local storage or server (if added)
+                const interval = localStorage.getItem('zynk_banner_interval') || 5;
+                document.getElementById('rotation-interval').value = interval;
+
+                renderList();
+                renderPreview();
+            } catch (err) {
+                list.innerHTML = `<div style="color: red; text-align: center;">${err.message}</div>`;
+            }
+        }
+
+        function renderList() {
+            const list = document.getElementById('banner-list');
+            if (allBanners.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Chưa có banner nào.</p>';
+                return;
+            }
+
+            list.innerHTML = allBanners.map((b, index) => `
+                <div class="draggable-banner" draggable="true" data-id="${b.id}" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+                    <div class="handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <img src="${b.imageUrl}" class="banner-thumb">
+                    <div class="banner-details">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="badge ${b.isMain ? 'badge-success' : 'badge-warning'}" style="font-size: 0.7rem; cursor: pointer;" onclick="toggleBannerType('${b.id}')">
+                                ${b.isMain ? 'Chính (Slider)' : 'Phụ (Phải)'}
+                            </span>
+                            <span style="font-weight: 600; font-size: 0.9rem;">Thứ tự: ${index + 1}</span>
+                        </div>
+                        <div class="banner-url-text">${b.imageUrl}</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-circle btn-edit" onclick="editBanner('${b.id}')"><i class="fa-solid fa-link"></i></button>
+                        <button class="btn-circle btn-delete" onclick="deleteBanner('${b.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- Drag & Drop Logic ---
+        let dragSrcId = null;
+
+        function handleDragStart(e) {
+            dragSrcId = e.target.getAttribute('data-id');
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            const target = e.target.closest('.draggable-banner');
+            if (!target) return;
+            
+            const targetId = target.getAttribute('data-id');
+            if (dragSrcId === targetId) return;
+
+            // Reorder in array
+            const srcIdx = allBanners.findIndex(b => b.id === dragSrcId);
+            const targetIdx = allBanners.findIndex(b => b.id === targetId);
+            
+            const [movedItem] = allBanners.splice(srcIdx, 1);
+            allBanners.splice(targetIdx, 0, movedItem);
+
+            renderList();
+            renderPreview();
+            
+            // Save new order to server
+            await saveNewOrder();
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        async function saveNewOrder() {
+            try {
+                // Batch update orders
+                for (let i = 0; i < allBanners.length; i++) {
+                    await window.adminApi.put(`admin/banners/${allBanners[i].id}`, {
+                        ...allBanners[i],
+                        displayOrder: i
+                    });
+                }
+            } catch (err) { console.error("Lỗi lưu thứ tự:", err); }
+        }
+
+        // --- Preview Logic ---
+        function renderPreview() {
+            const sliderSim = document.getElementById('preview-slider');
+            const sideSim = document.getElementById('preview-side');
+            
+            const containerSim = document.querySelector('.market-header-sim');
+            
+            const mains = allBanners.filter(b => b.isMain);
+            const sides = allBanners.filter(b => !b.isMain);
+
+            if (sides.length === 0) {
+                // Keep the grid layout visible so user can click to add
+                containerSim.style.gridTemplateColumns = '2fr 1fr';
+                sideSim.style.display = 'grid';
+            } else {
+                containerSim.style.gridTemplateColumns = '2fr 1fr';
+                sideSim.style.display = 'grid';
+            }
+
+            if (mains.length === 0) {
+                sliderSim.innerHTML = `
+                    <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; cursor: pointer;">
+                        <i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <span>Thêm Banner chính</span>
+                    </div>`;
+            } else {
+                sliderSim.innerHTML = mains.map((b, idx) => `
+                    <div class="preview-slide ${idx === 0 ? 'active' : ''}" style="display: ${idx === 0 ? 'block' : 'none'}; height: 100%;">
+                        <img src="${b.imageUrl}" class="banner-sim-img">
+                    </div>
+                `).join('');
+                startPreviewTimer();
+            }
+
+            sideSim.innerHTML = `
+                <div class="side-item-sim" onclick="openUploadModal(false)" style="cursor:pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; border: 2px dashed #e2e8f0; color: #cbd5e1;">
+                    ${sides[0] ? `<img src="${sides[0].imageUrl}" class="banner-sim-img">` : '<i class="fa-solid fa-plus" style="font-size: 1.2rem; margin-bottom: 5px;"></i><span style="font-size: 0.6rem; font-weight: 700;">BANNER PHỤ 1</span>'}
+                </div>
+                <div class="side-item-sim" onclick="openUploadModal(false)" style="cursor:pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; border: 2px dashed #e2e8f0; color: #cbd5e1;">
+                    ${sides[1] ? `<img src="${sides[1].imageUrl}" class="banner-sim-img">` : '<i class="fa-solid fa-plus" style="font-size: 1.2rem; margin-bottom: 5px;"></i><span style="font-size: 0.6rem; font-weight: 700;">BANNER PHỤ 2</span>'}
+                </div>
+            `;
+        }
+
+        function startPreviewTimer() {
+            if (previewTimer) clearInterval(previewTimer);
+            const interval = (parseInt(document.getElementById('rotation-interval').value) || 5) * 1000;
+            
+            previewTimer = setInterval(() => {
+                const slides = document.querySelectorAll('.preview-slide');
+                if (slides.length <= 1) return;
+                
+                slides[previewIndex].style.display = 'none';
+                previewIndex = (previewIndex + 1) % slides.length;
+                slides[previewIndex].style.display = 'block';
+            }, interval);
+        }
+
+        // --- Modal & Upload Logic ---
+        function openUploadModal(isMain = true) {
+            const modal = document.getElementById('upload-modal');
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden'); 
+            
+            // Pre-select position
+            document.getElementById('modal-is-main').value = isMain ? 'true' : 'false';
+        }
+        function closeUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            modal.style.display = 'none';
+            document.getElementById('upload-progress').style.display = 'none';
+        }
+
+        async function handleFiles(files) {
+            if (!files.length) return;
+            const progress = document.getElementById('upload-progress');
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('progress-text');
+            
+            progress.style.display = 'block';
+            
+            for (let i = 0; i < files.length; i++) {
+                text.textContent = `Đang tải lên ${i + 1}/${files.length}...`;
+                try {
+                    const isMain = document.getElementById('modal-is-main').value === 'true';
+                    const res = await window.adminApi.uploadImage(files[i]);
+                    await window.adminApi.post('admin/banners', {
+                        imageUrl: res.url,
+                        isMain: isMain,
+                        displayOrder: allBanners.length,
+                        isActive: true
+                    });
+                    bar.style.width = `${((i + 1) / files.length) * 100}%`;
+                } catch (err) {
+                    alert(`Lỗi tải tệp ${files[i].name}: ${err.message}`);
+                }
+            }
+            
+            loadBanners();
+            setTimeout(closeUploadModal, 1000);
+        }
+
+        async function addFromLink() {
+            const url = document.getElementById('link-input').value;
+            if (!url) return;
+            const isMain = document.getElementById('modal-is-main').value === 'true';
+            try {
+                await window.adminApi.post('admin/banners', {
+                    imageUrl: url,
+                    isMain: isMain,
+                    displayOrder: allBanners.length,
+                    isActive: true
+                });
+                document.getElementById('link-input').value = '';
+                loadBanners();
+                closeUploadModal();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function toggleBannerType(id) {
+            const b = allBanners.find(x => x.id === id);
+            if (!b) return;
+            try {
+                await window.adminApi.put(`admin/banners/${id}`, { ...b, isMain: !b.isMain });
+                loadBanners();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function deleteBanner(id) {
+            if (!confirm('Xóa banner này?')) return;
+            try {
+                await window.adminApi.delete(`admin/banners/${id}`);
+                loadBanners();
+            } catch (err) { alert(err.message); }
+        }
+
+        function saveConfig() {
+            const interval = document.getElementById('rotation-interval').value;
+            localStorage.setItem('zynk_banner_interval', interval);
+            alert('Đã lưu cấu hình thời gian!');
+            startPreviewTimer();
+        }
+
+        async function editBanner(id) {
+            const b = allBanners.find(x => x.id === id);
+            const newLink = prompt("Nhập link điều hướng mới (URL hoặc trang local):", b.linkUrl || "");
+            if (newLink === null) return;
+            
+            try {
+                await window.adminApi.put(`admin/banners/${id}`, { ...b, linkUrl: newLink });
+                loadBanners();
+            } catch (err) { alert(err.message); }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadBanners);
+    </script>
+</body>
+</html>

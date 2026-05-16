@@ -4,7 +4,178 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCategories();
     loadProducts();
     updateCartBadge();
+    initPremiumFeatures();
+    initBannerSlider();
 });
+
+let _bannerIndex = 0;
+let _bannerTimer = null;
+
+async function initBannerSlider() {
+    const slider = document.getElementById('banner-slider');
+    const sideContainer = document.getElementById('side-banners-container');
+    if (!slider) return;
+
+    try {
+        // Fetch banners from API
+        const banners = await window.api.get('marketplace/banners').catch(() => []);
+        
+        if (banners.length === 0) {
+            // Default banners if none from API
+            const defaults = [
+                { imageUrl: 'https://img.freepik.com/free-vector/horizontal-sale-banner-template_23-2148897328.jpg', isMain: true },
+                { imageUrl: 'https://img.freepik.com/free-vector/flat-sale-banner-with-photo_23-2149026968.jpg', isMain: false },
+                { imageUrl: 'https://img.freepik.com/free-vector/flat-sale-banner-with-photo_23-2149026969.jpg', isMain: false }
+            ];
+            renderBanners(defaults);
+        } else {
+            renderBanners(banners);
+        }
+    } catch (e) {
+        console.error('Banner error', e);
+    }
+}
+
+function renderBanners(banners) {
+    const slider = document.getElementById('banner-slider');
+    const sideContainer = document.getElementById('side-banners-container');
+    
+    const mains = banners.filter(b => b.isMain !== false);
+    const sides = banners.filter(b => b.isMain === false);
+
+    // Main slider
+    slider.innerHTML = mains.map((b, idx) => `
+        <div class="slide ${idx === 0 ? 'active' : ''}">
+            <img src="${b.imageUrl}" class="banner-img">
+        </div>
+    `).join('') + `
+        <div class="banner-dots">
+            ${mains.map((_, idx) => `<span class="dot ${idx === 0 ? 'active' : ''}" onclick="goToSlide(${idx})"></span>`).join('')}
+        </div>
+    `;
+
+    // Dynamic layout adjustment
+    const container = document.querySelector('.premium-banners');
+    if (container) {
+        if (sides.length === 0) {
+            container.classList.add('full-width');
+        } else {
+            container.classList.remove('full-width');
+        }
+    }
+
+    // Side banners
+    if (sideContainer) {
+        if (sides.length === 0) {
+            sideContainer.style.display = 'none';
+        } else {
+            sideContainer.style.display = 'flex';
+            sideContainer.innerHTML = sides.slice(0, 2).map(b => `
+                <div class="side-banner" onclick="window.location.href='${b.linkUrl || '#'}'">
+                    <img src="${b.imageUrl}" class="banner-img">
+                </div>
+            `).join('');
+        }
+    }
+
+    startAutoSlide();
+}
+
+function startAutoSlide() {
+    stopAutoSlide();
+    const interval = (parseInt(localStorage.getItem('zynk_banner_interval')) || 5) * 1000;
+    _bannerTimer = setInterval(nextSlide, interval);
+}
+
+function stopAutoSlide() {
+    if (_bannerTimer) clearInterval(_bannerTimer);
+}
+
+function nextSlide() {
+    const slides = document.querySelectorAll('.slide');
+    if (slides.length <= 1) return;
+    _bannerIndex = (_bannerIndex + 1) % slides.length;
+    showSlide(_bannerIndex);
+}
+
+function goToSlide(idx) {
+    _bannerIndex = idx;
+    showSlide(idx);
+    startAutoSlide();
+}
+
+function showSlide(idx) {
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+    
+    if (slides[idx]) slides[idx].classList.add('active');
+    if (dots[idx]) dots[idx].classList.add('active');
+}
+
+
+function initPremiumFeatures() {
+    startFlashSaleCountdown();
+    loadFlashSaleProducts();
+}
+
+function startFlashSaleCountdown() {
+    const hoursEl = document.getElementById('fs-hours');
+    const minsEl = document.getElementById('fs-minutes');
+    const secsEl = document.getElementById('fs-seconds');
+    if (!hoursEl || !minsEl || !secsEl) return;
+
+    // Set countdown to end in 2 hours 58 mins from now for demo
+    let timeLeft = (2 * 3600) + (58 * 60) + 59;
+
+    const timer = setInterval(() => {
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            return;
+        }
+        timeLeft--;
+
+        const h = Math.floor(timeLeft / 3600);
+        const m = Math.floor((timeLeft % 3600) / 60);
+        const s = timeLeft % 60;
+
+        hoursEl.textContent = h.toString().padStart(2, '0');
+        minsEl.textContent = m.toString().padStart(2, '0');
+        secsEl.textContent = s.toString().padStart(2, '0');
+    }, 1000);
+}
+
+async function loadFlashSaleProducts() {
+    const grid = document.getElementById('flash-sale-grid');
+    if (!grid) return;
+
+    try {
+        // Fetch real products but treat them as flash sale for demo
+        const products = await window.api.get('marketplace/products?sortBy=sales_desc');
+        const flashSaleProds = products.slice(0, 6); // Take top 6
+
+        grid.innerHTML = flashSaleProds.map(p => `
+            <div class="product-card flash-sale-card" onclick="openProductModal('${p.id}')">
+                <div class="discount-tag"><span>${Math.floor(Math.random() * 30) + 10}%</span><span>GIẢM</span></div>
+                <div class="product-image-box">
+                    <img src="${p.featuredImageUrl || 'https://via.placeholder.com/200'}" alt="${p.name}">
+                </div>
+                <div class="product-info">
+                    <div class="product-price">${formatCurrency(p.price * 0.7)}</div>
+                    <div class="price-original" style="font-size: 0.7rem; color: #94a3b8; text-decoration: line-through;">${formatCurrency(p.price)}</div>
+                    <div class="sales-progress">
+                        <div class="sales-progress-fill" style="width: ${Math.floor(Math.random() * 60) + 30}%"></div>
+                        <div class="sales-progress-text">ĐANG BÁN CHẠY</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load flash sale', e);
+    }
+}
+
 
 let currentProducts = [];
 let filterState = {
@@ -16,107 +187,104 @@ let filterState = {
 };
 
 async function loadCategories() {
-    const list = document.getElementById('category-list');
-    if (!list) return;
+    const grid = document.getElementById('category-circle-grid');
+    if (!grid) return;
 
     try {
         const categories = await window.api.get('marketplace/categories');
-
-        // Build hierarchy
-        const rootCategories = categories.filter(c => !c.parentCategoryId);
-
-        // Add "All" option
-        list.innerHTML = `
-            <li class="category-item">
-                <a href="#" class="category-link active" data-id="all">
-                    <i class="fa fa-border-all"></i> Tất cả
-                </a>
-            </li>
-        `;
-
-        rootCategories.forEach(cat => {
-            renderCategoryItem(cat, categories, list);
-        });
-
-        const allLink = list.querySelector('[data-id="all"]');
-        if (allLink) {
-            allLink.onclick = (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
-                allLink.classList.add('active');
-                filterState.categoryId = null;
-                filterState.keyword = null;
-                document.getElementById('market-search-input').value = '';
-                
-                const titleEl = document.getElementById('market-title');
-                titleEl.textContent = 'Gợi ý hôm nay';
-                titleEl.setAttribute('data-i18n', 'market_suggestions'); // Restore i18n
-                if(window.applyTranslations) window.applyTranslations();
-                
-                loadProducts();
-            };
-        }
+        window._allCategories = categories; // Cache globally
+        
+        const roots = categories.filter(c => !c.parentCategoryId);
+        
+        grid.innerHTML = roots.map(cat => `
+            <div class="category-circle-item" onclick="showSubCategories('${cat.id}', '${cat.name.replace(/'/g, "\\'")}')">
+                <div class="category-icon-wrapper"><i class="${cat.icon || 'fa fa-tag'}"></i></div>
+                <span>${cat.name}</span>
+            </div>
+        `).join('');
 
     } catch (e) {
         console.error('Failed to load categories', e);
     }
 }
 
-function renderCategoryItem(cat, allCategories, container, level = 0) {
-    const subCategories = allCategories.filter(c => c.parentCategoryId && c.parentCategoryId.toLowerCase() === cat.id.toLowerCase());
-    const li = document.createElement('li');
-    li.className = `category-item ${subCategories.length > 0 ? 'has-sub' : ''}`;
+let _categoryStack = [];
 
-    li.innerHTML = `
-        <div class="category-row">
-            <a href="#" class="category-link" data-id="${cat.id}">
-                <i class="${cat.icon || 'fa fa-tag'}"></i> ${cat.name}
-            </a>
-            ${subCategories.length > 0 ? '<i class="fa fa-chevron-down sub-toggle"></i>' : ''}
-        </div>
-        ${subCategories.length > 0 ? `<ul class="sub-category-list hidden" id="sub-${cat.id}"></ul>` : ''}
-    `;
+function showSubCategories(parentId, parentName) {
+    const panel = document.getElementById('sub-category-panel');
+    const subGrid = document.getElementById('sub-cat-grid');
+    const nameEl = document.getElementById('current-cat-name');
+    
+    if (!panel || !subGrid || !window._allCategories) return;
 
-    const link = li.querySelector('.category-link');
-    link.onclick = (e) => {
-        e.preventDefault();
-        try {
-            document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-            filterState.categoryId = cat.id;
-            filterState.keyword = null;
-            
-            const searchInput = document.getElementById('market-search-input');
-            if (searchInput) searchInput.value = '';
-            
-            const titleEl = document.getElementById('market-title');
-            if (titleEl) {
-                titleEl.textContent = cat.name;
-                titleEl.removeAttribute('data-i18n');
-            }
-            
-            loadProducts();
-        } catch (err) {
-            console.error('Click error:', err);
-        }
-    };
+    // Load products for this category immediately
+    filterByCategory(parentId, parentName, false);
 
-    if (subCategories.length > 0) {
-        const toggle = li.querySelector('.sub-toggle');
-        const subList = li.querySelector('.sub-category-list');
-        toggle.onclick = (e) => {
-            e.stopPropagation();
-            subList.classList.toggle('hidden');
-            toggle.classList.toggle('rotated');
-        };
-
-        subCategories.forEach(sub => {
-            renderCategoryItem(sub, allCategories, subList, level + 1);
-        });
+    const subs = window._allCategories.filter(c => c.parentCategoryId && c.parentCategoryId.toLowerCase() === parentId.toLowerCase());
+    
+    nameEl.textContent = parentName;
+    
+    // Add to stack for "Back" button
+    if (_categoryStack.length === 0 || _categoryStack[_categoryStack.length - 1].id !== parentId) {
+        // Find current category to get its parent for the back button
+        const currentCat = window._allCategories.find(c => c.id === parentId);
+        _categoryStack.push({ id: parentId, name: parentName, parentId: currentCat?.parentCategoryId });
     }
 
-    container.appendChild(li);
+    subGrid.innerHTML = `
+        <div class="sub-cat-item" style="background: #eef2ff; border-color: #6366f1; color: #6366f1;" onclick="filterByCategory('${parentId}', '${parentName}', true)">
+            <i class="fa-solid fa-layer-group"></i> <strong>Xem tất cả ${parentName}</strong>
+        </div>
+    ` + subs.map(sub => `
+        <div class="sub-cat-item" onclick="showSubCategories('${sub.id}', '${sub.name.replace(/'/g, "\\'")}')">
+            ${sub.name}
+        </div>
+    `).join('');
+
+    panel.classList.remove('hidden');
 }
+
+function goBackCategory() {
+    if (_categoryStack.length <= 1) {
+        closeSubPanel();
+        _categoryStack = [];
+        return;
+    }
+    
+    _categoryStack.pop(); // Remove current
+    const prev = _categoryStack[_categoryStack.length - 1];
+    
+    // We need to re-render the parent's level
+    // Actually, it's easier to just call showSubCategories again
+    const target = prev;
+    _categoryStack.pop(); // Remove it again so showSubCategories can re-add it correctly
+    showSubCategories(target.id, target.name);
+}
+
+function closeSubPanel() {
+    const panel = document.getElementById('sub-category-panel');
+    if (panel) panel.classList.add('hidden');
+    _categoryStack = [];
+}
+
+function filterByCategory(id, name, closePanel = true) {
+    document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+    filterState.categoryId = id;
+    filterState.keyword = null;
+    
+    const titleEl = document.getElementById('market-title');
+    if (titleEl) {
+        titleEl.textContent = name;
+        titleEl.removeAttribute('data-i18n');
+    }
+    
+    if (closePanel) closeSubPanel();
+    loadProducts();
+    const targetEl = document.getElementById('market-title');
+    if (targetEl) window.scrollTo({ top: targetEl.offsetTop - 100, behavior: 'smooth' });
+}
+
+// Sidebar render functions removed as sidebar is gone
 
 async function loadProducts() {
     let grid;
@@ -156,10 +324,16 @@ function renderProducts(products) {
         return;
     }
 
-    products.forEach(p => {
+    products.forEach((p, index) => {
+        const isMall = index % 3 === 0; // Demo Mall badge
+        const hasDiscount = index % 2 === 0; // Demo Discount tag
+        const discountPct = Math.floor(Math.random() * 20) + 10;
+        
         const card = document.createElement('div');
         card.className = 'product-card fadeInUp';
         card.innerHTML = `
+            ${isMall ? '<div class="badge-mall">Mall</div>' : ''}
+            ${hasDiscount ? `<div class="discount-tag"><span>${discountPct}%</span><span>GIẢM</span></div>` : ''}
             <div class="product-image-box">
                 <img src="${p.featuredImageUrl || 'https://via.placeholder.com/300'}" alt="${p.name}">
             </div>
@@ -167,7 +341,10 @@ function renderProducts(products) {
                 <span class="product-shop"><i class="fa fa-shop"></i> ${p.shopName}</span>
                 <h3 class="product-name">${p.name}</h3>
                 <div class="product-meta">
-                    <span class="product-price">${formatCurrency(p.price)}</span>
+                    <div>
+                        <span class="product-price">${formatCurrency(p.price)}</span>
+                        ${hasDiscount ? `<div class="price-original">${formatCurrency(p.price * 1.2)}</div>` : ''}
+                    </div>
                     <span class="product-stats">${p.salesCount} đã bán</span>
                 </div>
             </div>

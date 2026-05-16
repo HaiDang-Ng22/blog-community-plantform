@@ -9,6 +9,7 @@
     <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <link rel="stylesheet" href="css/common.css?v=1.7">
     <link rel="stylesheet" href="css/marketplace.css?v=2.3">
+    <link rel="stylesheet" href="css/marketplace-premium.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -43,18 +44,38 @@
 
     <main class="container-wide" style="overflow-x:hidden; padding-bottom: 2rem;">
         <div class="marketplace-layout">
-            <aside class="market-sidebar">
-                <h3 data-i18n="categories_title"><i class="fa-solid fa-layer-group"></i> Danh mục</h3>
-                <ul class="category-list" id="category-list">
-                    <li class="category-item">
-                        <a href="#" class="category-link active" data-id="all">
-                            <i class="fa fa-border-all"></i> <span data-i18n="all">Tất cả</span>
-                        </a>
-                    </li>
-                </ul>
-            </aside>
+            <!-- Sidebar Removed as per request -->
 
-            <div class="products-wrapper">
+
+                <!-- Premium Banners (Admin Managed Slider) -->
+                <div class="premium-banners" id="market-banners-container">
+                    <div class="banner-slider" id="banner-slider">
+                        <!-- Sẽ được nạp động từ JS -->
+                    </div>
+                    <div class="side-banners" id="side-banners-container">
+                        <!-- Sẽ được nạp động từ JS -->
+                    </div>
+                </div>
+
+                <!-- Premium Categories (Integrated with Sub-categories) -->
+                <div class="premium-categories-container">
+                    <div class="premium-categories">
+                        <h3 data-i18n="categories_title">Khám phá danh mục</h3>
+                        <div class="category-circle-grid" id="category-circle-grid">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- Sub-categories overlay/panel -->
+                    <div id="sub-category-panel" class="sub-category-panel hidden">
+                        <div class="sub-cat-header">
+                            <button onclick="goBackCategory()" class="back-btn"><i class="fa fa-chevron-left"></i> Quay lại</button>
+                            <h4 id="current-cat-name">Tên danh mục</h4>
+                        </div>
+                        <div class="sub-cat-grid" id="sub-cat-grid"></div>
+                    </div>
+                </div>
+
                 <div class="market-header">
                     <h2 id="market-title" data-i18n="market_suggestions">Gợi ý hôm nay</h2>
                     <div class="market-filters">

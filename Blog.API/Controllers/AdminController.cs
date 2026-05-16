@@ -819,7 +819,64 @@ public class AdminController : ControllerBase
 
         _context.BannedWords.Remove(word);
         await _context.SaveChangesAsync();
-        return Ok(new { message = "Xóa từ khóa thành công." });
+        return Ok(new { message = "Đã xóa tất cả từ khóa nhạy cảm." });
+    }
+
+    // ─── Banner Management ─────────────────────────────────────────
+
+    [HttpGet("banners")]
+    public async Task<IActionResult> GetAdminBanners()
+    {
+        var banners = await _context.Banners
+            .OrderBy(b => b.DisplayOrder)
+            .ThenByDescending(b => b.CreatedAt)
+            .ToListAsync();
+        return Ok(banners);
+    }
+
+    [HttpGet("banners/{id}")]
+    public async Task<IActionResult> GetBannerById(Guid id)
+    {
+        var banner = await _context.Banners.FindAsync(id);
+        if (banner == null) return NotFound();
+        return Ok(banner);
+    }
+
+    [HttpPost("banners")]
+    public async Task<IActionResult> CreateBanner([FromBody] Banner banner)
+    {
+        banner.Id = Guid.NewGuid();
+        banner.CreatedAt = DateTime.UtcNow;
+        _context.Banners.Add(banner);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã thêm banner thành công.", id = banner.Id });
+    }
+
+    [HttpPut("banners/{id}")]
+    public async Task<IActionResult> UpdateBanner(Guid id, [FromBody] Banner bannerData)
+    {
+        var banner = await _context.Banners.FindAsync(id);
+        if (banner == null) return NotFound();
+
+        banner.ImageUrl = bannerData.ImageUrl;
+        banner.LinkUrl = bannerData.LinkUrl;
+        banner.IsMain = bannerData.IsMain;
+        banner.DisplayOrder = bannerData.DisplayOrder;
+        banner.IsActive = bannerData.IsActive;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã cập nhật banner thành công." });
+    }
+
+    [HttpDelete("banners/{id}")]
+    public async Task<IActionResult> DeleteBanner(Guid id)
+    {
+        var banner = await _context.Banners.FindAsync(id);
+        if (banner == null) return NotFound();
+
+        _context.Banners.Remove(banner);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã xóa banner thành công." });
     }
 
     [HttpPost("banned-words/scan")]

@@ -316,4 +316,15 @@ public class MarketplaceController : ControllerBase
         });
         return Ok(dtos);
     }
+
+    [HttpGet("banners")]
+    public async Task<IActionResult> GetBanners()
+    {
+        var banners = await _context.Banners
+            .Where(b => b.IsActive)
+            .OrderBy(b => b.DisplayOrder)
+            .ThenByDescending(b => b.CreatedAt)
+            .ToListAsync();
+        return Ok(banners);
+    }
 }

@@ -117,15 +117,22 @@ async function renderDashboard(shop) {
 }
 
 function switchSellerTab(tab) {
+    // 1. Update UI
     document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
     document.querySelectorAll('.dashboard-section').forEach(s => s.classList.remove('active'));
 
-    event.currentTarget.classList.add('active');
-    document.getElementById(`section-${tab}`).classList.add('active');
+    // Find the clicked element or default to the one that matches the tab
+    const activeTabLink = document.querySelector(`.tab-link[onclick*="'${tab}'"]`);
+    if (activeTabLink) activeTabLink.classList.add('active');
 
+    const targetSection = document.getElementById(`section-${tab}`);
+    if (targetSection) targetSection.classList.add('active');
+
+    // 2. Load Data
     if (tab === 'overview') loadDashboardStats();
     if (tab === 'vouchers') loadVouchers();
     if (tab === 'messages') loadShopConversations();
+    if (tab === 'marketing') console.log('Marketing tab active'); // Placeholder for future logic
 }
 
 async function loadDashboardStats() {
