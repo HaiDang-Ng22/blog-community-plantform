@@ -973,7 +973,11 @@
                         <button class="admin-nav-item" onclick="switchAdminTab('users')">
                             <i class="fa-solid fa-users"></i> <span data-i18n="manage_users">Quản lý Người dùng</span>
                         </button>
-                        <button class="admin-nav-item" onclick="switchAdminTab('reports')">
+                        <button class="admin-nav-item" onclick="switchAdminTab('banners')">
+                        <i class="fa-solid fa-image"></i>
+                        <span>Quản lý Banners</span>
+                    </button>
+                    <button class="admin-nav-item" onclick="switchAdminTab('reports')">
                             <i class="fa-solid fa-flag"></i> <span data-i18n="violation_reports">Báo cáo vi phạm</span>
                             <span id="report-count-badge" class="badge badge-pending hidden">0</span>
                         </button>
@@ -1061,7 +1065,22 @@
                     </div>
                 </section>
 
-                <!-- Users Section -->
+                <!-- Banners Section -->
+            <section id="section-banners" class="admin-card hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3>Quản lý Banners</h3>
+                        <p style="font-size: 0.85rem; color: #64748b;">Cập nhật hình ảnh quảng cáo trên Marketplace.</p>
+                    </div>
+                    <button class="btn primary-btn" onclick="openAddBannerModal()" style="width: auto;">
+                        <i class="fa fa-plus"></i> Thêm Banner
+                    </button>
+                </div>
+
+                <div class="banner-list-grid" id="banner-list-admin">
+                    <!-- Banners will be listed here -->
+                </div>
+            </section>
                 <section id="section-users" class="admin-section hidden">
                     <div class="admin-card">
                         <div

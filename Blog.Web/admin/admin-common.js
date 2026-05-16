@@ -69,6 +69,9 @@
                     <a href="banned-words.html" class="nav-item ${currentPage === 'banned-words.html' ? 'active' : ''}">
                         <i class="fa-solid fa-ban"></i> <span>Từ khóa cấm</span>
                     </a>
+                    <a href="banners.html" class="nav-item ${currentPage === 'banners.html' ? 'active' : ''}">
+                        <i class="fa-solid fa-image"></i> <span>Quản lý Banners</span>
+                    </a>
                 </nav>
                 <div class="sidebar-footer">
                     <button onclick="adminLogout()" class="nav-item" style="background: none; border: none; width: 100%; color: #ef4444; cursor: pointer;">

@@ -75,6 +75,7 @@ function switchAdminTab(tabName) {
         if (typeof loadAdminActiveShops === 'function') loadAdminActiveShops();
     }
     if (tabName === 'categories' && typeof loadAdminCategories === 'function') loadAdminCategories();
+    if (tabName === 'banners' && typeof loadAdminBanners === 'function') loadAdminBanners();
 }
 
 window.switchAdminTab = switchAdminTab;

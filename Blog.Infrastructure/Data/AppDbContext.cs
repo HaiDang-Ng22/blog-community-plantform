@@ -50,6 +50,7 @@ public class AppDbContext : DbContext
     public DbSet<ShopConversation> ShopConversations { get; set; }
     public DbSet<ShopMessage> ShopMessages { get; set; }
     public DbSet<BannedWord> BannedWords { get; set; }
+    public DbSet<Banner> Banners { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
