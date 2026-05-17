@@ -10,12 +10,12 @@ const IS_LOCAL = window.location.hostname === 'localhost' ||
                  window.location.protocol === 'file:';
 
 // 👇👇👇 NẾU BẠN DEPLOY BACKEND Ở ĐÂU, HÃY ĐIỀN URL VÀO ĐÂY 👇👇👇
-const PRODUCTION_BACKEND_URL = 'https://blog-community-plantform.onrender.com';
+const PRODUCTION_BACKEND_URL = 'https://zynk-9al4.onrender.com';
 
 // Xác định API_BASE_URL
 const API_BASE_URL = IS_LOCAL
     ? 'http://localhost:7000/api'
-    : (PRODUCTION_BACKEND_URL && PRODUCTION_BACKEND_URL !== 'https://zynk-9al4.onrender.com'
+    : (PRODUCTION_BACKEND_URL && PRODUCTION_BACKEND_URL !== 'YOUR_BACKEND_URL'
         ? `${PRODUCTION_BACKEND_URL}/api`
         : `${window.location.origin}/api`); // Mặc định về origin nếu chưa cấu hình
 
