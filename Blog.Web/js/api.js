@@ -15,7 +15,7 @@ const PRODUCTION_BACKEND_URL = 'https://blog-community-plantform.onrender.com';
 // Xác định API_BASE_URL
 const API_BASE_URL = IS_LOCAL
     ? 'http://localhost:7000/api'
-    : (PRODUCTION_BACKEND_URL && PRODUCTION_BACKEND_URL !== 'https://blog-community-plantform.onrender.com'
+    : (PRODUCTION_BACKEND_URL && PRODUCTION_BACKEND_URL !== 'YOUR_BACKEND_URL'
         ? `${PRODUCTION_BACKEND_URL}/api`
         : `${window.location.origin}/api`); // Mặc định về origin nếu chưa cấu hình
 
