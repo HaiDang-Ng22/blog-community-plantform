@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCartBadge();
     initPremiumFeatures();
     initBannerSlider();
+    // Promo zone
+    loadPromoVouchers();
+    loadFlashSaleInline();
+    startFlashSaleCountdown2();
 });
 
 let _bannerIndex = 0;
@@ -44,11 +48,15 @@ function renderBanners(banners) {
     const sides = banners.filter(b => b.isMain === false);
 
     // Main slider
-    slider.innerHTML = mains.map((b, idx) => `
-        <div class="slide ${idx === 0 ? 'active' : ''}">
-            <img src="${b.imageUrl}" class="banner-img">
-        </div>
-    `).join('') + `
+    slider.innerHTML = mains.map((b, idx) => {
+        const isClickable = b.linkUrl && b.linkUrl.trim().length > 0;
+        const clickAttr = isClickable ? `onclick="window.location.href='${b.linkUrl.trim()}'" style="cursor: pointer;"` : 'style="cursor: default;"';
+        return `
+            <div class="slide ${idx === 0 ? 'active' : ''}" ${clickAttr}>
+                <img src="${b.imageUrl}" class="banner-img">
+            </div>
+        `;
+    }).join('') + `
         <div class="banner-dots">
             ${mains.map((_, idx) => `<span class="dot ${idx === 0 ? 'active' : ''}" onclick="goToSlide(${idx})"></span>`).join('')}
         </div>
@@ -70,11 +78,15 @@ function renderBanners(banners) {
             sideContainer.style.display = 'none';
         } else {
             sideContainer.style.display = 'flex';
-            sideContainer.innerHTML = sides.slice(0, 2).map(b => `
-                <div class="side-banner" onclick="window.location.href='${b.linkUrl || '#'}'">
-                    <img src="${b.imageUrl}" class="banner-img">
-                </div>
-            `).join('');
+            sideContainer.innerHTML = sides.slice(0, 2).map(b => {
+                const isClickable = b.linkUrl && b.linkUrl.trim().length > 0;
+                const clickAttr = isClickable ? `onclick="window.location.href='${b.linkUrl.trim()}'" style="cursor: pointer;"` : 'style="cursor: default;"';
+                return `
+                    <div class="side-banner" ${clickAttr}>
+                        <img src="${b.imageUrl}" class="banner-img">
+                    </div>
+                `;
+            }).join('');
         }
     }
 
@@ -1010,3 +1022,213 @@ async function openShopChat(shopId, shopName) {
 }
 
 window.openShopChat = openShopChat;
+
+// ═══════════════════════════════════════════
+// PROMOTIONS & EVENTS ZONE
+// ═══════════════════════════════════════════
+
+function switchPromoTab(tabName) {
+    // Tabs
+    document.querySelectorAll('.promo-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.promo-tab[data-tab="${tabName}"]`)?.classList.add('active');
+    // Content
+    document.querySelectorAll('.promo-tab-content').forEach(c => c.classList.remove('active'));
+    const content = document.getElementById(`tab-${tabName}`);
+    if (content) {
+        content.classList.remove('active');
+        // Force reflow for animation
+        void content.offsetWidth;
+        content.classList.add('active');
+    }
+}
+window.switchPromoTab = switchPromoTab;
+
+// ── Voucher Loading (max 3 preview) ──
+async function loadPromoVouchers() {
+    const carousel = document.getElementById('voucher-carousel');
+    if (!carousel) return;
+
+    try {
+        const response = await window.api.get('marketplace/vouchers');
+        const { vouchers, claimedIds } = response;
+
+        if (!vouchers || vouchers.length === 0) {
+            carousel.innerHTML = `
+                <div class="voucher-empty-state">
+                    <i class="fa-solid fa-ticket-simple"></i>
+                    <h4>Hiện chưa có mã giảm giá nào</h4>
+                    <p>Quay lại sau để săn voucher hot nhé!</p>
+                </div>
+            `;
+            return;
+        }
+
+        const gradients = ['gradient-orange', 'gradient-blue', 'gradient-purple', 'gradient-green'];
+        const previewVouchers = vouchers.slice(0, 3); // Only show 3 in marketplace
+
+        let html = previewVouchers.map((v, idx) => {
+            const isClaimed = claimedIds && claimedIds.includes(v.id);
+            const usagePercent = v.usageLimit > 0 ? Math.min((v.usedCount / v.usageLimit) * 100, 100) : 0;
+            const gradient = gradients[idx % gradients.length];
+            const discountDisplay = v.discountType === 'Percentage' 
+                ? `<span class="voucher-discount-val">${v.discountValue}%</span><span class="voucher-discount-label">Giảm</span>`
+                : `<span class="voucher-discount-val">${formatShortCurrency(v.discountValue)}</span><span class="voucher-discount-label">Giảm</span>`;
+            const desc = v.description || `Giảm ${v.discountValue}${v.discountType === 'Percentage' ? '%' : 'đ'} cho đơn từ ${formatShortCurrency(v.minOrderValue || 0)}`;
+
+            return `
+                <div class="voucher-ticket">
+                    <div class="voucher-ticket-left ${gradient}">
+                        ${discountDisplay}
+                    </div>
+                    <div class="voucher-ticket-right">
+                        <div>
+                            <div class="voucher-ticket-code">${v.code}</div>
+                            <div class="voucher-ticket-desc">${desc}</div>
+                        </div>
+                        <div>
+                            <div class="voucher-progress-mini">
+                                <div class="voucher-progress-bar">
+                                    <div class="voucher-progress-fill" style="width: ${usagePercent}%"></div>
+                                </div>
+                                <span class="voucher-usage-text">Đã dùng ${Math.round(usagePercent)}%</span>
+                            </div>
+                            <div class="voucher-ticket-footer">
+                                <span class="voucher-expiry">HSD: ${new Date(v.endDate).toLocaleDateString('vi-VN')}</span>
+                                <button class="btn-claim-mini ${isClaimed ? 'claimed' : 'claim'}" 
+                                        id="promo-btn-${v.id}"
+                                        onclick="${isClaimed ? '' : `claimPromoVoucher('${v.id}')`}">
+                                    ${isClaimed ? '<i class="fa-solid fa-check"></i> Đã lưu' : '<i class="fa-solid fa-plus"></i> Lưu mã'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Add "Xem thêm" button if there are more vouchers
+        if (vouchers.length > 3) {
+            html += `
+                <a href="vouchers.html" class="voucher-see-more-card">
+                    <div class="see-more-inner">
+                        <i class="fa-solid fa-ticket"></i>
+                        <span>Xem thêm ${vouchers.length - 3} mã</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+            `;
+        } else if (vouchers.length > 0) {
+            html += `
+                <a href="vouchers.html" class="voucher-see-more-card">
+                    <div class="see-more-inner">
+                        <i class="fa-solid fa-ticket"></i>
+                        <span>Xem tất cả voucher</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+            `;
+        }
+
+        carousel.innerHTML = html;
+
+    } catch (e) {
+        console.error('Failed to load promo vouchers', e);
+        carousel.innerHTML = `
+            <div class="voucher-empty-state">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <h4>Không thể tải voucher</h4>
+                <p>Vui lòng thử lại sau.</p>
+            </div>
+        `;
+    }
+}
+
+async function claimPromoVoucher(id) {
+    const btn = document.getElementById(`promo-btn-${id}`);
+    if (!btn || btn.classList.contains('claimed')) return;
+
+    if (!localStorage.getItem('auth_token')) {
+        window.location.href = 'auth.html';
+        return;
+    }
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        await window.api.post(`marketplace/vouchers/${id}/claim`);
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Đã lưu';
+        btn.classList.remove('claim');
+        btn.classList.add('claimed');
+        btn.onclick = null;
+        
+        // Show success notification
+        if (window.showNotification) {
+            showNotification('Thành công', 'Đã lưu mã giảm giá vào kho của bạn!');
+        }
+    } catch (err) {
+        btn.innerHTML = '<i class="fa-solid fa-plus"></i> Lưu mã';
+        btn.disabled = false;
+        alert(err.message || 'Không thể lưu mã giảm giá.');
+    }
+}
+window.claimPromoVoucher = claimPromoVoucher;
+
+function formatShortCurrency(v) {
+    if (v >= 1000000) return (v / 1000000).toFixed(1).replace('.0', '') + 'M';
+    if (v >= 1000) return (v / 1000).toFixed(0) + 'K';
+    return v + 'đ';
+}
+
+// ── Flash Sale Inline ──
+async function loadFlashSaleInline() {
+    const container = document.getElementById('flash-products-scroll');
+    if (!container) return;
+
+    try {
+        const products = await window.api.get('marketplace/products?sortBy=sales_desc');
+        const flashProds = products.slice(0, 8);
+
+        container.innerHTML = flashProds.map(p => {
+            const discountPct = Math.floor(Math.random() * 30) + 15;
+            const salePrice = Math.round(p.price * (1 - discountPct / 100));
+            const soldPct = Math.floor(Math.random() * 60) + 30;
+
+            return `
+                <div class="flash-mini-card" onclick="openProductModal('${p.id}')">
+                    <img src="${p.featuredImageUrl || 'https://via.placeholder.com/160'}" alt="${p.name}">
+                    <div class="flash-mini-info">
+                        <div class="flash-mini-price">${formatCurrency(salePrice)}</div>
+                        <div class="flash-mini-original">${formatCurrency(p.price)}</div>
+                        <div class="flash-mini-sold">
+                            <div class="flash-mini-sold-fill" style="width: ${soldPct}%"></div>
+                            <div class="flash-mini-sold-text">Đã bán ${soldPct}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load flash sale inline', e);
+    }
+}
+
+function startFlashSaleCountdown2() {
+    const hoursEl = document.getElementById('fs2-hours');
+    const minsEl = document.getElementById('fs2-minutes');
+    const secsEl = document.getElementById('fs2-seconds');
+    if (!hoursEl || !minsEl || !secsEl) return;
+
+    let timeLeft = (2 * 3600) + (58 * 60) + 59;
+
+    setInterval(() => {
+        if (timeLeft <= 0) return;
+        timeLeft--;
+        const h = Math.floor(timeLeft / 3600);
+        const m = Math.floor((timeLeft % 3600) / 60);
+        const s = timeLeft % 60;
+        hoursEl.textContent = h.toString().padStart(2, '0');
+        minsEl.textContent = m.toString().padStart(2, '0');
+        secsEl.textContent = s.toString().padStart(2, '0');
+    }, 1000);
+}
+

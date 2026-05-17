@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Voucher | Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .voucher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .voucher-card {
+            background: var(--admin-card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--admin-border);
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .voucher-card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            border-color: var(--admin-primary);
+        }
+
+        .voucher-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .voucher-code {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--admin-primary);
+            background: #eef2ff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-inactive { background: #fee2e2; color: #991b1b; }
+        .status-public { background: #fef9c3; color: #854d0e; margin-left: 5px; }
+
+        .voucher-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .voucher-desc {
+            font-size: 0.875rem;
+            color: var(--admin-text-muted);
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .voucher-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.8125rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--admin-text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--admin-text-main);
+        }
+
+        .voucher-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--admin-border);
+            padding-top: 1rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--admin-border);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--admin-text-muted);
+        }
+
+        .btn-icon:hover {
+            background: var(--admin-bg);
+            color: var(--admin-text-main);
+        }
+
+        .btn-delete:hover {
+            background: #fee2e2;
+            color: var(--admin-danger);
+            border-color: #fecaca;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 550px;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--admin-border);
+            border-radius: 8px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .modal-footer {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Quản lý Voucher</h1>
+                <p>Tạo và quản lý mã giảm giá toàn hệ thống</p>
+            </div>
+            <button class="btn btn-primary" onclick="openModal()">
+                <i class="fa-solid fa-plus"></i> Tạo Voucher Mới
+            </button>
+        </header>
+
+        <div class="voucher-grid" id="voucher-grid">
+            <p style="text-align: center; color: var(--admin-text-muted); padding: 2rem;">Đang tải dữ liệu...</p>
+        </div>
+    </main>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal" id="voucherModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Tạo Voucher Mới</h2>
+            </div>
+            <form id="voucherForm">
+                <input type="hidden" id="voucherId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mã Voucher</label>
+                        <input type="text" id="code" class="form-control" placeholder="VÍ DỤ: ZYNK10" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Loại giảm giá</label>
+                        <select id="discountType" class="form-control">
+                            <option value="Percentage">Phần trăm (%)</option>
+                            <option value="FixedAmount">Số tiền cố định (đ)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea id="description" class="form-control" rows="2" placeholder="Mô tả ngắn về voucher"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Giá trị giảm</label>
+                        <input type="number" id="discountValue" class="form-control" placeholder="10 hoặc 50000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Đơn tối thiểu</label>
+                        <input type="number" id="minOrderValue" class="form-control" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số lượng giới hạn</label>
+                        <input type="number" id="usageLimit" class="form-control" value="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Giảm tối đa (nếu %)</label>
+                        <input type="number" id="maxDiscountAmount" class="form-control" placeholder="Để trống nếu không giới hạn">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ngày bắt đầu</label>
+                        <input type="datetime-local" id="startDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày kết thúc</label>
+                        <input type="datetime-local" id="endDate" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <input type="checkbox" id="isPublic" style="width: 20px; height: 20px; cursor: pointer;">
+                    <label for="isPublic" style="margin-bottom: 0; cursor: pointer;">Hiển thị ở trang Săn Voucher (Dành cho User)</label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu Voucher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVouchers();
+            
+            // Set default dates
+            const now = new Date();
+            const nextWeek = new Date();
+            nextWeek.setDate(now.getDate() + 7);
+            
+            // Fix timezone for datetime-local
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
+            const localISOTimeNext = (new Date(nextWeek - offset)).toISOString().slice(0, 16);
+            
+            document.getElementById('startDate').value = localISOTime;
+            document.getElementById('endDate').value = localISOTimeNext;
+        });
+
+        async function loadVouchers() {
+            try {
+                const vouchers = await window.adminApi.get('admin/vouchers');
+                renderVouchers(vouchers);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderVouchers(vouchers) {
+            const grid = document.getElementById('voucher-grid');
+            if (!vouchers || vouchers.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: var(--admin-text-muted); padding: 2rem; grid-column: 1/-1;">Chưa có voucher nào.</p>';
+                return;
+            }
+
+            grid.innerHTML = vouchers.map(v => `
+                <div class="voucher-card">
+                    <div class="voucher-header">
+                        <span class="voucher-code">${v.code}</span>
+                        <div>
+                            <span class="status-badge ${v.isActive ? 'status-active' : 'status-inactive'}">
+                                ${v.isActive ? 'Đang chạy' : 'Tạm dừng'}
+                            </span>
+                            ${v.isPublic ? '<span class="status-badge status-public">Công khai</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="voucher-body">
+                        <div class="voucher-desc">${v.description || 'Không có mô tả'}</div>
+                        <div class="voucher-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Loại giảm</span>
+                                <span class="stat-value">${v.discountType === 'Percentage' ? v.discountValue + '%' : formatCurrency(v.discountValue)}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Đã dùng / Tổng</span>
+                                <span class="stat-value">${v.usedCount} / ${v.usageLimit}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Đơn tối thiểu</span>
+                                <span class="stat-value">${v.minOrderValue ? formatCurrency(v.minOrderValue) : '0đ'}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Hết hạn</span>
+                                <span class="stat-value" style="color: ${new Date(v.endDate) < new Date() ? 'var(--admin-danger)' : 'inherit'}">
+                                    ${new Date(v.endDate).toLocaleDateString('vi-VN')}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="voucher-actions">
+                        <button class="btn-icon" onclick="editVoucher('${v.id}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-icon btn-delete" onclick="deleteVoucher('${v.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatCurrency(v) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
+        }
+
+        function openModal() {
+            document.getElementById('modalTitle').textContent = 'Tạo Voucher Mới';
+            document.getElementById('voucherForm').reset();
+            document.getElementById('voucherId').value = '';
+            document.getElementById('voucherModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('voucherModal').style.display = 'none';
+        }
+
+        async function editVoucher(id) {
+            try {
+                const vouchers = await window.adminApi.get('admin/vouchers');
+                const v = vouchers.find(x => x.id === id);
+                if (!v) return;
+
+                document.getElementById('modalTitle').textContent = 'Chỉnh sửa Voucher';
+                document.getElementById('voucherId').value = v.id;
+                document.getElementById('code').value = v.code;
+                document.getElementById('description').value = v.description;
+                document.getElementById('discountType').value = v.discountType;
+                document.getElementById('discountValue').value = v.discountValue;
+                document.getElementById('minOrderValue').value = v.minOrderValue;
+                document.getElementById('maxDiscountAmount').value = v.maxDiscountAmount;
+                document.getElementById('usageLimit').value = v.usageLimit;
+                document.getElementById('isPublic').checked = v.isPublic;
+                
+                // Fix timezone for datetime-local
+                const start = new Date(v.startDate);
+                const end = new Date(v.endDate);
+                const offset = start.getTimezoneOffset() * 60000;
+                
+                document.getElementById('startDate').value = (new Date(start - offset)).toISOString().slice(0, 16);
+                document.getElementById('endDate').value = (new Date(end - offset)).toISOString().slice(0, 16);
+
+                document.getElementById('voucherModal').style.display = 'flex';
+            } catch (e) { console.error(e); }
+        }
+
+        document.getElementById('voucherForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('voucherId').value;
+            const data = {
+                code: document.getElementById('code').value,
+                description: document.getElementById('description').value,
+                discountType: document.getElementById('discountType').value,
+                discountValue: parseFloat(document.getElementById('discountValue').value),
+                minOrderValue: parseFloat(document.getElementById('minOrderValue').value) || 0,
+                maxDiscountAmount: parseFloat(document.getElementById('maxDiscountAmount').value) || null,
+                usageLimit: parseInt(document.getElementById('usageLimit').value),
+                startDate: new Date(document.getElementById('startDate').value).toISOString(),
+                endDate: new Date(document.getElementById('endDate').value).toISOString(),
+                isPublic: document.getElementById('isPublic').checked
+            };
+
+            try {
+                if (id) {
+                    await window.adminApi.put(`admin/vouchers/${id}`, data);
+                } else {
+                    await window.adminApi.post('admin/vouchers', data);
+                }
+                closeModal();
+                loadVouchers();
+                alert('Đã lưu voucher thành công!');
+            } catch (err) {
+                alert('Lỗi: ' + (err.message || 'Không thể lưu voucher'));
+            }
+        };
+
+        async function deleteVoucher(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa voucher này?')) return;
+            try {
+                await window.adminApi.delete(`admin/vouchers/${id}`);
+                loadVouchers();
+            } catch (e) { console.error(e); }
+        }
+    </script>
+</body>
+</html>

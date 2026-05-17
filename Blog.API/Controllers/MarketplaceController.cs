@@ -2,6 +2,7 @@ using Blog.Application.Dtos;
 using Blog.Domain.Entities;
 using Blog.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
@@ -326,5 +327,63 @@ public class MarketplaceController : ControllerBase
             .ThenByDescending(b => b.CreatedAt)
             .ToListAsync();
         return Ok(banners);
+    }
+
+    [HttpGet("vouchers")]
+    public async Task<IActionResult> GetPublicVouchers()
+    {
+        var now = DateTime.UtcNow;
+        var vouchers = await _context.Vouchers
+            .Where(v => v.IsPublic && v.IsActive && v.StartDate <= now && v.EndDate >= now && v.UsedCount < v.UsageLimit)
+            .OrderByDescending(v => v.CreatedAt)
+            .ToListAsync();
+            
+        var userId = User.GetUserId();
+        if (userId.HasValue)
+        {
+            var claimedIds = await _context.UserVouchers
+                .Where(uv => uv.UserId == userId.Value)
+                .Select(uv => uv.VoucherId)
+                .ToListAsync();
+            
+            return Ok(new { vouchers, claimedIds });
+        }
+
+        return Ok(new { vouchers, claimedIds = new List<Guid>() });
+    }
+
+    [HttpPost("vouchers/{id}/claim")]
+    [Authorize]
+    public async Task<IActionResult> ClaimVoucher(Guid id)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var voucher = await _context.Vouchers.FindAsync(id);
+        if (voucher == null) return NotFound(new { message = "Không tìm thấy mã giảm giá." });
+
+        if (!voucher.IsActive || voucher.StartDate > DateTime.UtcNow || voucher.EndDate < DateTime.UtcNow)
+            return BadRequest(new { message = "Mã giảm giá này hiện không khả dụng." });
+
+        if (voucher.UsedCount >= voucher.UsageLimit)
+            return BadRequest(new { message = "Mã giảm giá đã hết lượt sử dụng." });
+
+        var alreadyClaimed = await _context.UserVouchers.AnyAsync(uv => uv.UserId == userId && uv.VoucherId == id);
+        if (alreadyClaimed)
+            return BadRequest(new { message = "Bạn đã lưu mã giảm giá này rồi." });
+
+        var userVoucher = new UserVoucher
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            VoucherId = id,
+            ClaimedAt = DateTime.UtcNow
+        };
+
+        _context.UserVouchers.Add(userVoucher);
+        voucher.UsedCount++; 
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã lưu mã giảm giá vào kho của bạn!" });
     }
 }

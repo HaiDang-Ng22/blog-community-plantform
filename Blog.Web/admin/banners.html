@@ -254,6 +254,54 @@
         </div>
     </div>
 
+    <!-- Edit Link Modal -->
+    <div id="link-modal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div class="card" style="width: 90%; max-width: 500px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; background: white; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <i class="fa-solid fa-link" style="color: var(--admin-primary);"></i> Cấu hình Liên kết Banner
+                </h2>
+                <button onclick="closeLinkModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; line-height: 1;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem; text-align: left;">Đường dẫn đích (URL hoặc Trang):</label>
+                <input type="text" id="modal-link-url" class="admin-input" placeholder="Ví dụ: vouchers.html hoặc https://example.com" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; box-sizing: border-box;">
+                <p style="font-size: 0.75rem; color: #64748b; margin-top: 6px; text-align: left; line-height: 1.3;">
+                    * Để trống nếu không muốn người dùng click được vào banner này (Sẽ hiển thị dạng không click được ở Marketplace).
+                </p>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div style="margin-bottom: 1.5rem; text-align: left;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">Gợi ý liên kết nhanh:</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <button type="button" class="btn" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; cursor: pointer;" onclick="suggestLink('vouchers.html')">
+                        🎟️ Trang Săn Voucher
+                    </button>
+                    <button type="button" class="btn" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; cursor: pointer;" onclick="suggestLink('marketplace.html')">
+                        🛍️ Trang Khám Phá
+                    </button>
+                    <button type="button" class="btn" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; cursor: pointer;" onclick="suggestLink('profile.html')">
+                        👤 Trang Cá Nhân
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
+                <button type="button" class="btn" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;" onclick="clearLink()">
+                    <i class="fa-solid fa-link-slash"></i> Gỡ Liên kết
+                </button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" style="padding: 8px 16px; border-radius: 8px; cursor: pointer;" onclick="closeLinkModal()">Hủy</button>
+                    <button type="button" class="btn btn-primary" style="padding: 8px 16px; border-radius: 8px; cursor: pointer;" onclick="saveBannerLink()">
+                        <i class="fa-solid fa-check"></i> Lưu Cấu hình
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/api.js"></script>
     <script src="admin-common.js"></script>
     <script>
@@ -284,25 +332,33 @@
                 return;
             }
 
-            list.innerHTML = allBanners.map((b, index) => `
-                <div class="draggable-banner" draggable="true" data-id="${b.id}" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-                    <div class="handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <img src="${b.imageUrl}" class="banner-thumb">
-                    <div class="banner-details">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="badge ${b.isMain ? 'badge-success' : 'badge-warning'}" style="font-size: 0.7rem; cursor: pointer;" onclick="toggleBannerType('${b.id}')">
-                                ${b.isMain ? 'Chính (Slider)' : 'Phụ (Phải)'}
-                            </span>
-                            <span style="font-weight: 600; font-size: 0.9rem;">Thứ tự: ${index + 1}</span>
+            list.innerHTML = allBanners.map((b, index) => {
+                const hasLink = b.linkUrl && b.linkUrl.trim().length > 0;
+                const linkBadge = hasLink 
+                    ? `<span class="badge" style="font-size: 0.72rem; display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-link"></i> Liên kết: ${b.linkUrl}</span>`
+                    : `<span class="badge" style="font-size: 0.72rem; display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-link-slash"></i> Không click được (Chưa gắn link)</span>`;
+                
+                return `
+                    <div class="draggable-banner" draggable="true" data-id="${b.id}" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+                        <div class="handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                        <img src="${b.imageUrl}" class="banner-thumb">
+                        <div class="banner-details" style="text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                                <span class="badge ${b.isMain ? 'badge-success' : 'badge-warning'}" style="font-size: 0.7rem; cursor: pointer;" onclick="toggleBannerType('${b.id}')">
+                                    ${b.isMain ? 'Chính (Slider)' : 'Phụ (Phải)'}
+                                </span>
+                                <span style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">Thứ tự: ${index + 1}</span>
+                            </div>
+                            <div style="margin-bottom: 6px; display: flex;">${linkBadge}</div>
+                            <div class="banner-url-text">${b.imageUrl}</div>
                         </div>
-                        <div class="banner-url-text">${b.imageUrl}</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-circle btn-edit" title="Cấu hình liên kết" style="background: ${hasLink ? '#e0f2fe' : '#f1f5f9'}; color: ${hasLink ? '#0284c7' : '#64748b'}; border: 1px solid ${hasLink ? '#bae6fd' : '#e2e8f0'}; cursor: pointer;" onclick="openLinkModal('${b.id}')"><i class="fa-solid fa-link"></i></button>
+                            <button class="btn-circle btn-delete" onclick="deleteBanner('${b.id}')" style="cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-circle btn-edit" onclick="editBanner('${b.id}')"><i class="fa-solid fa-link"></i></button>
-                        <button class="btn-circle btn-delete" onclick="deleteBanner('${b.id}')"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // --- Drag & Drop Logic ---
@@ -500,15 +556,49 @@
             startPreviewTimer();
         }
 
-        async function editBanner(id) {
+        let activeEditBannerId = null;
+
+        function openLinkModal(id) {
+            activeEditBannerId = id;
             const b = allBanners.find(x => x.id === id);
-            const newLink = prompt("Nhập link điều hướng mới (URL hoặc trang local):", b.linkUrl || "");
-            if (newLink === null) return;
+            if (!b) return;
+
+            document.getElementById('modal-link-url').value = b.linkUrl || '';
+            const modal = document.getElementById('link-modal');
+            modal.style.display = 'flex';
+        }
+
+        function closeLinkModal() {
+            const modal = document.getElementById('link-modal');
+            modal.style.display = 'none';
+            activeEditBannerId = null;
+        }
+
+        function suggestLink(val) {
+            document.getElementById('modal-link-url').value = val;
+        }
+
+        function clearLink() {
+            document.getElementById('modal-link-url').value = '';
+        }
+
+        async function saveBannerLink() {
+            if (!activeEditBannerId) return;
+            const b = allBanners.find(x => x.id === activeEditBannerId);
+            if (!b) return;
+
+            const url = document.getElementById('modal-link-url').value.trim();
             
             try {
-                await window.adminApi.put(`admin/banners/${id}`, { ...b, linkUrl: newLink });
+                await window.adminApi.put(`admin/banners/${activeEditBannerId}`, { 
+                    ...b, 
+                    linkUrl: url 
+                });
+                closeLinkModal();
                 loadBanners();
-            } catch (err) { alert(err.message); }
+            } catch (err) { 
+                alert(err.message || 'Không thể lưu liên kết.'); 
+            }
         }
 
         document.addEventListener('DOMContentLoaded', loadBanners);

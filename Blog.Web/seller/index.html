@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng quan Kênh Người Bán - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <main class="seller-main">
+        <header class="seller-header">
+            <div class="seller-title">
+                <h1>Tổng quan Cửa hàng</h1>
+                <p>Theo dõi hiệu quả bán hàng, doanh thu và các hoạt động kinh doanh của bạn.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="loadDashboardStats()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Làm mới dữ liệu
+                </button>
+            </div>
+        </header>
+
+        <!-- Metric Cards -->
+        <div class="metrics-grid">
+            <div class="metric-card blue">
+                <div class="metric-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                <div class="metric-info">
+                    <span class="metric-label">Tổng đơn hàng</span>
+                    <span class="metric-value" id="stat-orders">0</span>
+                </div>
+            </div>
+            <div class="metric-card green">
+                <div class="metric-icon"><i class="fa-solid fa-wallet"></i></div>
+                <div class="metric-info">
+                    <span class="metric-label">Doanh thu ước tính</span>
+                    <span class="metric-value" id="stat-revenue">0đ</span>
+                </div>
+            </div>
+            <div class="metric-card orange">
+                <div class="metric-icon"><i class="fa-solid fa-box-open"></i></div>
+                <div class="metric-info">
+                    <span class="metric-label">Tổng sản phẩm</span>
+                    <span class="metric-value" id="stat-products">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-chart-line" style="color: var(--seller-primary);"></i> Doanh thu 7 ngày qua</h3>
+            </div>
+            <div style="position: relative; height: 350px; width: 100%;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        let _revenueChart = null;
+
+        async function initPage() {
+            loadDashboardStats();
+        }
+
+        async function loadDashboardStats() {
+            try {
+                const stats = await window.api.get('seller/dashboard-stats');
+                document.getElementById('stat-orders').textContent = stats.totalOrders;
+                document.getElementById('stat-revenue').textContent = formatCurrency(stats.totalRevenue);
+                document.getElementById('stat-products').textContent = stats.totalProducts;
+
+                renderRevenueChart(stats.revenueChart);
+            } catch (e) {
+                console.error('Failed to load dashboard stats', e);
+            }
+        }
+
+        function renderRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            if (_revenueChart) _revenueChart.destroy();
+
+            _revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: data.map(d => d.revenue),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#10b981',
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                callback: (value) => formatCurrency(value)
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

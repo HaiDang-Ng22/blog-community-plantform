@@ -46,7 +46,7 @@ function renderSettingsSidebar() {
         { id: 'security', name: 'Bảo mật', icon: 'fa-shield-halved', url: 'security.html' },
         { id: 'privacy', name: 'Quyền riêng tư', icon: 'fa-lock', url: 'privacy.html' },
         { id: 'verification', name: 'Xác minh danh tính', icon: 'fa-certificate', url: 'verification.html' },
-        { id: 'marketplace', name: 'Đăng ký bán hàng', icon: 'fa-store', url: '../seller-center.html' },
+        { id: 'marketplace', name: 'Đăng ký bán hàng', icon: 'fa-store', url: '../seller/index.html' },
         { label: 'TRẢI NGHIỆM', type: 'header' },
         { id: 'notifications', name: 'Thông báo', icon: 'fa-bell', url: 'notifications.html' },
         { id: 'appearance', name: 'Giao diện', icon: 'fa-palette', url: 'appearance.html' },
@@ -70,7 +70,7 @@ function renderSettingsSidebar() {
 }
 
 async function updateSidebarMarketplaceStatus() {
-    const marketplaceItem = document.querySelector('a[href="../seller-center.html"]');
+    const marketplaceItem = document.querySelector('a[href="../seller/index.html"]');
     if (!marketplaceItem || !window.api) return;
 
     try {

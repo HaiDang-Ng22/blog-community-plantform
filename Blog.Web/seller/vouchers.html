@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khuyến mãi - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <style>
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.hidden {
+            display: none !important;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--seller-border);
+            width: 100%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFade 0.25s ease-out;
+        }
+        @keyframes modalFade {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <main class="seller-main">
+        <header class="seller-header">
+            <div class="seller-title">
+                <h1>Quản lý Mã giảm giá</h1>
+                <p>Tạo các mã giảm giá cho shop của bạn để tăng doanh thu và thu hút khách hàng trung thành.</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="openAddVoucherModal()">
+                    <i class="fa-solid fa-plus"></i> Tạo mã giảm giá mới
+                </button>
+            </div>
+        </header>
+
+        <!-- Voucher List Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-ticket" style="color: var(--seller-primary);"></i> Danh sách mã giảm giá hoạt động</h3>
+            </div>
+            <div class="table-wrapper">
+                <table class="seller-table">
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Mô tả chương trình</th>
+                            <th>Mức giảm</th>
+                            <th>Thời gian áp dụng</th>
+                            <th>Lượt dùng (Đã/Tối đa)</th>
+                            <th style="width: 80px; text-align: center;">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="voucher-list-body">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem;">
+                                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--seller-primary);"></i>
+                                <p style="margin-top: 1rem; color: var(--seller-text-light);">Đang tải danh sách voucher...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Tạo Voucher Mới -->
+    <div id="voucher-add-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--seller-border); display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a;"><i class="fa-solid fa-ticket" style="color: var(--seller-primary); margin-right: 8px;"></i>Tạo mã giảm giá mới</h2>
+                <button onclick="closeAddVoucherModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;">&times;</button>
+            </div>
+            
+            <form id="form-add-voucher" style="padding: 2rem;">
+                <div class="form-group">
+                    <label for="v-code">Mã giảm giá <span style="color: red;">*</span></label>
+                    <input type="text" id="v-code" class="form-input" placeholder="Ví dụ: COCO50K (Viết hoa không dấu, không cách)" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="v-desc">Mô tả chương trình <span style="color: red;">*</span></label>
+                    <input type="text" id="v-desc" class="form-input" placeholder="Ví dụ: Giảm 50k cho đơn hàng từ 500k trở lên" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="v-type">Loại chiết khấu</label>
+                        <select id="v-type" class="form-input">
+                            <option value="FixedAmount">Số tiền cố định (đ)</option>
+                            <option value="Percentage">Phần trăm (%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="v-value">Mức giảm giá <span style="color: red;">*</span></label>
+                        <input type="number" id="v-value" class="form-input" placeholder="Mức giảm..." required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="v-min-order">Giá trị đơn tối thiểu (đ)</label>
+                        <input type="number" id="v-min-order" class="form-input" placeholder="Ví dụ: 200000">
+                    </div>
+                    <div class="form-group">
+                        <label for="v-max-discount">Mức giảm tối đa (đ)</label>
+                        <input type="number" id="v-max-discount" class="form-input" placeholder="Bắt buộc nếu giảm theo %">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="v-start">Ngày bắt đầu hiệu lực <span style="color: red;">*</span></label>
+                        <input type="date" id="v-start" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="v-end">Ngày hết hạn hiệu lực <span style="color: red;">*</span></label>
+                        <input type="date" id="v-end" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="v-limit">Giới hạn tổng lượt sử dụng</label>
+                    <input type="number" id="v-limit" class="form-input" placeholder="Để trống nếu không giới hạn">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu & Kích hoạt
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddVoucherModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        async function initPage() {
+            await loadVouchers();
+        }
+
+        async function loadVouchers() {
+            const tbody = document.getElementById('voucher-list-body');
+            if (!tbody) return;
+
+            try {
+                const vouchers = await window.api.get('seller/vouchers');
+                if (vouchers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--seller-text-light);">Shop chưa tạo mã giảm giá nào.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = vouchers.map(v => `
+                    <tr>
+                        <td><strong style="color: #4f46e5; background: #e0e7ff; padding: 4px 8px; border-radius: 6px; font-family: monospace; font-size: 0.95rem;">${v.code}</strong></td>
+                        <td style="font-weight: 500;">${v.description}</td>
+                        <td style="font-weight: 700; color: var(--seller-primary);">
+                            ${v.discountType === 'Percentage' ? v.discountValue + '%' : formatCurrency(v.discountValue)}
+                        </td>
+                        <td style="font-size: 0.85rem; color: var(--seller-text-light);">
+                            ${new Date(v.startDate).toLocaleDateString('vi')} - ${new Date(v.endDate).toLocaleDateString('vi')}
+                        </td>
+                        <td style="font-weight: 500;">${v.usedCount} / ${v.usageLimit || '∞'}</td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-secondary" onclick="deleteVoucher('${v.id}')" style="padding: 0.4rem; color: #ef4444; border-color: #fee2e2;"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 2rem;">Không thể lấy danh sách voucher.</td></tr>';
+            }
+        }
+
+        function openAddVoucherModal() {
+            document.getElementById('form-add-voucher').reset();
+            
+            // Auto fill start and end dates with placeholder dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('v-start').value = today;
+
+            document.getElementById('voucher-add-modal').classList.remove('hidden');
+        }
+
+        function closeAddVoucherModal() {
+            document.getElementById('voucher-add-modal').classList.add('hidden');
+        }
+
+        document.getElementById('form-add-voucher').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                code: document.getElementById('v-code').value.toUpperCase().trim(),
+                description: document.getElementById('v-desc').value,
+                discountType: document.getElementById('v-type').value,
+                discountValue: parseFloat(document.getElementById('v-value').value),
+                minOrderValue: parseFloat(document.getElementById('v-min-order').value) || 0,
+                maxDiscountAmount: parseFloat(document.getElementById('v-max-discount').value) || 0,
+                startDate: document.getElementById('v-start').value,
+                endDate: document.getElementById('v-end').value,
+                usageLimit: parseInt(document.getElementById('v-limit').value) || null
+            };
+
+            try {
+                await window.api.post('seller/vouchers', data);
+                alert('Tạo mã giảm giá thành công!');
+                closeAddVoucherModal();
+                await loadVouchers();
+            } catch (err) {
+                alert(err.message || 'Lỗi khi tạo mã giảm giá.');
+            }
+        };
+
+        async function deleteVoucher(id) {
+            if (!confirm('Bạn chắc chắn muốn xóa vĩnh viễn mã giảm giá này?')) return;
+            try {
+                await window.api.delete(`seller/vouchers/${id}`);
+                alert('Đã xóa mã giảm giá thành công!');
+                await loadVouchers();
+            } catch (e) {
+                alert(e.message || 'Không thể xóa mã giảm giá.');
+            }
+        }
+    </script>
+</body>
+</html>

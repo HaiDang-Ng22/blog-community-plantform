@@ -76,6 +76,78 @@
                     </div>
                 </div>
 
+                <!-- ═══════ Promotions & Events Zone ═══════ -->
+                <section class="promo-events-zone" id="promo-events-zone">
+                    <div class="promo-header">
+                        <div class="promo-title-group">
+                            <i class="fa-solid fa-fire-flame-curved promo-fire-icon"></i>
+                            <h2>Ưu đãi & Sự kiện</h2>
+                        </div>
+                        <div class="promo-tabs" id="promo-tabs">
+                            <button class="promo-tab active" data-tab="vouchers" onclick="switchPromoTab('vouchers')">
+                                <i class="fa-solid fa-ticket"></i> Voucher
+                            </button>
+                            <button class="promo-tab" data-tab="flash" onclick="switchPromoTab('flash')">
+                                <i class="fa-solid fa-bolt"></i> Flash Sale
+                            </button>
+                            <button class="promo-tab" data-tab="seasonal" onclick="switchPromoTab('seasonal')">
+                                <i class="fa-solid fa-snowflake"></i> Theo mùa
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Voucher Tab Content -->
+                    <div class="promo-tab-content active" id="tab-vouchers">
+                        <div class="voucher-carousel" id="voucher-carousel">
+                            <div class="voucher-shimmer"><div class="skeleton" style="height:130px; border-radius:14px;"></div></div>
+                            <div class="voucher-shimmer"><div class="skeleton" style="height:130px; border-radius:14px;"></div></div>
+                            <div class="voucher-shimmer"><div class="skeleton" style="height:130px; border-radius:14px;"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Flash Sale Tab Content -->
+                    <div class="promo-tab-content" id="tab-flash">
+                        <div class="flash-sale-inline">
+                            <div class="flash-timer-bar">
+                                <span class="flash-label"><i class="fa-solid fa-bolt"></i> KẾT THÚC TRONG</span>
+                                <div class="flash-countdown">
+                                    <span class="timer-box" id="fs2-hours">02</span>:<span class="timer-box" id="fs2-minutes">58</span>:<span class="timer-box" id="fs2-seconds">59</span>
+                                </div>
+                            </div>
+                            <div class="flash-products-scroll" id="flash-products-scroll">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seasonal Tab Content -->
+                    <div class="promo-tab-content" id="tab-seasonal">
+                        <div class="seasonal-events-grid" id="seasonal-events-grid">
+                            <div class="seasonal-card seasonal-summer">
+                                <div class="seasonal-badge">HOT</div>
+                                <div class="seasonal-icon"><i class="fa-solid fa-sun"></i></div>
+                                <h4>Summer Sale 2026</h4>
+                                <p>Giảm đến 50% tất cả sản phẩm thời trang mùa hè</p>
+                                <span class="seasonal-date"><i class="fa-regular fa-calendar"></i> 01/06 - 30/06</span>
+                            </div>
+                            <div class="seasonal-card seasonal-back2school">
+                                <div class="seasonal-badge upcoming">SẮP TỚI</div>
+                                <div class="seasonal-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                                <h4>Back to School</h4>
+                                <p>Ưu đãi lớn cho mùa tựu trường — đồ dùng học tập, balo</p>
+                                <span class="seasonal-date"><i class="fa-regular fa-calendar"></i> 15/08 - 15/09</span>
+                            </div>
+                            <div class="seasonal-card seasonal-mid-year">
+                                <div class="seasonal-badge live">ĐANG DIỄN RA</div>
+                                <div class="seasonal-icon"><i class="fa-solid fa-tags"></i></div>
+                                <h4>Mid-Year Mega Sale</h4>
+                                <p>Siêu sale giữa năm — Freeship toàn quốc, voucher khủng</p>
+                                <span class="seasonal-date"><i class="fa-regular fa-calendar"></i> 15/05 - 30/05</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <div class="market-header">
                     <h2 id="market-title" data-i18n="market_suggestions">Gợi ý hôm nay</h2>
                     <div class="market-filters">

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tin nhắn Shop - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <style>
+        .chat-empty-state {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--seller-text-light);
+            text-align: center;
+            padding: 2rem;
+        }
+        .chat-empty-state i {
+            font-size: 3.5rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+        .chat-empty-state p {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <main class="seller-main">
+        <header class="seller-header">
+            <div class="seller-title">
+                <h1>Tin nhắn Cửa hàng</h1>
+                <p>Trò chuyện trực tiếp, tư vấn sản phẩm và chăm sóc khách hàng của bạn.</p>
+            </div>
+        </header>
+
+        <!-- Premium Chat Container -->
+        <div class="chat-container">
+            <!-- Sidebar -->
+            <div class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    <i class="fa-regular fa-comments"></i> Hội thoại gần đây
+                </div>
+                <div class="chat-conversations" id="chat-sidebar-list">
+                    <div style="text-align: center; padding: 2rem; color: var(--seller-text-light);">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p style="font-size: 0.8rem; margin-top: 8px;">Đang tải danh sách...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Main View -->
+            <div class="chat-main" id="chat-main-view">
+                <div class="chat-empty-state">
+                    <i class="fa-regular fa-message"></i>
+                    <p>Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu tư vấn khách hàng</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        let _currentConversationId = null;
+        let _refreshInterval = null;
+
+        async function initPage() {
+            await loadShopConversations();
+            
+            // Auto refresh conversation list and active chat every 8 seconds
+            _refreshInterval = setInterval(async () => {
+                await loadShopConversations(false); // background reload without spinner
+                if (_currentConversationId) {
+                    await reloadMessagesSilently();
+                }
+            }, 8000);
+        }
+
+        // Make sure to clear interval when navigating away
+        window.addEventListener('beforeunload', () => {
+            if (_refreshInterval) clearInterval(_refreshInterval);
+        });
+
+        async function loadShopConversations(showSpinner = true) {
+            const sidebar = document.getElementById('chat-sidebar-list');
+            if (!sidebar) return;
+
+            if (showSpinner && sidebar.innerHTML.includes('fa-spinner') === false) {
+                sidebar.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--seller-text-light);">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p style="font-size: 0.8rem; margin-top: 8px;">Đang tải...</p>
+                    </div>
+                `;
+            }
+
+            try {
+                const convs = await window.api.get('shopchat/conversations');
+                if (convs.length === 0) {
+                    sidebar.innerHTML = '<p style="padding: 20px; text-align: center; color: var(--seller-text-light); font-size: 0.9rem;">Chưa có tin nhắn nào.</p>';
+                    return;
+                }
+
+                sidebar.innerHTML = convs.map(c => `
+                    <div class="chat-item ${c.id === _currentConversationId ? 'active' : ''}" onclick="selectConversation('${c.id}')">
+                        <img src="${c.buyerAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.buyerName)}" class="chat-avatar">
+                        <div class="chat-info">
+                            <div class="chat-name">${c.buyerName}</div>
+                            <div class="chat-last-msg">${c.lastMessage || 'Đã gửi một hình ảnh'}</div>
+                        </div>
+                        ${c.unreadCount > 0 ? `<div style="background:#ef4444; color:white; font-size:0.75rem; font-weight:700; border-radius:10px; padding:2px 6px; min-width:18px; text-align:center;">${c.unreadCount}</div>` : ''}
+                    </div>
+                `).join('');
+            } catch (e) {
+                sidebar.innerHTML = '<p style="color: #ef4444; padding: 20px; text-align: center; font-size: 0.9rem;">Lỗi tải danh sách hội thoại.</p>';
+            }
+        }
+
+        async function selectConversation(id) {
+            _currentConversationId = id;
+            
+            // Mark active state in sidebar immediately
+            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+            const activeItem = document.querySelector(`.chat-item[onclick*="${id}"]`);
+            if (activeItem) activeItem.classList.add('active');
+
+            const main = document.getElementById('chat-main-view');
+            main.innerHTML = `
+                <div class="chat-header">
+                    <h3 id="chat-buyer-name"><i class="fa-solid fa-circle" style="color: #10b981; font-size: 0.6rem; margin-right: 6px; vertical-align: middle;"></i> Đang kết nối khách hàng...</h3>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div style="text-align: center; padding: 4rem;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--seller-primary);"></i></div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" class="chat-input" placeholder="Nhập câu trả lời tư vấn cho khách hàng..." onkeypress="if(event.key === 'Enter') sendShopMessage()">
+                    <button class="chat-send-btn" onclick="sendShopMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            `;
+
+            try {
+                const messages = await window.api.get(`shopchat/messages/${id}`);
+                const sidebarItem = _currentConversationId ? document.querySelector(`.chat-item[onclick*="${_currentConversationId}"]`) : null;
+                const buyerName = sidebarItem ? sidebarItem.querySelector('.chat-name').textContent : 'Khách Hàng Zynk';
+                
+                document.getElementById('chat-buyer-name').innerHTML = `<i class="fa-solid fa-user-circle" style="color: var(--seller-primary); margin-right: 6px;"></i> Tư vấn: ${buyerName}`;
+
+                const msgContainer = document.getElementById('chat-messages');
+                msgContainer.innerHTML = messages.map(m => `
+                    <div class="message ${m.isMe ? 'me' : 'other'}">
+                        <div class="message-content">${m.content}</div>
+                        <div class="message-time">${new Date(m.createdAt).toLocaleTimeString('vi', {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                `).join('');
+                msgContainer.scrollTop = msgContainer.scrollHeight;
+                
+                // Clear active unread count in background
+                loadShopConversations(false);
+            } catch (e) {
+                console.error(e);
+                alert('Không thể tải tin nhắn.');
+            }
+        }
+
+        async function reloadMessagesSilently() {
+            if (!_currentConversationId) return;
+            const msgContainer = document.getElementById('chat-messages');
+            if (!msgContainer) return;
+
+            try {
+                const messages = await window.api.get(`shopchat/messages/${_currentConversationId}`);
+                
+                // Compare length to determine if new message arrived
+                const currentCount = msgContainer.querySelectorAll('.message').length;
+                if (messages.length !== currentCount) {
+                    msgContainer.innerHTML = messages.map(m => `
+                        <div class="message ${m.isMe ? 'me' : 'other'}">
+                            <div class="message-content">${m.content}</div>
+                            <div class="message-time">${new Date(m.createdAt).toLocaleTimeString('vi', {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                    `).join('');
+                    msgContainer.scrollTop = msgContainer.scrollHeight;
+                }
+            } catch (err) {
+                console.error("Silent reload failed:", err);
+            }
+        }
+
+        async function sendShopMessage() {
+            const input = document.getElementById('chat-input');
+            const content = input.value.trim();
+            if (!content || !_currentConversationId) return;
+
+            try {
+                const msg = await window.api.post('shopchat/send', {
+                    conversationId: _currentConversationId,
+                    content: content
+                });
+
+                const msgContainer = document.getElementById('chat-messages');
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'message me';
+                msgDiv.innerHTML = `
+                    <div class="message-content">${msg.content}</div>
+                    <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString('vi', {hour: '2-digit', minute:'2-digit'})}</div>
+                `;
+                msgContainer.appendChild(msgDiv);
+                msgContainer.scrollTop = msgContainer.scrollHeight;
+                input.value = '';
+
+                // Background update sidebar details
+                await loadShopConversations(false);
+            } catch (e) {
+                alert('Không thể gửi tin nhắn. Thử lại sau!');
+            }
+        }
+    </script>
+</body>
+</html>

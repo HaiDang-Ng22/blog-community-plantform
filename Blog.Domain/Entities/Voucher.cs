@@ -11,7 +11,7 @@ public enum DiscountType
 public class Voucher
 {
     public Guid Id { get; set; }
-    public Guid ShopId { get; set; }
+    public Guid? ShopId { get; set; } // Null if Platform Voucher
     
     [Required]
     public string Code { get; set; } = string.Empty;
@@ -21,16 +21,17 @@ public class Voucher
     public decimal DiscountValue { get; set; }
     
     public decimal? MinOrderValue { get; set; }
-    public decimal? MaxDiscountAmount { get; set; } // Chỉ dùng cho Percentage
+    public decimal? MaxDiscountAmount { get; set; } 
     
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     
-    public int? UsageLimit { get; set; }
+    public int UsageLimit { get; set; } // Set to a large number if no limit
     public int UsedCount { get; set; }
     
+    public bool IsPublic { get; set; } = false; // If true, shows on hunting page
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public virtual Shop Shop { get; set; } = null!;
+    public virtual Shop? Shop { get; set; }
 }

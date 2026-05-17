@@ -434,4 +434,619 @@
     .category-circle-grid {
         grid-template-columns: repeat(4, 1fr);
     }
+    .promo-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    .promo-tabs {
+        width: 100%;
+        overflow-x: auto;
+    }
+    .voucher-carousel {
+        grid-template-columns: 1fr !important;
+    }
+    .seasonal-events-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .flash-products-scroll {
+        gap: 10px !important;
+    }
+    .flash-mini-card {
+        min-width: 130px !important;
+    }
+}
+
+/* ========================================= */
+/* PROMOTIONS & EVENTS ZONE                  */
+/* ========================================= */
+.promo-events-zone {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border: 1px solid #f1f5f9;
+    position: relative;
+    overflow: hidden;
+}
+
+.promo-events-zone::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ff4d2d, #ff8c00, #facc15, #3b82f6, #6366f1);
+    border-radius: 16px 16px 0 0;
+}
+
+.promo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.promo-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.promo-title-group h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.promo-fire-icon {
+    font-size: 1.6rem;
+    color: #ff4d2d;
+    animation: fireFlicker 1.5s ease-in-out infinite;
+}
+
+@keyframes fireFlicker {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15) rotate(-5deg); opacity: 0.85; }
+}
+
+/* Tabs */
+.promo-tabs {
+    display: flex;
+    gap: 6px;
+    background: #f8fafc;
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.promo-tab {
+    padding: 8px 18px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: 'Inter', 'Outfit', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.promo-tab:hover {
+    color: #1e293b;
+    background: #fff;
+}
+
+.promo-tab.active {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.promo-tab.active i {
+    color: #fff;
+}
+
+/* Tab Content */
+.promo-tab-content {
+    display: none;
+    animation: promoFadeIn 0.35s ease;
+}
+
+.promo-tab-content.active {
+    display: block;
+}
+
+@keyframes promoFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================= */
+/* VOUCHER CAROUSEL                          */
+/* ========================================= */
+.voucher-carousel {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+}
+
+.voucher-ticket {
+    display: flex;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 130px;
+    border: 1px solid #f1f5f9;
+}
+
+.voucher-ticket:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+.voucher-ticket-left {
+    width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0.75rem;
+    position: relative;
+    border-right: 2px dashed #e2e8f0;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.voucher-ticket-left.gradient-orange {
+    background: linear-gradient(135deg, #ff4d2d, #ff8c00);
+}
+.voucher-ticket-left.gradient-blue {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+.voucher-ticket-left.gradient-purple {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+.voucher-ticket-left.gradient-green {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+/* Scalloped edges */
+.voucher-ticket-left::before, .voucher-ticket-left::after {
+    content: '';
+    position: absolute;
+    right: -9px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    z-index: 2;
+}
+.voucher-ticket-left::before { top: -9px; }
+.voucher-ticket-left::after { bottom: -9px; }
+
+.voucher-ticket-left .voucher-discount-val {
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.voucher-ticket-left .voucher-discount-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
+.voucher-ticket-right {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.voucher-ticket-code {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 0.5px;
+}
+
+.voucher-ticket-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    margin: 4px 0;
+}
+
+.voucher-ticket-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.voucher-progress-mini {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.voucher-progress-bar {
+    height: 5px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.voucher-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #ff4d2d, #ff8c00);
+    transition: width 0.6s ease;
+}
+
+.voucher-usage-text {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.voucher-expiry {
+    font-size: 0.68rem;
+    color: #94a3b8;
+}
+
+.btn-claim-mini {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', 'Outfit', sans-serif;
+    flex-shrink: 0;
+}
+
+.btn-claim-mini.claim {
+    background: linear-gradient(135deg, #ff4d2d, #e63e20);
+    color: #fff;
+}
+
+.btn-claim-mini.claim:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 77, 45, 0.3);
+}
+
+.btn-claim-mini.claimed {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: default;
+}
+
+/* ========================================= */
+/* FLASH SALE INLINE                         */
+/* ========================================= */
+.flash-sale-inline {
+    background: linear-gradient(135deg, #fff5f5, #fff);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #fee2e2;
+}
+
+.flash-timer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: linear-gradient(90deg, #ff4d2d 0%, #dc2626 100%);
+    color: #fff;
+}
+
+.flash-label {
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.flash-label i {
+    color: #facc15;
+    margin-right: 6px;
+}
+
+.flash-countdown {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.flash-countdown .timer-box {
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    min-width: 30px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.flash-products-scroll {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 1.25rem;
+    scrollbar-width: none;
+}
+
+.flash-products-scroll::-webkit-scrollbar { display: none; }
+
+.flash-mini-card {
+    min-width: 150px;
+    max-width: 160px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.flash-mini-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+}
+
+.flash-mini-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.flash-mini-info {
+    padding: 8px 10px;
+}
+
+.flash-mini-price {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #dc2626;
+}
+
+.flash-mini-original {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.flash-mini-sold {
+    height: 14px;
+    background: #ffbdab;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.flash-mini-sold-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff5722, #d0011b);
+    border-radius: 10px;
+}
+
+.flash-mini-sold-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+/* ========================================= */
+/* SEASONAL EVENTS                           */
+/* ========================================= */
+.seasonal-events-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.seasonal-card {
+    border-radius: 16px;
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.seasonal-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+}
+
+.seasonal-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    filter: brightness(0.85);
+    z-index: 0;
+}
+
+.seasonal-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.seasonal-summer {
+    background: linear-gradient(135deg, #ff8c00, #ff4d2d, #f97316);
+}
+
+.seasonal-back2school {
+    background: linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6);
+}
+
+.seasonal-mid-year {
+    background: linear-gradient(135deg, #10b981, #059669, #0d9488);
+}
+
+.seasonal-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(8px);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.seasonal-badge.upcoming {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+.seasonal-badge.live {
+    background: rgba(16, 185, 129, 0.3);
+    animation: livePulse 2s ease infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+.seasonal-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+}
+
+.seasonal-card h4 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin: 0 0 6px;
+}
+
+.seasonal-card p {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    line-height: 1.4;
+    margin: 0 0 10px;
+}
+
+.seasonal-date {
+    font-size: 0.78rem;
+    opacity: 0.8;
+    font-weight: 600;
+}
+
+.seasonal-date i {
+    margin-right: 4px;
+}
+
+/* ========================================= */
+/* VOUCHER EMPTY STATE                       */
+/* ========================================= */
+.voucher-empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #94a3b8;
+    grid-column: 1 / -1;
+}
+
+.voucher-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #e2e8f0;
+}
+
+.voucher-empty-state h4 {
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+/* ========================================= */
+/* VOUCHER SEE MORE CARD                     */
+/* ========================================= */
+.voucher-see-more-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 14px;
+    height: 130px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.voucher-see-more-card:hover {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, #eef2ff, #f0f4ff);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.12);
+}
+
+.see-more-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #6366f1;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.see-more-inner i:first-child {
+    font-size: 1.8rem;
+    opacity: 0.7;
+}
+
+.see-more-inner i:last-child {
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.voucher-see-more-card:hover .see-more-inner i:last-child {
+    transform: translateX(4px);
 }

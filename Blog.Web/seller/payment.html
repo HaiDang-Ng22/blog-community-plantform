@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cấu hình Thanh toán VietQR - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <style>
+        .payment-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .payment-info-box {
+            background-color: #eff6ff;
+            border: 1px solid #dbeafe;
+            color: #1e40af;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            display: flex;
+            gap: 10px;
+            margin-top: 1.25rem;
+        }
+        .payment-info-box i {
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+        
+        /* ═══════ CARD PREVIEW MOCKUP ═══════ */
+        .card-preview {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 20px;
+            padding: 1.75rem;
+            color: white;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card-preview::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .card-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-preview-logo {
+            font-weight: 800;
+            font-size: 1.25rem;
+            background: linear-gradient(to right, #10b981, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card-preview-chip {
+            width: 40px;
+            height: 30px;
+            background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%);
+            border-radius: 6px;
+            margin: 1.25rem 0;
+            position: relative;
+        }
+        .card-preview-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-family: monospace;
+            margin-bottom: 1rem;
+        }
+        .card-preview-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .card-preview-holder {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .card-preview-holder span {
+            font-size: 0.65rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .card-preview-holder strong {
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .card-preview-bank {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #34d399;
+        }
+    </style>
+</head>
+<body>
+    <main class="seller-main">
+        <header class="seller-header">
+            <div class="seller-title">
+                <h1>Thanh toán VietQR</h1>
+                <p>Cấu hình tài khoản ngân hàng của bạn để nhận thanh toán chuyển khoản VietQR tự động khi khách hàng thanh toán hóa đơn.</p>
+            </div>
+        </header>
+
+        <div class="payment-layout">
+            <!-- Configuration Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-qrcode" style="color: var(--seller-primary);"></i> Thông tin ngân hàng nhận tiền</h3>
+                </div>
+                
+                <form id="form-payment-settings">
+                    <div class="form-group">
+                        <label for="bank-name">Ngân hàng thụ hưởng <span style="color: red;">*</span></label>
+                        <select id="bank-name" class="form-input" required onchange="updateMockupCard()">
+                            <option value="" disabled selected>Chọn ngân hàng thụ hưởng</option>
+                            <option value="MB">MB Bank (Ngân hàng Quân đội)</option>
+                            <option value="VCB">Vietcombank (Ngoại thương VN)</option>
+                            <option value="ICB">VietinBank (Công thương VN)</option>
+                            <option value="BIDV">BIDV (Đầu tư & Phát triển VN)</option>
+                            <option value="TCB">Techcombank (Kỹ thương VN)</option>
+                            <option value="ACB">ACB (Á Châu)</option>
+                            <option value="VPB">VPBank (Việt Nam Thịnh Vượng)</option>
+                            <option value="STB">Sacombank (Sài Gòn Thương Tín)</option>
+                            <option value="VIB">VIB (Quốc tế Việt Nam)</option>
+                            <option value="TPB">TPBank (Tiên Phong)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bank-account-number">Số tài khoản ngân hàng <span style="color: red;">*</span></label>
+                        <input type="text" id="bank-account-number" class="form-input" placeholder="Nhập số tài khoản ngân hàng nhận tiền" required oninput="updateMockupCard()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bank-account-name">Họ & tên chủ tài khoản (Viết hoa không dấu) <span style="color: red;">*</span></label>
+                        <input type="text" id="bank-account-name" class="form-input" placeholder="Ví dụ: NGUYEN VAN A" required oninput="this.value = this.value.toUpperCase(); updateMockupCard()">
+                    </div>
+
+                    <div class="payment-info-box">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <div>
+                            <strong>Quan trọng:</strong> Thông tin ngân hàng này sẽ được dùng để tạo mã VietQR thanh toán động tự động trên đơn hàng của khách. Vui lòng kiểm tra kỹ số tài khoản và họ tên để đảm bảo tiền được chuyển đúng tài khoản của bạn.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; padding: 0.75rem;">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu cấu hình thanh toán
+                    </button>
+                </form>
+            </div>
+
+            <!-- Preview Card -->
+            <div>
+                <div style="margin-bottom: 0.75rem; font-weight: 700; color: var(--seller-text-light); font-size: 0.9rem;">
+                    <i class="fa-solid fa-eye"></i> XEM TRƯỚC THẺ THANH TOÁN
+                </div>
+                
+                <div class="card-preview">
+                    <div class="card-preview-header">
+                        <span class="card-preview-logo"><i class="fa-solid fa-vault"></i> ZYNK MERCHANT</span>
+                        <span class="card-preview-bank" id="mock-bank-name">BANK CARD</span>
+                    </div>
+                    
+                    <div class="card-preview-chip"></div>
+                    
+                    <div class="card-preview-number" id="mock-account-number">•••• •••• •••• ••••</div>
+                    
+                    <div class="card-preview-footer">
+                        <div class="card-preview-holder">
+                            <span>Chủ tài khoản</span>
+                            <strong id="mock-account-holder">NGUYEN VAN A</strong>
+                        </div>
+                        <div style="font-size: 1.7rem; color: #10b981;">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--seller-border); border-radius: 12px; font-size: 0.85rem; color: var(--seller-text-light); line-height: 1.4; background: white;">
+                    <h5 style="font-weight: 700; color: var(--seller-text); margin-bottom: 4px;"><i class="fa-solid fa-shield-halved" style="color: var(--seller-primary);"></i> Bảo mật & An toàn VietQR</h5>
+                    Toàn bộ quá trình quét mã nhận tiền đều do các Ngân hàng thành viên Napas thực hiện trực tiếp. Zynk cam kết không can thiệp hay thu bất kỳ phí chuyển khoản nào từ phía người nhận!
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        async function initPage() {
+            const shop = JSON.parse(localStorage.getItem('seller_shop_info') || '{}');
+            await loadPaymentSettings(shop);
+        }
+
+        async function loadPaymentSettings(shop) {
+            if (shop.bankName) document.getElementById('bank-name').value = shop.bankName;
+            if (shop.bankAccountNumber) document.getElementById('bank-account-number').value = shop.bankAccountNumber;
+            if (shop.bankAccountName) document.getElementById('bank-account-name').value = shop.bankAccountName;
+
+            updateMockupCard();
+
+            document.getElementById('form-payment-settings').onsubmit = async (e) => {
+                e.preventDefault();
+                const data = {
+                    bankName: document.getElementById('bank-name').value,
+                    bankAccountNumber: document.getElementById('bank-account-number').value.trim(),
+                    bankAccountName: document.getElementById('bank-account-name').value.toUpperCase().trim()
+                };
+
+                try {
+                    await window.api.put('seller/payment-settings', data);
+                    
+                    // Update locally cached shop details
+                    const updatedShop = { ...shop, ...data };
+                    localStorage.setItem('seller_shop_info', JSON.stringify(updatedShop));
+                    
+                    alert('Lưu cấu hình thanh toán VietQR thành công!');
+                } catch (err) {
+                    alert(err.message || 'Lỗi lưu thông tin thanh toán.');
+                }
+            };
+        }
+
+        function updateMockupCard() {
+            const bankSelect = document.getElementById('bank-name');
+            const bankVal = bankSelect.value || 'BANK CARD';
+            const numVal = document.getElementById('bank-account-number').value.trim() || '•••• •••• •••• ••••';
+            const holderVal = document.getElementById('bank-account-name').value.toUpperCase().trim() || 'NGUYEN VAN A';
+
+            document.getElementById('mock-bank-name').textContent = bankVal;
+            document.getElementById('mock-account-number').textContent = numVal;
+            document.getElementById('mock-account-holder').textContent = holderVal;
+        }
+    </script>
+</body>
+</html>

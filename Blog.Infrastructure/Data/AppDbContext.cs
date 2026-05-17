@@ -51,6 +51,7 @@ public class AppDbContext : DbContext
     public DbSet<ShopMessage> ShopMessages { get; set; }
     public DbSet<BannedWord> BannedWords { get; set; }
     public DbSet<Banner> Banners { get; set; }
+    public DbSet<UserVoucher> UserVouchers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -316,7 +317,22 @@ public class AppDbContext : DbContext
             .HasForeignKey(i => i.ProductReviewId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // --- Chat Configurations ---
+        // UserVoucher
+        modelBuilder.Entity<UserVoucher>()
+            .HasOne(uv => uv.User)
+            .WithMany()
+            .HasForeignKey(uv => uv.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserVoucher>()
+            .HasOne(uv => uv.Voucher)
+            .WithMany()
+            .HasForeignKey(uv => uv.VoucherId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserVoucher>()
+            .HasIndex(uv => new { uv.UserId, uv.VoucherId })
+            .IsUnique();
 
         // Conversation
         modelBuilder.Entity<Conversation>()
