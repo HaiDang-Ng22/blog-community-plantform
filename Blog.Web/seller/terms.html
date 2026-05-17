@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điều khoản & Chiết khấu người bán - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <style>
+        .terms-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        
+        /* Accordion FAQ */
+        .faq-item {
+            border: 1px solid var(--seller-border);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            background: white;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        .faq-item:hover {
+            border-color: #cbd5e1;
+            box-shadow: var(--shadow-sm);
+        }
+        .faq-header {
+            padding: 1.1rem 1.25rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1e293b;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            background: #f8fafc;
+        }
+        .faq-header i {
+            transition: transform 0.2s;
+            color: var(--seller-primary);
+        }
+        .faq-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease-out, padding 0.25s ease-out;
+            color: #475569;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+        .faq-item.active .faq-header {
+            background: white;
+            border-bottom: 1px solid var(--seller-border);
+        }
+        .faq-item.active .faq-header i {
+            transform: rotate(180deg);
+        }
+        .faq-item.active .faq-body {
+            max-height: 350px;
+            padding: 1.25rem;
+        }
+        
+        /* Interactive Calculator */
+        .calc-box {
+            background: white;
+            border: 1px solid var(--seller-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .calc-input-group {
+            position: relative;
+            margin: 1rem 0;
+        }
+        .calc-input-group span.currency-prefix {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 700;
+            color: var(--seller-text-light);
+        }
+        .calc-input-group input {
+            width: 100%;
+            padding: 0.85rem 3rem 0.85rem 1rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            border: 2px solid var(--seller-border);
+            border-radius: 10px;
+            outline: none;
+            color: var(--seller-text);
+            transition: border-color 0.2s;
+        }
+        .calc-input-group input:focus {
+            border-color: var(--seller-primary);
+        }
+        
+        .calc-result-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            padding: 8px 0;
+            border-bottom: 1px dashed #f1f5f9;
+        }
+        .calc-result-row.total {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            border-top: 1px solid var(--seller-border);
+            border-bottom: none;
+            padding-top: 12px;
+            margin-top: 10px;
+        }
+        .calc-result-row.total .value {
+            color: var(--seller-primary);
+        }
+    </style>
+</head>
+<body>
+    <main class="seller-main">
+        <header class="seller-header">
+            <div class="seller-title">
+                <h1>Điều khoản & Chiết khấu người bán</h1>
+                <p>Nắm rõ quy chế hoạt động, phí dịch vụ và tỉ lệ chiết khấu giao dịch khi mở shop trên nền tảng Zynk.</p>
+            </div>
+        </header>
+
+        <div class="terms-grid">
+            <!-- FAQ accordion -->
+            <div>
+                <div style="margin-bottom: 1rem; font-weight: 800; font-size: 1.1rem; color: #0f172a;">
+                    <i class="fa-solid fa-scale-balanced" style="color: var(--seller-primary);"></i> QUY CHẾ HOẠT ĐỘNG & BIỂU PHÍ
+                </div>
+
+                <div class="faq-item active">
+                    <div class="faq-header" onclick="toggleFaq(this)">
+                        1. Tỉ lệ chiết khấu & Biểu phí của nền tảng Zynk là bao nhiêu?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-body">
+                        Zynk áp dụng biểu phí cực kỳ ưu đãi nhằm hỗ trợ tối đa cho các nhà bán hàng khởi nghiệp. Hiện tại, cơ cấu chiết khấu gồm 2 khoản phí cố định trên mỗi đơn hàng hoàn thành:
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem; list-style-type: square;">
+                            <li><strong>Phí hoa hồng nền tảng (Platform Commission):</strong> <strong>3.0%</strong> trên giá trị sản phẩm. Phí này dùng để duy trì hệ thống, máy chủ và tối ưu hóa SEO danh mục.</li>
+                            <li><strong>Phí thanh toán & kiểm tra VietQR (Processing Fee):</strong> <strong>1.5%</strong> trên tổng đơn. Phí dành cho việc kết nối, kiểm soát giao dịch VietQR Napas bảo mật 24/7.</li>
+                            <li><strong>Tổng mức khấu trừ:</strong> <strong>4.5%</strong>. Shop thực nhận về ví/tài khoản là <strong>95.5%</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header" onclick="toggleFaq(this)">
+                        2. Thanh toán VietQR trực tiếp hoạt động như thế nào?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-body">
+                        Khi bạn cấu hình thông tin ngân hàng thụ hưởng tại mục "Thanh toán VietQR", hệ thống Zynk sẽ tự động tạo một mã QR thông minh có nhúng kèm số tiền và nội dung chuyển khoản động trên trang thanh toán của khách mua.
+                        <br><br>
+                        Khách hàng sử dụng bất kỳ ứng dụng ngân hàng di động nào (Mobile Banking) quét mã QR này để thanh toán. <strong>Tiền sẽ chuyển thẳng trực tiếp vào tài khoản ngân hàng của bạn ngay lập tức</strong> mà không qua bất kỳ tài khoản giữ trung gian nào của Zynk.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header" onclick="toggleFaq(this)">
+                        3. Khi nào tôi được rút tiền hàng và cách đối soát?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-body">
+                        Vì phương thức VietQR chuyển tiền trực tiếp từ người mua tới người bán, nên <strong>bạn nhận tiền ngay lập tức sau khi khách quét mã thành công</strong>. Bạn không phải đợi chu kỳ rút tiền hàng tuần hay hàng tháng từ hệ thống!
+                        <br><br>
+                        Hệ thống Zynk sẽ ghi nhận lịch sử giao dịch và đối soát tự động ở tab "Đơn hàng" để cập nhật trạng thái đơn thành "Đã thanh toán/Chờ giao". Cuối mỗi tháng, Zynk sẽ tổng hợp báo cáo dịch vụ và phí 4.5% tương ứng để gửi hóa đơn đối soát phí dịch vụ.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header" onclick="toggleFaq(this)">
+                        4. Các mặt hàng bị nghiêm cấm đăng bán trên Zynk?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-body">
+                        Để xây dựng một cộng đồng văn minh và an toàn, Zynk nghiêm cấm đăng bán các sản phẩm sau:
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem; list-style-type: decimal;">
+                            <li>Hàng giả, hàng nhái, các sản phẩm vi phạm quyền sở hữu trí tuệ thương hiệu quốc tế.</li>
+                            <li>Các loại thuốc men kê đơn, thuốc kích thích, chất gây nghiện nguy hiểm.</li>
+                            <li>Vũ khí thô sơ, vật liệu nổ, hóa chất độc hại gây ô nhiễm môi trường.</li>
+                            <li>Các nội dung đồi trụy, sản phẩm vi phạm thuần phong mỹ tục Việt Nam.</li>
+                        </ul>
+                        Mọi hành vi đăng bán sản phẩm cấm sẽ bị khóa Shop vĩnh viễn và gửi thông tin định danh CCCD đến cơ quan quản lý nhà nước xử lý.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Calculator -->
+            <div>
+                <div style="margin-bottom: 1rem; font-weight: 800; font-size: 1.1rem; color: #0f172a;">
+                    <i class="fa-solid fa-calculator" style="color: var(--seller-primary);"></i> CÔNG CỤ TÍNH THỰC NHẬN
+                </div>
+
+                <div class="calc-box">
+                    <p style="font-size: 0.85rem; color: var(--seller-text-light); line-height: 1.4;">Nhập thử giá bán sản phẩm dự kiến của bạn để xem số tiền thực tế nhận về tài khoản sau khi trừ chiết khấu:</p>
+                    
+                    <div class="calc-input-group">
+                        <input type="number" id="calc-price" value="500000" min="1000" step="10000" oninput="calculateCommission()">
+                        <span class="currency-prefix">VND</span>
+                    </div>
+
+                    <div style="margin: 1.25rem 0 1rem; font-weight: 700; font-size: 0.85rem; color: #475569; text-transform: uppercase;">
+                        Chi tiết khấu trừ (Tổng 4.5%):
+                    </div>
+
+                    <div class="calc-result-row">
+                        <span class="label">Phí hoa hồng Zynk (3%)</span>
+                        <span class="value" id="calc-fee-platform" style="color: #ef4444; font-weight: 600;">-15,000 đ</span>
+                    </div>
+
+                    <div class="calc-result-row">
+                        <span class="label">Phí xử lý giao dịch VietQR (1.5%)</span>
+                        <span class="value" id="calc-fee-processing" style="color: #ef4444; font-weight: 600;">-7,500 đ</span>
+                    </div>
+
+                    <div class="calc-result-row total">
+                        <span class="label">Số tiền bạn thực nhận về</span>
+                        <span class="value" id="calc-payout">477,500 đ</span>
+                    </div>
+
+                    <div style="margin-top: 1.25rem; font-size: 0.78rem; color: #64748b; font-style: italic; line-height: 1.3; display: flex; gap: 6px; align-items: flex-start;">
+                        <i class="fa-solid fa-circle-question" style="margin-top: 2px;"></i>
+                        <span>Chiết khấu này chỉ áp dụng trên các đơn hàng giao dịch thành công. Đơn bị khách hủy sẽ không phát sinh bất kỳ khoản phí nào!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        async function initPage() {
+            calculateCommission();
+        }
+
+        function toggleFaq(header) {
+            const item = header.parentElement;
+            const isActive = item.classList.contains('active');
+            
+            // Close all items
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+            
+            // Toggle clicked item
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        }
+
+        function calculateCommission() {
+            const inputVal = parseFloat(document.getElementById('calc-price').value) || 0;
+            
+            const platformFee = inputVal * 0.03;
+            const processingFee = inputVal * 0.015;
+            const payout = inputVal - platformFee - processingFee;
+
+            document.getElementById('calc-fee-platform').textContent = `-${formatNumber(platformFee)} đ`;
+            document.getElementById('calc-fee-processing').textContent = `-${formatNumber(processingFee)} đ`;
+            document.getElementById('calc-payout').textContent = `${formatNumber(payout)} đ`;
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('vi-VN').format(Math.round(num));
+        }
+    </script>
+</body>
+</html>

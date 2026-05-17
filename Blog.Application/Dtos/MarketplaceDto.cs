@@ -215,6 +215,7 @@ public class CreateOrderItemDto
 public class VoucherDto
 {
     public Guid Id { get; set; }
+    public Guid? ShopId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string DiscountType { get; set; } = string.Empty; // Percentage, FixedAmount
@@ -223,8 +224,9 @@ public class VoucherDto
     public decimal? MaxDiscountAmount { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public int? UsageLimit { get; set; }
+    public int UsageLimit { get; set; }
     public int UsedCount { get; set; }
+    public bool IsPublic { get; set; }
     public bool IsActive { get; set; }
 }
 
@@ -238,7 +240,8 @@ public class CreateVoucherDto
     public decimal? MaxDiscountAmount { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public int? UsageLimit { get; set; }
+    public int UsageLimit { get; set; }
+    public bool IsPublic { get; set; }
 }
 
 // Seller Dashboard DTOs

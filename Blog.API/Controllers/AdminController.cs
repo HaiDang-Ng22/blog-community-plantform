@@ -943,4 +943,72 @@ public class AdminController : ControllerBase
 
         return Ok(new { message = $"Đã quét xong. Xóa thành công {removedCount} bài viết vi phạm." });
     }
+
+    // --- Voucher Management ---
+
+    [HttpGet("vouchers")]
+    public async Task<IActionResult> GetAdminVouchers()
+    {
+        var vouchers = await _context.Vouchers
+            .OrderByDescending(v => v.CreatedAt)
+            .ToListAsync();
+        return Ok(vouchers);
+    }
+
+    [HttpPost("vouchers")]
+    public async Task<IActionResult> CreateAdminVoucher([FromBody] CreateVoucherDto dto)
+    {
+        var voucher = new Voucher
+        {
+            Id = Guid.NewGuid(),
+            Code = dto.Code.ToUpper(),
+            Description = dto.Description,
+            DiscountType = Enum.Parse<DiscountType>(dto.DiscountType),
+            DiscountValue = dto.DiscountValue,
+            MinOrderValue = dto.MinOrderValue,
+            MaxDiscountAmount = dto.MaxDiscountAmount,
+            StartDate = dto.StartDate.Kind == DateTimeKind.Utc ? dto.StartDate : dto.StartDate.ToUniversalTime(),
+            EndDate = dto.EndDate.Kind == DateTimeKind.Utc ? dto.EndDate : dto.EndDate.ToUniversalTime(),
+            UsageLimit = dto.UsageLimit,
+            IsPublic = dto.IsPublic,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Vouchers.Add(voucher);
+        await _context.SaveChangesAsync();
+        return Ok(voucher);
+    }
+
+    [HttpPut("vouchers/{id}")]
+    public async Task<IActionResult> UpdateAdminVoucher(Guid id, [FromBody] CreateVoucherDto dto)
+    {
+        var voucher = await _context.Vouchers.FindAsync(id);
+        if (voucher == null) return NotFound();
+
+        voucher.Code = dto.Code.ToUpper();
+        voucher.Description = dto.Description;
+        voucher.DiscountType = Enum.Parse<DiscountType>(dto.DiscountType);
+        voucher.DiscountValue = dto.DiscountValue;
+        voucher.MinOrderValue = dto.MinOrderValue;
+        voucher.MaxDiscountAmount = dto.MaxDiscountAmount;
+        voucher.StartDate = dto.StartDate.Kind == DateTimeKind.Utc ? dto.StartDate : dto.StartDate.ToUniversalTime();
+        voucher.EndDate = dto.EndDate.Kind == DateTimeKind.Utc ? dto.EndDate : dto.EndDate.ToUniversalTime();
+        voucher.UsageLimit = dto.UsageLimit;
+        voucher.IsPublic = dto.IsPublic;
+
+        await _context.SaveChangesAsync();
+        return Ok(voucher);
+    }
+
+    [HttpDelete("vouchers/{id}")]
+    public async Task<IActionResult> DeleteAdminVoucher(Guid id)
+    {
+        var voucher = await _context.Vouchers.FindAsync(id);
+        if (voucher == null) return NotFound();
+
+        _context.Vouchers.Remove(voucher);
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
 }

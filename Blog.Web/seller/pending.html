@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ chờ phê duyệt - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-card" style="margin: 0; padding: 3rem 2rem;">
+        <div style="font-size: 4rem; color: #f59e0b; margin-bottom: 1.5rem; animation: pulse 2s infinite;">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <h2>Hồ sơ đang được chờ duyệt</h2>
+        <p style="margin-bottom: 2rem;">Hệ thống đang tiến hành kiểm tra thông tin định danh CCCD và mô tả hoạt động cửa hàng của bạn. Quá trình kiểm tra thông thường mất từ 12 - 24 giờ. Chúng tôi sẽ thông báo cho bạn ngay khi có kết quả duyệt.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button onclick="checkAppStatus()" class="btn btn-primary">
+                <i class="fa-solid fa-arrows-rotate"></i> Kiểm tra lại trạng thái
+            </button>
+            <a href="../index.html" class="btn btn-secondary">
+                <i class="fa-solid fa-house"></i> Quay lại trang chủ
+            </a>
+        </div>
+    </div>
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        async function checkAppStatus() {
+            try {
+                const shop = await window.api.get('seller/my-shop').catch(() => null);
+                if (shop) {
+                    localStorage.setItem('seller_shop_info', JSON.stringify(shop));
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const app = await window.api.get('seller/application-status').catch(() => null);
+                if (app) {
+                    if (app.status === 'Approved' || app.Status === 'Approved') {
+                        window.location.href = 'index.html';
+                    } else if (app.status === 'Rejected' || app.Status === 'Rejected') {
+                        localStorage.setItem('seller_reject_note', app.adminNote || 'Hồ sơ của bạn bị từ chối.');
+                        window.location.href = 'register.html';
+                    } else {
+                        alert("Hồ sơ của bạn vẫn đang ở trạng thái chờ duyệt. Vui lòng quay lại sau!");
+                    }
+                } else {
+                    window.location.href = 'register.html';
+                }
+            } catch (err) {
+                alert("Lỗi khi kiểm tra trạng thái: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

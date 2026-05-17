@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký Người bán - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .register-container {
+            max-width: 650px;
+            width: 100%;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .register-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+        .register-header p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        .rejection-box {
+            background-color: #fef2f2;
+            border: 1px solid #fee2e2;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .rejection-box i {
+            margin-top: 2px;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <div style="font-size: 3rem; color: var(--seller-primary); margin-bottom: 0.5rem;">
+                <i class="fa-solid fa-store"></i>
+            </div>
+            <h1>Đăng ký mở Cửa hàng Zynk</h1>
+            <p>Bắt đầu hành trình kinh doanh tiếp cận hàng triệu khách hàng cùng cộng đồng Zynk.</p>
+        </div>
+
+        <div id="rejection-box" class="rejection-box" style="display: none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div>
+                <strong>Đơn trước bị từ chối:</strong>
+                <span id="rejection-note"></span>
+            </div>
+        </div>
+
+        <form id="register-form">
+            <div class="form-group">
+                <label for="shop-name"><i class="fa-solid fa-shop"></i> Tên cửa hàng dự kiến</label>
+                <input type="text" id="shop-name" class="form-input" placeholder="Ví dụ: Zynk Mobile, Shop Thời Trang GenZ..." required>
+            </div>
+
+            <div style="display: flex; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; margin: 1.5rem 0 1rem;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-address-card"></i> Thông tin định danh (CCCD/CMND)</h3>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="citizen-id">Số CCCD / CMND</label>
+                    <input type="text" id="citizen-id" class="form-input" placeholder="Nhập số CCCD gồm 12 chữ số" required>
+                </div>
+                <div class="form-group">
+                    <label for="full-name">Họ và tên chủ sở hữu</label>
+                    <input type="text" id="full-name" class="form-input" placeholder="Họ và tên trên CCCD" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="gender">Giới tính</label>
+                    <select id="gender" class="form-input" required>
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dob">Ngày tháng năm sinh</label>
+                    <input type="date" id="dob" class="form-input" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="hometown">Quê quán</label>
+                    <input type="text" id="hometown" class="form-input" placeholder="Địa chỉ quê quán" required>
+                </div>
+                <div class="form-group">
+                    <label for="occupation">Nghề nghiệp</label>
+                    <input type="text" id="occupation" class="form-input" placeholder="Nghề nghiệp hiện tại" required>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="shop-desc"><i class="fa-solid fa-quote-left"></i> Mô tả ngắn về Cửa hàng</label>
+                <textarea id="shop-desc" class="form-input" rows="3" placeholder="Mô tả sản phẩm bạn định bán, các chính sách hoặc cam kết chất lượng..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 1.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                <i class="fa-solid fa-paper-plane"></i> Gửi Hồ Sơ Phê Duyệt
+            </button>
+            <a href="../index.html" class="btn btn-secondary" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 0.75rem;">
+                <i class="fa-solid fa-house"></i> Quay lại Trang chủ
+            </a>
+        </form>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rejectNote = localStorage.getItem('seller_reject_note');
+            if (rejectNote) {
+                document.getElementById('rejection-note').textContent = rejectNote;
+                document.getElementById('rejection-box').style.display = 'flex';
+                localStorage.removeItem('seller_reject_note'); // Clear after showing once
+            }
+
+            document.getElementById('register-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const data = {
+                    shopName: document.getElementById('shop-name').value,
+                    description: document.getElementById('shop-desc').value,
+                    citizenId: document.getElementById('citizen-id').value,
+                    fullName: document.getElementById('full-name').value,
+                    gender: document.getElementById('gender').value,
+                    dateOfBirth: document.getElementById('dob').value,
+                    hometown: document.getElementById('hometown').value,
+                    occupation: document.getElementById('occupation').value
+                };
+
+                try {
+                    await window.api.post('seller/apply', data);
+                    window.location.href = 'pending.html';
+                } catch (err) {
+                    alert(err.message || 'Có lỗi xảy ra khi gửi hồ sơ đăng ký.');
+                }
+            };
+        });
+    </script>
+</body>
+</html>

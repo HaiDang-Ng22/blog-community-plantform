@@ -405,7 +405,7 @@
                     } else if (type === 'OrderStatusUpdated') {
                         window.location.href = `order-detail.html?id=${targetId}`;
                     } else if (type === 'System') {
-                        if (message.toLowerCase().includes('cửa hàng')) window.location.href = 'seller-center.html';
+                        if (message.toLowerCase().includes('cửa hàng')) window.location.href = 'seller/index.html';
                         else if (message.toLowerCase().includes('xác minh')) window.location.href = 'settings.html';
                     }
                 } catch (err) { console.error(err); }

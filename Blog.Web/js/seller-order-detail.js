@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const orderId = urlParams.get('id');
 
     if (!orderId) {
-        window.location.href = 'seller-center.html';
+        window.location.href = 'seller/orders.html';
         return;
     }
 
@@ -25,7 +25,7 @@ async function loadSellerOrderDetails(orderId) {
     } catch (e) {
         console.error('Lỗi khi tải chi tiết đơn hàng:', e);
         alert('Lỗi: ' + e.message);
-        window.location.href = 'seller-center.html';
+        window.location.href = 'seller/orders.html';
     }
 }
 

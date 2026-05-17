@@ -72,6 +72,9 @@
                     <a href="banners.html" class="nav-item ${currentPage === 'banners.html' ? 'active' : ''}">
                         <i class="fa-solid fa-image"></i> <span>Quản lý Banners</span>
                     </a>
+                    <a href="vouchers.html" class="nav-item ${currentPage === 'vouchers.html' ? 'active' : ''}">
+                        <i class="fa-solid fa-ticket"></i> <span>Quản lý Voucher</span>
+                    </a>
                 </nav>
                 <div class="sidebar-footer">
                     <button onclick="adminLogout()" class="nav-item" style="background: none; border: none; width: 100%; color: #ef4444; cursor: pointer;">

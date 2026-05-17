@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Sản phẩm - Zynk Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="seller-common.css">
+    <style>
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.hidden {
+            display: none !important;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--seller-border);
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFade 0.25s ease-out;
+        }
+        @keyframes modalFade {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .cascade-select {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: 1px solid var(--seller-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            background-color: white;
+            margin-bottom: 0.5rem;
+        }
+        .variant-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1.2fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border: 1px solid var(--seller-border);
+            border-radius: 8px;
+        }
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ef4444;
+            font-size: 1.1rem;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .btn-icon:hover {
+            background: #fef2f2;
+        }
+    </style>
+</head>
+<body>
+    <main class="seller-main">
+        <header class="seller-header">
+            <div class="seller-title">
+                <h1>Quản lý Sản phẩm</h1>
+                <p>Thêm mới, sửa đổi thông tin, hình ảnh và phân loại sản phẩm của bạn.</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="openAddProductModal()">
+                    <i class="fa-solid fa-plus"></i> Đăng sản phẩm mới
+                </button>
+            </div>
+        </header>
+
+        <!-- Product Table Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-box" style="color: var(--seller-primary);"></i> Danh sách sản phẩm đang bán</h3>
+            </div>
+            <div class="table-wrapper">
+                <table class="seller-table">
+                    <thead>
+                        <tr>
+                            <th>Ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Đơn giá</th>
+                            <th>Kho hàng</th>
+                            <th>Trạng thái</th>
+                            <th style="width: 120px; text-align: center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-list-body">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem;">
+                                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--seller-primary);"></i>
+                                <p style="margin-top: 1rem; color: var(--seller-text-light);">Đang tải danh sách sản phẩm...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Đăng sản phẩm mới -->
+    <div id="product-add-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--seller-border); display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a;"><i class="fa-solid fa-box-open" style="color: var(--seller-primary); margin-right: 8px;"></i>Đăng sản phẩm mới</h2>
+                <button onclick="closeAddProductModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;">&times;</button>
+            </div>
+            
+            <form id="form-add-product" style="padding: 2rem;">
+                <div class="form-group">
+                    <label for="p-name">Tên sản phẩm <span style="color: red;">*</span></label>
+                    <input type="text" id="p-name" class="form-input" placeholder="Ví dụ: Giày Sneaker Thể Thao Nam Zynk v2" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="p-price">Đơn giá (VND) <span style="color: red;">*</span></label>
+                        <input type="number" id="p-price" class="form-input" placeholder="Ví dụ: 250000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-stock">Số lượng kho <span style="color: red;">*</span></label>
+                        <input type="number" id="p-stock" class="form-input" placeholder="Ví dụ: 100" required>
+                    </div>
+                </div>
+
+                <!-- Cascading Category Selector -->
+                <div class="form-group">
+                    <label>Danh mục sản phẩm <span style="color: var(--seller-primary); font-size: 0.8rem;">(chọn đến cấp cuối cùng)</span></label>
+                    <div id="category-cascade-selects" style="display: flex; flex-direction: column; gap: 4px;"></div>
+                    <div id="category-selected-path" style="font-size: 0.82rem; color: var(--seller-primary); font-weight: 600; min-height: 1.2rem; margin-top: 4px;"></div>
+                    <input type="hidden" id="p-category" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="p-desc">Mô tả sản phẩm <span style="color: red;">*</span></label>
+                    <textarea id="p-desc" class="form-input" rows="4" placeholder="Mô tả chi tiết về chất liệu, kích thước, công dụng..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Hình ảnh sản phẩm (Link ảnh hoặc tải lên file) <span style="color: red;">*</span></label>
+                    <div style="display: flex; gap: 8px; align-items: flex-start;">
+                        <textarea id="p-images" class="form-input" rows="2" placeholder="Nhập link ảnh hoặc bấm nút bên phải để tải file trực tiếp (Ngăn cách nhiều link bằng dấu phẩy)"></textarea>
+                        <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('p-upload').click()" style="padding: 0.6rem; font-size: 0.8rem;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Tải ảnh
+                            </button>
+                            <input type="file" id="p-upload" hidden accept="image/*" onchange="handleImageUpload(this, 'p-images')">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phân loại Variant (Tùy chọn) -->
+                <div class="card" style="background: #f8fafc; border-color: #e2e8f0; margin-top: 1.5rem;">
+                    <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0.75rem;">
+                        <h4 style="font-size: 0.95rem; font-weight: 700; color: #334155;"><i class="fa-solid fa-tags"></i> Cấu hình Phân loại (Tùy chọn)</h4>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Nhóm phân loại 1 (VD: Màu sắc)</label>
+                            <input type="text" id="p-variant-group1" class="form-input" placeholder="Màu sắc">
+                        </div>
+                        <div class="form-group">
+                            <label>Nhóm phân loại 2 (VD: Kích cỡ)</label>
+                            <input type="text" id="p-variant-group2" class="form-input" placeholder="Kích cỡ">
+                        </div>
+                    </div>
+
+                    <div id="variant-list-container" style="margin-top: 0.5rem;"></div>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="addNewVariantRow(false)" style="margin-top: 8px; padding: 0.4rem 1rem; font-size: 0.82rem; width: auto;">
+                        <i class="fa-solid fa-plus"></i> Thêm hàng phân loại
+                    </button>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu & Đăng bán
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Chỉnh sửa sản phẩm -->
+    <div id="product-edit-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--seller-border); display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a;"><i class="fa-solid fa-pen-to-square" style="color: var(--seller-primary); margin-right: 8px;"></i>Chỉnh sửa sản phẩm</h2>
+                <button onclick="closeEditProductModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;">&times;</button>
+            </div>
+            
+            <form id="form-edit-product" style="padding: 2rem;">
+                <input type="hidden" id="edit-p-id">
+                
+                <div class="form-group">
+                    <label for="edit-p-name">Tên sản phẩm <span style="color: red;">*</span></label>
+                    <input type="text" id="edit-p-name" class="form-input" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="edit-p-price">Đơn giá (VND) <span style="color: red;">*</span></label>
+                        <input type="number" id="edit-p-price" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-p-stock">Số lượng kho <span style="color: red;">*</span></label>
+                        <input type="number" id="edit-p-stock" class="form-input" required>
+                    </div>
+                </div>
+
+                <!-- Cascading Category Selector Edit -->
+                <div class="form-group">
+                    <label>Danh mục sản phẩm <span style="color: var(--seller-primary); font-size: 0.8rem;">(chọn đến cấp cuối cùng)</span></label>
+                    <div id="edit-category-cascade-selects" style="display: flex; flex-direction: column; gap: 4px;"></div>
+                    <div id="edit-category-selected-path" style="font-size: 0.82rem; color: var(--seller-primary); font-weight: 600; min-height: 1.2rem; margin-top: 4px;"></div>
+                    <input type="hidden" id="edit-p-category" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-p-desc">Mô tả sản phẩm <span style="color: red;">*</span></label>
+                    <textarea id="edit-p-desc" class="form-input" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Hình ảnh sản phẩm <span style="color: red;">*</span></label>
+                    <div style="display: flex; gap: 8px; align-items: flex-start;">
+                        <textarea id="edit-p-images" class="form-input" rows="2" placeholder="Link ảnh..."></textarea>
+                        <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-p-upload').click()" style="padding: 0.6rem; font-size: 0.8rem;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Tải ảnh
+                            </button>
+                            <input type="file" id="edit-p-upload" hidden accept="image/*" onchange="handleImageUpload(this, 'edit-p-images')">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phân loại Variant Edit (Tùy chọn) -->
+                <div class="card" style="background: #f8fafc; border-color: #e2e8f0; margin-top: 1.5rem;">
+                    <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0.75rem;">
+                        <h4 style="font-size: 0.95rem; font-weight: 700; color: #334155;"><i class="fa-solid fa-tags"></i> Cấu hình Phân loại (Tùy chọn)</h4>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Nhóm phân loại 1</label>
+                            <input type="text" id="edit-p-variant-group1" class="form-input" placeholder="Màu sắc">
+                        </div>
+                        <div class="form-group">
+                            <label>Nhóm phân loại 2</label>
+                            <input type="text" id="edit-p-variant-group2" class="form-input" placeholder="Kích cỡ">
+                        </div>
+                    </div>
+
+                    <div id="edit-variant-list-container" style="margin-top: 0.5rem;"></div>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="addNewVariantRow(true)" style="margin-top: 8px; padding: 0.4rem 1rem; font-size: 0.82rem; width: auto;">
+                        <i class="fa-solid fa-plus"></i> Thêm hàng phân loại
+                    </button>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditProductModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="seller-common.js"></script>
+    <script>
+        let _cachedProducts = [];
+        let allCategories = [];
+
+        async function initPage() {
+            await loadSellerProducts();
+            await loadCategoriesForProduct();
+        }
+
+        async function loadSellerProducts() {
+            const tbody = document.getElementById('product-list-body');
+            if (!tbody) return;
+
+            try {
+                const products = await window.api.get('seller/my-products');
+                _cachedProducts = products;
+
+                if (products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--seller-text-light);">Bạn chưa đăng bán sản phẩm nào.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = products.map(p => `
+                    <tr>
+                        <td><img src="${p.featuredImageUrl || p.imageUrl || 'https://via.placeholder.com/50'}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--seller-border);"></td>
+                        <td style="font-weight: 600; color: #0f172a;">${p.name}</td>
+                        <td style="font-weight: 700; color: var(--seller-primary);">${formatCurrency(p.price)}</td>
+                        <td style="font-weight: 500;">${p.stock} sản phẩm</td>
+                        <td>
+                            <span class="badge ${p.stock === 0 ? 'badge-danger' : 'badge-success'}">
+                                ${p.stock === 0 ? 'Hết hàng' : 'Đang hoạt động'}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                <button class="btn btn-secondary" onclick="openEditProductModal('${p.id}')" style="padding: 0.4rem; font-size: 0.85rem;"><i class="fa-solid fa-edit"></i></button>
+                                <button class="btn btn-secondary" onclick="confirmDeleteProduct('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="padding: 0.4rem; font-size: 0.85rem; color: #ef4444; border-color: #fee2e2;"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 2rem;">Không thể kết nối lấy danh sách sản phẩm.</td></tr>';
+            }
+        }
+
+        async function loadCategoriesForProduct() {
+            try {
+                allCategories = await window.api.get('marketplace/categories');
+                resetCategoryCascade();
+            } catch (e) {
+                console.error('Failed to load categories', e);
+            }
+        }
+
+        function resetCategoryCascade() {
+            const container = document.getElementById('category-cascade-selects');
+            if (!container) return;
+            container.innerHTML = '';
+            const roots = allCategories.filter(c => !c.parentCategoryId);
+            if (roots.length > 0) addCascadeLevel(roots, 0, 'category-cascade-selects', 'p-category', 'category-selected-path');
+        }
+
+        function addCascadeLevel(options, level, containerId, hiddenInputId, pathId, preSelectedPath = []) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            while (container.children.length > level) container.removeChild(container.lastChild);
+
+            const select = document.createElement('select');
+            select.className = 'cascade-select';
+            select.innerHTML = `<option value="" disabled selected>Chọn danh mục cấp ${level + 1}</option>` + 
+                options.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+            if (preSelectedPath && preSelectedPath[level]) select.value = preSelectedPath[level].id;
+
+            select.onchange = () => {
+                const val = select.value;
+                const children = allCategories.filter(c => c.parentCategoryId && c.parentCategoryId.toLowerCase() === val.toLowerCase());
+                document.getElementById(hiddenInputId).value = children.length === 0 ? val : '';
+                if (children.length > 0) addCascadeLevel(children, level + 1, containerId, hiddenInputId, pathId);
+                else while (container.children.length > level + 1) container.removeChild(container.lastChild);
+                updateCategoryPath(containerId, pathId);
+            };
+            container.appendChild(select);
+            if (preSelectedPath && preSelectedPath[level]) {
+                const children = allCategories.filter(c => c.parentCategoryId && c.parentCategoryId.toLowerCase() === select.value.toLowerCase());
+                if (children.length > 0) addCascadeLevel(children, level + 1, containerId, hiddenInputId, pathId, preSelectedPath);
+            }
+        }
+
+        function updateCategoryPath(containerId, pathId) {
+            const container = document.getElementById(containerId);
+            const pathEl = document.getElementById(pathId);
+            if (!pathEl) return;
+            const parts = Array.from(container.querySelectorAll('select')).map(s => {
+                const opt = s.options[s.selectedIndex];
+                return opt.disabled ? null : opt.text;
+            }).filter(v => v);
+            pathEl.innerHTML = parts.length > 0 ? `<i class="fa-solid fa-location-dot"></i> ${parts.join(' › ')}` : '';
+        }
+
+        async function handleImageUpload(input, targetTextAreaId) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const result = await window.api.uploadImage(file);
+                const textArea = document.getElementById(targetTextAreaId);
+                if (textArea) {
+                    const currentVal = textArea.value.trim();
+                    textArea.value = currentVal ? `${currentVal}, ${result.url}` : result.url;
+                }
+            } catch (err) {
+                alert(err.message || 'Không thể tải hình ảnh lên Cloudinary.');
+            } finally {
+                input.value = ''; // Reset file input
+            }
+        }
+
+        function addNewVariantRow(isEdit = false) {
+            const containerId = isEdit ? 'edit-variant-list-container' : 'variant-list-container';
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = 'variant-row';
+            div.innerHTML = `
+                <input type="text" class="form-input var-lbl1" placeholder="Nhãn 1 (VD: Đỏ)" required>
+                <input type="text" class="form-input var-lbl2" placeholder="Nhãn 2 (VD: L)" required>
+                <input type="number" class="form-input var-price" placeholder="Giá..." required>
+                <input type="number" class="form-input var-stock" placeholder="Kho..." required>
+                <button type="button" class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function getVariantsData(isEdit = false) {
+            const containerId = isEdit ? 'edit-variant-list-container' : 'variant-list-container';
+            const container = document.getElementById(containerId);
+            if (!container) return [];
+
+            const rows = container.querySelectorAll('.variant-row');
+            const variants = [];
+            rows.forEach(r => {
+                variants.push({
+                    label1: r.querySelector('.var-lbl1').value.trim(),
+                    label2: r.querySelector('.var-lbl2').value.trim(),
+                    price: parseFloat(r.querySelector('.var-price').value),
+                    stock: parseInt(r.querySelector('.var-stock').value)
+                });
+            });
+            return variants;
+        }
+
+        // Add Product Submit Handlers
+        document.getElementById('form-add-product').onsubmit = async (e) => {
+            e.preventDefault();
+            const catId = document.getElementById('p-category').value;
+            if (!catId) {
+                alert("Vui lòng chọn danh mục cấp cuối cùng!");
+                return;
+            }
+
+            const images = document.getElementById('p-images').value.split(',').map(s => s.trim()).filter(s => s);
+            if (images.length === 0) {
+                alert("Vui lòng nhập hoặc tải lên ít nhất 1 hình ảnh!");
+                return;
+            }
+
+            const data = {
+                name: document.getElementById('p-name').value,
+                price: parseFloat(document.getElementById('p-price').value),
+                stock: parseInt(document.getElementById('p-stock').value),
+                categoryId: catId,
+                description: document.getElementById('p-desc').value,
+                featuredImageUrl: images[0],
+                images: images,
+                variantGroup1: document.getElementById('p-variant-group1').value.trim() || null,
+                variantGroup2: document.getElementById('p-variant-group2').value.trim() || null,
+                variants: getVariantsData(false)
+            };
+
+            try {
+                await window.api.post('seller/products', data);
+                alert("Đăng bán sản phẩm thành công!");
+                closeAddProductModal();
+                loadSellerProducts();
+            } catch (err) {
+                alert(err.message || "Lỗi khi thêm sản phẩm.");
+            }
+        };
+
+        // Edit Product Handler
+        async function openEditProductModal(id) {
+            const p = _cachedProducts.find(x => x.id === id);
+            if (!p) return;
+
+            document.getElementById('edit-p-id').value = p.id;
+            document.getElementById('edit-p-name').value = p.name;
+            document.getElementById('edit-p-price').value = p.price;
+            document.getElementById('edit-p-stock').value = p.stock;
+            document.getElementById('edit-p-desc').value = p.description || '';
+            document.getElementById('edit-p-images').value = p.images ? p.images.join(', ') : p.featuredImageUrl || '';
+            document.getElementById('edit-p-variant-group1').value = p.variantGroup1 || '';
+            document.getElementById('edit-p-variant-group2').value = p.variantGroup2 || '';
+
+            // Handle edit cascade selects
+            document.getElementById('edit-p-category').value = p.categoryId || '';
+            const editCascadeContainer = document.getElementById('edit-category-cascade-selects');
+            editCascadeContainer.innerHTML = '';
+            
+            // Build selected path chain
+            let preSelectedPath = [];
+            let currentId = p.categoryId;
+            while (currentId) {
+                const cat = allCategories.find(c => c.id.toLowerCase() === currentId.toLowerCase());
+                if (cat) {
+                    preSelectedPath.unshift(cat);
+                    currentId = cat.parentCategoryId;
+                } else {
+                    currentId = null;
+                }
+            }
+
+            const roots = allCategories.filter(c => !c.parentCategoryId);
+            if (roots.length > 0) {
+                addCascadeLevel(roots, 0, 'edit-category-cascade-selects', 'edit-p-category', 'edit-category-selected-path', preSelectedPath);
+                updateCategoryPath('edit-category-cascade-selects', 'edit-category-selected-path');
+            }
+
+            // Populate variants list
+            const variantContainer = document.getElementById('edit-variant-list-container');
+            variantContainer.innerHTML = '';
+            if (p.variants && p.variants.length > 0) {
+                p.variants.forEach(v => {
+                    const div = document.createElement('div');
+                    div.className = 'variant-row';
+                    div.innerHTML = `
+                        <input type="text" class="form-input var-lbl1" value="${v.label1 || ''}" placeholder="Nhãn 1" required>
+                        <input type="text" class="form-input var-lbl2" value="${v.label2 || ''}" placeholder="Nhãn 2" required>
+                        <input type="number" class="form-input var-price" value="${v.price || 0}" placeholder="Giá" required>
+                        <input type="number" class="form-input var-stock" value="${v.stock || 0}" placeholder="Kho" required>
+                        <button type="button" class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                    variantContainer.appendChild(div);
+                });
+            }
+
+            document.getElementById('product-edit-modal').classList.remove('hidden');
+        }
+
+        document.getElementById('form-edit-product').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-p-id').value;
+            const catId = document.getElementById('edit-p-category').value;
+            
+            if (!catId) {
+                alert("Vui lòng chọn danh mục cấp cuối cùng!");
+                return;
+            }
+
+            const images = document.getElementById('edit-p-images').value.split(',').map(s => s.trim()).filter(s => s);
+            if (images.length === 0) {
+                alert("Vui lòng cung cấp ít nhất 1 hình ảnh!");
+                return;
+            }
+
+            const data = {
+                id: id,
+                name: document.getElementById('edit-p-name').value,
+                price: parseFloat(document.getElementById('edit-p-price').value),
+                stock: parseInt(document.getElementById('edit-p-stock').value),
+                categoryId: catId,
+                description: document.getElementById('edit-p-desc').value,
+                featuredImageUrl: images[0],
+                images: images,
+                variantGroup1: document.getElementById('edit-p-variant-group1').value.trim() || null,
+                variantGroup2: document.getElementById('edit-p-variant-group2').value.trim() || null,
+                variants: getVariantsData(true)
+            };
+
+            try {
+                await window.api.put(`seller/products/${id}`, data);
+                alert("Cập nhật sản phẩm thành công!");
+                closeEditProductModal();
+                loadSellerProducts();
+            } catch (err) {
+                alert(err.message || "Lỗi khi lưu thay đổi sản phẩm.");
+            }
+        };
+
+        async function confirmDeleteProduct(id, name) {
+            if (!confirm(`Bạn chắc chắn muốn xóa vĩnh viễn sản phẩm "${name}" khỏi shop chứ?`)) return;
+            try {
+                await window.api.delete(`seller/products/${id}`);
+                alert("Đã xóa sản phẩm thành công!");
+                loadSellerProducts();
+            } catch (err) {
+                alert(err.message || "Không thể xóa sản phẩm.");
+            }
+        }
+
+        function openAddProductModal() {
+            document.getElementById('form-add-product').reset();
+            document.getElementById('variant-list-container').innerHTML = '';
+            resetCategoryCascade();
+            document.getElementById('category-selected-path').textContent = '';
+            document.getElementById('product-add-modal').classList.remove('hidden');
+        }
+
+        function closeAddProductModal() {
+            document.getElementById('product-add-modal').classList.add('hidden');
+        }
+
+        function closeEditProductModal() {
+            document.getElementById('product-edit-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

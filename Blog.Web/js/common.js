@@ -909,7 +909,7 @@ async function updateNav() {
                     <i class="fa-solid fa-bag-shopping"></i> <span data-i18n="shopping">${window.t('shopping')}</span>
                 </a>
                 ${window._userHasShop ? `
-                <a href="seller-center.html" class="nav-marketplace-link" style="color: #059669; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
+                <a href="seller/index.html" class="nav-marketplace-link" style="color: #059669; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05);">
                     <i class="fa-solid fa-store"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span>
                 </a>` : ''}
             </div>
@@ -921,7 +921,7 @@ async function updateNav() {
                     <a href="profile.html"><i class="fa fa-user"></i> <span data-i18n="profile">${window.t('profile')}</span></a>
                     <a href="marketplace.html" style="color: #2563eb; font-weight: 600;"><i class="fa fa-shopping-bag"></i> <span data-i18n="marketplace">${window.t('marketplace')}</span></a>
                     <a href="my-orders.html" style="color: #f59e0b; font-weight: 600;"><i class="fa-solid fa-box-open"></i> <span data-i18n="my_orders">${window.t('my_orders')}</span></a>
-                    ${window._userHasShop ? `<a href="seller-center.html" style="color: #059669; font-weight: 600;"><i class="fa fa-store"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span></a>` : ''}
+                    ${window._userHasShop ? `<a href="seller/index.html" style="color: #059669; font-weight: 600;"><i class="fa fa-store"></i> <span data-i18n="seller_center">${window.t('seller_center')}</span></a>` : ''}
                   
                     <hr>
                     ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `<a href="create-post.html"><i class="fa fa-plus-circle"></i> <span data-i18n="post_new">${window.t('post_new')}</span></a>` : ''}

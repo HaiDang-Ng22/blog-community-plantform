@@ -275,7 +275,7 @@ async function updateMarketplaceTabUI() {
                 <i class="fa-solid fa-shop" style="font-size:3.5rem; color:#22c55e; margin-bottom:1.5rem;"></i>
                 <h3 style="color:#166534; font-size:1.4rem; margin-bottom:0.5rem;">Cửa hàng của bạn đang hoạt động</h3>
                 <p style="color:#166534; margin: 1rem 0; font-size:0.95rem;">Cửa hàng <strong>${shop.name}</strong> đã sẵn sàng.</p>
-                <a href="seller-center.html" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; background:#22c55e; border:none; border-radius:10px; font-weight:700; text-decoration:none;">
+                <a href="seller/index.html" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; background:#22c55e; border:none; border-radius:10px; font-weight:700; text-decoration:none;">
                     Vào Kênh Người Bán
                 </a>
             </div>
@@ -314,7 +314,7 @@ async function updateMarketplaceTabUI() {
                             <i class="fa-solid fa-circle-xmark" style="font-size:3.5rem; color:#ef4444; margin-bottom:1.5rem;"></i>
                             <h3 style="color:#991b1b; font-size:1.4rem; margin-bottom:0.5rem;">Đăng ký bị từ chối</h3>
                             <p style="color:#991b1b; margin: 1rem 0; font-size:0.95rem;">Lý do: ${app.rejectionReason || 'Thông tin chưa chính xác.'}</p>
-                            <button onclick="window.location.href='seller-center.html'" class="btn primary-btn" style="background:#ef4444; border:none;">Đăng ký lại</button>
+                            <button onclick="window.location.href='seller/register.html'" class="btn primary-btn" style="background:#ef4444; border:none;">Đăng ký lại</button>
                         </div>
                     `;
                 } else {
@@ -331,7 +331,7 @@ async function updateMarketplaceTabUI() {
                             <i class="fa-solid fa-store" style="font-size:3.5rem; color:#94a3b8; margin-bottom:1.5rem;"></i>
                             <h3 style="color:#475569; font-size:1.4rem; margin-bottom:0.5rem;">Bắt đầu kinh doanh trên Zynk</h3>
                             <p style="color:#64748b; margin: 1rem 0; font-size:0.95rem;">Tiếp cận hàng ngàn khách hàng tiềm năng bằng cách mở cửa hàng ngay hôm nay.</p>
-                            <button onclick="window.location.href='seller-center.html'" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; border-radius:10px; font-weight:700;">
+                            <button onclick="window.location.href='seller/register.html'" class="btn primary-btn" style="display:inline-block; padding:0.9rem 2.5rem; border-radius:10px; font-weight:700;">
                                 Đăng ký ngay
                             </button>
                         </div>
