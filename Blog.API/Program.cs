@@ -119,6 +119,24 @@ if (!string.IsNullOrEmpty(payOsClientId) && payOsClientId != "YOUR_CLIENT_ID_HER
 
 // Initialize Firebase
 var firebaseKeyPath = Path.Combine(builder.Environment.ContentRootPath, "firebase-key.json");
+if (!File.Exists(firebaseKeyPath))
+{
+    // Try Render's secret mount path
+    var renderSecretPath = "/etc/secrets/firebase-key.json";
+    if (File.Exists(renderSecretPath))
+    {
+        firebaseKeyPath = renderSecretPath;
+    }
+}
+if (!File.Exists(firebaseKeyPath))
+{
+    var currentDirKey = Path.Combine(Directory.GetCurrentDirectory(), "firebase-key.json");
+    if (File.Exists(currentDirKey))
+    {
+        firebaseKeyPath = currentDirKey;
+    }
+}
+
 if (File.Exists(firebaseKeyPath))
 {
     FirebaseApp.Create(new AppOptions()
@@ -127,6 +145,10 @@ if (File.Exists(firebaseKeyPath))
     });
     // Set Firestore environment variable
     Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", firebaseKeyPath);
+}
+else
+{
+    Console.WriteLine("[Firebase Warning] firebase-key.json not found in any search paths! Chat endpoints will fail.");
 }
 
 var app = builder.Build();
