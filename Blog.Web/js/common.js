@@ -1227,7 +1227,7 @@ function createPostCard(post) {
                 </div>
             </div>
             <div class="zynk-media-container zynk-reel-container" style="background: #000; min-height: 400px; aspect-ratio: 9/16; max-height: 600px;">
-                <video src="${videoSrc}" controls style="width: 100%; height: 100%; object-fit: contain;" loading="lazy"></video>
+                <video src="${videoSrc}" preload="metadata" controls style="width: 100%; height: 100%; object-fit: contain;"></video>
             </div>
             <div class="zynk-actions">
                 <button class="${isLiked ? 'liked' : ''}" onclick="window.postActions.toggleLike('${postId}', this)">

@@ -42,7 +42,7 @@ function createReelItem(reel) {
     const isSaved = reel.isSavedByMe;
 
     div.innerHTML = `
-        <video class="reel-video" loop playsinline src="${reel.videoUrl || reel.imageUrls[0]}"></video>
+        <video class="reel-video" preload="metadata" loop playsinline src="${reel.videoUrl || reel.imageUrls[0]}"></video>
         
         <div class="reel-overlay">
             <div class="reel-user">

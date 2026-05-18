@@ -106,6 +106,12 @@ builder.Services.AddScoped<IFirebaseChatService, FirebaseChatService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
 
 // Initialize PayOS
 var payOsClientId = builder.Configuration["PayOSSettings:ClientId"];
@@ -162,6 +168,7 @@ if (app.Environment.IsDevelopment())
 }
 // app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseResponseCompression();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -175,7 +182,14 @@ if (Directory.Exists(webPath))
     });
     app.UseStaticFiles(new StaticFileOptions
     {
-        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webPath)
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webPath),
+        OnPrepareResponse = ctx =>
+        {
+            // Cache static assets like CSS, JS, images, and fonts for 30 days
+            const int durationInSeconds = 60 * 60 * 24 * 30;
+            ctx.Context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.CacheControl] = 
+                $"public,max-age={durationInSeconds}";
+        }
     });
 }
 
