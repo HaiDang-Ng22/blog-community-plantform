@@ -1,40 +1,106 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chính sách Quyền riêng tư | Zynk</title>
-    <link rel="stylesheet" href="css/common.css">
-    <style>
-        .page-container { max-width: 800px; margin: 40px auto; padding: 40px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; }
-        h1 { margin-bottom: 25px; }
-        h2 { margin-top: 25px; margin-bottom: 10px; font-size: 1.25rem; }
-        p, li { line-height: 1.7; color: var(--text-secondary); margin-bottom: 15px; }
-        .back-link { display: inline-block; margin-top: 30px; color: var(--primary-blue); text-decoration: none; font-weight: 600; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quyền riêng tư | Zynk</title>
+<meta name="description" content="Chính sách bảo mật và quyền riêng tư của nền tảng Zynk.">
+<link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/info-pages.css">
+<style>
+body.main-with-sidebar { margin-left: 0; }
+@media (min-width: 769px) {
+    body.main-with-sidebar:has(.sidebar-nav) { margin-left: 72px; }
+    body.main-with-sidebar:has(.sidebar-nav) .info-nav { left: 72px; width: calc(100% - 72px); }
+}
+.legal-alert {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.legal-alert i { font-size: 1.5rem; color: #059669; }
+.legal-alert p { font-size: 0.85rem; color: var(--text1); margin: 0; font-weight: 500; }
+.legal-section { margin-bottom: 28px; }
+.legal-section:last-child { margin-bottom: 0; }
+.legal-section h3 { font-size: 1.1rem; font-weight: 700; color: var(--text1); margin-bottom: 10px; }
+.legal-section p, .legal-section ul { font-size: 0.9rem; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+.legal-section ul { padding-left: 20px; }
+</style>
 </head>
 <body class="main-with-sidebar">
-    <div class="page-container">
-        <h1>Chính sách Quyền riêng tư</h1>
-        <p>Chào mừng bạn đến với Zynk. Chúng tôi cam kết bảo vệ thông tin cá nhân và quyền riêng tư của bạn trong suốt quá trình sử dụng dịch vụ của đồ án này.</p>
-        
-        <h2>1. Thông tin chúng tôi thu thập</h2>
-        <ul>
-            <li>Thông tin tài khoản: Email, tên đầy đủ, ảnh đại diện khi bạn đăng ký.</li>
-            <li>Nội dung người dùng: Bài viết, hình ảnh, video và bình luận bạn chia sẻ.</li>
-            <li>Dữ liệu giao dịch: Thông tin đơn hàng và lịch sử mua sắm tại Zynk Shop.</li>
-        </ul>
 
-        <h2>2. Cách chúng tôi sử dụng thông tin</h2>
-        <p>Chúng tôi sử dụng thông tin thu thập được để duy trì tài khoản, xử lý đơn hàng, gửi thông báo thời gian thực và cải thiện trải nghiệm người dùng dựa trên phản hồi thực tế.</p>
-
-        <h2>3. Bảo mật dữ liệu</h2>
-        <p>Mọi thông tin mật khẩu đều được mã hóa (hashing) trước khi lưu trữ vào cơ sở dữ liệu. Chúng tôi sử dụng giao thức JWT để đảm bảo an toàn cho các phiên đăng nhập của bạn.</p>
-
-        <h2>4. Quyền của người dùng</h2>
-        <p>Bạn có toàn quyền chỉnh sửa thông tin cá nhân, chuyển đổi trạng thái tài khoản sang "Riêng tư" hoặc xóa tài khoản vĩnh viễn trong mục Cài đặt.</p>
-
-        <a href="index.html" class="back-link">← Quay lại trang chủ</a>
+<nav class="info-nav">
+  <div class="info-nav-inner">
+    <a href="index.html" class="info-nav-logo">Zynk</a>
+    <div class="info-nav-links">
+      <a href="about.html">Giới thiệu</a>
+      <a href="help.html">Trợ giúp</a>
+      <a href="press.html">Báo chí</a>
+      <a href="api.html">API</a>
+      <a href="jobs.html">Việc làm</a>
+      <a href="privacy.html" class="active">Quyền riêng tư</a>
+      <a href="terms.html">Điều khoản</a>
     </div>
+  </div>
+</nav>
+
+<section class="info-hero">
+  <div class="info-badge">Trung tâm Pháp lý</div>
+  <h1>Quyền riêng tư</h1>
+  <p>Chính sách thu thập, sử dụng và bảo mật dữ liệu người dùng Zynk.</p>
+</section>
+
+<div class="info-content">
+  <div class="legal-alert">
+    <i class="fa fa-shield-check"></i>
+    <p>Dữ liệu mật khẩu của bạn được mã hóa an toàn (hashing) trước khi lưu trữ. Zynk cam kết không chia sẻ dữ liệu với bên thứ ba vì mục đích quảng cáo.</p>
+  </div>
+
+  <div class="info-card">
+    <div class="legal-section">
+      <h3>1. Thông tin chúng tôi thu thập</h3>
+      <p>Khi bạn đăng ký và sử dụng Zynk, chúng tôi thu thập:</p>
+      <ul>
+        <li>Thông tin đăng ký: Email, họ tên, ảnh đại diện.</li>
+        <li>Nội dung người dùng: Bài viết, hình ảnh, bình luận.</li>
+        <li>Dữ liệu thương mại: Lịch sử mua hàng, địa chỉ giao nhận trên Marketplace.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h3>2. Cách chúng tôi sử dụng thông tin</h3>
+      <p>Thông tin thu thập được sử dụng duy nhất cho việc vận hành nền tảng:</p>
+      <ul>
+        <li>Xác thực tài khoản và duy trì phiên đăng nhập.</li>
+        <li>Xử lý giao dịch VietQR và điều phối đơn hàng Marketplace.</li>
+        <li>Cải thiện hệ thống lọc nội dung và thuật toán chống thư rác.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h3>3. Bảo mật kỹ thuật</h3>
+      <p>Zynk áp dụng kiến trúc bảo mật tiên tiến để bảo vệ người dùng:</p>
+      <ul>
+        <li>API được bảo vệ bằng JSON Web Token (JWT) có thời hạn.</li>
+        <li>Toàn bộ lưu lượng truy cập được mã hóa qua SSL/HTTPS.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer class="info-footer">
+  <p><a href="about.html">Giới thiệu</a>·<a href="help.html">Trợ giúp</a>·<a href="press.html">Báo chí</a>·<a href="api.html">API</a>·<a href="jobs.html">Việc làm</a>·<a href="privacy.html">Quyền riêng tư</a>·<a href="terms.html">Điều khoản</a></p>
+  <p style="margin-top:8px">© 2026 ZYNK COMMUNITY.</p>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
 </body>
 </html>

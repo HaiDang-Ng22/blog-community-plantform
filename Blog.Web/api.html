@@ -3,92 +3,149 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>API – Zynk</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<title>Developer API | Zynk</title>
+<meta name="description" content="Tài liệu kỹ thuật và API của Zynk dành cho nhà phát triển.">
 <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/info-pages.css">
 <style>
-  .code-block {
-    background:#1e1e2e;
-    color:#cdd6f4;
-    border-radius:10px;
-    padding:16px 20px;
-    font-family:'Courier New',monospace;
-    font-size:0.82rem;
-    line-height:1.8;
-    overflow-x:auto;
-    margin-top:12px;
-  }
-  .code-block .kw{color:#cba6f7;}
-  .code-block .str{color:#a6e3a1;}
-  .code-block .key{color:#89dceb;}
-  .endpoint-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.72rem;font-weight:700;margin-right:8px;}
-  .get{background:#dbf0e8;color:#1a7a4a;}
-  .post{background:#ddeeff;color:#1a4a7a;}
+body.main-with-sidebar { margin-left: 0; }
+@media (min-width: 769px) {
+    body.main-with-sidebar:has(.sidebar-nav) { margin-left: 72px; }
+    body.main-with-sidebar:has(.sidebar-nav) .info-nav { left: 72px; width: calc(100% - 72px); }
+}
+.code-block {
+    background: #111827; /* Dark background for code even in light mode */
+    color: #e5e7eb;
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 16px 0;
+}
+.code-block .kw { color: #f472b6; font-weight: 600; }
+.code-block .str { color: #34d399; }
+.code-block .key { color: #60a5fa; }
+.code-block .num { color: #fbbf24; }
+.code-block .comment { color: #6b7280; font-style: italic; }
+
+.api-list { margin-top: 16px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg2); }
+.api-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.api-row:last-child { border-bottom: none; }
+.api-badge {
+    width: 64px; text-align: center; font-size: 0.7rem; font-weight: 700; padding: 4px 0; border-radius: 6px; margin-right: 16px;
+}
+.api-badge.get { background: rgba(16,185,129,0.1); color: #059669; }
+.api-badge.post { background: rgba(59,130,246,0.1); color: #2563eb; }
+.api-badge.put { background: rgba(245,158,11,0.1); color: #d97706; }
+.api-badge.delete { background: rgba(239,68,68,0.1); color: #dc2626; }
+.api-path { font-family: monospace; font-size: 0.85rem; font-weight: 600; color: var(--text1); }
+.api-desc { margin-left: auto; font-size: 0.8rem; color: var(--text2); }
+@media (max-width: 600px) {
+    .api-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .api-desc { margin-left: 0; }
+}
 </style>
 </head>
-<body>
+<body class="main-with-sidebar">
+
 <nav class="info-nav">
   <div class="info-nav-inner">
     <a href="index.html" class="info-nav-logo">Zynk</a>
     <div class="info-nav-links">
-    <a href="about.html">Giới thiệu</a>
-                    <a href="help.html">Trợ giúp</a>
-                    <a href="press.html">Báo chí</a>
-                    <a href="api.html">API</a>
-                    <a href="jobs.html">Việc làm</a>
-                    <a href="privacy.html">Quyền riêng tư</a>
-                    <a href="terms.html">Điều khoản</a>
+      <a href="about.html">Giới thiệu</a>
+      <a href="help.html">Trợ giúp</a>
+      <a href="press.html">Báo chí</a>
+      <a href="api.html" class="active">API</a>
+      <a href="jobs.html">Việc làm</a>
+      <a href="privacy.html">Quyền riêng tư</a>
+      <a href="terms.html">Điều khoản</a>
     </div>
   </div>
 </nav>
+
 <section class="info-hero">
-  <div class="info-badge">Dành cho lập trình viên</div>
-  <h1>Zynk Developer API</h1>
-  <p>Tích hợp sức mạnh của Zynk vào ứng dụng của bạn với REST API đơn giản và mạnh mẽ.</p>
+  <div class="info-badge">Tài nguyên Lập trình viên</div>
+  <h1>Zynk RESTful API</h1>
+  <p>Tài liệu tích hợp hệ thống, hướng dẫn xác thực JWT và danh sách endpoints mở rộng.</p>
 </section>
+
 <div class="info-content">
-  <div class="info-stats">
-    <div class="info-stat"><span class="stat-num">REST</span><span class="stat-label">Kiến trúc</span></div>
-    <div class="info-stat"><span class="stat-num">JWT</span><span class="stat-label">Xác thực</span></div>
-    <div class="info-stat"><span class="stat-num">JSON</span><span class="stat-label">Định dạng</span></div>
-  </div>
-
   <div class="info-card">
-    <h2><span class="icon"><i class="fa fa-plug"></i></span> Base URL</h2>
-    <div class="code-block">/api/</div>
-    <p style="margin-top:12px;">Tất cả các endpoints đều yêu cầu header <code>Authorization: Bearer &lt;token&gt;</code> (trừ đăng nhập/đăng ký).</p>
-  </div>
-
-  <div class="info-card">
-    <h2><span class="icon"><i class="fa fa-lock"></i></span> Xác thực</h2>
-    <p>Endpoint để lấy JWT token:</p>
+    <h2><span class="icon"><i class="fa fa-server"></i></span>Môi trường & Base URL</h2>
+    <p>Mọi kết nối API chính thức đều thông qua cổng giao thức an toàn HTTPS với cấu trúc đường dẫn cơ sở:</p>
     <div class="code-block">
-<span class="kw">POST</span> /api/auth/login<br><br>{<br>  <span class="key">"email"</span>: <span class="str">"user@example.com"</span>,<br>  <span class="key">"password"</span>: <span class="str">"your_password"</span><br>}<br><br>// Response<br>{<br>  <span class="key">"token"</span>: <span class="str">"eyJhbGciOiJIUzI1NiIs..."</span><br>}
+        <span class="kw">Production:</span> https://zynk.app/api/<br>
+        <span class="kw">Development:</span> http://localhost:7000/api/
     </div>
   </div>
 
   <div class="info-card">
-    <h2><span class="icon"><i class="fa fa-list"></i></span> Endpoints chính</h2>
-    <ul style="list-style:none;padding:0;">
-      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge get">GET</span><code>/api/marketplace/products</code> – Lấy danh sách sản phẩm</li>
-      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge get">GET</span><code>/api/marketplace/categories</code> – Lấy danh mục</li>
-      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge get">GET</span><code>/api/posts</code> – Lấy danh sách bài viết</li>
-      <li style="padding:10px 0;border-bottom:1px solid #f0f0f0;"><span class="endpoint-badge post">POST</span><code>/api/posts</code> – Tạo bài viết mới</li>
-      <li style="padding:10px 0;"><span class="endpoint-badge get">GET</span><code>/api/users/{id}/profile</code> – Lấy hồ sơ người dùng</li>
-    </ul>
+    <h2><span class="icon"><i class="fa fa-key"></i></span>Xác thực (Authentication)</h2>
+    <p>Các request cần xác thực yêu cầu truyền JWT token trong Header:</p>
+    <div class="code-block">Authorization: Bearer <span class="str">&lt;jwt_token&gt;</span></div>
+    <p style="margin-top:16px; font-weight:600; font-size:0.9rem">Lấy Token (Login):</p>
+    <div class="code-block">
+        <span class="kw">POST</span> /api/auth/login<br>
+        <span class="comment">// Payload:</span><br>
+        {<br>
+        &nbsp;&nbsp;<span class="key">"email"</span>: <span class="str">"dev@zynk.app"</span>,<br>
+        &nbsp;&nbsp;<span class="key">"password"</span>: <span class="str">"secure_pass"</span><br>
+        }<br><br>
+        <span class="comment">// Response (200 OK):</span><br>
+        {<br>
+        &nbsp;&nbsp;<span class="key">"token"</span>: <span class="str">"eyJhbGciOiJIUzI1NiIs..."</span><br>
+        }
+    </div>
   </div>
 
   <div class="info-card">
-    <h2><span class="icon"><i class="fa fa-envelope"></i></span> Yêu cầu API Key</h2>
-    <p>API hiện đang trong giai đoạn beta. Liên hệ chúng tôi để được cấp quyền truy cập sớm.</p>
-    <a class="info-cta" href="mailto:dev@zynk.app"><i class="fa fa-paper-plane"></i> Đăng ký truy cập</a>
+    <h2><span class="icon"><i class="fa fa-code"></i></span>Danh sách Endpoints</h2>
+    <div class="api-list">
+      <div class="api-row">
+        <div class="api-badge get">GET</div>
+        <div class="api-path">/api/marketplace/products</div>
+        <div class="api-desc">Danh sách sản phẩm</div>
+      </div>
+      <div class="api-row">
+        <div class="api-badge get">GET</div>
+        <div class="api-path">/api/posts</div>
+        <div class="api-desc">Bảng tin cộng đồng</div>
+      </div>
+      <div class="api-row">
+        <div class="api-badge post">POST</div>
+        <div class="api-path">/api/posts</div>
+        <div class="api-desc">Đăng bài viết mới</div>
+      </div>
+      <div class="api-row">
+        <div class="api-badge put">PUT</div>
+        <div class="api-path">/api/users/profile</div>
+        <div class="api-desc">Cập nhật hồ sơ</div>
+      </div>
+      <div class="api-row">
+        <div class="api-badge delete">DELETE</div>
+        <div class="api-path">/api/posts/{id}</div>
+        <div class="api-desc">Xóa bài viết</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-card" style="text-align: center; padding: 40px 20px;">
+    <h2>Cần thêm hỗ trợ API?</h2>
+    <p>Hệ thống API hiện đang được giới hạn lưu lượng (rate limit). Liên hệ để nâng cấp hạn mức.</p>
+    <a href="mailto:dev@zynk.app" class="info-cta">Đăng ký khóa API</a>
   </div>
 </div>
+
 <footer class="info-footer">
-  <p><a href="about.html">Giới thiệu</a><a href="help.html">Trợ giúp</a><a href="press.html">Báo chí</a><a href="api.html">API</a><a href="jobs.html">Việc làm</a><a href="privacy.html">Quyền riêng tư</a><a href="terms.html">Điều khoản</a></p>
-  <p style="margin-top:8px;">© 2026 Zynk Community.</p>
+  <p><a href="about.html">Giới thiệu</a>·<a href="help.html">Trợ giúp</a>·<a href="press.html">Báo chí</a>·<a href="api.html">API</a>·<a href="jobs.html">Việc làm</a>·<a href="privacy.html">Quyền riêng tư</a>·<a href="terms.html">Điều khoản</a></p>
+  <p style="margin-top:8px">© 2026 ZYNK COMMUNITY.</p>
 </footer>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
 </body>
 </html>

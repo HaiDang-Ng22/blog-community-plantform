@@ -118,7 +118,7 @@ public class OrdersController : ControllerBase
             if (!string.IsNullOrEmpty(dto.VoucherCode))
             {
                 appliedVoucher = await _context.Vouchers.FirstOrDefaultAsync(v => 
-                    v.ShopId == shopId && 
+                    (v.ShopId == shopId || v.ShopId == null) && 
                     v.Code == dto.VoucherCode.ToUpper() && 
                     v.IsActive && 
                     v.StartDate <= DateTime.UtcNow && 
@@ -511,9 +511,15 @@ public class OrdersController : ControllerBase
     [HttpGet("my-addresses")]
     public async Task<IActionResult> GetMyAddresses()
     {
-        var userId = User.GetUserId() ?? Guid.Empty;
-        if (userId == Guid.Empty) return Unauthorized();
-        var userAddresses = await _addressRepository.FindAsync(a => a.UserId == userId);
+        var userId = User.GetUserId();
+        if (userId == null || userId == Guid.Empty) return Ok(Array.Empty<object>());
+        
+        // Fetch all addresses for this user, ordered by default first, then newest
+        var userAddresses = await _context.UserAddresses
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.IsDefault)
+            .ThenByDescending(a => a.CreatedAt)
+            .ToListAsync();
         
         var dtos = userAddresses.Select(a => new
         {
@@ -527,6 +533,195 @@ public class OrdersController : ControllerBase
         }).ToList();
 
         return Ok(dtos);
+    }
+
+    [HttpPost("addresses")]
+    public async Task<IActionResult> CreateAddress([FromBody] CreateAddressDto dto)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var userAddresses = await _context.UserAddresses.Where(a => a.UserId == userId).ToListAsync();
+        bool isFirst = !userAddresses.Any();
+
+        var newAddress = new UserAddress
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            FullName = dto.FullName,
+            PhoneNumber = dto.PhoneNumber,
+            Province = dto.Province,
+            DistrictWard = dto.DistrictWard,
+            SpecificAddress = dto.SpecificAddress,
+            IsDefault = isFirst || dto.IsDefault,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        if (newAddress.IsDefault)
+        {
+            foreach (var addr in userAddresses)
+            {
+                if (addr.IsDefault)
+                {
+                    addr.IsDefault = false;
+                    _context.UserAddresses.Update(addr);
+                }
+            }
+        }
+
+        _context.UserAddresses.Add(newAddress);
+        await _context.SaveChangesAsync();
+
+        return Ok(newAddress);
+    }
+
+    [HttpPut("addresses/{id}/default")]
+    public async Task<IActionResult> SetDefaultAddress(Guid id)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var userAddresses = await _context.UserAddresses.Where(a => a.UserId == userId).ToListAsync();
+        var targetAddress = userAddresses.FirstOrDefault(a => a.Id == id);
+        if (targetAddress == null) return NotFound(new { message = "Không tìm thấy địa chỉ." });
+
+        foreach (var addr in userAddresses)
+        {
+            addr.IsDefault = (addr.Id == id);
+            _context.UserAddresses.Update(addr);
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã đặt làm địa chỉ mặc định." });
+    }
+
+    [HttpDelete("addresses/{id}")]
+    public async Task<IActionResult> DeleteAddress(Guid id)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var userAddresses = await _context.UserAddresses.Where(a => a.UserId == userId).ToListAsync();
+        var targetAddress = userAddresses.FirstOrDefault(a => a.Id == id);
+        if (targetAddress == null) return NotFound(new { message = "Không tìm thấy địa chỉ." });
+
+        bool wasDefault = targetAddress.IsDefault;
+        _context.UserAddresses.Remove(targetAddress);
+
+        // If we deleted the default address, make another one default
+        if (wasDefault)
+        {
+            var remaining = userAddresses.Where(a => a.Id != id).OrderByDescending(a => a.CreatedAt).FirstOrDefault();
+            if (remaining != null)
+            {
+                remaining.IsDefault = true;
+                _context.UserAddresses.Update(remaining);
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã xóa địa chỉ thành công." });
+    }
+
+    [HttpPost("validate-voucher")]
+    public async Task<IActionResult> ValidateVoucher([FromBody] ValidateVoucherDto dto)
+    {
+        var now = DateTime.UtcNow;
+        var voucher = await _context.Vouchers
+            .Include(v => v.Shop)
+            .FirstOrDefaultAsync(v => 
+                v.Code == dto.Code.ToUpper() && 
+                v.IsActive && 
+                v.StartDate <= now && 
+                v.EndDate >= now && 
+                (v.UsageLimit == 0 || v.UsedCount < v.UsageLimit));
+
+        if (voucher == null)
+        {
+            return BadRequest(new { message = "Mã giảm giá không tồn tại, đã hết hạn hoặc hết lượt dùng." });
+        }
+
+        if (dto.ShopId.HasValue && voucher.ShopId.HasValue && voucher.ShopId.Value != dto.ShopId.Value)
+        {
+            return BadRequest(new { message = "Mã giảm giá này không áp dụng cho cửa hàng của sản phẩm này." });
+        }
+
+        if (voucher.MinOrderValue.HasValue && dto.OrderValue < voucher.MinOrderValue.Value)
+        {
+            return BadRequest(new { message = $"Đơn hàng từ shop chưa đạt giá trị tối thiểu {voucher.MinOrderValue.Value:N0}đ để áp dụng mã." });
+        }
+
+        decimal discountAmount = 0;
+        if (voucher.DiscountType == DiscountType.Percentage)
+        {
+            discountAmount = dto.OrderValue * (voucher.DiscountValue / 100);
+            if (voucher.MaxDiscountAmount.HasValue)
+            {
+                discountAmount = Math.Min(discountAmount, voucher.MaxDiscountAmount.Value);
+            }
+        }
+        else
+        {
+            discountAmount = voucher.DiscountValue;
+        }
+
+        discountAmount = Math.Min(discountAmount, dto.OrderValue);
+
+        return Ok(new { 
+            code = voucher.Code,
+            discountType = voucher.DiscountType.ToString(),
+            discountValue = voucher.DiscountValue,
+            discountAmount = discountAmount,
+            shopId = voucher.ShopId,
+            shopName = voucher.Shop?.Name ?? "Zynk Platform"
+        });
+    }
+
+    [HttpGet("my-vouchers")]
+    public async Task<IActionResult> GetMyVouchers()
+    {
+        var userId = User.GetUserId();
+        if (userId == null || userId == Guid.Empty) return Ok(Array.Empty<object>());
+
+        var now = DateTime.UtcNow;
+        var userVouchers = await _context.UserVouchers
+            .Include(uv => uv.Voucher)
+            .ThenInclude(v => v.Shop)
+            .Where(uv => uv.UserId == userId && !uv.IsUsed && uv.Voucher.IsActive && uv.Voucher.EndDate >= now)
+            .Select(uv => new {
+                uv.Voucher.Id,
+                uv.Voucher.Code,
+                uv.Voucher.Description,
+                DiscountType = uv.Voucher.DiscountType.ToString(), // Serialize as string
+                uv.Voucher.DiscountValue,
+                uv.Voucher.MinOrderValue,
+                uv.Voucher.MaxDiscountAmount,
+                uv.Voucher.StartDate,
+                uv.Voucher.EndDate,
+                uv.Voucher.ShopId,
+                ShopName = uv.Voucher.Shop != null ? uv.Voucher.Shop.Name : "Hệ thống Zynk",
+                uv.ClaimedAt
+            })
+            .ToListAsync();
+
+        return Ok(userVouchers);
+    }
+
+    public class ValidateVoucherDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public decimal OrderValue { get; set; }
+        public Guid? ShopId { get; set; }
+    }
+
+    public class CreateAddressDto
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string Province { get; set; } = string.Empty;
+        public string DistrictWard { get; set; } = string.Empty;
+        public string SpecificAddress { get; set; } = string.Empty;
+        public bool IsDefault { get; set; }
     }
 
     [AllowAnonymous]

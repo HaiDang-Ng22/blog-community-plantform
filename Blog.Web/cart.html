@@ -39,6 +39,177 @@
         .saved-address-card { border: 1px solid #cbd5e1; padding: 1rem; border-radius: 0.75rem; cursor: pointer; margin-bottom: 0.75rem; }
         .saved-address-card.selected { border-color: #3b82f6; background: #eff6ff; }
         .btn-toggle-saved { font-size: 0.9rem; color: #3b82f6; cursor: pointer; display: inline-block; margin-bottom: 1rem; text-decoration: underline; font-weight: 600; }
+
+        /* Premium Voucher Cards Style */
+        .voucher-card-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: stretch;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            min-height: 80px;
+        }
+        .voucher-card-item.eligible:hover {
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.08);
+        }
+        .voucher-card-item.selected {
+            border-color: #10b981;
+            background: #f0fdf4;
+            box-shadow: 0 0 0 1px #10b981;
+        }
+        .voucher-card-item.ineligible {
+            opacity: 0.6;
+            filter: grayscale(80%) blur(0.2px);
+            cursor: not-allowed;
+            background: #f1f5f9;
+        }
+        .voucher-left-stub {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 1rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            width: 65px;
+            font-size: 1rem;
+            text-align: center;
+            position: relative;
+            border-right: 1px dashed rgba(255,255,255,0.4);
+        }
+        .voucher-left-stub::before, .voucher-left-stub::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            width: 10px;
+            height: 10px;
+            background: #f8fafc; /* Match parent container bg */
+            border-radius: 50%;
+        }
+        .voucher-left-stub::before { top: -5px; }
+        .voucher-left-stub::after { bottom: -5px; }
+        .voucher-card-item.selected .voucher-left-stub {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .voucher-card-item.ineligible .voucher-left-stub {
+            background: #94a3b8;
+        }
+        .voucher-right-body {
+            flex: 1;
+            padding: 0.6rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .voucher-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+        .voucher-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 5px;
+            line-height: 1.25;
+        }
+        .voucher-status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            align-self: flex-start;
+        }
+        .status-eligible { background: #dbeafe; color: #1e40af; }
+        .status-ineligible { background: #fee2e2; color: #991b1b; }
+        .status-selected { background: #d1fae5; color: #065f46; }
+
+        /* Premium Address Row Style */
+        .address-item-row {
+            border: 1px solid #cbd5e1;
+            padding: 1rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            position: relative;
+            background: white;
+        }
+        .address-item-row:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        .address-item-row.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+        .address-radio {
+            margin-top: 4px;
+            width: 18px;
+            height: 18px;
+            accent-color: #3b82f6;
+            cursor: pointer;
+        }
+        .address-details {
+            flex: 1;
+        }
+        .address-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .address-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1rem;
+        }
+        .address-phone {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .address-text {
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        .address-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        .btn-addr-action {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            color: #3b82f6;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+        .btn-addr-action.danger {
+            color: #ef4444;
+        }
+        .btn-addr-action:hover {
+            color: #1d4ed8;
+        }
+        .btn-addr-action.danger:hover {
+            color: #b91c1c;
+        }
     </style>
 </head>
 <body class="home-page" data-i18n-title="cart_title">
@@ -61,7 +232,7 @@
             </div>
         </div>
 
-        <div class="checkout-box" id="checkout-section">
+        <div class="checkout-box" id="checkout-section" style="display:none;">
             <div class="cart-total" style="font-size: 1.1rem; color: #64748b; margin-bottom: 0.5rem; border: none;">
                 <span data-i18n="subtotal">Tạm tính:</span>
                 <span id="subtotal-price">0đ</span>
@@ -76,22 +247,31 @@
             </div>
 
             <!-- Voucher Section -->
-            <div class="voucher-input-group" style="margin-top: 1.5rem; display: flex; gap: 8px;">
-                <input type="text" id="voucher-code" placeholder="Mã giảm giá (nếu có)" style="flex: 1; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; outline: none;">
-                <button class="btn" style="background: #3b82f6; color: #fff; padding: 0 1.5rem; border-radius: 0.75rem;" onclick="applyVoucher()">Áp dụng</button>
+            <div class="voucher-section-container" style="margin-top: 1.5rem; background: #f8fafc; border: 1px solid #cbd5e1; padding: 1.25rem; border-radius: 1rem;">
+                <label style="font-weight: 700; color: #1e293b; font-size: 0.95rem; margin-bottom: 0.5rem; display: block;"><i class="fa-solid fa-ticket-simple" style="color: #3b82f6; margin-right: 5px;"></i> Mã giảm giá</label>
+                <div class="voucher-input-group" style="display: flex; gap: 8px;">
+                    <input type="text" id="voucher-code" placeholder="Mã giảm giá (nếu có)" style="flex: 1; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; outline: none; background: white;">
+                    <button class="btn" style="background: #3b82f6; color: #fff; padding: 0 1.5rem; border-radius: 0.75rem; font-weight: 600;" onclick="applyVoucher()">Áp dụng</button>
+                </div>
+                <div id="voucher-msg" style="font-size: 0.85rem; margin-top: 5px; font-weight: 600;"></div>
+                
+                <div id="voucher-select-trigger" class="btn-toggle-saved" style="margin-top: 12px; text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #3b82f6; font-weight: 600;" onclick="toggleVoucherList()">
+                    <i class="fa-solid fa-tags"></i> Chọn mã giảm giá đã lưu <i class="fa fa-chevron-down" id="voucher-chevron" style="font-size: 0.75rem;"></i>
+                </div>
+                
+                <div id="my-vouchers-list" class="hidden" style="margin-top: 10px; max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 5px 2px;">
+                    <!-- Claimed vouchers rendered here -->
+                </div>
             </div>
-            <div id="voucher-msg" style="font-size: 0.8rem; margin-top: 5px;"></div>
 
             <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
             
             <h3 style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <span data-i18n="shipping_info_title">Thông tin nhận hàng</span>
-                <span id="btn-show-saved" class="btn-toggle-saved hidden" onclick="toggleSavedAddresses()"><i class="fa-solid fa-address-book"></i> <span data-i18n="saved_addresses">Địa chỉ đã lưu</span></span>
+                <span id="btn-show-saved" class="btn-toggle-saved hidden" onclick="openAddressModal()"><i class="fa-solid fa-address-book"></i> <span data-i18n="saved_addresses">Chọn từ địa chỉ đã lưu</span></span>
             </h3>
 
-            <div id="saved-addresses-list" class="hidden" style="margin-bottom: 1.5rem;">
-                <!-- Rendered from JS -->
-            </div>
+            <div id="selected-address-badge"></div>
 
             <div id="new-address-form">
                 <div class="form-group">
@@ -176,6 +356,27 @@
         </div>
     </div>
 
+    <!-- Address Selection Modal (TikTok Style) -->
+    <div id="address-modal" class="modal-overlay hidden">
+        <div class="modal-content glassmorphism" style="max-width: 550px; width: 95%; text-align: left; border-radius: 1.5rem; display: flex; flex-direction: column; max-height: 85vh;">
+            <div class="modal-header" style="padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-address-book" style="color: #3b82f6;"></i> Địa chỉ đã lưu</h3>
+                <button onclick="closeAddressModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b; padding: 0;"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem; overflow-y: auto; flex: 1;" id="modal-address-list">
+                <!-- Saved addresses rendered here -->
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; gap: 10px;">
+                <button class="btn secondary-btn" onclick="addNewAddressClick()" style="flex: 1; padding: 0.85rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.95rem; border: 1px solid #cbd5e1;">
+                    <i class="fa fa-plus"></i> Nhập địa chỉ mới
+                </button>
+                <button class="btn primary-btn" onclick="confirmAddressSelection()" style="flex: 1; padding: 0.85rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.95rem; background: #3b82f6; color: white;">
+                    Chọn địa chỉ này
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/api.js?v=2.0"></script>
     <script src="js/lang.js"></script>
     <script src="js/i18n.js"></script>
@@ -184,11 +385,14 @@
         let provincesData = [];
         let savedAddresses = [];
         let appliedVoucher = null;
+        let selectedAddressObj = null;
+        let myVouchers = [];
+        let tempSelectedAddressId = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderCart();
-            await loadSavedAddresses();
             await fetchProvinces();
+            await loadSavedAddresses();
             
             // Pre-fill user info if available
             const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
@@ -198,14 +402,15 @@
 
         function renderCart() {
             const list = document.getElementById('cart-list');
+            const checkoutSection = document.getElementById('checkout-section');
             const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
             
             if (cart.length === 0) {
-                list.innerHTML = `<div style="text-align:center; padding: 3rem;">${window.t('empty_cart')}</div>`;
-                document.getElementById('checkout-section').style.display = 'none';
+                list.innerHTML = `<div style="text-align:center; padding: 3rem; color: #64748b;"><i class="fa-solid fa-cart-xmark" style="font-size:3rem; display:block; margin-bottom:1rem; opacity:0.4;"></i><p style="font-weight:600;">Giỏ hàng của bạn đang trống</p><a href="marketplace.html" class="btn primary-btn" style="display:inline-block; margin-top:1rem;">Tiếp tục mua sắm</a></div>`;
+                if (checkoutSection) checkoutSection.style.display = 'none';
                 return;
             }
-            document.getElementById('checkout-section').style.display = 'block';
+            if (checkoutSection) checkoutSection.style.display = 'block';
 
             // Group by shopName
             const grouped = {};
@@ -332,34 +537,50 @@
             }
 
             document.getElementById('total-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.max(0, total));
+
+            // Dynamic eligibility refresh
+            const voucherList = document.getElementById('my-vouchers-list');
+            if (voucherList && !voucherList.classList.contains('hidden')) {
+                renderVouchersList();
+            }
         }
 
-        async function applyVoucher() {
-            const code = document.getElementById('voucher-code').value.trim();
+        async function applyVoucher(customCode = null) {
+            const codeInput = document.getElementById('voucher-code');
+            if (customCode) codeInput.value = customCode;
+            
+            const code = codeInput.value.trim();
             if (!code) return;
             
             const msg = document.getElementById('voucher-msg');
             msg.textContent = 'Đang kiểm tra...';
             msg.style.color = '#64748b';
 
-            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
-            const checkedBoxes = document.querySelectorAll('.item-cb:checked');
-            let subtotal = 0;
-            checkedBoxes.forEach(cb => {
-                const idx = parseInt(cb.getAttribute('data-index'));
-                const item = cart[idx];
-                if (item) subtotal += item.price * item.qty;
-            });
+            const { subtotal } = getSelectedCartInfo();
 
             try {
-                // We need to send the subtotal to check if minOrderValue is met
-                const res = await window.api.post('orders/validate-voucher', { code, orderValue: subtotal });
+                // Find matching shopId if it's a shop voucher in our claimed list
+                const matchedVoucher = myVouchers.find(v => v.code.toUpperCase() === code.toUpperCase());
+                let shopId = null;
+                if (matchedVoucher && matchedVoucher.shopId) {
+                    shopId = matchedVoucher.shopId;
+                }
+
+                const res = await window.api.post('orders/validate-voucher', { 
+                    code, 
+                    orderValue: subtotal,
+                    shopId: shopId 
+                });
+                
                 appliedVoucher = {
                     code: code,
                     discountAmount: res.discountAmount
                 };
+                
                 msg.textContent = `Đã áp dụng mã! Giảm ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(res.discountAmount)}`;
                 msg.style.color = '#10b981';
+                
+                renderVouchersList();
                 updateTotalPrice();
             } catch (e) {
                 msg.textContent = e.message || 'Mã không hợp lệ hoặc không đủ điều kiện';
@@ -367,6 +588,8 @@
                 appliedVoucher = null;
                 const discEl = document.getElementById('voucher-discount-row');
                 if (discEl) discEl.remove();
+                
+                renderVouchersList();
                 updateTotalPrice();
             }
         }
@@ -384,43 +607,90 @@
                 savedAddresses = await window.api.get('orders/my-addresses');
                 if (savedAddresses.length > 0) {
                     document.getElementById('btn-show-saved').classList.remove('hidden');
-                    const html = savedAddresses.map(a => `
-                        <div class="saved-address-card" onclick="selectSavedAddress('${a.id}')" id="addr-card-${a.id}">
-                            <div style="font-weight: 600; margin-bottom: 4px;">${a.fullName} - ${a.phoneNumber} ${a.isDefault ? `<span class="badge badge-success" style="font-size:0.7rem; padding: 2px 6px;">${window.t('default_label') || 'Mặc định'}</span>` : ''}</div>
-                            <div style="font-size: 0.9rem; color: #64748b;">${a.specificAddress}, ${a.districtWard}, ${a.province}</div>
-                        </div>
-                    `).join('');
-                    document.getElementById('saved-addresses-list').innerHTML = html;
                     
-                    // Auto select default
+                    // Auto select default or first address
                     const defaultAddr = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
-                    if (defaultAddr) selectSavedAddress(defaultAddr.id);
+                    if (defaultAddr) {
+                        selectSavedAddress(defaultAddr.id);
+                    }
+                } else {
+                    document.getElementById('btn-show-saved').classList.add('hidden');
                 }
             } catch (e) {
                 console.log('No saved addresses or not logged in');
             }
         }
 
-        function toggleSavedAddresses() {
-            const list = document.getElementById('saved-addresses-list');
-            list.classList.toggle('hidden');
-        }
-
         function selectSavedAddress(id) {
-            document.querySelectorAll('.saved-address-card').forEach(el => el.classList.remove('selected'));
-            document.getElementById('addr-card-' + id).classList.add('selected');
-            
             const addr = savedAddresses.find(a => a.id === id);
             if (addr) {
+                selectedAddressObj = addr;
                 document.getElementById('ship-name').value = addr.fullName;
                 document.getElementById('ship-phone').value = addr.phoneNumber;
                 document.getElementById('ship-specific').value = addr.specificAddress;
                 
-                // Set province and district (Simulated since matching exactly depends on open-api structure)
-                // In a perfect system we'd bind codes. Here we just set the text if it matches, or hide the dropdowns
-                document.getElementById('save-address-cb').checked = false; 
-                // We'll rely on specific text when submitting if these selects are not perfectly matched
+                // Pre-fill Province dropdown
+                const provSel = document.getElementById('ship-province');
+                let foundProvince = false;
+                for (let i = 0; i < provSel.options.length; i++) {
+                    if (provSel.options[i].text.trim().toLowerCase() === addr.province.trim().toLowerCase()) {
+                        provSel.selectedIndex = i;
+                        foundProvince = true;
+                        break;
+                    }
+                }
+                
+                if (foundProvince) {
+                    // Load districts and select the correct one
+                    const provinceCode = provSel.value;
+                    const districtSelect = document.getElementById('ship-district');
+                    districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                    
+                    const province = provincesData.find(p => p.code == provinceCode);
+                    if (province && province.districts) {
+                        province.districts.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d.name;
+                            opt.textContent = d.name;
+                            districtSelect.appendChild(opt);
+                        });
+                        districtSelect.disabled = false;
+                        
+                        // Try to select district
+                        for (let i = 0; i < districtSelect.options.length; i++) {
+                            if (districtSelect.options[i].text.trim().toLowerCase() === addr.districtWard.trim().toLowerCase()) {
+                                districtSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                document.getElementById('save-address-cb').checked = false;
+                
+                // Show address active status indicator
+                const badgeContainer = document.getElementById('selected-address-badge');
+                if (badgeContainer) {
+                    badgeContainer.innerHTML = `
+                        <div style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:8px 12px; border-radius:8px; margin-bottom:12px; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between; font-weight: 600; animation: fadeIn 0.3s ease;">
+                            <span><i class="fa-solid fa-circle-check" style="color: #3b82f6; margin-right: 4px;"></i> Đang áp dụng địa chỉ đã lưu</span>
+                            <button class="btn" style="background:transparent; color:#64748b; padding:0; width:auto; font-size: 0.85rem; font-weight: 700; text-decoration: underline;" onclick="clearAddressSelection()"><i class="fa fa-times"></i> Nhập địa chỉ mới</button>
+                        </div>
+                    `;
+                }
             }
+        }
+
+        function clearAddressSelection() {
+            selectedAddressObj = null;
+            document.getElementById('ship-name').value = '';
+            document.getElementById('ship-phone').value = '';
+            document.getElementById('ship-specific').value = '';
+            document.getElementById('ship-province').selectedIndex = 0;
+            document.getElementById('ship-district').innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+            document.getElementById('ship-district').disabled = true;
+            document.getElementById('save-address-cb').checked = true;
+            document.getElementById('selected-address-badge').innerHTML = '';
         }
 
         async function fetchProvinces() {
@@ -462,6 +732,247 @@
             updateTotalPrice();
         }
 
+        /* Upgraded Voucher List Interactions */
+        function toggleVoucherList() {
+            const list = document.getElementById('my-vouchers-list');
+            const chev = document.getElementById('voucher-chevron');
+            list.classList.toggle('hidden');
+            
+            if (list.classList.contains('hidden')) {
+                chev.className = 'fa fa-chevron-down';
+            } else {
+                chev.className = 'fa fa-chevron-up';
+                loadMyVouchers(); // Fetch user's claimed vouchers
+            }
+        }
+
+        async function loadMyVouchers() {
+            const list = document.getElementById('my-vouchers-list');
+            list.innerHTML = `<div style="font-size:0.85rem; color:#64748b; padding:10px; text-align:center;"><i class="fa fa-spinner fa-spin"></i> Đang tải kho voucher...</div>`;
+            try {
+                myVouchers = await window.api.get('orders/my-vouchers');
+                renderVouchersList();
+            } catch (e) {
+                console.error('Lỗi tải danh sách voucher:', e);
+                list.innerHTML = `<div style="font-size:0.85rem; color:#ef4444; padding:10px; text-align:center;">Vui lòng đăng nhập để xem kho voucher của bạn</div>`;
+            }
+        }
+
+        function renderVouchersList() {
+            const list = document.getElementById('my-vouchers-list');
+            if (myVouchers.length === 0) {
+                list.innerHTML = `<div style="font-size:0.85rem; color:#64748b; padding:15px; text-align:center;"><i class="fa-solid fa-ticket-simple" style="font-size: 1.5rem; margin-bottom: 5px; display: block; opacity: 0.5;"></i> Kho voucher của bạn trống</div>`;
+                return;
+            }
+
+            const { subtotal, shopSubtotals } = getSelectedCartInfo();
+
+            list.innerHTML = myVouchers.map(v => {
+                let eligible = true;
+                let reason = '';
+
+                // Expiration Check
+                const now = new Date();
+                const expiry = new Date(v.endDate);
+                if (expiry < now) {
+                    eligible = false;
+                    reason = 'Voucher đã hết hạn';
+                }
+
+                // MinOrderValue Check
+                if (eligible) {
+                    if (v.shopId) {
+                        const shopVal = shopSubtotals[v.shopName] || 0;
+                        if (shopVal === 0) {
+                            eligible = false;
+                            reason = `Chỉ áp dụng cho sản phẩm thuộc cửa hàng ${v.shopName}`;
+                        } else if (v.minOrderValue && shopVal < v.minOrderValue) {
+                            eligible = false;
+                            reason = `Đơn shop ${v.shopName} cần tối thiểu ${new Intl.NumberFormat('vi-VN').format(v.minOrderValue)}đ (hiện có ${new Intl.NumberFormat('vi-VN').format(shopVal)}đ)`;
+                        }
+                    } else {
+                        if (v.minOrderValue && subtotal < v.minOrderValue) {
+                            eligible = false;
+                            reason = `Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN').format(v.minOrderValue)}đ (hiện có ${new Intl.NumberFormat('vi-VN').format(subtotal)}đ)`;
+                        }
+                    }
+                }
+
+                const discountText = v.discountType === 'Percentage' 
+                    ? `${v.discountValue}%`
+                    : `${new Intl.NumberFormat('vi-VN').format(v.discountValue)}đ`;
+                
+                const isSelected = appliedVoucher && appliedVoucher.code.toUpperCase() === v.code.toUpperCase();
+                
+                let badgeClass = 'status-eligible';
+                let badgeText = v.shopId ? `Shop: ${v.shopName}` : 'Toàn sàn';
+                
+                if (isSelected) {
+                    badgeClass = 'status-selected';
+                    badgeText = 'Đang áp dụng';
+                } else if (!eligible) {
+                    badgeClass = 'status-ineligible';
+                    badgeText = reason;
+                }
+
+                return `
+                    <div class="voucher-card-item ${eligible ? 'eligible' : 'ineligible'} ${isSelected ? 'selected' : ''}" 
+                         onclick="${eligible ? `selectVoucherCard('${v.code}')` : ''}">
+                        <div class="voucher-left-stub">
+                            <div>${v.discountType === 'Percentage' ? '%' : 'đ'}</div>
+                            <div style="font-size:0.65rem; font-weight:normal; margin-top:2px; letter-spacing: 0.5px;">GIẢM</div>
+                        </div>
+                        <div class="voucher-right-body">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span class="voucher-title">${v.code} - Giảm ${discountText}</span>
+                                    ${isSelected ? `<i class="fa-solid fa-circle-check" style="color:#10b981;"></i>` : ''}
+                                </div>
+                                <div class="voucher-desc">${v.description || 'Ưu đãi đặt mua ngay cùng Zynk'}</div>
+                            </div>
+                            <div class="voucher-status-badge ${badgeClass}">${badgeText}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectVoucherCard(code) {
+            applyVoucher(code);
+        }
+
+        function getSelectedCartInfo() {
+            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+            const checkedBoxes = document.querySelectorAll('.item-cb:checked');
+            
+            let subtotal = 0;
+            const shopSubtotals = {};
+            const selectedShopNames = new Set();
+            
+            checkedBoxes.forEach(cb => {
+                const idx = parseInt(cb.getAttribute('data-index'));
+                const item = cart[idx];
+                if (item) {
+                    subtotal += item.price * item.qty;
+                    const shopName = item.shopName || 'Shop Zynk';
+                    shopSubtotals[shopName] = (shopSubtotals[shopName] || 0) + (item.price * item.qty);
+                    selectedShopNames.add(shopName);
+                }
+            });
+            
+            return {
+                subtotal,
+                shopSubtotals,
+                selectedShopNames
+            };
+        }
+
+        /* Upgraded Address Selection Modal (TikTok Style) */
+        function openAddressModal() {
+            document.getElementById('address-modal').classList.remove('hidden');
+            tempSelectedAddressId = selectedAddressObj ? selectedAddressObj.id : null;
+            renderModalAddresses();
+        }
+
+        function closeAddressModal() {
+            document.getElementById('address-modal').classList.add('hidden');
+        }
+
+        function renderModalAddresses() {
+            const list = document.getElementById('modal-address-list');
+            if (savedAddresses.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; padding: 2rem 0; color: #64748b;">
+                        <i class="fa-solid fa-map-location-dot" style="font-size: 3rem; margin-bottom: 1rem; color: #cbd5e1; display: block;"></i>
+                        <p style="font-weight: 600;">Bạn chưa lưu thông tin địa chỉ nào.</p>
+                        <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Vui lòng điền thông tin mới ở form bên ngoài để lưu địa chỉ mới.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!tempSelectedAddressId && savedAddresses.length > 0) {
+                const def = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
+                tempSelectedAddressId = def.id;
+            }
+
+            list.innerHTML = savedAddresses.map(a => {
+                const isSel = tempSelectedAddressId === a.id;
+                return `
+                    <div class="address-item-row ${isSel ? 'selected' : ''}" onclick="selectTempAddress('${a.id}')">
+                        <input type="radio" name="temp_address" class="address-radio" ${isSel ? 'checked' : ''} value="${a.id}">
+                        <div class="address-details">
+                            <div class="address-meta">
+                                <span class="address-name">${a.fullName}</span>
+                                <span class="address-phone">${a.phoneNumber}</span>
+                                ${a.isDefault ? `<span style="background: #10b981; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Mặc định</span>` : ''}
+                            </div>
+                            <div class="address-text">${a.specificAddress}, ${a.districtWard}, ${a.province}</div>
+                            <div class="address-actions" onclick="event.stopPropagation();">
+                                ${!a.isDefault ? `<button class="btn-addr-action" onclick="setDefaultAddressClick('${a.id}')">Đặt làm mặc định</button>` : ''}
+                                <button class="btn-addr-action danger" onclick="deleteAddressClick('${a.id}')"><i class="fa-solid fa-trash-can"></i> Xóa</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectTempAddress(id) {
+            tempSelectedAddressId = id;
+            renderModalAddresses();
+        }
+
+        async function setDefaultAddressClick(id) {
+            try {
+                if (window.common?.showToast) window.common.showToast('Đang cập nhật...', 'info');
+                await window.api.put(`orders/addresses/${id}/default`);
+                if (window.common?.showToast) window.common.showToast('Đã cài đặt địa chỉ mặc định mới!', 'success');
+                
+                await loadSavedAddresses();
+                renderModalAddresses();
+            } catch (e) {
+                alert('Lỗi đặt địa chỉ mặc định: ' + e.message);
+            }
+        }
+
+        async function deleteAddressClick(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa thông tin địa chỉ đã lưu này?')) return;
+            try {
+                if (window.common?.showToast) window.common.showToast('Đang xóa...', 'info');
+                await window.api.delete(`orders/addresses/${id}`);
+                if (window.common?.showToast) window.common.showToast('Đã xóa thành công!', 'success');
+                
+                if (selectedAddressObj && selectedAddressObj.id === id) {
+                    clearAddressSelection();
+                }
+                if (tempSelectedAddressId === id) {
+                    tempSelectedAddressId = null;
+                }
+                
+                await loadSavedAddresses();
+                renderModalAddresses();
+            } catch (e) {
+                alert('Lỗi khi xóa địa chỉ: ' + e.message);
+            }
+        }
+
+        function addNewAddressClick() {
+            clearAddressSelection();
+            closeAddressModal();
+            document.getElementById('new-address-form').scrollIntoView({ behavior: 'smooth' });
+            if (window.common?.showToast) window.common.showToast('Nhập thông tin địa chỉ mới bên dưới!', 'info');
+        }
+
+        function confirmAddressSelection() {
+            if (!tempSelectedAddressId) {
+                closeAddressModal();
+                return;
+            }
+            selectSavedAddress(tempSelectedAddressId);
+            closeAddressModal();
+        }
+
         async function checkout() {
             try {
                 const name = document.getElementById('ship-name').value;
@@ -474,10 +985,16 @@
                 const provSel = document.getElementById('ship-province');
                 if (provSel && provSel.selectedIndex > 0) {
                     provinceText = provSel.options[provSel.selectedIndex].text;
+                } else if (selectedAddressObj) {
+                    provinceText = selectedAddressObj.province;
                 }
 
-                if (!name || !phone || !specific) {
-                    return window.common?.showToast ? window.common.showToast('Vui lòng điền đủ thông tin nhận hàng', 'error') : alert('Vui lòng nhập đủ thông tin');
+                if (!districtText && selectedAddressObj) {
+                    districtText = selectedAddressObj.districtWard;
+                }
+
+                if (!name || !phone || !specific || !provinceText || !districtText) {
+                    return window.common?.showToast ? window.common.showToast('Vui lòng điền đủ thông tin nhận hàng và chọn địa chỉ', 'error') : alert('Vui lòng nhập đủ thông tin nhận hàng');
                 }
 
                 const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
