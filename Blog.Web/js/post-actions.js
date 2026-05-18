@@ -25,9 +25,28 @@ window.postActions = {
                 if (modalCount) modalCount.textContent = `${result.likeCount} lượt thích`;
             }
 
-            // 2. Update feed card (if it exists on the page)
-            // Use ID-based search first for better precision
-            const card = document.getElementById(`post-${postId}`) || btnElement.closest('.zynk-post-card');
+            // 2. Update button state directly if provided (e.g. on Reels)
+            if (btnElement) {
+                const icon = btnElement.querySelector('i');
+                const span = btnElement.querySelector('span');
+                if (icon) {
+                    if (result.isLiked) {
+                        icon.className = 'fa-solid fa-heart';
+                        icon.style.color = '#EF4444';
+                        btnElement.classList.add('liked');
+                    } else {
+                        icon.className = 'fa-regular fa-heart';
+                        icon.style.color = '';
+                        btnElement.classList.remove('liked');
+                    }
+                }
+                if (span) {
+                    span.textContent = result.likeCount;
+                }
+            }
+
+            // 3. Update feed card (if it exists on the page)
+            const card = document.getElementById(`post-${postId}`) || (btnElement && btnElement.closest('.zynk-post-card'));
             if (card) {
                 const icon = card.querySelector('.fa-heart');
                 if (icon) {

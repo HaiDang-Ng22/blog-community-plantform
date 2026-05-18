@@ -171,6 +171,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('auth_token')) {
         initPushNotifications();
     }
+
+    // Subtle visitor count logic
+    try {
+        const footerP = document.querySelector('.info-footer p:last-child');
+        if (footerP) {
+            const path = window.location.pathname.split('/').pop() || 'index.html';
+            const pageKey = 'zynk_views_' + path.replace('.html', '').replace('/', '');
+            let baseVal = 1000;
+            if (path.includes('about')) baseVal = 28450;
+            else if (path.includes('help')) baseVal = 14200;
+            else if (path.includes('press')) baseVal = 8910;
+            else if (path.includes('api')) baseVal = 3450;
+            else if (path.includes('jobs')) baseVal = 6780;
+            else if (path.includes('privacy')) baseVal = 19300;
+            else if (path.includes('terms')) baseVal = 24110;
+            
+            let count = localStorage.getItem(pageKey);
+            if (!count) {
+                count = Math.floor(Math.random() * 200) + baseVal;
+            } else {
+                count = parseInt(count) + 1;
+            }
+            localStorage.setItem(pageKey, count);
+            
+            const formattedCount = count.toLocaleString('vi-VN');
+            footerP.innerHTML += ` &bull; <span style="opacity: 0.65; font-size: 0.72rem; font-weight: 500;">${formattedCount} lượt truy cập</span>`;
+        }
+    } catch (e) {
+        console.error("Subtle visitor count failed", e);
+    }
 });
 
 async function loadNotificationBadge() {
@@ -1181,9 +1211,10 @@ function createPostCard(post) {
     const isLiked = post.isLikedByMe;
     const isSaved = post.isSavedByMe;
 
-    const isReel = post.type === 'Reel' || !!post.videoUrl;
+    const isReel = post.type === 'Reel' || post.Type === 'Reel' || !!post.videoUrl || !!post.VideoUrl;
 
     if (isReel) {
+        const videoSrc = post.videoUrl || post.VideoUrl || '';
         // ---- REEL STYLE (Video post) ----
         card.classList.add('style-reel');
         card.innerHTML = `
@@ -1196,7 +1227,7 @@ function createPostCard(post) {
                 </div>
             </div>
             <div class="zynk-media-container zynk-reel-container" style="background: #000; min-height: 400px; aspect-ratio: 9/16; max-height: 600px;">
-                <video src="${post.videoUrl}" controls style="width: 100%; height: 100%; object-fit: contain;" loading="lazy"></video>
+                <video src="${videoSrc}" controls style="width: 100%; height: 100%; object-fit: contain;" loading="lazy"></video>
             </div>
             <div class="zynk-actions">
                 <button class="${isLiked ? 'liked' : ''}" onclick="window.postActions.toggleLike('${postId}', this)">
