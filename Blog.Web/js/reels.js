@@ -58,9 +58,9 @@ function createReelItem(reel) {
                 <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                 <span>${reel.likeCount}</span>
             </button>
-            <button class="reel-action-btn" onclick="window.postActions.toggleComments('${reel.id}', this.closest('.reel-item'))">
+            <button class="reel-action-btn" onclick="showReelComments('${reel.id}')">
                 <i class="fa-regular fa-comment"></i>
-                <span>${reel.commentCount}</span>
+                <span class="comment-count-${reel.id}">${reel.commentCount}</span>
             </button>
             <button class="reel-action-btn" onclick="window.common.openShareModal('${reel.id}')">
                 <i class="fa-regular fa-paper-plane"></i>
@@ -71,8 +71,146 @@ function createReelItem(reel) {
         </div>
     `;
 
+    const video = div.querySelector('video');
+    video.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (video.paused) {
+            video.play().catch(err => console.log(err));
+            showPlayOverlayAnimation(div, 'play');
+        } else {
+            video.pause();
+            showPlayOverlayAnimation(div, 'pause');
+        }
+    });
+
     return div;
 }
+
+function showPlayOverlayAnimation(itemEl, state) {
+    let overlay = itemEl.querySelector('.play-pause-animation');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'play-pause-animation';
+        overlay.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 15;
+        `;
+        itemEl.appendChild(overlay);
+    }
+    
+    overlay.innerHTML = state === 'play' ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+    
+    // Trigger animation
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+        overlay.style.transform = 'translate(-50%, -50%) scale(1.1)';
+    }, 10);
+    
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        overlay.style.transform = 'translate(-50%, -50%) scale(1.3)';
+    }, 400);
+}
+
+// Reels Comment Drawer Operations
+let currentReelCommentPostId = null;
+
+async function showReelComments(postId) {
+    currentReelCommentPostId = postId;
+    const drawer = document.getElementById('reel-comments-drawer');
+    const list = document.getElementById('reel-comments-list');
+    const input = document.getElementById('reel-comment-input');
+    
+    input.value = '';
+    drawer.classList.add('open');
+    list.innerHTML = `
+        <div style="text-align:center; padding:30px; color:#8e8e8e;">
+            <i class="fa-solid fa-circle-notch fa-spin fa-lg"></i> Đang tải bình luận...
+        </div>
+    `;
+
+    try {
+        const comments = await window.api.get(`posts/${postId}/comments`);
+        list.innerHTML = '';
+        if (comments.length === 0) {
+            list.innerHTML = '<p style="color:#8e8e8e; text-align:center; padding:20px; font-size:0.9rem;">Chưa có bình luận nào.</p>';
+        } else {
+            comments.forEach(c => {
+                list.appendChild(window.postActions.renderCommentItem(c, postId));
+            });
+        }
+    } catch (e) {
+        list.innerHTML = '<p style="color:#8e8e8e; text-align:center; padding:20px; font-size:0.9rem;">Không thể tải bình luận.</p>';
+    }
+}
+
+function closeReelComments() {
+    const drawer = document.getElementById('reel-comments-drawer');
+    if (drawer) drawer.classList.remove('open');
+    currentReelCommentPostId = null;
+}
+
+async function submitReelComment() {
+    if (!currentReelCommentPostId) return;
+    const input = document.getElementById('reel-comment-input');
+    const content = input.value.trim();
+    if (!content) return;
+
+    if (!localStorage.getItem('auth_token')) {
+        window.location.href = 'auth.html';
+        return;
+    }
+
+    const btn = document.getElementById('reel-comment-submit');
+    btn.disabled = true;
+
+    try {
+        const comment = await window.api.post(`posts/${currentReelCommentPostId}/comments`, { content });
+        input.value = '';
+        
+        // Reload list
+        await showReelComments(currentReelCommentPostId);
+        
+        // Update count badge on reel button
+        const countSpan = document.querySelector(`.comment-count-${currentReelCommentPostId}`);
+        if (countSpan) {
+            const currentCount = parseInt(countSpan.textContent) || 0;
+            countSpan.textContent = currentCount + 1;
+        }
+    } catch (e) {
+        alert('Lỗi khi gửi bình luận');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Bind events to comments drawer inputs
+document.addEventListener('DOMContentLoaded', () => {
+    const submitBtn = document.getElementById('reel-comment-submit');
+    const inputField = document.getElementById('reel-comment-input');
+    
+    if (submitBtn) submitBtn.addEventListener('click', submitReelComment);
+    if (inputField) {
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitReelComment();
+        });
+    }
+});
 
 function setupVideoObserver() {
     const observer = new IntersectionObserver((entries) => {
@@ -82,7 +220,6 @@ function setupVideoObserver() {
 
             if (entry.isIntersecting) {
                 video.play().catch(() => {
-                    // Autoplay might be blocked without interaction
                     video.muted = true;
                     video.play();
                 });
@@ -93,7 +230,6 @@ function setupVideoObserver() {
         });
     }, { threshold: 0.8 });
 
-    // We need to re-observe when new items are added
     const feed = document.getElementById('reels-feed');
     const observerWrapper = new MutationObserver(() => {
         const items = document.querySelectorAll('.reel-item');

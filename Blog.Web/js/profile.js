@@ -281,6 +281,8 @@ async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
             normalized.authorId = p.authorId || p.AuthorId || userId;
             normalized.authorName = p.authorName || p.AuthorName || document.getElementById('profile-name')?.textContent?.trim() || 'Người dùng';
             normalized.authorAvatarUrl = p.authorAvatarUrl || p.AuthorAvatarUrl || document.getElementById('profile-avatar')?.src || '';
+            normalized.videoUrl = p.videoUrl || p.VideoUrl || '';
+            normalized.type = p.type || p.Type || '';
 
             const imageUrls = p.imageUrls || p.ImageUrls;
             if (Array.isArray(imageUrls)) {
