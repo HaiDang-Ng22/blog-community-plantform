@@ -1,36 +1,105 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Điều khoản Sử dụng | Zynk</title>
-    <link rel="stylesheet" href="css/common.css">
-    <style>
-        .page-container { max-width: 800px; margin: 40px auto; padding: 40px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; }
-        h1 { margin-bottom: 25px; }
-        h2 { margin-top: 25px; margin-bottom: 10px; font-size: 1.25rem; }
-        p, li { line-height: 1.7; color: var(--text-secondary); margin-bottom: 15px; }
-        .back-link { display: inline-block; margin-top: 30px; color: var(--primary-blue); text-decoration: none; font-weight: 600; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Điều khoản sử dụng | Zynk</title>
+<meta name="description" content="Điều khoản và quy định sử dụng nền tảng Zynk.">
+<link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/info-pages.css">
+<style>
+body.main-with-sidebar { margin-left: 0; }
+@media (min-width: 769px) {
+    body.main-with-sidebar:has(.sidebar-nav) { margin-left: 72px; }
+    body.main-with-sidebar:has(.sidebar-nav) .info-nav { left: 72px; width: calc(100% - 72px); }
+}
+.legal-alert {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.legal-alert i { font-size: 1.5rem; color: #dc2626; }
+.legal-alert p { font-size: 0.85rem; color: var(--text1); margin: 0; font-weight: 500; }
+.legal-section { margin-bottom: 28px; }
+.legal-section:last-child { margin-bottom: 0; }
+.legal-section h3 { font-size: 1.1rem; font-weight: 700; color: var(--text1); margin-bottom: 10px; }
+.legal-section p, .legal-section ul { font-size: 0.9rem; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+.legal-section ul { padding-left: 20px; }
+</style>
 </head>
 <body class="main-with-sidebar">
-    <div class="page-container">
-        <h1>Điều khoản Sử dụng</h1>
-        <p>Bằng việc đăng ký tài khoản và sử dụng Zynk, bạn đồng ý tuân thủ các điều khoản và quy định dưới đây nhằm xây dựng một cộng đồng văn minh.</p>
-        
-        <h2>1. Quy định về nội dung</h2>
-        <p>Người dùng không được phép đăng tải các nội dung vi phạm pháp luật, nội dung khiêu dâm, bạo lực hoặc gây thù ghét. Mọi hành vi vi phạm sẽ bị khóa tài khoản vĩnh viễn.</p>
 
-        <h2>2. Quyền sở hữu trí tuệ</h2>
-        <p>Bạn giữ bản quyền đối với nội dung mình đăng tải. Tuy nhiên, bằng việc chia sẻ, bạn cấp cho Zynk quyền hiển thị và phân phối nội dung đó trên hệ thống của chúng tôi.</p>
-
-        <h2>3. Thương mại điện tử</h2>
-        <p>Các Shop cam kết cung cấp thông tin sản phẩm chính xác. Mọi giao dịch được thực hiện trực tiếp giữa người mua và người bán thông qua hỗ trợ từ nền tảng Zynk.</p>
-
-        <h2>4. Giới hạn trách nhiệm</h2>
-        <p>Vì đây là dự án đồ án học thuật, chúng tôi không chịu trách nhiệm pháp lý đối với các thiệt hại phát sinh từ việc sử dụng sai mục đích hoặc các lỗi kỹ thuật ngoài ý muốn.</p>
-
-        <a href="index.html" class="back-link">← Quay lại trang chủ</a>
+<nav class="info-nav">
+  <div class="info-nav-inner">
+    <a href="index.html" class="info-nav-logo">Zynk</a>
+    <div class="info-nav-links">
+      <a href="about.html">Giới thiệu</a>
+      <a href="help.html">Trợ giúp</a>
+      <a href="press.html">Báo chí</a>
+      <a href="api.html">API</a>
+      <a href="jobs.html">Việc làm</a>
+      <a href="privacy.html">Quyền riêng tư</a>
+      <a href="terms.html" class="active">Điều khoản</a>
     </div>
+  </div>
+</nav>
+
+<section class="info-hero">
+  <div class="info-badge">Trung tâm Pháp lý</div>
+  <h1>Điều khoản Sử dụng</h1>
+  <p>Quy tắc ứng xử và điều kiện tham gia hệ sinh thái mạng xã hội Zynk.</p>
+</section>
+
+<div class="info-content">
+  <div class="legal-alert">
+    <i class="fa fa-triangle-exclamation"></i>
+    <p>Các hành vi đăng tải nội dung đồi trụy, thù hằn, hoặc gian lận thương mại trên Marketplace sẽ dẫn đến việc khóa tài khoản vĩnh viễn.</p>
+  </div>
+
+  <div class="info-card">
+    <div class="legal-section">
+      <h3>1. Tiêu chuẩn cộng đồng</h3>
+      <p>Người dùng Zynk phải tuân thủ nghiêm ngặt các quy định:</p>
+      <ul>
+        <li>Không chia sẻ nội dung vi phạm pháp luật, đồi trụy hoặc kích động bạo lực.</li>
+        <li>Không sử dụng phần mềm tự động (bot) để spam hệ thống.</li>
+        <li>Tôn trọng quyền sở hữu trí tuệ của thành viên khác.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h3>2. Quy định Marketplace</h3>
+      <p>Dành cho cửa hàng và khách mua hàng:</p>
+      <ul>
+        <li>Shop phải cung cấp thông tin sản phẩm trung thực và chịu trách nhiệm về chất lượng hàng hóa.</li>
+        <li>Thanh toán qua VietQR là tự nguyện và tự động, Zynk không can thiệp vào dòng tiền trực tiếp giữa hai bên.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h3>3. Miễn trừ trách nhiệm</h3>
+      <p>Zynk là một hệ thống phát triển với mục đích học thuật (Đồ án tốt nghiệp CNTT):</p>
+      <ul>
+        <li>Chúng tôi không chịu trách nhiệm dân sự đối với thiệt hại vật chất do giao dịch cá nhân trên Marketplace.</li>
+        <li>Nền tảng có thể được bảo trì hoặc ngừng cung cấp dịch vụ thử nghiệm mà không cần báo trước.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer class="info-footer">
+  <p><a href="about.html">Giới thiệu</a>·<a href="help.html">Trợ giúp</a>·<a href="press.html">Báo chí</a>·<a href="api.html">API</a>·<a href="jobs.html">Việc làm</a>·<a href="privacy.html">Quyền riêng tư</a>·<a href="terms.html">Điều khoản</a></p>
+  <p style="margin-top:8px">© 2026 ZYNK COMMUNITY.</p>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
 </body>
 </html>

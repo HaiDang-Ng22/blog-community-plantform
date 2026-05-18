@@ -1,50 +1,148 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trung tâm Trợ giúp Zynk</title>
-    <link rel="stylesheet" href="css/common.css">
-    <style>
-        .page-container { max-width: 800px; margin: 40px auto; padding: 40px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; }
-        h1 { font-size: 2rem; margin-bottom: 30px; text-align: center; }
-        .faq-item { margin-bottom: 25px; padding: 20px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--input-border); }
-        .faq-q { font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: block; font-size: 1.1rem; }
-        .faq-a { color: var(--text-secondary); line-height: 1.6; }
-        .contact-box { margin-top: 40px; padding: 30px; background: var(--primary-gradient); border-radius: 15px; color: white; text-align: center; }
-        .contact-box h2 { margin-bottom: 10px; }
-        .back-link { display: inline-block; margin-top: 20px; color: var(--primary-blue); text-decoration: none; font-weight: 600; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trợ giúp | Zynk</title>
+<meta name="description" content="Trung tâm hỗ trợ Zynk — câu hỏi thường gặp và hướng dẫn sử dụng.">
+<link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/info-pages.css">
+<style>
+body.main-with-sidebar { margin-left: 0; }
+@media (min-width: 769px) {
+    body.main-with-sidebar:has(.sidebar-nav) { margin-left: 72px; }
+    body.main-with-sidebar:has(.sidebar-nav) .info-nav { left: 72px; width: calc(100% - 72px); }
+}
+.help-search {
+    max-width: 480px;
+    margin: -20px auto 32px;
+    position: relative;
+    z-index: 10;
+}
+.help-search input {
+    width: 100%;
+    padding: 12px 16px 12px 42px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text1);
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.help-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.help-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 0.9rem; }
+.contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.contact-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.contact-box h3 { font-size: 0.88rem; font-weight: 700; margin-bottom: 4px; color: var(--text1); }
+.contact-box p { font-size: 0.8rem; color: var(--text2); margin: 0 0 8px; }
+.contact-box a { font-size: 0.82rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+@media (max-width: 560px) { .contact-row { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body class="main-with-sidebar">
-    <div class="page-container">
-        <h1>Trung tâm Trợ giúp</h1>
-        
-        <div class="faq-list">
-            <div class="faq-item">
-                <span class="faq-q">Làm thế nào để đăng ký kênh bán hàng?</span>
-                <p class="faq-a">Bạn có thể truy cập vào mục "Cửa hàng của tôi" trong phần trang cá nhân và gửi yêu cầu đăng ký. Admin sẽ xem xét và phản hồi yêu cầu của bạn trong vòng 24 giờ.</p>
-            </div>
-            <div class="faq-item">
-                <span class="faq-q">Tôi có thể thanh toán bằng cách nào?</span>
-                <p class="faq-a">Zynk hỗ trợ thanh toán qua mã VietQR tự động. Sau khi đặt hàng, hệ thống sẽ tạo một mã QR riêng cho đơn hàng đó, bạn chỉ cần dùng ứng dụng Ngân hàng để quét và thanh toán.</p>
-            </div>
-            <div class="faq-item">
-                <span class="faq-q">Làm sao để báo cáo bài viết vi phạm?</span>
-                <p class="faq-a">Tại mỗi bài viết, bạn nhấn vào biểu tượng ba chấm (...) ở góc phải và chọn "Báo cáo". Chúng tôi sẽ kiểm duyệt nội dung đó ngay lập tức.</p>
-            </div>
-            <div class="faq-item">
-                <span class="faq-q">Tích xanh (Verified) là gì?</span>
-                <p class="faq-a">Tích xanh là biểu tượng xác minh tài khoản chính chủ dành cho các nhà sáng tạo nội dung hoặc cửa hàng uy tín trên hệ thống.</p>
-            </div>
-        </div>
 
-        <div class="contact-box">
-            <h2>Vẫn cần hỗ trợ?</h2>
-            <p>Hãy liên hệ với đội ngũ phát triển đồ án qua email: <strong>support@zynk.com</strong></p>
-        </div>
-
-        <a href="index.html" class="back-link">← Quay lại trang chủ</a>
+<nav class="info-nav">
+  <div class="info-nav-inner">
+    <a href="index.html" class="info-nav-logo">Zynk</a>
+    <div class="info-nav-links">
+      <a href="about.html">Giới thiệu</a>
+      <a href="help.html" class="active">Trợ giúp</a>
+      <a href="press.html">Báo chí</a>
+      <a href="api.html">API</a>
+      <a href="jobs.html">Việc làm</a>
+      <a href="privacy.html">Quyền riêng tư</a>
+      <a href="terms.html">Điều khoản</a>
     </div>
+  </div>
+</nav>
+
+<section class="info-hero">
+  <div class="info-badge">Trung tâm hỗ trợ</div>
+  <h1>Chúng tôi có thể giúp gì?</h1>
+  <p>Tìm câu trả lời nhanh hoặc liên hệ trực tiếp với đội ngũ hỗ trợ của chúng tôi.</p>
+</section>
+
+<div class="info-content">
+  <div class="help-search">
+    <i class="fa fa-search"></i>
+    <input type="text" id="faqSearch" placeholder="Tìm kiếm câu hỏi...">
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-circle-question"></i></span>Câu hỏi thường gặp</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-question">Làm thế nào để đăng ký tài khoản?</div>
+        <div class="faq-answer">Nhấn vào nút <strong>Đăng nhập</strong> và chuyển sang tab Đăng ký. Bạn có thể đăng ký bằng email hoặc tài khoản Google chỉ trong vài giây.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Làm thế nào để mở cửa hàng bán hàng trên Zynk?</div>
+        <div class="faq-answer">Vào <strong>Cài đặt → Cửa hàng của tôi</strong> và gửi yêu cầu đăng ký kinh doanh. Đội ngũ kiểm duyệt sẽ phê duyệt trong vòng 24 giờ.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Zynk hỗ trợ những phương thức thanh toán nào?</div>
+        <div class="faq-answer">Zynk tích hợp <strong>VietQR</strong> — hệ thống tạo mã QR động tự động theo từng đơn hàng. Bạn chỉ cần quét mã bằng ứng dụng ngân hàng bất kỳ để thanh toán tức thì.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Tôi phải làm gì khi gặp bài viết vi phạm?</div>
+        <div class="faq-answer">Nhấn vào biểu tượng <strong>···</strong> (ba chấm) tại góc bài viết, chọn <strong>Báo cáo</strong>. Đội ngũ kiểm duyệt sẽ xem xét và xử lý trong thời gian sớm nhất.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Tích xanh xác minh là gì và cách đăng ký?</div>
+        <div class="faq-answer">Tích xanh dành cho người dùng và cửa hàng uy tín đã xác minh danh tính. Vào <strong>Cài đặt → Xác minh tài khoản</strong> và tải lên giấy tờ tùy thân để bắt đầu.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Làm sao để sử dụng mã giảm giá (Voucher)?</div>
+        <div class="faq-answer">Khi thanh toán trong Giỏ hàng, nhấn <strong>Chọn Voucher</strong>. Danh sách các mã hợp lệ sẽ hiển thị tự động, chọn mã muốn dùng và giảm giá sẽ được áp dụng ngay lập tức.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-card">
+    <h2><span class="icon"><i class="fa fa-headset"></i></span>Vẫn cần hỗ trợ?</h2>
+    <p>Không tìm thấy câu trả lời? Hãy liên hệ trực tiếp với chúng tôi.</p>
+    <div class="contact-row">
+      <div class="contact-box">
+        <h3><i class="fa fa-envelope" style="color:var(--accent);margin-right:6px"></i>Email hỗ trợ</h3>
+        <p>Phản hồi trong 12–24 giờ làm việc.</p>
+        <a href="mailto:support@zynk.app">support@zynk.app</a>
+      </div>
+      <div class="contact-box">
+        <h3><i class="fa fa-comment" style="color:var(--accent);margin-right:6px"></i>Chat trực tiếp</h3>
+        <p>Nhắn tin với đội ngũ hỗ trợ Zynk.</p>
+        <a href="messages.html">Trò chuyện ngay →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="info-footer">
+  <p><a href="about.html">Giới thiệu</a>·<a href="help.html">Trợ giúp</a>·<a href="press.html">Báo chí</a>·<a href="api.html">API</a>·<a href="jobs.html">Việc làm</a>·<a href="privacy.html">Quyền riêng tư</a>·<a href="terms.html">Điều khoản</a></p>
+  <p style="margin-top:8px">© 2026 ZYNK COMMUNITY.</p>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script>
+document.querySelectorAll('.faq-question').forEach(q => {
+  q.addEventListener('click', () => {
+    const item = q.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
+document.getElementById('faqSearch').addEventListener('input', e => {
+  const term = e.target.value.toLowerCase();
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.style.display = item.textContent.toLowerCase().includes(term) ? '' : 'none';
+  });
+});
+</script>
 </body>
 </html>
