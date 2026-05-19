@@ -260,7 +260,7 @@ function renderSidebar() {
             </div>
             <div class="mth-actions">
                 ${window.location.pathname.includes('profile.html') ? `
-                <a href="${pathPrefix}settings/index.html" class="mth-icon-link" title="Cài đặt">
+                <a href="${pathPrefix}settings.html" class="mth-icon-link" title="Cài đặt">
                     <i class="fa-solid fa-gear"></i>
                 </a>
                 <a href="#" class="mth-icon-link" onclick="logout(event)" title="Đăng xuất">
@@ -363,9 +363,20 @@ function renderSidebar() {
                     <span>Chế độ tối</span>
                     <div id="dark-mode-toggle-switch" class="theme-toggle-indicator ${localStorage.getItem('theme') === 'dark' ? 'active' : ''}"></div>
                 </a>
-                <a href="${pathPrefix}settings/index.html"><i class="fa-solid fa-gear"></i> Cài đặt</a>
+                <a href="${pathPrefix}settings.html"><i class="fa-solid fa-gear"></i> Cài đặt</a>
                 <a href="${pathPrefix}saved.html"><i class="fa-solid fa-bookmark"></i> Đã lưu</a>
-                ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<a href="admin.html" style="color: #6366f1;"><i class="fa-solid fa-user-shield"></i> Quản trị</a>` : ''}
+                
+                <!-- Giao dịch & Cửa hàng -->
+                <div class="menu-divider"></div>
+                <a href="${pathPrefix}my-orders.html"><i class="fa-solid fa-box-open"></i> Đơn hàng của tôi</a>
+                <a href="${pathPrefix}vouchers.html"><i class="fa-solid fa-ticket"></i> Săn Voucher Zynk</a>
+                ${window._userHasShop ? `
+                <a href="${pathPrefix}seller/index.html" style="color: #22c55e; font-weight:600;"><i class="fa-solid fa-store"></i> Kênh người bán</a>
+                ` : `
+                <a href="${pathPrefix}settings.html" style="color: #3b82f6;"><i class="fa-solid fa-store"></i> Đăng ký bán hàng</a>
+                `}
+                
+                ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<div class="menu-divider"></div><a href="${pathPrefix}admin.html" style="color: #6366f1; font-weight:600;"><i class="fa-solid fa-user-shield"></i> Quản trị</a>` : ''}
                 <div class="menu-divider"></div>
                 <a href="#" onclick="logout(event)"><i class="fa-solid fa-sign-out-alt"></i> Đăng xuất</a>
             </div>

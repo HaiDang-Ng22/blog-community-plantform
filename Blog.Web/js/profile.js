@@ -163,9 +163,14 @@ async function loadUserProfile(userId) {
         const followBtn = document.getElementById('follow-btn');
         if (isMyProfile) {
             friendsTabBtn.classList.remove('hidden');
+            const shoppingTabBtn = document.getElementById('shopping-tab-btn');
+            if (shoppingTabBtn) {
+                shoppingTabBtn.classList.remove('hidden');
+                loadProfileShoppingTab();
+            }
             followBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa hồ sơ';
             followBtn.className = 'btn secondary-btn';
-            followBtn.onclick = () => window.location.href = 'settings/index.html';
+            followBtn.onclick = () => window.location.href = 'settings.html';
             document.getElementById('message-btn').classList.add('hidden');
         } else {
             friendsTabBtn.classList.add('hidden');
@@ -356,3 +361,66 @@ async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
 
 function formatDate(dateStr) { return window.common.formatDate(dateStr); }
 function toggleMenu(btn) { window.common.toggleMenu(btn); }
+
+async function loadProfileShoppingTab() {
+    const cardTitle = document.getElementById('profile-seller-title');
+    const cardDesc = document.getElementById('profile-seller-desc');
+    const cardFooter = document.getElementById('profile-seller-footer');
+    if (!cardTitle || !cardDesc || !cardFooter) return;
+
+    cardFooter.innerHTML = '<div class="loading-spinner" style="border-width:2px; width:20px; height:20px; margin:0;"></div>';
+
+    try {
+        const shop = await window.api.get('seller/my-shop');
+        cardTitle.textContent = "Kênh người bán";
+        cardDesc.textContent = `Cửa hàng "${shop.name}" của bạn đang hoạt động tốt.`;
+        cardFooter.innerHTML = `
+            <a href="seller/index.html" class="ph-btn primary-btn" style="background:#22c55e; border-radius:8px;">
+                <i class="fa-solid fa-store"></i> Vào Kênh người bán
+            </a>
+        `;
+    } catch (err) {
+        if (err.status === 404) {
+            try {
+                const app = await window.api.get('seller/application-status');
+                if (app && app.status === 'Pending') {
+                    cardTitle.textContent = "Đang chờ duyệt";
+                    cardDesc.textContent = `Yêu cầu đăng ký shop "${app.shopName}" đang chờ Admin duyệt.`;
+                    cardFooter.innerHTML = `
+                        <button class="ph-btn secondary-btn" disabled style="opacity: 0.7; border-radius:8px;">
+                            <i class="fa-solid fa-clock"></i> Đang chờ phê duyệt
+                        </button>
+                    `;
+                } else if (app && app.status === 'Rejected') {
+                    cardTitle.textContent = "Đăng ký bị từ chối";
+                    cardDesc.textContent = `Đăng ký shop "${app.shopName}" bị từ chối: ${app.rejectionReason || 'Thông tin chưa hợp lệ'}.`;
+                    cardFooter.innerHTML = `
+                        <a href="settings.html" class="ph-btn primary-btn" style="background:#ef4444; border-radius:8px;">
+                            <i class="fa-solid fa-rotate-left"></i> Đăng ký lại
+                        </a>
+                    `;
+                } else {
+                    cardTitle.textContent = "Đăng ký bán hàng";
+                    cardDesc.textContent = "Bắt đầu kinh doanh trên Zynk bằng cách đăng ký mở gian hàng.";
+                    cardFooter.innerHTML = `
+                        <a href="settings.html" class="ph-btn primary-btn" style="background:#3b82f6; border-radius:8px;">
+                            <i class="fa-solid fa-store"></i> Mở shop ngay
+                        </a>
+                    `;
+                }
+            } catch (e) {
+                cardTitle.textContent = "Đăng ký bán hàng";
+                cardDesc.textContent = "Bắt đầu kinh doanh trên Zynk bằng cách đăng ký mở gian hàng.";
+                cardFooter.innerHTML = `
+                    <a href="settings.html" class="ph-btn primary-btn" style="background:#3b82f6; border-radius:8px;">
+                        <i class="fa-solid fa-store"></i> Mở shop ngay
+                    </a>
+                `;
+            }
+        } else {
+            cardTitle.textContent = "Lỗi kết nối";
+            cardDesc.textContent = "Không thể kiểm tra trạng thái cửa hàng.";
+            cardFooter.innerHTML = '';
+        }
+    }
+}
