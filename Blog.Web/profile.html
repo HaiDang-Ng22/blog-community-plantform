@@ -74,6 +74,10 @@
                     <i class="fa-solid fa-user-group"></i>
                     <span>Bạn bè</span>
                 </button>
+                <button class="profile-tab hidden" data-tab="shopping" id="shopping-tab-btn">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span>Mua sắm</span>
+                </button>
             </div>
 
             <!-- Tab Content Containers -->
@@ -103,6 +107,63 @@
                 <div id="no-friends" class="no-posts hidden">
                     <i class="fa-solid fa-users-slash"></i>
                     <p>Danh sách bạn bè trống.</p>
+                </div>
+            </div>
+
+            <!-- Shopping & Seller Dashboard (Only visible on own profile) -->
+            <div id="shopping-container" class="tab-content">
+                <div class="shopping-dashboard">
+                    <!-- Order Card -->
+                    <div class="shopping-card">
+                        <div class="shopping-card-header">
+                            <div class="shopping-icon bg-blue-tint">
+                                <i class="fa-solid fa-box-open"></i>
+                            </div>
+                            <div>
+                                <h4 class="shopping-card-title">Đơn hàng của tôi</h4>
+                                <p class="shopping-card-desc">Quản lý, xem hành trình và lịch sử đặt hàng của bạn.</p>
+                            </div>
+                        </div>
+                        <div class="shopping-card-footer">
+                            <a href="my-orders.html" class="ph-btn primary-btn">
+                                <i class="fa-solid fa-receipt"></i> Xem đơn hàng
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Voucher Card -->
+                    <div class="shopping-card">
+                        <div class="shopping-card-header">
+                            <div class="shopping-icon bg-purple-tint">
+                                <i class="fa-solid fa-ticket"></i>
+                            </div>
+                            <div>
+                                <h4 class="shopping-card-title">Ưu đãi & Voucher</h4>
+                                <p class="shopping-card-desc">Săn mã giảm giá và quản lý kho khuyến mãi đã lưu.</p>
+                            </div>
+                        </div>
+                        <div class="shopping-card-footer">
+                            <a href="vouchers.html" class="ph-btn primary-btn" style="background: linear-gradient(135deg, #7c3aed, #4f46e5);">
+                                <i class="fa-solid fa-tags"></i> Săn Voucher ngay
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Seller Card (Dynamic text filled by JS) -->
+                    <div class="shopping-card" id="profile-seller-card">
+                        <div class="shopping-card-header">
+                            <div class="shopping-icon bg-green-tint">
+                                <i class="fa-solid fa-store"></i>
+                            </div>
+                            <div>
+                                <h4 class="shopping-card-title" id="profile-seller-title">Cửa hàng của tôi</h4>
+                                <p class="shopping-card-desc" id="profile-seller-desc">Quản lý sản phẩm, đơn hàng và kinh doanh của bạn.</p>
+                            </div>
+                        </div>
+                        <div class="shopping-card-footer" id="profile-seller-footer">
+                            <!-- Injected by JS based on shop status -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
