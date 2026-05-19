@@ -73,32 +73,95 @@ body.main-with-sidebar { margin-left: 0; }
     <input type="text" id="faqSearch" placeholder="Tìm kiếm câu hỏi...">
   </div>
 
-  <div class="info-card">
-    <h2><span class="icon"><i class="fa fa-circle-question"></i></span>Câu hỏi thường gặp</h2>
-    <div class="faq-list">
-      <div class="faq-item">
-        <div class="faq-question">Làm thế nào để đăng ký tài khoản?</div>
-        <div class="faq-answer">Nhấn vào nút <strong>Đăng nhập</strong> và chuyển sang tab Đăng ký. Bạn có thể đăng ký bằng email hoặc tài khoản Google chỉ trong vài giây.</div>
+  <!-- Hướng dẫn chi tiết theo chuyên mục -->
+  <div class="info-grid">
+    <!-- Mua sắm & Voucher -->
+    <div class="info-card">
+      <h2><span class="icon"><i class="fa-solid fa-bag-shopping"></i></span>Mua sắm & Voucher</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-question">Làm sao để đặt hàng trên Zynk?</div>
+          <div class="faq-answer">
+            <ol style="margin-left: 16px; margin-top: 8px;">
+              <li>Truy cập mục <strong>Marketplace</strong> từ thanh điều hướng để xem các sản phẩm đăng bán.</li>
+              <li>Chọn sản phẩm bạn quan tâm, đọc mô tả và nhấn <strong>Thêm vào giỏ hàng</strong> hoặc <strong>Mua ngay</strong>. Bạn cũng có thể bấm <strong>Nhắn tin</strong> để chat trực tiếp thương lượng với người bán.</li>
+              <li>Vào Giỏ hàng, chọn các sản phẩm muốn thanh toán, điền thông tin giao nhận và tiến hành đặt hàng.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Cách săn và áp dụng Voucher giảm giá?</div>
+          <div class="faq-answer">
+            Truy cập trang <strong>Săn Voucher</strong> (hoặc nhấn nút Voucher trên menu) để lưu các ưu đãi khả dụng. Khi ở bước thanh toán trong Giỏ hàng, hãy nhấn nút <strong>Chọn Voucher</strong>. Hệ thống sẽ tự động hiển thị danh sách voucher bạn đã lưu và đủ điều kiện áp dụng cho đơn hàng đó.
+          </div>
+        </div>
       </div>
-      <div class="faq-item">
-        <div class="faq-question">Làm thế nào để mở cửa hàng bán hàng trên Zynk?</div>
-        <div class="faq-answer">Vào <strong>Cài đặt → Cửa hàng của tôi</strong> và gửi yêu cầu đăng ký kinh doanh. Đội ngũ kiểm duyệt sẽ phê duyệt trong vòng 24 giờ.</div>
+    </div>
+
+    <!-- Bán hàng & Cửa hàng -->
+    <div class="info-card">
+      <h2><span class="icon"><i class="fa-solid fa-store"></i></span>Kênh người bán</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-question">Làm thế nào để mở shop bán hàng trên Zynk?</div>
+          <div class="faq-answer">
+            <ol style="margin-left: 16px; margin-top: 8px;">
+              <li>Nhấn vào <strong>Đăng ký bán hàng</strong> trên menu hoặc tab Mua sắm trong trang cá nhân.</li>
+              <li>Điền tên shop, mô tả, số điện thoại và <strong>thông tin tài khoản ngân hàng (VietQR)</strong> để nhận tiền trực tiếp từ người mua.</li>
+              <li>Gửi yêu cầu đăng ký. Admin sẽ xét duyệt hồ sơ của bạn trong vòng 24 giờ.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Quản lý sản phẩm và đơn hàng ở đâu?</div>
+          <div class="faq-answer">
+            Sau khi được phê duyệt mở shop, bạn sẽ có quyền truy cập vào <strong>Kênh người bán</strong> (nút màu xanh lá trong mục Mua sắm hoặc thanh menu). Tại đây bạn có thể đăng sản phẩm mới, cập nhật tồn kho, xem danh sách đơn hàng cần giao và xác nhận thanh toán.
+          </div>
+        </div>
       </div>
-      <div class="faq-item">
-        <div class="faq-question">Zynk hỗ trợ những phương thức thanh toán nào?</div>
-        <div class="faq-answer">Zynk tích hợp <strong>VietQR</strong> — hệ thống tạo mã QR động tự động theo từng đơn hàng. Bạn chỉ cần quét mã bằng ứng dụng ngân hàng bất kỳ để thanh toán tức thì.</div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <!-- Thanh toán & VietQR -->
+    <div class="info-card">
+      <h2><span class="icon"><i class="fa-solid fa-credit-card"></i></span>Thanh toán & VietQR</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-question">Zynk hỗ trợ những phương thức thanh toán nào?</div>
+          <div class="faq-answer">
+            Hệ thống hỗ trợ 2 phương thức thanh toán hiện đại:
+            <ul style="margin-left: 16px; margin-top: 8px;">
+              <li><strong>VietQR động:</strong> Hệ thống tự tạo mã QR chuyển khoản chứa thông tin ngân hàng của chủ shop và số tiền cần thanh toán. Bạn chỉ cần quét mã bằng app ngân hàng để chuyển khoản trực tiếp.</li>
+              <li><strong>Cổng thanh toán PayOS:</strong> Thanh toán tự động liên kết tài khoản ngân hàng, xác nhận giao dịch thành công tức thì.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Làm sao để chủ shop nhận được tiền thanh toán?</div>
+          <div class="faq-answer">
+            Khi khách hàng chọn thanh toán qua VietQR, mã QR sẽ trỏ thẳng tới số tài khoản ngân hàng của bạn đã thiết lập lúc đăng ký shop. Khách hàng quét mã chuyển khoản thành công nghĩa là tiền đã vào tài khoản ngân hàng của bạn. Bạn chỉ cần vào quản lý đơn hàng xác nhận "Đã nhận tiền" để tiến hành giao hàng.
+          </div>
+        </div>
       </div>
-      <div class="faq-item">
-        <div class="faq-question">Tôi phải làm gì khi gặp bài viết vi phạm?</div>
-        <div class="faq-answer">Nhấn vào biểu tượng <strong>···</strong> (ba chấm) tại góc bài viết, chọn <strong>Báo cáo</strong>. Đội ngũ kiểm duyệt sẽ xem xét và xử lý trong thời gian sớm nhất.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question">Tích xanh xác minh là gì và cách đăng ký?</div>
-        <div class="faq-answer">Tích xanh dành cho người dùng và cửa hàng uy tín đã xác minh danh tính. Vào <strong>Cài đặt → Xác minh tài khoản</strong> và tải lên giấy tờ tùy thân để bắt đầu.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question">Làm sao để sử dụng mã giảm giá (Voucher)?</div>
-        <div class="faq-answer">Khi thanh toán trong Giỏ hàng, nhấn <strong>Chọn Voucher</strong>. Danh sách các mã hợp lệ sẽ hiển thị tự động, chọn mã muốn dùng và giảm giá sẽ được áp dụng ngay lập tức.</div>
+    </div>
+
+    <!-- Xác minh & Bảo mật -->
+    <div class="info-card">
+      <h2><span class="icon"><i class="fa-solid fa-shield-halved"></i></span>Xác minh & Bảo mật</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-question">Làm thế nào để được cấp Tích xanh xác minh?</div>
+          <div class="faq-answer">
+            Tích xanh giúp gia tăng uy tín cho tài khoản cá nhân và shop. Hãy vào <strong>Cài đặt → Xác minh tài khoản</strong>, tải lên ảnh giấy tờ tùy thân (CCCD/Hộ chiếu) và ảnh selfie xác thực. Ban quản trị sẽ đối chiếu và cấp tích xanh trong vòng 24–48 giờ.
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Quy trình kiểm duyệt nội dung của Zynk?</div>
+          <div class="faq-answer">
+            Để đảm bảo môi trường lành mạnh, Zynk áp dụng bộ lọc từ ngữ tục tĩu tự động đối với các bài viết và bình luận. Nếu phát hiện vi phạm lặp lại nhiều lần, tài khoản có thể bị khóa tạm thời hoặc vĩnh viễn bởi Ban quản trị.
+          </div>
+        </div>
       </div>
     </div>
   </div>
