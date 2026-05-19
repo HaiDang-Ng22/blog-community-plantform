@@ -371,6 +371,17 @@ function applyFilters() {
     const s = document.getElementById('adj-saturate').value;
     const bl = document.getElementById('adj-blur').value;
 
+    // Update value badges dynamically
+    const valBrightness = document.getElementById('val-brightness');
+    const valContrast = document.getElementById('val-contrast');
+    const valSaturate = document.getElementById('val-saturate');
+    const valBlur = document.getElementById('val-blur');
+
+    if (valBrightness) valBrightness.textContent = `${b}%`;
+    if (valContrast) valContrast.textContent = `${c}%`;
+    if (valSaturate) valSaturate.textContent = `${s}%`;
+    if (valBlur) valBlur.textContent = `${bl}px`;
+
     postImages[currentImageIndex].filters = { brightness: b, contrast: c, saturate: s, blur: bl };
     const img = document.getElementById('current-edit-img');
     if (img) {
@@ -384,6 +395,92 @@ function updateFilterSliders() {
     document.getElementById('adj-contrast').value = f.contrast;
     document.getElementById('adj-saturate').value = f.saturate;
     document.getElementById('adj-blur').value = f.blur;
+
+    // Update value badges on loading state
+    const valBrightness = document.getElementById('val-brightness');
+    const valContrast = document.getElementById('val-contrast');
+    const valSaturate = document.getElementById('val-saturate');
+    const valBlur = document.getElementById('val-blur');
+
+    if (valBrightness) valBrightness.textContent = `${f.brightness}%`;
+    if (valContrast) valContrast.textContent = `${f.contrast}%`;
+    if (valSaturate) valSaturate.textContent = `${f.saturate}%`;
+    if (valBlur) valBlur.textContent = `${f.blur}px`;
+    
+    // Auto active preset cards based on filter parameters
+    document.querySelectorAll('.preset-card').forEach(card => card.classList.remove('active'));
+    
+    let matchedPreset = 'custom';
+    if (f.brightness == 100 && f.contrast == 100 && f.saturate == 100 && f.blur == 0) matchedPreset = 'original';
+    else if (f.brightness == 110 && f.contrast == 120 && f.saturate == 125 && f.blur == 0) matchedPreset = 'clarendon';
+    else if (f.brightness == 115 && f.contrast == 110 && f.saturate == 140 && f.blur == 0) matchedPreset = 'juno';
+    else if (f.brightness == 105 && f.contrast == 95 && f.saturate == 80 && f.blur == 0) matchedPreset = 'valencia';
+    else if (f.brightness == 100 && f.contrast == 130 && f.saturate == 0 && f.blur == 0) matchedPreset = 'monochrome';
+    else if (f.brightness == 110 && f.contrast == 90 && f.saturate == 70 && f.blur == 0) matchedPreset = 'gingham';
+    
+    if (matchedPreset !== 'custom') {
+        const activeCard = document.querySelector(`.preset-card[onclick*="'${matchedPreset}'"]`);
+        if (activeCard) activeCard.classList.add('active');
+    }
+}
+
+function switchEditorTab(tabName) {
+    const tabPresets = document.getElementById('tab-presets');
+    const tabAdjustments = document.getElementById('tab-adjustments');
+    const presetsContainer = document.getElementById('editor-presets-container');
+    const adjustmentsContainer = document.getElementById('editor-adjustments-container');
+    
+    if (tabName === 'presets') {
+        tabPresets.classList.add('active');
+        tabAdjustments.classList.remove('active');
+        presetsContainer.classList.remove('hidden');
+        adjustmentsContainer.classList.add('hidden');
+    } else {
+        tabPresets.classList.remove('active');
+        tabAdjustments.classList.add('active');
+        presetsContainer.classList.add('hidden');
+        adjustmentsContainer.classList.remove('hidden');
+    }
+}
+
+function applyPreset(presetName) {
+    // Select active card UI styling
+    document.querySelectorAll('.preset-card').forEach(card => card.classList.remove('active'));
+    
+    const activeCard = document.querySelector(`.preset-card[onclick*="'${presetName}'"]`);
+    if (activeCard) activeCard.classList.add('active');
+
+    let b = 100, c = 100, s = 100, bl = 0;
+    switch(presetName) {
+        case 'clarendon':
+            b = 110; c = 120; s = 125; bl = 0;
+            break;
+        case 'juno':
+            b = 115; c = 110; s = 140; bl = 0;
+            break;
+        case 'valencia':
+            b = 105; c = 95; s = 80; bl = 0;
+            break;
+        case 'monochrome':
+            b = 100; c = 130; s = 0; bl = 0;
+            break;
+        case 'gingham':
+            b = 110; c = 90; s = 70; bl = 0;
+            break;
+        case 'original':
+        default:
+            b = 100; c = 100; s = 100; bl = 0;
+            break;
+    }
+
+    // Set slider values
+    document.getElementById('adj-brightness').value = b;
+    document.getElementById('adj-contrast').value = c;
+    document.getElementById('adj-saturate').value = s;
+    document.getElementById('adj-blur').value = bl;
+
+    // Apply filters
+    applyFilters();
 }
 
 function applyStoredVisuals(img, idx) {
@@ -448,3 +545,5 @@ window.applyFilters = applyFilters;
 window.applyZoom = applyZoom;
 window.initPollPost = initPollPost;
 window.addPollOption = addPollOption;
+window.switchEditorTab = switchEditorTab;
+window.applyPreset = applyPreset;
