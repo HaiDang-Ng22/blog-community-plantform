@@ -319,6 +319,19 @@
     .user-list-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    /* Modern tab layout for mobile */
+    .profile-tab span {
+        display: none;
+    }
+    
+    .profile-tab i {
+        font-size: 1.25rem !important;
+    }
+    
+    .profile-tab {
+        padding: 16px 0;
+    }
 }
 
 @media (max-width: 480px) {

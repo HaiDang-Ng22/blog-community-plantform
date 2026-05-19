@@ -363,15 +363,19 @@ function formatDate(dateStr) { return window.common.formatDate(dateStr); }
 function toggleMenu(btn) { window.common.toggleMenu(btn); }
 
 async function loadProfileShoppingTab() {
+    const card = document.getElementById('profile-seller-card');
     const cardTitle = document.getElementById('profile-seller-title');
     const cardDesc = document.getElementById('profile-seller-desc');
     const cardFooter = document.getElementById('profile-seller-footer');
-    if (!cardTitle || !cardDesc || !cardFooter) return;
+    if (!card || !cardTitle || !cardDesc || !cardFooter) return;
 
+    // By default, hide the seller card
+    card.style.display = 'none';
     cardFooter.innerHTML = '<div class="loading-spinner" style="border-width:2px; width:20px; height:20px; margin:0;"></div>';
 
     try {
         const shop = await window.api.get('seller/my-shop');
+        card.style.display = 'flex'; // Show card since they have an active shop
         cardTitle.textContent = "Kênh người bán";
         cardDesc.textContent = `Cửa hàng "${shop.name}" của bạn đang hoạt động tốt.`;
         cardFooter.innerHTML = `
@@ -384,6 +388,7 @@ async function loadProfileShoppingTab() {
             try {
                 const app = await window.api.get('seller/application-status');
                 if (app && app.status === 'Pending') {
+                    card.style.display = 'flex'; // Show card for pending applications
                     cardTitle.textContent = "Đang chờ duyệt";
                     cardDesc.textContent = `Yêu cầu đăng ký shop "${app.shopName}" đang chờ Admin duyệt.`;
                     cardFooter.innerHTML = `
@@ -392,6 +397,7 @@ async function loadProfileShoppingTab() {
                         </button>
                     `;
                 } else if (app && app.status === 'Rejected') {
+                    card.style.display = 'flex'; // Show card for rejected applications
                     cardTitle.textContent = "Đăng ký bị từ chối";
                     cardDesc.textContent = `Đăng ký shop "${app.shopName}" bị từ chối: ${app.rejectionReason || 'Thông tin chưa hợp lệ'}.`;
                     cardFooter.innerHTML = `
@@ -400,27 +406,13 @@ async function loadProfileShoppingTab() {
                         </a>
                     `;
                 } else {
-                    cardTitle.textContent = "Đăng ký bán hàng";
-                    cardDesc.textContent = "Bắt đầu kinh doanh trên Zynk bằng cách đăng ký mở gian hàng.";
-                    cardFooter.innerHTML = `
-                        <a href="settings.html" class="ph-btn primary-btn" style="background:#3b82f6; border-radius:8px;">
-                            <i class="fa-solid fa-store"></i> Mở shop ngay
-                        </a>
-                    `;
+                    card.style.display = 'none'; // Hide if no shop and status not pending/rejected
                 }
             } catch (e) {
-                cardTitle.textContent = "Đăng ký bán hàng";
-                cardDesc.textContent = "Bắt đầu kinh doanh trên Zynk bằng cách đăng ký mở gian hàng.";
-                cardFooter.innerHTML = `
-                    <a href="settings.html" class="ph-btn primary-btn" style="background:#3b82f6; border-radius:8px;">
-                        <i class="fa-solid fa-store"></i> Mở shop ngay
-                    </a>
-                `;
+                card.style.display = 'none';
             }
         } else {
-            cardTitle.textContent = "Lỗi kết nối";
-            cardDesc.textContent = "Không thể kiểm tra trạng thái cửa hàng.";
-            cardFooter.innerHTML = '';
+            card.style.display = 'none';
         }
     }
 }
