@@ -14,6 +14,9 @@ let typingTimer = null;
 let isTyping = false;
 let replyingToMsgId = null;
 let replyingToMsgContent = null;
+let earliestMessageTimestamp = null;
+let hasMoreMessages = true;
+let isLoadingMore = false;
 
 const API = window.API_BASE_URL || '';
 
@@ -202,6 +205,11 @@ async function openConversation(conv) {
     currentConversationId = conv.conversationId;
     currentOtherUser = conv.otherUser;
 
+    // Reset pagination state
+    earliestMessageTimestamp = null;
+    hasMoreMessages = true;
+    isLoadingMore = false;
+
     // Mark active in list
     document.querySelectorAll('.conv-item').forEach(el => {
         el.classList.toggle('active', el.dataset.convId === conv.conversationId);
@@ -212,6 +220,12 @@ async function openConversation(conv) {
 
     // Load messages
     await loadMessages(conv.conversationId);
+
+    // Attach scroll listener for infinite paging
+    const messagesArea = document.getElementById('messages-area');
+    if (messagesArea) {
+        messagesArea.addEventListener('scroll', handleChatScroll);
+    }
 
     // Mobile: slide chat panel in
     document.getElementById('chat-panel')?.classList.add('mobile-open');
@@ -306,7 +320,26 @@ function buildChatPanel(conv) {
         <button onclick="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="chat-input-area">
-        <div class="chat-input-wrap">
+        <div class="chat-input-wrap" style="position: relative;">
+            <button class="chat-icon-btn chat-emoji-btn" onclick="toggleEmojiPicker(event)" title="Emoji">
+                <i class="fa-regular fa-face-smile"></i>
+            </button>
+            <div id="emoji-picker-container" class="emoji-picker-popover hidden">
+                <div class="emoji-grid">
+                    <span onclick="insertEmoji('😀')">😀</span>
+                    <span onclick="insertEmoji('😂')">😂</span>
+                    <span onclick="insertEmoji('🥰')">🥰</span>
+                    <span onclick="insertEmoji('😍')">😍</span>
+                    <span onclick="insertEmoji('😘')">😘</span>
+                    <span onclick="insertEmoji('👍')">👍</span>
+                    <span onclick="insertEmoji('🔥')">🔥</span>
+                    <span onclick="insertEmoji('❤️')">❤️</span>
+                    <span onclick="insertEmoji('👏')">👏</span>
+                    <span onclick="insertEmoji('🎉')">🎉</span>
+                    <span onclick="insertEmoji('😢')">😢</span>
+                    <span onclick="insertEmoji('😮')">😮</span>
+                </div>
+            </div>
             <button class="chat-icon-btn" onclick="document.getElementById('chat-img-input').click()" title="Gửi ảnh">
                 <i class="fa-regular fa-image"></i>
             </button>
@@ -341,7 +374,7 @@ function closeChatPanelMobile() {
 }
 
 // ── Load Messages ─────────────────────────────────────────
-async function loadMessages(conversationId, page = 1) {
+async function loadMessages(conversationId) {
     const token = localStorage.getItem('auth_token');
     const area = document.getElementById('messages-area');
     if (!area) return;
@@ -356,12 +389,21 @@ async function loadMessages(conversationId, page = 1) {
         area.innerHTML = '';
         if (messages.length === 0) {
             area.innerHTML = `<div class="inbox-empty"><i class="fa-regular fa-comment-dots"></i><p>Hãy bắt đầu cuộc trò chuyện!</p></div>`;
+            hasMoreMessages = false;
             return;
+        }
+
+        // Set earliest message timestamp from first loaded message
+        earliestMessageTimestamp = messages[0].createdAt;
+        if (messages.length < 20) {
+            hasMoreMessages = false;
+        } else {
+            hasMoreMessages = true;
         }
 
         let lastDate = null;
         let lastSenderId = null;
-        messages.forEach((msg, idx) => {
+        messages.forEach((msg) => {
             const msgDate = new Date(msg.createdAt).toDateString();
             if (msgDate !== lastDate) {
                 area.appendChild(createDateSeparator(msg.createdAt));
@@ -377,6 +419,89 @@ async function loadMessages(conversationId, page = 1) {
     } catch (err) {
         console.error('[Chat] Load messages error:', err);
         if (area) area.innerHTML = `<div class="inbox-empty"><i class="fa-solid fa-wifi-slash"></i><p>Không thể tải tin nhắn</p></div>`;
+    }
+}
+
+function handleChatScroll() {
+    const area = document.getElementById('messages-area');
+    if (!area) return;
+
+    // When user scrolls to top of chat
+    if (area.scrollTop === 0 && hasMoreMessages && !isLoadingMore) {
+        loadOlderMessages();
+    }
+}
+
+async function loadOlderMessages() {
+    if (!currentConversationId || !earliestMessageTimestamp || !hasMoreMessages || isLoadingMore) return;
+
+    isLoadingMore = true;
+    const area = document.getElementById('messages-area');
+    if (!area) return;
+
+    // Show small inline spinner at the top
+    let spinner = document.getElementById('chat-history-spinner');
+    if (!spinner) {
+        spinner = document.createElement('div');
+        spinner.id = 'chat-history-spinner';
+        spinner.className = 'chat-history-spinner';
+        spinner.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Tải tin nhắn cũ hơn...';
+        area.insertBefore(spinner, area.firstChild);
+    }
+
+    const token = localStorage.getItem('auth_token');
+    const oldScrollHeight = area.scrollHeight;
+
+    try {
+        const res = await fetch(`${API}/messages/conversations/${currentConversationId}/messages?before=${earliestMessageTimestamp}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed');
+        const messages = await res.json();
+
+        // Remove spinner
+        spinner.remove();
+
+        if (messages.length === 0) {
+            hasMoreMessages = false;
+            isLoadingMore = false;
+            return;
+        }
+
+        // Set new earliest message timestamp from first loaded message
+        earliestMessageTimestamp = messages[0].createdAt;
+        if (messages.length < 20) {
+            hasMoreMessages = false;
+        }
+
+        // Build temporary fragment to render older messages
+        const tempContainer = document.createDocumentFragment();
+        
+        let lastDate = null;
+        let lastSenderId = null;
+        messages.forEach((msg) => {
+            const msgDate = new Date(msg.createdAt).toDateString();
+            if (msgDate !== lastDate) {
+                tempContainer.appendChild(createDateSeparator(msg.createdAt));
+                lastDate = msgDate;
+                lastSenderId = null;
+            }
+            const isConsecutive = lastSenderId === msg.senderId;
+            tempContainer.appendChild(createMessageEl(msg, isConsecutive));
+            lastSenderId = msg.senderId;
+        });
+
+        // Prepend messages below the loader
+        area.insertBefore(tempContainer, area.firstChild);
+
+        // Precise scroll restoration so scroll position doesn't jump
+        area.scrollTop = area.scrollHeight - oldScrollHeight;
+
+    } catch (err) {
+        console.error('[Chat] Load older messages error:', err);
+        if (spinner) spinner.remove();
+    } finally {
+        isLoadingMore = false;
     }
 }
 
@@ -837,3 +962,41 @@ function formatDateLabel(dateStr) {
     if (diff === 1) return 'Hôm qua';
     return date.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
 }
+
+// ── Emoji Picker Helpers ──────────────────────────────────
+function toggleEmojiPicker(e) {
+    e.stopPropagation();
+    const container = document.getElementById('emoji-picker-container');
+    if (container) {
+        container.classList.toggle('hidden');
+    }
+}
+window.toggleEmojiPicker = toggleEmojiPicker;
+
+function insertEmoji(emoji) {
+    const input = document.getElementById('chat-text-input');
+    const sendBtn = document.getElementById('chat-send-btn');
+    if (input) {
+        input.value += emoji;
+        input.focus();
+        if (sendBtn) sendBtn.disabled = false;
+        
+        // Hide popover
+        const container = document.getElementById('emoji-picker-container');
+        if (container) container.classList.add('hidden');
+        
+        autoResizeTextarea(input);
+    }
+}
+window.insertEmoji = insertEmoji;
+
+// Hide emoji popover when clicking anywhere else
+document.addEventListener('click', (e) => {
+    const container = document.getElementById('emoji-picker-container');
+    if (container && !container.classList.contains('hidden')) {
+        const pickerBtn = e.target.closest('.chat-emoji-btn') || e.target.closest('.emoji-picker-popover');
+        if (!pickerBtn) {
+            container.classList.add('hidden');
+        }
+    }
+});

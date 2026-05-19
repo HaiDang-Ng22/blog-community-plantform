@@ -118,7 +118,7 @@ public class MessagesController : ControllerBase
         if (conv == null) return NotFound();
         if (conv.User1Id != userId && conv.User2Id != userId) return Forbid();
 
-        var messages = await _firebaseChatService.GetMessagesAsync(conversationId, 50, before);
+        var messages = await _firebaseChatService.GetMessagesAsync(conversationId, 20, before);
         
         // Mark as read in Firebase
         await _firebaseChatService.MarkAsReadAsync(conversationId, userId.Value);
