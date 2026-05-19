@@ -219,3 +219,225 @@
     background: #f9fafb;
     border-color: #9ca3af;
 }
+
+/* CP Modern Custom Slider CSS */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 99px;
+    outline: none;
+    margin: 8px 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+}
+
+/* CP Modern Tabs CSS */
+.cp-adjust-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid #f1f5f9;
+    margin-bottom: 24px;
+}
+
+.cp-tab {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.cp-tab:hover {
+    color: #334155;
+}
+
+.cp-tab.active {
+    color: #7c3aed;
+}
+
+.cp-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #7c3aed;
+    border-radius: 99px;
+}
+
+/* Presets Grid System */
+.presets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 10px 0;
+}
+
+.preset-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 12px 8px;
+    border-radius: 14px;
+    border: 1px solid #f1f5f9;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.preset-card:hover {
+    transform: translateY(-2px);
+    background: #f1f5f9;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.preset-card.active {
+    border-color: #7c3aed;
+    background: #f5f3ff;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.12);
+}
+
+.preset-card.active span {
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+.preset-card span {
+    font-size: 0.8rem;
+    color: #475569;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* Preset Gradient Previews with Filters */
+.preset-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s ease;
+}
+
+.preset-preview.original { filter: none; }
+.preset-preview.clarendon { filter: brightness(1.1) contrast(1.2) saturate(1.25); }
+.preset-preview.juno { filter: brightness(1.15) contrast(1.1) saturate(1.4); }
+.preset-preview.valencia { filter: brightness(1.05) contrast(0.95) saturate(0.8); }
+.preset-preview.monochrome { filter: brightness(1) contrast(1.3) saturate(0); }
+.preset-preview.gingham { filter: brightness(1.1) contrast(0.9) saturate(0.7); }
+
+.preset-card:hover .preset-preview {
+    transform: scale(1.05);
+}
+
+/* CP Manual Adjustment Group */
+.control-group {
+    margin-bottom: 18px;
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+.control-group:hover {
+    border-color: #e2e8f0;
+    background: #f1f5f9;
+}
+
+.control-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.control-label-row label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.control-value-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #7c3aed;
+    background: #f5f3ff;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid #ddd6fe;
+}
+
+/* CP Advanced Poll UI */
+#poll-editor {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9 !important;
+    border-radius: 16px !important;
+    padding: 20px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+#poll-editor h4 {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 0.95rem !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px !important;
+}
+
+#poll-editor h4::before {
+    content: '\f080';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #7c3aed;
+}
+
+.poll-option-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    outline: none;
+    transition: all 0.2s ease;
+    background: #fff;
+    margin-bottom: 8px;
+}
+
+.poll-option-input:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+/* Smooth step transitions */
+.cp-step {
+    animation: fadeIn 0.35s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}

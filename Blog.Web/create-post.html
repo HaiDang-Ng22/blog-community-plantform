@@ -89,28 +89,75 @@
                         </div>
                         <div class="cp-pane-right cp-adjust-pane">
                             <div class="cp-adjust-tabs">
-                                <button type="button" class="cp-tab active">Điều chỉnh</button>
+                                <button type="button" id="tab-presets" class="cp-tab active" onclick="window.switchEditorTab('presets')">Bộ lọc</button>
+                                <button type="button" id="tab-adjustments" class="cp-tab" onclick="window.switchEditorTab('adjustments')">Công cụ</button>
                             </div>
-                            <div class="cp-adjust-controls">
-                                <div class="control-group">
-                                    <label>Độ sáng</label>
-                                    <input type="range" id="adj-brightness" min="0" max="200" value="100"
-                                        oninput="applyFilters()">
+                            
+                            <!-- Tab Presets (Instagram-style scrollable presets) -->
+                            <div id="editor-presets-container" class="editor-tab-content">
+                                <div class="presets-grid">
+                                    <div class="preset-card active" onclick="window.applyPreset('original')">
+                                        <div class="preset-preview original"></div>
+                                        <span>Original</span>
+                                    </div>
+                                    <div class="preset-card" onclick="window.applyPreset('clarendon')">
+                                        <div class="preset-preview clarendon"></div>
+                                        <span>Clarendon</span>
+                                    </div>
+                                    <div class="preset-card" onclick="window.applyPreset('juno')">
+                                        <div class="preset-preview juno"></div>
+                                        <span>Juno</span>
+                                    </div>
+                                    <div class="preset-card" onclick="window.applyPreset('valencia')">
+                                        <div class="preset-preview valencia"></div>
+                                        <span>Valencia</span>
+                                    </div>
+                                    <div class="preset-card" onclick="window.applyPreset('monochrome')">
+                                        <div class="preset-preview monochrome"></div>
+                                        <span>Monochrome</span>
+                                    </div>
+                                    <div class="preset-card" onclick="window.applyPreset('gingham')">
+                                        <div class="preset-preview gingham"></div>
+                                        <span>Gingham</span>
+                                    </div>
                                 </div>
-                                <div class="control-group">
-                                    <label>Độ tương phản</label>
-                                    <input type="range" id="adj-contrast" min="0" max="200" value="100"
-                                        oninput="applyFilters()">
-                                </div>
-                                <div class="control-group">
-                                    <label>Độ bão hòa</label>
-                                    <input type="range" id="adj-saturate" min="0" max="200" value="100"
-                                        oninput="applyFilters()">
-                                </div>
-                                <div class="control-group">
-                                    <label>Độ mờ</label>
-                                    <input type="range" id="adj-blur" min="0" max="10" value="0"
-                                        oninput="applyFilters()">
+                            </div>
+                            
+                            <!-- Tab Adjustments (Manual adjustment sliders) -->
+                            <div id="editor-adjustments-container" class="editor-tab-content hidden">
+                                <div class="cp-adjust-controls">
+                                    <div class="control-group">
+                                        <div class="control-label-row">
+                                            <label>Độ sáng</label>
+                                            <span id="val-brightness" class="control-value-badge">100%</span>
+                                        </div>
+                                        <input type="range" id="adj-brightness" min="0" max="200" value="100"
+                                            oninput="applyFilters()">
+                                    </div>
+                                    <div class="control-group">
+                                        <div class="control-label-row">
+                                            <label>Độ tương phản</label>
+                                            <span id="val-contrast" class="control-value-badge">100%</span>
+                                        </div>
+                                        <input type="range" id="adj-contrast" min="0" max="200" value="100"
+                                            oninput="applyFilters()">
+                                    </div>
+                                    <div class="control-group">
+                                        <div class="control-label-row">
+                                            <label>Độ bão hòa</label>
+                                            <span id="val-saturate" class="control-value-badge">100%</span>
+                                        </div>
+                                        <input type="range" id="adj-saturate" min="0" max="200" value="100"
+                                            oninput="applyFilters()">
+                                    </div>
+                                    <div class="control-group">
+                                        <div class="control-label-row">
+                                            <label>Độ mờ</label>
+                                            <span id="val-blur" class="control-value-badge">0px</span>
+                                        </div>
+                                        <input type="range" id="adj-blur" min="0" max="10" value="0"
+                                            oninput="applyFilters()">
+                                    </div>
                                 </div>
                             </div>
                         </div>
