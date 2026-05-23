@@ -62,6 +62,9 @@
                     <a href="categories.html" class="nav-item ${currentPage === 'categories.html' ? 'active' : ''}">
                         <i class="fa-solid fa-layer-group"></i> <span>Quản lý Danh mục</span>
                     </a>
+                    <a href="auctions.html" class="nav-item ${currentPage === 'auctions.html' ? 'active' : ''}">
+                        <i class="fa-solid fa-gavel"></i> <span>Duyệt Đấu giá</span>
+                    </a>
                     <a href="verifications.html" class="nav-item ${currentPage === 'verifications.html' ? 'active' : ''}" style="position: relative;">
                         <i class="fa-solid fa-circle-check"></i> <span>Duyệt tích xanh</span>
                         <span id="badge-verifications" class="admin-badge hidden">0</span>

@@ -29,6 +29,7 @@ public class Post
     public virtual ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
     public virtual ICollection<PostLike> PostLikes { get; set; } = new List<PostLike>();
     public virtual ICollection<PostImage> Images { get; set; } = new List<PostImage>();
+    public virtual ICollection<PostProductTag> ProductTags { get; set; } = new List<PostProductTag>();
     public virtual Poll? Poll { get; set; }
     public PostType Type { get; set; } = PostType.Standard;
     public string? VideoUrl { get; set; }

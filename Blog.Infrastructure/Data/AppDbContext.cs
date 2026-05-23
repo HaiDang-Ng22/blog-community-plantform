@@ -52,6 +52,9 @@ public class AppDbContext : DbContext
     public DbSet<BannedWord> BannedWords { get; set; }
     public DbSet<Banner> Banners { get; set; }
     public DbSet<UserVoucher> UserVouchers { get; set; }
+    public DbSet<Auction> Auctions { get; set; }
+    public DbSet<AuctionBid> AuctionBids { get; set; }
+    public DbSet<PostProductTag> PostProductTags { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -446,6 +449,44 @@ public class AppDbContext : DbContext
             .HasOne(vr => vr.User)
             .WithMany(u => u.VerificationRequests)
             .HasForeignKey(vr => vr.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // --- Auction ---
+        modelBuilder.Entity<Auction>()
+            .HasOne(a => a.Seller)
+            .WithMany()
+            .HasForeignKey(a => a.SellerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Auction>()
+            .HasOne(a => a.HighestBidder)
+            .WithMany()
+            .HasForeignKey(a => a.HighestBidderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AuctionBid>()
+            .HasOne(ab => ab.Auction)
+            .WithMany(a => a.Bids)
+            .HasForeignKey(ab => ab.AuctionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AuctionBid>()
+            .HasOne(ab => ab.User)
+            .WithMany()
+            .HasForeignKey(ab => ab.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // --- Affiliate & Shoppable Posts ---
+        modelBuilder.Entity<PostProductTag>()
+            .HasOne(pt => pt.Post)
+            .WithMany(p => p.ProductTags)
+            .HasForeignKey(pt => pt.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PostProductTag>()
+            .HasOne(pt => pt.Product)
+            .WithMany()
+            .HasForeignKey(pt => pt.ProductId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // --- Global DateTime UTC Converter ---

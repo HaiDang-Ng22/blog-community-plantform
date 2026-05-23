@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đấu giá - Zynk Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .table th, .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .table th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: #64748b;
+        }
+        .thumbnail {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        
+        /* Tabs styling */
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .admin-tab {
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .admin-tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <main class="admin-main">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Quản lý Đấu Giá</h1>
+                <p>Tạo phiên đấu giá và xét duyệt yêu cầu từ người dùng.</p>
+            </div>
+            <button class="btn btn-primary" onclick="showCreateSessionModal()">
+                <i class="fa-solid fa-plus"></i> Tạo Phiên Mới
+            </button>
+        </header>
+
+        <div class="admin-tabs">
+            <div class="admin-tab active" onclick="switchTab('sessions')" data-tab="sessions">Các phiên đấu giá (Đã lên lịch)</div>
+            <div class="admin-tab" onclick="switchTab('requests')" data-tab="requests">Yêu cầu từ người dùng</div>
+        </div>
+
+        <!-- TAB 1: DANH SÁCH PHIÊN ĐẤU GIÁ -->
+        <div id="tab-sessions" class="tab-content active">
+            <div class="card">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Giá KĐ (VNĐ)</th>
+                            <th>Bắt đầu</th>
+                            <th>Kết thúc</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-tbody">
+                        <tr><td colspan="6" style="text-align: center; color: #94a3b8;">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: DUYỆT YÊU CẦU -->
+        <div id="tab-requests" class="tab-content">
+            <div class="card">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Người gửi</th>
+                            <th>Giá KĐ (VNĐ)</th>
+                            <th>Ngày yêu cầu</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-auctions-tbody">
+                        <tr><td colspan="5" style="text-align: center; color: #94a3b8;">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="admin-common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSessions();
+            loadPendingAuctions();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.admin-tab[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        // ==========================================
+        // QUẢN LÝ PHIÊN ĐẤU GIÁ
+        // ==========================================
+        async function loadSessions() {
+            const tbody = document.getElementById('sessions-tbody');
+            try {
+                const sessions = await window.adminApi.get('admin/auctions/sessions');
+                if (sessions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8;">Chưa có phiên đấu giá nào.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = sessions.map(s => {
+                    let statusColor = '#64748b';
+                    let statusText = s.status;
+                    if(s.status === 'Upcoming') { statusColor = '#0284c7'; statusText = 'Sắp diễn ra'; }
+                    else if(s.status === 'Ongoing') { statusColor = '#dc2626'; statusText = 'Đang diễn ra (LIVE)'; }
+                    else if(s.status === 'Ended') { statusText = 'Đã kết thúc'; }
+                    
+                    return `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <img src="${s.imageUrls && s.imageUrls.length > 0 ? s.imageUrls[0] : 'https://via.placeholder.com/60'}" class="thumbnail">
+                                <div style="font-weight: 600;">${s.name}</div>
+                            </div>
+                        </td>
+                        <td style="font-weight: 700; color: #10b981;">${new Intl.NumberFormat('vi-VN').format(s.startingPrice)}</td>
+                        <td>${s.startTime ? new Date(s.startTime).toLocaleString('vi-VN') : 'N/A'}</td>
+                        <td>${s.endTime ? new Date(s.endTime).toLocaleString('vi-VN') : 'N/A'}</td>
+                        <td style="color: ${statusColor}; font-weight: 600;">${statusText}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSession('${s.id}')">Xóa</button>
+                        </td>
+                    </tr>
+                `}).join('');
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444;">Lỗi tải dữ liệu.</td></tr>';
+            }
+        }
+
+        function showCreateSessionModal() {
+            const dateStr = new Date().toISOString().split('T')[0];
+            const html = `
+                <div style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Tạo Phiên Đấu Giá Mới</h3>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tên sản phẩm *</label>
+                        <input type="text" id="create-name" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Hình ảnh (URL) *</label>
+                        <input type="text" id="create-image" placeholder="https://..." required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Giá khởi điểm (VNĐ) *</label>
+                        <input type="number" id="create-price" required min="1000" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Mô tả</label>
+                        <textarea id="create-desc" rows="3" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;"></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                        <div style="flex: 1;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Bắt đầu *</label>
+                            <input type="datetime-local" id="create-start" value="${dateStr}T08:00" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Kết thúc *</label>
+                            <input type="datetime-local" id="create-end" value="${dateStr}T20:00" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="submitCreateSession()">Tạo Phiên Đấu Giá</button>
+                </div>
+            `;
+            window.adminModal.open(html);
+        }
+
+        async function submitCreateSession() {
+            const data = {
+                name: document.getElementById('create-name').value,
+                description: document.getElementById('create-desc').value,
+                imageUrls: [document.getElementById('create-image').value],
+                startingPrice: parseFloat(document.getElementById('create-price').value),
+                startTime: document.getElementById('create-start').value,
+                endTime: document.getElementById('create-end').value
+            };
+            
+            if(!data.name || !data.imageUrls[0] || !data.startingPrice || !data.startTime || !data.endTime) {
+                alert('Vui lòng điền đầy đủ các trường bắt buộc (*)');
+                return;
+            }
+
+            try {
+                await window.adminApi.post('admin/auctions/create-session', data);
+                alert('Đã tạo phiên đấu giá thành công!');
+                window.adminModal.close();
+                loadSessions();
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+            }
+        }
+
+        async function deleteSession(id) {
+            if(!confirm('Bạn có chắc chắn muốn xóa phiên đấu giá này?')) return;
+            try {
+                await window.adminApi.delete(`admin/auctions/sessions/${id}`);
+                alert('Xóa thành công');
+                loadSessions();
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+            }
+        }
+
+        // ==========================================
+        // DUYỆT YÊU CẦU TỪ NGƯỜI DÙNG
+        // ==========================================
+        async function loadPendingAuctions() {
+            const tbody = document.getElementById('pending-auctions-tbody');
+            try {
+                const requests = await window.adminApi.get('admin/auctions/pending');
+                if (requests.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8;">Không có yêu cầu nào đang chờ duyệt.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = requests.map(r => `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <img src="${r.imageUrls && r.imageUrls.length > 0 ? r.imageUrls[0] : 'https://via.placeholder.com/60'}" class="thumbnail">
+                                <div>
+                                    <div style="font-weight: 600;">${r.name}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${r.sellerName}</td>
+                        <td style="font-weight: 700; color: #10b981;">${new Intl.NumberFormat('vi-VN').format(r.startingPrice)}</td>
+                        <td>${new Date(r.requestedDate).toLocaleDateString('vi-VN')}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-secondary btn-sm" onclick='showApproveModal(${JSON.stringify(r).replace(/'/g, "&apos;")})'>Xem & Duyệt</button>
+                                <button class="btn btn-danger btn-sm" onclick="rejectAuction('${r.id}')">Từ chối</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #ef4444;">Lỗi tải dữ liệu.</td></tr>';
+            }
+        }
+
+        function showApproveModal(auction) {
+            const dateStr = new Date(auction.requestedDate).toISOString().split('T')[0];
+            const html = `
+                <div style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Duyệt Đấu Giá</h3>
+                    <p><strong>Sản phẩm:</strong> ${auction.name}</p>
+                    <p><strong>Mô tả:</strong> ${auction.description}</p>
+                    <p><strong>Ngày mong muốn:</strong> ${new Date(auction.requestedDate).toLocaleDateString('vi-VN')}</p>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 20px;">
+                        ${auction.imageUrls.map(img => `<img src="${img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">`).join('')}
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Thời gian bắt đầu</label>
+                        <input type="datetime-local" id="start-time" value="${dateStr}T08:00" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Thời gian kết thúc</label>
+                        <input type="datetime-local" id="end-time" value="${dateStr}T20:00" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="approveAuction('${auction.id}')">Xác nhận Duyệt</button>
+                </div>
+            `;
+            window.adminModal.open(html);
+        }
+
+        async function approveAuction(id) {
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+
+            if (!startTime || !endTime) {
+                alert('Vui lòng chọn thời gian bắt đầu và kết thúc.');
+                return;
+            }
+
+            try {
+                await window.adminApi.post(`admin/auctions/${id}/approve`, { startTime, endTime });
+                alert('Đã duyệt thành công!');
+                window.adminModal.close();
+                loadPendingAuctions();
+                loadSessions();
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
+        }
+
+        async function rejectAuction(id) {
+            if (!confirm('Bạn có chắc chắn muốn từ chối yêu cầu đấu giá này?')) return;
+            try {
+                await window.adminApi.post(`admin/auctions/${id}/reject`);
+                alert('Đã từ chối.');
+                loadPendingAuctions();
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

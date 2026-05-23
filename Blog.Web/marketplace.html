@@ -93,6 +93,9 @@
                             <button class="promo-tab" data-tab="seasonal" onclick="switchPromoTab('seasonal')">
                                 <i class="fa-solid fa-snowflake"></i> Theo mùa
                             </button>
+                            <button class="promo-tab" data-tab="auction" onclick="switchPromoTab('auction')">
+                                <i class="fa-solid fa-gavel"></i> Đấu giá
+                            </button>
                         </div>
                     </div>
 
@@ -143,6 +146,25 @@
                                 <h4>Mid-Year Mega Sale</h4>
                                 <p>Siêu sale giữa năm — Freeship toàn quốc, voucher khủng</p>
                                 <span class="seasonal-date"><i class="fa-regular fa-calendar"></i> 15/05 - 30/05</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auction Tab Content -->
+                    <div class="promo-tab-content" id="tab-auction">
+                        <div class="auction-zone" style="padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #f0f0f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h3 style="color:#ff3b30; margin: 0;"><i class="fa-solid fa-gavel"></i> Phiên đấu giá trực tuyến (LIVE)</h3>
+                                <div>
+                                    <span style="background: #ff3b30; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-right: 10px;" class="blink-animation">ĐANG DIỄN RA</span>
+                                    <a href="auctions.html" style="font-size: 0.9rem; color: #3b82f6; text-decoration: none; font-weight: 600;">Xem thêm <i class="fa-solid fa-arrow-right"></i></a>
+                                </div>
+                            </div>
+                            <div class="auction-grid" id="auction-grid" style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px;">
+                                <!-- Skeleton Cards -->
+                                <div class="product-card skeleton" style="min-width:280px; height: 350px;"></div>
+                                <div class="product-card skeleton" style="min-width:280px; height: 350px;"></div>
+                                <div class="product-card skeleton" style="min-width:280px; height: 350px;"></div>
                             </div>
                         </div>
                     </div>

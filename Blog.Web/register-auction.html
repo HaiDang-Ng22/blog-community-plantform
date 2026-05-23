@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký Sản phẩm Đấu Giá - Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f8fafc;
+        }
+        .register-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .register-header h1 {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        .register-header p {
+            color: #64748b;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #334155;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        .image-preview-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .img-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .back-link:hover {
+            color: #6366f1;
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html"><div class="zynk-logo-clean logo-header"></div></a>
+            </div>
+            <div class="nav-actions">
+                <a href="auctions.html" class="nav-btn"><i class="fa-solid fa-gavel"></i> Quay lại Sàn Đấu Giá</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container-wide" style="min-height: 80vh;">
+        <div class="register-container">
+            <a href="auctions.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+            
+            <div class="register-header">
+                <h1>Gửi Yêu Cầu Đấu Giá</h1>
+                <p>Điền thông tin sản phẩm của bạn để Admin xét duyệt đưa lên sàn Đấu giá LIVE</p>
+            </div>
+
+            <form id="submit-auction-form">
+                <div class="form-group">
+                    <label>Tên sản phẩm *</label>
+                    <input type="text" id="auction-name" required placeholder="Ví dụ: Giày Sneaker Bản giới hạn">
+                </div>
+                <div class="form-group">
+                    <label>Mô tả chi tiết *</label>
+                    <textarea id="auction-desc" rows="5" required placeholder="Tình trạng, xuất xứ, độ hiếm..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Giá khởi điểm (VNĐ) *</label>
+                    <input type="number" id="auction-price" required min="1000">
+                </div>
+                <div class="form-group">
+                    <label>Ngày mong muốn đấu giá *</label>
+                    <input type="date" id="auction-req-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Hình ảnh (Tối thiểu 3 tấm) *</label>
+                    <input type="file" id="auction-images" multiple accept="image/*" onchange="previewAuctionImages(this)">
+                    <div class="image-preview-container" id="auction-img-preview"></div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">Mẹo: Upload lên Cloudinary để lấy link nhanh.</p>
+                </div>
+                <div style="margin-top: 2rem;">
+                    <button type="submit" class="btn-submit">Gửi Yêu Cầu Cho Admin</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if(!localStorage.getItem('auth_token')) {
+                alert('Vui lòng đăng nhập để gửi yêu cầu đấu giá.');
+                window.location.href = 'auth.html';
+                return;
+            }
+
+            document.getElementById('submit-auction-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const files = document.getElementById('auction-images').files;
+                if(files.length < 3) {
+                    alert('Vui lòng chọn ít nhất 3 hình ảnh!');
+                    return;
+                }
+
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerText;
+                submitBtn.innerText = 'Đang tải lên hình ảnh...';
+                submitBtn.disabled = true;
+
+                const uploadedUrls = [];
+                try {
+                    for(let i = 0; i < files.length; i++) {
+                        const res = await window.api.uploadImage(files[i]);
+                        if(res && res.url) {
+                            uploadedUrls.push(res.url);
+                        } else {
+                            throw new Error('Không thể lấy URL của ảnh thứ ' + (i+1));
+                        }
+                    }
+                } catch(err) {
+                    alert('Lỗi tải ảnh: ' + err.message);
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                submitBtn.innerText = 'Đang gửi yêu cầu...';
+
+                const data = {
+                    name: document.getElementById('auction-name').value,
+                    description: document.getElementById('auction-desc').value,
+                    startingPrice: parseFloat(document.getElementById('auction-price').value),
+                    requestedDate: document.getElementById('auction-req-date').value,
+                    imageUrls: uploadedUrls
+                };
+
+                try {
+                    const res = await window.api.post('auctions/request', data);
+                    alert(res.message);
+                    window.location.href = 'auctions.html';
+                } catch(err) {
+                    alert('Lỗi: ' + err.message);
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+
+        function previewAuctionImages(input) {
+            const container = document.getElementById('auction-img-preview');
+            container.innerHTML = '';
+            if(input.files) {
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'img-preview';
+                        container.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

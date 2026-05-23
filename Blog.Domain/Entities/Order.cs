@@ -36,6 +36,11 @@ public class Order
     public decimal DiscountAmount { get; set; }
     public decimal PlatformFeeRate { get; set; } = 0.05m; // 5% by default
     public decimal PlatformFeeAmount { get; set; } = 0;
+    
+    // Affiliate Fields
+    public Guid? AffiliateUserId { get; set; }
+    public decimal AffiliateCommissionAmount { get; set; } = 0;
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPromoVouchers();
     loadFlashSaleInline();
     startFlashSaleCountdown2();
+    loadUpcomingAuctions();
 });
 
 let _bannerIndex = 0;
@@ -1230,5 +1231,49 @@ function startFlashSaleCountdown2() {
         minsEl.textContent = m.toString().padStart(2, '0');
         secsEl.textContent = s.toString().padStart(2, '0');
     }, 1000);
+}
+
+// ── Upcoming Auctions (Marketplace Banner) ──
+async function loadUpcomingAuctions() {
+    const container = document.getElementById('auction-grid');
+    if (!container) return;
+
+    try {
+        const auctions = await window.api.get('auctions/upcoming');
+        if (!auctions || auctions.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 20px; color: #64748b; font-style: italic;">
+                    Hiện chưa có phiên đấu giá nào sắp diễn ra.
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = auctions.map(a => `
+            <div class="product-card" style="min-width:280px;" onclick="window.location.href='auctions.html'">
+                <div class="product-img-wrapper">
+                    <img src="${a.imageUrls && a.imageUrls.length > 0 ? a.imageUrls[0] : 'https://via.placeholder.com/300'}" class="product-img" style="object-fit:cover; height: 220px;">
+                    <div class="discount-badge">LIVE</div>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name" style="height: 40px; overflow: hidden; text-overflow: ellipsis;">${a.name}</h3>
+                    <div class="price-container">
+                        <span style="font-size: 0.9rem; color: #666;">Giá khởi điểm:</span>
+                        <span class="product-price" style="color: #ff3b30; font-size: 1.1rem;">${new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(a.startingPrice)}</span>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.85rem; color: #64748b;">
+                        <i class="fa-regular fa-clock"></i> Bắt đầu: ${new Date(a.startTime).toLocaleString('vi-VN')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        console.error('Failed to load upcoming auctions:', e);
+        container.innerHTML = `
+            <div style="padding: 20px; color: #ef4444;">
+                Không thể kết nối đến máy chủ. Vui lòng thử lại.
+            </div>
+        `;
+    }
 }
 

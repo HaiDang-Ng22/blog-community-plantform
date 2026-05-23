@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sàn Đấu Giá Zynk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .auction-header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 2rem;
+        }
+        .auction-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #ff4b2b, #ff416c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .auction-filters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .date-picker {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        .auction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .auction-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        .auction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .auction-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+        .auction-info {
+            padding: 1.2rem;
+        }
+        .auction-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+        .auction-price {
+            color: #ff3b30;
+            font-weight: 800;
+            font-size: 1.3rem;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .status-upcoming { background: #e0f2fe; color: #0284c7; }
+        .status-ongoing { background: #fef2f2; color: #dc2626; animation: pulse 2s infinite; }
+        .status-ended { background: #f1f5f9; color: #64748b; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* Modal Đăng ký */
+        .submit-auction-btn {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #auction-form-modal .modal-body {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .image-preview-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .img-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="home-page">
+    <header class="main-header">
+        <nav class="nav-container container-wide">
+            <div class="logo">
+                <a href="index.html"><div class="zynk-logo-clean logo-header"></div></a>
+            </div>
+            <div class="nav-actions">
+                <a href="marketplace.html" class="nav-btn"><i class="fa-solid fa-store"></i> Quay lại Chợ</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="auction-header">
+        <div class="container-wide">
+            <h1>SÀN ĐẤU GIÁ LIVE ZYNK</h1>
+            <p style="font-size: 1.1rem; color: #cbd5e1; max-width: 600px; margin: 0 auto;">
+                Nơi săn lùng những món đồ độc lạ, phiên bản giới hạn. 
+                Hoặc tự gửi sản phẩm của bạn lên sàn đấu giá!
+            </p>
+        </div>
+    </div>
+
+    <main class="container-wide" style="min-height: 60vh;">
+        <div class="auction-filters">
+            <div>
+                <label style="font-weight: 600; margin-right: 10px;">Chọn ngày xem:</label>
+                <input type="date" id="auction-date" class="date-picker">
+            </div>
+            <button class="submit-auction-btn" onclick="window.location.href='register-auction.html'">
+                <i class="fa-solid fa-plus"></i> Đăng ký Sản phẩm Đấu giá
+            </button>
+        </div>
+
+        <div id="auction-list" class="auction-grid">
+            <!-- Loading Skeletons -->
+            <div class="skeleton" style="height: 350px; border-radius: 16px;"></div>
+            <div class="skeleton" style="height: 350px; border-radius: 16px;"></div>
+            <div class="skeleton" style="height: 350px; border-radius: 16px;"></div>
+        </div>
+    </main>
+
+    <!-- Removed Modal Đăng Ký Đấu Giá (moved to register-auction.html) -->
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('auction-date').valueAsDate = new Date();
+            loadAuctions();
+
+            document.getElementById('auction-date').addEventListener('change', loadAuctions);
+        });
+
+        async function loadAuctions() {
+            const date = document.getElementById('auction-date').value;
+            const container = document.getElementById('auction-list');
+            container.innerHTML = '<div class="skeleton" style="height: 350px; border-radius: 16px;"></div>'.repeat(3);
+
+            try {
+                const auctions = await window.api.get(`auctions/date/${date}`);
+                if(auctions.length === 0) {
+                    container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #64748b;">Không có phiên đấu giá nào trong ngày này.</div>';
+                    return;
+                }
+
+                container.innerHTML = auctions.map(a => `
+                    <div class="auction-card">
+                        <img src="${a.imageUrls[0] || 'https://via.placeholder.com/300'}" class="auction-img">
+                        <div class="auction-info">
+                            <h3 class="auction-title">${a.name}</h3>
+                            <p style="font-size: 0.9rem; color: #64748b;">Người gửi: <i class="fa-solid fa-user"></i> ${a.sellerName}</p>
+                            <div style="margin-top: 10px;">
+                                <span style="font-size: 0.85rem; color: #64748b;">Giá hiện tại</span>
+                                <div class="auction-price">${new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(a.currentPrice)}</div>
+                            </div>
+                            <span class="status-badge status-${a.status.toLowerCase()}">${formatStatus(a.status)}</span>
+                            ${a.status === 'Ongoing' ? 
+                                `<button class="btn primary-btn" style="width: 100%; margin-top: 15px;" onclick="joinAuction('${a.id}')">Vào phòng ngay</button>` : 
+                                `<button class="btn secondary-btn" style="width: 100%; margin-top: 15px;" onclick="alert('Phòng đấu giá chưa mở')">Xem chi tiết</button>`}
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #ef4444;">Lỗi tải dữ liệu. Bạn chưa chạy Backend.</div>';
+            }
+        }
+
+        function formatStatus(s) {
+            switch(s) {
+                case 'Upcoming': return 'Sắp diễn ra';
+                case 'Ongoing': return 'Đang diễn ra (LIVE)';
+                case 'Ended': return 'Đã kết thúc';
+                default: return s;
+            }
+        }
+
+        function joinAuction(id) {
+            window.location.href = `auction-room.html?id=${id}`;
+        }
+    </script>
+</body>
+</html>
