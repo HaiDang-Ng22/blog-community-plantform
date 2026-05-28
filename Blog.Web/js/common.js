@@ -1183,9 +1183,10 @@ function createPostCard(post) {
     const card = document.createElement('div');
     card.className = 'zynk-post-card animate-up';
     const postId = post.id || post.Id;
-    const authorId = post.authorId || post.AuthorId;
-    const authorName = post.authorName || post.AuthorName || 'Người dùng';
-    const authorAvatarUrl = post.authorAvatarUrl || post.AuthorAvatarUrl;
+    const isAnonymous = post.isAnonymous || post.IsAnonymous || false;
+    const authorId = (!isAnonymous && (post.authorId || post.AuthorId)) || null;
+    const authorName = isAnonymous ? 'Người dùng Ẩn danh' : (post.authorName || post.AuthorName || 'Người dùng');
+    const authorAvatarUrl = isAnonymous ? null : (post.authorAvatarUrl || post.AuthorAvatarUrl);
 
     card.dataset.id = postId;
     card.id = `post-${postId}`;
@@ -1197,7 +1198,8 @@ function createPostCard(post) {
 
     const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
     const currentId = (currentUser.id || currentUser.Id || '').toString();
-    const isOwner = currentId && currentId === (authorId || '').toString();
+    // Owner check: anonymous posts can only be managed by their real author via /me endpoint
+    const isOwner = !isAnonymous && currentId && currentId === (authorId || '').toString();
 
     const images = [];
     if (post.imageUrls && post.imageUrls.length > 0) {
@@ -1210,7 +1212,12 @@ function createPostCard(post) {
     const hasMultiple = images.length > 1;
 
     const avatarUrl = authorAvatarUrl
-        || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName || 'U')}&background=random&color=fff`;
+        || `https://ui-avatars.com/api/?name=${isAnonymous ? 'A' : encodeURIComponent(authorName || 'U')}&background=${isAnonymous ? '6b7280' : 'random'}&color=fff`;
+
+    const anonymousBadge = isAnonymous ? `<span class="anon-badge"><i class="fa-solid fa-user-secret"></i> Ẩn danh</span>` : '';
+    const authorLink = isAnonymous
+        ? `<span class="zynk-author-name anon">${authorName}${anonymousBadge}</span>`
+        : `<a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>`;
 
     const menuItems = isOwner
         ? `<button onclick="location.href='edit-post.html?id=${postId}'"><i class="fa-solid fa-pen" style="margin-right:8px;"></i>Chỉnh sửa</button>
@@ -1230,8 +1237,8 @@ function createPostCard(post) {
         card.classList.add('style-reel');
         card.innerHTML = `
             <div class="zynk-header">
-                <img src="${avatarUrl}" class="zynk-avatar-mini" alt="${authorName}">
-                <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                <img src="${avatarUrl}" class="zynk-avatar-mini ${isAnonymous ? 'anon-avatar' : ''}" alt="${authorName}">
+                ${authorLink}
                 <div class="zynk-options" onclick="window.common.toggleMenu(this)" style="margin-left:auto;">
                     <i class="fa-solid fa-ellipsis"></i>
                     <div class="zynk-menu hidden">${menuItems}</div>
@@ -1257,7 +1264,7 @@ function createPostCard(post) {
             <div class="zynk-body">
                 <div class="zynk-stats">${likeCount > 0 ? likeCount + ' lượt thích' : ''}</div>
                 <div class="zynk-caption">
-                    <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                    ${authorLink}
                     ${truncateText(post.content || '')}
                 </div>
                 ${renderPollHtml(post)}
@@ -1277,7 +1284,7 @@ function createPostCard(post) {
                 <div class="zynk-right">
                     <div class="zynk-header">
                         <div class="zynk-author-meta">
-                            <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                            ${authorLink}
                             <span class="zynk-time">${postTime}</span>
                         </div>
                         <div class="zynk-options" onclick="window.common.toggleMenu(this)">
@@ -1320,8 +1327,8 @@ function createPostCard(post) {
 
         card.innerHTML = `
             <div class="zynk-header">
-                <img src="${avatarUrl}" class="zynk-avatar-mini" alt="${authorName}">
-                <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                <img src="${avatarUrl}" class="zynk-avatar-mini ${isAnonymous ? 'anon-avatar' : ''}" alt="${authorName}">
+                ${authorLink}
                 <div class="zynk-options" onclick="window.common.toggleMenu(this)" style="margin-left:auto;">
                     <i class="fa-solid fa-ellipsis"></i>
                     <div class="zynk-menu hidden">${menuItems}</div>
@@ -1351,7 +1358,7 @@ function createPostCard(post) {
             <div class="zynk-body">
                 <div class="zynk-stats">${likeCount > 0 ? likeCount + ' lượt thích' : ''}</div>
                 <div class="zynk-caption">
-                    <a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>
+                    ${authorLink}
                     ${truncateText(post.content || '')}
                 </div>
                 ${renderPollHtml(post)}

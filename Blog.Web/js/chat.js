@@ -344,6 +344,9 @@ function buildChatPanel(conv) {
                 <i class="fa-regular fa-image"></i>
             </button>
             <input type="file" id="chat-img-input" hidden accept="image/*" onchange="uploadMessageImage(this)">
+            <button class="chat-icon-btn vanish-toggle-btn" id="vanish-mode-btn" onclick="toggleVanishMode()" title="Chế độ tin nhắn tự hủy">
+                <i class="fa-solid fa-fire"></i>
+            </button>
             <textarea
                 id="chat-text-input"
                 placeholder="Nhắn tin..."
@@ -366,6 +369,11 @@ function buildChatPanel(conv) {
             sendBtn.disabled = !input.value.trim();
         });
     }
+    
+    // Reset vanish mode state when opening a new conversation
+    window._vanishModeActive = false;
+    const vanishBtn = document.getElementById('vanish-mode-btn');
+    if (vanishBtn) vanishBtn.classList.remove('active');
 }
 
 function closeChatPanelMobile() {
@@ -554,12 +562,17 @@ function createMessageEl(msg, isConsecutive = false) {
         </div>
     `;
 
+    // Vanish mode bubble style
+    const vanishClass = msg.isVanishMode ? 'vanish-msg' : '';
+    const vanishLabel = msg.isVanishMode && !msg.viewedAt ? '<span class="vanish-label"><i class="fa-solid fa-fire"></i> Tự hủy</span>' : '';
+
     if (isSent) {
         row.innerHTML = `
         <div class="msg-bubble-wrap">
-            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''}" title="${time}">
+            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''} ${vanishClass}" title="${time}">
                 ${replyHtml}
                 ${sharedPostHtml}
+                ${vanishLabel}
                 ${msgContent}
                 ${msg.isHearted ? '<div class="msg-heart-indicator"><i class="fa-solid fa-heart"></i></div>' : ''}
             </div>
@@ -571,15 +584,23 @@ function createMessageEl(msg, isConsecutive = false) {
         <img class="msg-avatar-sm" src="${otherAvatar}" alt="Avatar"
              onerror="this.src='https://ui-avatars.com/api/?name=U&background=6366f1&color=fff'">
         <div class="msg-bubble-wrap">
-            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''}" title="${time}">
+            <div class="msg-bubble ${msg.imageUrl ? 'is-img' : ''} ${vanishClass}" title="${time}">
                 ${replyHtml}
                 ${sharedPostHtml}
+                ${vanishLabel}
                 ${msgContent}
                 ${msg.isHearted ? '<div class="msg-heart-indicator"><i class="fa-solid fa-heart"></i></div>' : ''}
             </div>
             <span class="msg-time">${isConsecutive ? '' : time}</span>
         </div>
         ${actionsHtml}`;
+        
+        // Auto-trigger vanish: sau khi tin hiển thị, nếu là vanish và chưa có viewedAt => báo server
+        if (msg.isVanishMode && !msg.viewedAt && connection) {
+            setTimeout(() => {
+                connection.invoke('MarkVanishMessageRead', msg.id.toString()).catch(() => {});
+            }, 2000); // sau 2 giây hiển thị
+        }
     }
     return row;
 }
@@ -608,7 +629,8 @@ async function sendMessage(imageUrl = null, sharedPostId = null) {
     cancelReply();
 
     try {
-        await connection.invoke('SendMessage', currentOtherUser.id, content, imageUrl, currentReplyId, sharedPostId);
+        const isVanish = window._vanishModeActive || false;
+        await connection.invoke('SendMessage', currentOtherUser.id, content, imageUrl, currentReplyId, sharedPostId, isVanish);
     } catch (err) {
         console.error('[Chat] Send error:', err);
         showToast('Lỗi gửi tin nhắn (hoặc bị chặn)', 'error');
@@ -736,6 +758,8 @@ function handleIncomingMessage(msg, isPending) {
             createdAt: msg.createdAt,
             isRead: msg.isRead,
             imageUrl: msg.imageUrl,
+            isVanishMode: msg.isVanishMode,
+            viewedAt: msg.viewedAt,
             replyToMessage: msg.replyToMessage,
             sharedPost: msg.sharedPost
         }, isConsecutive);
@@ -1000,3 +1024,31 @@ document.addEventListener('click', (e) => {
         }
     }
 });
+
+// ── Vanish Mode Toggle ────────────────────────────────────
+function toggleVanishMode() {
+    window._vanishModeActive = !window._vanishModeActive;
+    const btn = document.getElementById('vanish-mode-btn');
+    const input = document.getElementById('chat-text-input');
+    if (btn) btn.classList.toggle('active', window._vanishModeActive);
+    if (input) {
+        input.placeholder = window._vanishModeActive
+            ? '🔥 Tin nhắn này sẽ tự hủy sau khi đọc...'
+            : 'Nhắn tin...';
+    }
+}
+window.toggleVanishMode = toggleVanishMode;
+
+// ── Handle VanishMessageExpired (SignalR) ─────────────────
+if (typeof connection !== 'undefined' && connection) {
+    connection.on('VanishMessageExpired', (messageId) => {
+        const row = document.querySelector(`.msg-row[data-msg-id="${messageId}"]`);
+        if (row) {
+            const bubble = row.querySelector('.msg-bubble');
+            if (bubble) {
+                bubble.innerHTML = '<span style="opacity:0.5; font-style:italic;">🔥 Tin nhắn đã tự hủy</span>';
+                bubble.classList.add('vanish-expired');
+            }
+        }
+    });
+}

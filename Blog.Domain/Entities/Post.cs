@@ -33,6 +33,9 @@ public class Post
     public virtual Poll? Poll { get; set; }
     public PostType Type { get; set; } = PostType.Standard;
     public string? VideoUrl { get; set; }
+    
+    // Social Features
+    public bool IsAnonymous { get; set; } = false;
 }
 
 public enum PostStatus

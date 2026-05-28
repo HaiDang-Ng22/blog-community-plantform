@@ -1149,3 +1149,90 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ============================================================
+   Secret Chat — Vanish Mode (Tin nhắn tự hủy)
+   ============================================================ */
+
+/* Nút bật Vanish Mode trong thanh input */
+.vanish-toggle-btn {
+    color: var(--text-secondary, #8e8e8e);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.vanish-toggle-btn.active {
+    color: #f97316;
+    animation: vanishPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes vanishPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.15); }
+}
+
+/* Bubble tin nhắn vanish (chưa đọc) */
+.msg-bubble.vanish-msg {
+    border: 1.5px dashed #f97316 !important;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5) !important;
+    color: #9a3412 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.msg-row.sent .msg-bubble.vanish-msg {
+    background: linear-gradient(135deg, #fed7aa, #fb923c) !important;
+    color: #fff !important;
+    border-color: #ea580c !important;
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.35) !important;
+}
+
+/* Nhãn "🔥 Tự hủy" nhỏ bên trên nội dung */
+.vanish-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #ea580c;
+    background: rgba(249,115,22,0.12);
+    border-radius: 999px;
+    padding: 1px 8px;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+
+.msg-row.sent .vanish-label {
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.2);
+}
+
+/* Bubble sau khi tin nhắn đã tự hủy */
+.msg-bubble.vanish-expired {
+    background: transparent !important;
+    border: 1px dashed var(--border-color, #efefef) !important;
+    box-shadow: none !important;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Dark mode vanish */
+.dark-mode .msg-bubble.vanish-msg {
+    background: linear-gradient(135deg, #431407, #7c2d12) !important;
+    color: #fed7aa !important;
+    border-color: #f97316 !important;
+}
+
+.dark-mode .msg-row.sent .msg-bubble.vanish-msg {
+    background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+    color: #fff !important;
+}
+
+.dark-mode .vanish-label {
+    color: #fdba74;
+    background: rgba(249, 115, 22, 0.2);
+}
+
+.dark-mode .msg-bubble.vanish-expired {
+    border-color: #333 !important;
+}

@@ -131,9 +131,9 @@ public class PostsController : ControllerBase
             ViewCount = p.ViewCount,
             LikeCount = p.LikeCount,
             Status = p.Status.ToString(),
-            AuthorName = p.Author?.FullName ?? "Người dùng",
-            AuthorAvatarUrl = p.Author?.AvatarUrl,
-            AuthorId = p.AuthorId,
+            AuthorName = p.IsAnonymous ? "Người dùng Ẩn danh" : (p.Author?.FullName ?? "Người dùng"),
+            AuthorAvatarUrl = p.IsAnonymous ? "/img/default-anonymous.png" : p.Author?.AvatarUrl,
+            AuthorId = p.IsAnonymous ? Guid.Empty : p.AuthorId,
             CreatedAt = p.CreatedAt,
             PublishedAt = p.PublishedAt,
             CommentCount = p.Comments.Count,
@@ -142,6 +142,7 @@ public class PostsController : ControllerBase
             ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
             Type = p.Type.ToString(),
             VideoUrl = p.VideoUrl,
+            IsAnonymous = p.IsAnonymous,
             Poll = p.Poll == null ? null : new PollDto
             {
                 Id = p.Poll.Id,
@@ -194,14 +195,15 @@ public class PostsController : ControllerBase
             ViewCount = post.ViewCount,
             LikeCount = post.LikeCount,
             Status = post.Status.ToString(),
-            AuthorName = post.Author?.FullName ?? "Người dùng",
-            AuthorAvatarUrl = post.Author?.AvatarUrl,
-            AuthorId = post.AuthorId,
+            AuthorName = post.IsAnonymous ? "Người dùng Ẩn danh" : (post.Author?.FullName ?? "Người dùng"),
+            AuthorAvatarUrl = post.IsAnonymous ? "/img/default-anonymous.png" : post.Author?.AvatarUrl,
+            AuthorId = post.IsAnonymous ? Guid.Empty : post.AuthorId,
             CreatedAt = post.CreatedAt,
             PublishedAt = post.PublishedAt,
             CommentCount = post.Comments.Count,
             IsLikedByMe = currentUserId.HasValue && post.PostLikes.Any(l => l.UserId == currentUserId.Value),
-            ImageUrls = post.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
+            ImageUrls = post.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
+            IsAnonymous = post.IsAnonymous
         };
         
         return Ok(postDto);
@@ -270,6 +272,7 @@ public class PostsController : ControllerBase
             }).ToList(),
             Type = Enum.TryParse<PostType>(createPostDto.Type, true, out var postType) ? postType : PostType.Standard,
             VideoUrl = createPostDto.VideoUrl,
+            IsAnonymous = createPostDto.IsAnonymous,
             Poll = createPostDto.Poll == null ? null : new Poll
             {
                 Question = createPostDto.Poll.Question,
@@ -290,6 +293,10 @@ public class PostsController : ControllerBase
     public async Task<IActionResult> GetByUser(Guid userId)
     {
         var posts = await _postRepository.GetPostsByAuthorIdAsync(userId);
+        
+        // Không hiển thị các bài viết ẩn danh trên trang profile công khai
+        posts = posts.Where(p => !p.IsAnonymous).ToList();
+
         var currentUserIdStr = User.GetUserIdStr();
         Guid? currentUserId = !string.IsNullOrEmpty(currentUserIdStr) ? Guid.Parse(currentUserIdStr) : null;
 
@@ -311,7 +318,8 @@ public class PostsController : ControllerBase
             PublishedAt = p.PublishedAt,
             CommentCount = p.Comments.Count,
             IsLikedByMe = currentUserId.HasValue && p.PostLikes.Any(l => l.UserId == currentUserId.Value),
-            ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
+            ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
+            IsAnonymous = false
         });
 
         return Ok(postDtos);
@@ -339,14 +347,15 @@ public class PostsController : ControllerBase
             ViewCount = p.ViewCount,
             LikeCount = p.LikeCount,
             Status = p.Status.ToString(),
-            AuthorName = p.Author?.FullName ?? "Tôi",
-            AuthorAvatarUrl = p.Author?.AvatarUrl,
+            AuthorName = p.IsAnonymous ? "Người dùng Ẩn danh (Bạn)" : (p.Author?.FullName ?? "Tôi"),
+            AuthorAvatarUrl = p.IsAnonymous ? "/img/default-anonymous.png" : p.Author?.AvatarUrl,
             AuthorId = p.AuthorId,
             CreatedAt = p.CreatedAt,
             PublishedAt = p.PublishedAt,
             CommentCount = p.Comments.Count,
             IsLikedByMe = p.PostLikes.Any(l => l.UserId == userId.Value),
-            ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList()
+            ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
+            IsAnonymous = p.IsAnonymous
         });
 
         return Ok(postDtos);

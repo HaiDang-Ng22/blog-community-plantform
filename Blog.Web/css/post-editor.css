@@ -441,3 +441,180 @@ input[type="range"]::-webkit-slider-thumb:hover {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ============================================
+   Anonymous Mode Toggle — Create Post Step 3
+   ============================================ */
+.anonymous-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.anonymous-toggle-row:has(#anonymous-toggle:checked) {
+    border-color: #6366f1;
+    background: #eef2ff;
+}
+
+.anonymous-toggle-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.anon-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4b5563, #1f2937);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.anonymous-toggle-row:has(#anonymous-toggle:checked) .anon-icon {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.anon-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.anon-sublabel {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #d1d5db;
+    border-radius: 999px;
+    transition: background 0.25s ease;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(22px);
+}
+
+/* ============================================
+   Anonymous Badge — Newsfeed Post Cards
+   ============================================ */
+.anon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6366f1;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.3px;
+}
+
+.zynk-author-name.anon {
+    cursor: default;
+    text-decoration: none !important;
+    color: #374151;
+}
+
+.anon-avatar {
+    filter: grayscale(60%) !important;
+    opacity: 0.85;
+}
+
+/* Dark mode adjustments */
+.dark-mode .anonymous-toggle-row {
+    background: rgba(255,255,255,0.04);
+    border-color: #374151;
+}
+
+.dark-mode .anonymous-toggle-row:has(#anonymous-toggle:checked) {
+    background: rgba(99,102,241,0.12);
+    border-color: #6366f1;
+}
+
+.dark-mode .anon-label {
+    color: #f3f4f6;
+}
+
+.dark-mode .anon-sublabel {
+    color: #9ca3af;
+}
+
+.dark-mode .anon-badge {
+    background: rgba(99,102,241,0.2);
+    border-color: rgba(99,102,241,0.4);
+    color: #a5b4fc;
+}
+
+.dark-mode .zynk-author-name.anon {
+    color: #e5e7eb;
+}
+
+/* Dark mode create-post panel */
+.dark-mode .cp-pane-right {
+    background: #1a1a2e;
+}
+
+.dark-mode .post-editor-textarea,
+.dark-mode #post-content {
+    background: #0f0f23;
+    border-color: #2d2d4e;
+    color: #e5e7eb;
+}
+
+.dark-mode .post-editor-textarea::placeholder,
+.dark-mode #post-content::placeholder {
+    color: #6b7280;
+}

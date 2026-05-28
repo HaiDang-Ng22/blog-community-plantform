@@ -526,7 +526,8 @@ async function handlePublish() {
             imageUrls: isReel ? [] : postImages.map(p => p.url),
             videoUrl: isReel ? reelUrl : null,
             type: isReel ? 'Reel' : (isPoll ? 'Poll' : 'Standard'),
-            poll: pollData
+            poll: pollData,
+            isAnonymous: document.getElementById('anonymous-toggle')?.checked || false
         });
 
         alert('Đã chia sẻ bài viết thành công!');

@@ -23,6 +23,7 @@ public class PostDto
     public string Type { get; set; } = "Standard";
     public string? VideoUrl { get; set; }
     public PollDto? Poll { get; set; }
+    public bool IsAnonymous { get; set; }
 }
 
 public class PollDto
@@ -61,6 +62,7 @@ public class CreatePostDto
     public string? VideoUrl { get; set; }
     public string Type { get; set; } = "Standard";
     public CreatePollDto? Poll { get; set; }
+    public bool IsAnonymous { get; set; }
 }
 
 public class UpdatePostDto

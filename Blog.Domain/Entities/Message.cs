@@ -31,6 +31,17 @@ public class Message
     public Guid? SharedPostId { get; set; }
     public virtual Post? SharedPost { get; set; }
 
+    // ── Secret Chat (Vanish Mode) ─────────────────────────────────────────────
+    /// <summary>
+    /// Nếu true: tin nhắn sẽ tự động bị xóa khỏi DB ngay sau khi người nhận đọc lần đầu.
+    /// </summary>
+    public bool IsVanishMode { get; set; } = false;
+
+    /// <summary>
+    /// Thời điểm người nhận xem tin nhắn vanish lần đầu (trigger xóa).
+    /// </summary>
+    public DateTime? ViewedAt { get; set; }
+
     // Navigation
     public virtual Conversation Conversation { get; set; } = null!;
     public virtual User Sender { get; set; } = null!;

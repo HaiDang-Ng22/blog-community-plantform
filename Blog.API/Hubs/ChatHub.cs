@@ -53,7 +53,7 @@ public class ChatHub : Hub
     /// <summary>
     /// Client gọi để gửi tin nhắn. Server lưu DB rồi push realtime cho cả hai.
     /// </summary>
-    public async Task SendMessage(string recipientId, string? content, string? imageUrl = null, Guid? replyToMessageId = null, Guid? sharedPostId = null)
+    public async Task SendMessage(string recipientId, string? content, string? imageUrl = null, Guid? replyToMessageId = null, Guid? sharedPostId = null, bool isVanishMode = false)
     {
         var senderIdStr = Context.User?.GetUserIdStr();
         if (string.IsNullOrEmpty(senderIdStr) || (string.IsNullOrEmpty(content?.Trim()) && string.IsNullOrEmpty(imageUrl) && sharedPostId == null))
@@ -117,6 +117,7 @@ public class ChatHub : Hub
             IsRequestMessage = isRequest, 
             ReplyToMessageId = replyToMessageId,
             SharedPostId = sharedPostId,
+            IsVanishMode = isVanishMode,
             CreatedAt = DateTime.UtcNow
         };
         
@@ -154,6 +155,7 @@ public class ChatHub : Hub
             imageUrl = message.ImageUrl,
             isRead = message.IsRead,
             isRequestMessage = message.IsRequestMessage,
+            isVanishMode = message.IsVanishMode,
             createdAt = message.CreatedAt,
             senderName = sender?.FullName ?? sender?.Username ?? "User",
             senderAvatar = sender?.AvatarUrl,
@@ -195,5 +197,43 @@ public class ChatHub : Hub
         var convId = Guid.Parse(conversationId);
 
         await _firebaseChatService.MarkAsReadAsync(convId, userId);
+    }
+
+    /// <summary>
+    /// Secret Chat: Người nhận gọi method này sau khi đọc tin nhắn vanish.
+    /// Server sẽ xóa nội dung tin nhắn và thông báo cho cả hai bên.
+    /// </summary>
+    public async Task MarkVanishMessageRead(string messageId)
+    {
+        var userIdStr = Context.User?.GetUserIdStr();
+        if (string.IsNullOrEmpty(userIdStr)) return;
+
+        var msgGuid = Guid.Parse(messageId);
+        var userId = Guid.Parse(userIdStr);
+
+        var message = await _context.Messages
+            .Include(m => m.Conversation)
+            .FirstOrDefaultAsync(m => m.Id == msgGuid && m.IsVanishMode);
+
+        if (message == null) return;
+
+        // Chỉ người nhận (không phải người gửi) mới được trigger xóa
+        var conv = message.Conversation;
+        var recipientId = conv.User1Id == message.SenderId ? conv.User2Id : conv.User1Id;
+        if (recipientId != userId) return;
+
+        // Đã xem rồi thì bỏ qua
+        if (message.ViewedAt.HasValue) return;
+
+        message.ViewedAt = DateTime.UtcNow;
+        // Xóa nội dung nhưng giữ lại bản ghi (để hiển thị placeholder)
+        message.Content = "🔥 Tin nhắn đã tự hủy";
+        message.ImageUrl = null;
+        await _context.SaveChangesAsync();
+
+        // Thông báo cho cả 2 bên: tin nhắn này đã biến mất
+        var senderIdStr = message.SenderId.ToString();
+        await Clients.Group($"user_{senderIdStr}").SendAsync("VanishMessageExpired", messageId);
+        await Clients.Group($"user_{userIdStr}").SendAsync("VanishMessageExpired", messageId);
     }
 }
