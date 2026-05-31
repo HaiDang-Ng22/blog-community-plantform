@@ -1,5 +1,5 @@
 // js/home.js v2.1
-let currentFeedType = 'discover';
+let currentFeedType = 'fyp';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.common && window.common.requireAuth) {
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    await loadPosts('discover');
+    await loadPosts('fyp');
 
     // Handle deep-linking from notifications (URL param ?postId=...)
     const urlParams = new URLSearchParams(window.location.search);

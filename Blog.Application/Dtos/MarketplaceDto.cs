@@ -46,6 +46,13 @@ public class ShopApplicationDto
     public string Hometown { get; set; } = string.Empty;
     public string Occupation { get; set; } = string.Empty;
 
+    // AI Fields
+    public string? CccdFrontUrl { get; set; }
+    public string? CccdBackUrl { get; set; }
+    public string? SelfieUrl { get; set; }
+    public int AiMatchPercentage { get; set; }
+    public bool IsAiVerified { get; set; }
+
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }

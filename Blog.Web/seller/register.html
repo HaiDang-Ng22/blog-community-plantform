@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="seller-common.css">
     <style>
         body {
-            background-color: #f1f5f9;
+            background-color: #f8fafc;
             font-family: 'Outfit', sans-serif;
             display: flex;
             align-items: center;
@@ -18,27 +18,31 @@
             min-height: 100vh;
         }
         .register-container {
-            max-width: 650px;
+            max-width: 750px;
             width: 100%;
             background: white;
             padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
+            border: 1px solid #f1f5f9;
+            position: relative;
         }
         .register-header {
             text-align: center;
             margin-bottom: 2rem;
         }
         .register-header h1 {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 800;
             color: #0f172a;
             margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         .register-header p {
             color: #64748b;
-            font-size: 0.95rem;
+            font-size: 0.98rem;
         }
         .rejection-box {
             background-color: #fef2f2;
@@ -56,16 +60,201 @@
             margin-top: 2px;
             font-size: 1.1rem;
         }
+
+        /* AI Upload Sections */
+        .ai-upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .upload-card {
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+        }
+        .upload-card:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+            transform: translateY(-2px);
+        }
+        .upload-card i {
+            font-size: 1.8rem;
+            color: #64748b;
+            margin-bottom: 8px;
+            transition: color 0.3s;
+        }
+        .upload-card:hover i {
+            color: #10b981;
+        }
+        .upload-card span {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        .upload-card p {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .upload-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+            object-fit: cover;
+            display: none;
+            z-index: 2;
+        }
+        .upload-preview.active {
+            display: block;
+        }
+        .upload-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            cursor: pointer;
+            z-index: 3;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+        .upload-preview.active ~ .upload-remove {
+            display: flex;
+        }
+
+        /* Scanner Layer */
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+        }
+        .scanner-box {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border: 4px solid #10b981;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        .scanner-line {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .ai-result-badge {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+        .ai-result-badge.active {
+            display: flex;
+        }
+        .ai-result-badge i {
+            font-size: 1.5rem;
+        }
+        .ai-verified-tag {
+            background: #10b981;
+            color: white;
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: auto;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .form-input.verified {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        
+        .form-input:disabled {
+            color: #334155;
+            opacity: 0.9;
+            cursor: not-allowed;
+        }
+        @media (max-width: 640px) {
+            .ai-upload-grid {
+                grid-template-columns: 1fr;
+            }
+            .register-container {
+                padding: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="register-container">
+        <!-- Spinner & Pulse Scanner -->
+        <div class="scanner-overlay" id="scanner-overlay">
+            <div class="scanner-box">
+                <div class="scanner-line"></div>
+            </div>
+            <h3 style="font-weight: 700; margin-bottom: 6px;">Trí tuệ nhân tạo (AI) đang phân tích...</h3>
+            <p style="font-size: 0.88rem; color: #cbd5e1;">OCR thông tin CCCD & Đối sánh sinh trắc khuôn mặt</p>
+        </div>
+
         <div class="register-header">
-            <div style="font-size: 3rem; color: var(--seller-primary); margin-bottom: 0.5rem;">
+            <div style="font-size: 3.5rem; color: #10b981; margin-bottom: 0.5rem;">
                 <i class="fa-solid fa-store"></i>
             </div>
-            <h1>Đăng ký mở Cửa hàng Zynk</h1>
-            <p>Bắt đầu hành trình kinh doanh tiếp cận hàng triệu khách hàng cùng cộng đồng Zynk.</p>
+            <h1>Đăng ký Cửa hàng Zynk</h1>
+            <p>Xác thực thông tin sinh trắc học bằng AI để mở shop nhanh chóng.</p>
         </div>
 
         <div id="rejection-box" class="rejection-box" style="display: none;">
@@ -76,6 +265,60 @@
             </div>
         </div>
 
+        <!-- AI Biometric Banner Status -->
+        <div class="ai-result-badge" id="ai-result-badge">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>
+                <strong style="display:block; font-size:0.95rem;">Sinh trắc học hợp lệ (<span id="ai-score">95</span>% Trùng khớp)</strong>
+                <span style="font-size:0.8rem; color:#047857;" id="ai-message">Thông tin OCR đã được điền tự động.</span>
+            </div>
+            <div class="ai-verified-tag">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Verified
+            </div>
+        </div>
+
+        <!-- Step 1: Uploading files for AI verification -->
+        <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 12px;">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: #7c3aed;"></i> Bước 1: Xác thực định danh & Sinh trắc học bằng AI
+        </h3>
+        
+        <div class="ai-upload-grid">
+            <!-- Front CCCD Card -->
+            <div class="upload-card" onclick="triggerUpload('file-front')">
+                <i class="fa-solid fa-id-card"></i>
+                <span>CCCD Mặt trước</span>
+                <p>Ảnh chụp rõ nét mặt trước</p>
+                <img id="preview-front" class="upload-preview">
+                <div class="upload-remove" onclick="removeImage(event, 'file-front', 'preview-front')">&times;</div>
+                <input type="file" id="file-front" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'preview-front')">
+            </div>
+
+            <!-- Back CCCD Card -->
+            <div class="upload-card" onclick="triggerUpload('file-back')">
+                <i class="fa-solid fa-id-card"></i>
+                <span>CCCD Mặt sau</span>
+                <p>Ảnh chụp rõ nét mặt sau</p>
+                <img id="preview-back" class="upload-preview">
+                <div class="upload-remove" onclick="removeImage(event, 'file-back', 'preview-back')">&times;</div>
+                <input type="file" id="file-back" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'preview-back')">
+            </div>
+
+            <!-- Selfie Portrait -->
+            <div class="upload-card" onclick="triggerUpload('file-selfie')">
+                <i class="fa-solid fa-circle-user"></i>
+                <span>Ảnh Chân Dung / Selfie</span>
+                <p>Ảnh tự sướng hoặc chân dung</p>
+                <img id="preview-selfie" class="upload-preview">
+                <div class="upload-remove" onclick="removeImage(event, 'file-selfie', 'preview-selfie')">&times;</div>
+                <input type="file" id="file-selfie" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'preview-selfie')">
+            </div>
+        </div>
+
+        <button type="button" class="btn" id="btn-ai-verify" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-bottom: 24px; background: linear-gradient(135deg, #7c3aed, #a855f7); color:white; font-weight:700; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Xác Thực Tự Động Bằng AI ✨
+        </button>
+
+        <!-- Step 2: Form registration -->
         <form id="register-form">
             <div class="form-group">
                 <label for="shop-name"><i class="fa-solid fa-shop"></i> Tên cửa hàng dự kiến</label>
@@ -83,17 +326,17 @@
             </div>
 
             <div style="display: flex; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; margin: 1.5rem 0 1rem;">
-                <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-address-card"></i> Thông tin định danh (CCCD/CMND)</h3>
+                <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-address-card"></i> Bước 2: Kiểm tra thông tin định danh</h3>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label for="citizen-id">Số CCCD / CMND</label>
-                    <input type="text" id="citizen-id" class="form-input" placeholder="Nhập số CCCD gồm 12 chữ số" required>
+                    <input type="text" id="citizen-id" class="form-input" placeholder="Tự động điền qua AI" required>
                 </div>
                 <div class="form-group">
                     <label for="full-name">Họ và tên chủ sở hữu</label>
-                    <input type="text" id="full-name" class="form-input" placeholder="Họ và tên trên CCCD" required>
+                    <input type="text" id="full-name" class="form-input" placeholder="Tự động điền qua AI" required>
                 </div>
             </div>
 
@@ -115,7 +358,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label for="hometown">Quê quán</label>
-                    <input type="text" id="hometown" class="form-input" placeholder="Địa chỉ quê quán" required>
+                    <input type="text" id="hometown" class="form-input" placeholder="Tự động điền qua AI" required>
                 </div>
                 <div class="form-group">
                     <label for="occupation">Nghề nghiệp</label>
@@ -128,10 +371,10 @@
                 <textarea id="shop-desc" class="form-input" rows="3" placeholder="Mô tả sản phẩm bạn định bán, các chính sách hoặc cam kết chất lượng..." required></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 1.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+            <button type="submit" class="btn btn-primary" id="btn-submit" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 1.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
                 <i class="fa-solid fa-paper-plane"></i> Gửi Hồ Sơ Phê Duyệt
             </button>
-            <a href="../index.html" class="btn btn-secondary" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 0.75rem;">
+            <a href="../index.html" class="btn btn-secondary" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 0.75rem; display:block; text-align:center; text-decoration:none;">
                 <i class="fa-solid fa-house"></i> Quay lại Trang chủ
             </a>
         </form>
@@ -140,16 +383,136 @@
     <script src="../js/api.js"></script>
     <script src="seller-common.js"></script>
     <script>
+        // AI Verification variables
+        let uploadedFrontUrl = '';
+        let uploadedBackUrl = '';
+        let uploadedSelfieUrl = '';
+        let aiMatchPercentage = 0;
+        let isAiVerified = false;
+
+        function triggerUpload(inputId) {
+            document.getElementById(inputId).click();
+        }
+
+        function handleFileSelect(input, previewId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(previewId);
+                    img.src = e.target.result;
+                    img.classList.add('active');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImage(event, inputId, previewId) {
+            event.stopPropagation();
+            document.getElementById(inputId).value = '';
+            const img = document.getElementById(previewId);
+            img.src = '';
+            img.classList.remove('active');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const rejectNote = localStorage.getItem('seller_reject_note');
             if (rejectNote) {
                 document.getElementById('rejection-note').textContent = rejectNote;
                 document.getElementById('rejection-box').style.display = 'flex';
-                localStorage.removeItem('seller_reject_note'); // Clear after showing once
+                localStorage.removeItem('seller_reject_note');
             }
+
+            // AI Verification Button
+            document.getElementById('btn-ai-verify').onclick = async () => {
+                const fileFront = document.getElementById('file-front').files[0];
+                const fileSelfie = document.getElementById('file-selfie').files[0];
+                const fileBack = document.getElementById('file-back').files[0];
+
+                if (!fileFront || !fileSelfie) {
+                    alert('Vui lòng tải lên cả mặt trước CCCD và ảnh chân dung (selfie) của bạn để thực hiện xác thực AI.');
+                    return;
+                }
+
+                // Show scanner overlay
+                const scanner = document.getElementById('scanner-overlay');
+                scanner.style.display = 'flex';
+
+                try {
+                    // 1. Upload images sequentially to Cloudinary
+                    uploadedFrontUrl = (await window.api.uploadImage(fileFront)).url;
+                    uploadedSelfieUrl = (await window.api.uploadImage(fileSelfie)).url;
+                    
+                    if (fileBack) {
+                        uploadedBackUrl = (await window.api.uploadImage(fileBack)).url;
+                    }
+
+                    // 2. Call identity verification API
+                    const aiResult = await window.api.post('seller/verify-identity', {
+                        frontCccdUrl: uploadedFrontUrl,
+                        backCccdUrl: uploadedBackUrl,
+                        selfieUrl: uploadedSelfieUrl
+                    });
+
+                    scanner.style.display = 'none';
+
+                    if (aiResult.success) {
+                        aiMatchPercentage = aiResult.matchPercentage;
+                        isAiVerified = true;
+
+                        // Display match banner
+                        document.getElementById('ai-score').textContent = aiResult.matchPercentage;
+                        document.getElementById('ai-message').textContent = aiResult.message || 'Xác thực sinh trắc học hoàn tất.';
+                        document.getElementById('ai-result-badge').classList.add('active');
+
+                        // Autofill data
+                        const info = aiResult.extractedInfo;
+                        
+                        const txtCitizenId = document.getElementById('citizen-id');
+                        const txtFullName = document.getElementById('full-name');
+                        const selGender = document.getElementById('gender');
+                        const txtDob = document.getElementById('dob');
+                        const txtHometown = document.getElementById('hometown');
+
+                        txtCitizenId.value = info.citizenId || '';
+                        txtFullName.value = info.fullName || '';
+                        selGender.value = info.gender === 'Nữ' ? 'Nữ' : 'Nam';
+                        txtHometown.value = info.hometown || '';
+                        
+                        if (info.dateOfBirth) {
+                            txtDob.value = info.dateOfBirth.split('T')[0];
+                        }
+
+                        // Add verification style classes and lock fields to prevent manipulation
+                        [txtCitizenId, txtFullName, selGender, txtDob, txtHometown].forEach(input => {
+                            input.classList.add('verified');
+                            input.setAttribute('readonly', 'true');
+                            if (input.tagName === 'SELECT') {
+                                input.setAttribute('disabled', 'true');
+                            }
+                        });
+
+                        alert(`Xác thực AI thành công! Trùng khớp khuôn mặt: ${aiResult.matchPercentage}%.`);
+                    } else {
+                        alert(aiResult.message || 'Xác thực sinh trắc học thất bại.');
+                    }
+                } catch (err) {
+                    scanner.style.display = 'none';
+                    alert(err.message || 'Có lỗi xảy ra trong quá trình xác thực AI. Vui lòng thử lại.');
+                    console.error('AI verification failed:', err);
+                }
+            };
 
             document.getElementById('register-form').onsubmit = async (e) => {
                 e.preventDefault();
+
+                if (!isAiVerified) {
+                    alert('Bạn cần thực hiện "Xác thực tự động bằng AI" ở Bước 1 trước khi gửi hồ sơ đăng ký.');
+                    return;
+                }
+
+                // Temporary enable select elements to read their values on submit
+                document.getElementById('gender').removeAttribute('disabled');
+
                 const data = {
                     shopName: document.getElementById('shop-name').value,
                     description: document.getElementById('shop-desc').value,
@@ -158,8 +521,18 @@
                     gender: document.getElementById('gender').value,
                     dateOfBirth: document.getElementById('dob').value,
                     hometown: document.getElementById('hometown').value,
-                    occupation: document.getElementById('occupation').value
+                    occupation: document.getElementById('occupation').value,
+                    
+                    // Add AI biometric fields
+                    cccdFrontUrl: uploadedFrontUrl,
+                    cccdBackUrl: uploadedBackUrl,
+                    selfieUrl: uploadedSelfieUrl,
+                    aiMatchPercentage: aiMatchPercentage,
+                    isAiVerified: isAiVerified
                 };
+
+                // Restore disabled state just in case
+                document.getElementById('gender').setAttribute('disabled', 'true');
 
                 try {
                     await window.api.post('seller/apply', data);

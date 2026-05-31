@@ -21,9 +21,15 @@
             <div class="feed-col search-center">
                 <div class="search-page-header">
                     <h3 id="search-title" class="search-page-title">Tìm kiếm</h3>
-                    <div class="search-bar-modern">
+                    <div class="search-bar-modern" style="margin-bottom: 10px;">
                         <input type="text" id="page-search-input" placeholder="Tìm kiếm bài viết, người dùng...">
                         <button id="page-search-btn" class="btn primary-btn">Tìm</button>
+                    </div>
+                    <div class="ai-search-toggle-container" style="display: flex; align-items: center; gap: 8px; margin-left: 4px; margin-top: 10px;">
+                        <input type="checkbox" id="ai-search-checkbox" style="width: 16px; height: 16px; cursor: pointer; accent-color: #7c3aed;">
+                        <label for="ai-search-checkbox" style="font-size: 0.88rem; font-weight: 600; color: #7c3aed; cursor: pointer; display: flex; align-items: center; gap: 5px; user-select: none;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Tìm kiếm thông minh bằng AI ✨
+                        </label>
                     </div>
                 </div>
             
@@ -39,6 +45,12 @@
                         <h2 data-i18n="posts_section">Bài viết</h2>
                         <div id="posts-results-list"></div>
                     </section>
+
+                    <!-- Products -->
+                    <section class="search-section" id="products-search-section">
+                        <h2>Sản phẩm</h2>
+                        <div id="products-results-list"></div>
+                    </section>
                 </div>
             </div>
 
@@ -50,6 +62,30 @@
     <script src="js/lang.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/common.js?v=2.4"></script>
+    <!-- Floating AI Assistant Chatbot -->
+    <div id="ai-assistant-widget" class="ai-assistant-bubble">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span class="tooltip-text">Hỏi Trợ Lý AI ✨</span>
+    </div>
+
+    <div id="ai-chat-window" class="ai-chat-window hidden">
+        <div class="ai-chat-header">
+            <div class="ai-chat-title">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Trợ lý ảo Zynk AI
+            </div>
+            <button class="ai-chat-close" onclick="toggleAiChat()">&times;</button>
+        </div>
+        <div class="ai-chat-messages" id="ai-chat-messages">
+            <div class="ai-message bot">
+                Dạ, em là Zynk AI. Anh/chị cần tìm bài viết, sản phẩm gì hay cần em hỗ trợ tư vấn mua sắm không ạ?
+            </div>
+        </div>
+        <div class="ai-chat-input-area">
+            <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi..." onkeypress="handleAiChatKeyPress(event)">
+            <button id="ai-chat-send-btn" onclick="sendAiChatMessage()"><i class="fa-regular fa-paper-plane"></i></button>
+        </div>
+    </div>
+
     <script src="js/post-actions.js"></script>
     <script src="js/search.js"></script>
 </body>

@@ -22,6 +22,7 @@ public class SellerController : ControllerBase
     private readonly IRepository<ProductImage> _imageRepository;
     private readonly IOrderRepository _orderRepository;
     private readonly AppDbContext _context;
+    private readonly IGeminiService _geminiService;
 
     public SellerController(
         IShopRepository shopRepository,
@@ -29,7 +30,8 @@ public class SellerController : ControllerBase
         IProductRepository productRepository,
         IRepository<ProductImage> imageRepository,
         IOrderRepository orderRepository,
-        AppDbContext context)
+        AppDbContext context,
+        IGeminiService geminiService)
     {
         _shopRepository = shopRepository;
         _appRepository = appRepository;
@@ -37,6 +39,7 @@ public class SellerController : ControllerBase
         _imageRepository = imageRepository;
         _orderRepository = orderRepository;
         _context = context;
+        _geminiService = geminiService;
     }
 
     [HttpPost("apply")]
@@ -68,12 +71,40 @@ public class SellerController : ControllerBase
             DateOfBirth = DateTime.SpecifyKind(dto.DateOfBirth, DateTimeKind.Utc),
             Hometown = dto.Hometown,
             Occupation = dto.Occupation,
+            CccdFrontUrl = dto.CccdFrontUrl,
+            CccdBackUrl = dto.CccdBackUrl,
+            SelfieUrl = dto.SelfieUrl,
+            AiMatchPercentage = dto.AiMatchPercentage,
+            IsAiVerified = dto.IsAiVerified,
             Status = ShopApplicationStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
 
         await _appRepository.AddAsync(app);
         return Ok(new { message = "Gửi đơn đăng ký thành công. Vui lòng chờ Admin duyệt." });
+    }
+
+    [HttpPost("verify-identity")]
+    public async Task<IActionResult> VerifyIdentity([FromBody] VerifyIdentityRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.FrontCccdUrl) || string.IsNullOrWhiteSpace(request.SelfieUrl))
+        {
+            return BadRequest(new { message = "Vui lòng cung cấp đầy đủ ảnh mặt trước CCCD và ảnh Selfie." });
+        }
+
+        try
+        {
+            var result = await _geminiService.VerifyIdentityAsync(
+                request.FrontCccdUrl, 
+                request.BackCccdUrl ?? string.Empty, 
+                request.SelfieUrl);
+
+            return Content(result, "application/json");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Lỗi hệ thống khi xử lý xác thực AI: {ex.Message}" });
+        }
     }
 
     [HttpGet("application-status")]
@@ -413,4 +444,11 @@ public class SellerController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { message = "Đã xóa mã giảm giá." });
     }
+}
+
+public class VerifyIdentityRequest
+{
+    public string FrontCccdUrl { get; set; } = string.Empty;
+    public string? BackCccdUrl { get; set; }
+    public string SelfieUrl { get; set; } = string.Empty;
 }

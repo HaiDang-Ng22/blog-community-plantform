@@ -39,7 +39,7 @@ public class PostsController : ControllerBase
 
     // GET: api/posts
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string type = "discover")
+    public async Task<IActionResult> GetAll([FromQuery] string type = "fyp")
     {
         // Lấy UserId an toàn từ Token
         var currentUserIdStr = User.GetUserIdStr();
@@ -48,6 +48,10 @@ public class PostsController : ControllerBase
  
         List<Guid> followingIds = new List<Guid>();
         List<Guid> blockedIds = new List<Guid>();
+        List<Guid> savedPostIds = new List<Guid>();
+        List<Guid> likedPostIds = new List<Guid>();
+        List<Guid> favoriteTagIds = new List<Guid>();
+
         if (currentUserId.HasValue)
         {
             followingIds = await _context.Follows
@@ -60,9 +64,22 @@ public class PostsController : ControllerBase
                 .Select(b => b.BlockedId)
                 .ToListAsync();
 
-            var savedPostIds = await _context.SavedPosts
+            savedPostIds = await _context.SavedPosts
                 .Where(sp => sp.UserId == currentUserId.Value)
                 .Select(sp => sp.PostId)
+                .ToListAsync();
+
+            likedPostIds = await _context.PostLikes
+                .Where(l => l.UserId == currentUserId.Value)
+                .Select(l => l.PostId)
+                .ToListAsync();
+
+            var userInteractedPostIds = likedPostIds.Concat(savedPostIds).Distinct().ToList();
+
+            favoriteTagIds = await _context.PostTags
+                .Where(pt => userInteractedPostIds.Contains(pt.PostId))
+                .Select(pt => pt.TagId)
+                .Distinct()
                 .ToListAsync();
 
             HttpContext.Items["SavedPostIds"] = savedPostIds;
@@ -77,6 +94,8 @@ public class PostsController : ControllerBase
                 .ThenInclude(poll => poll.Options)
             .Where(p => p.Status == PostStatus.Published && !blockedIds.Contains(p.AuthorId));
 
+        List<Post> posts = new List<Post>();
+
         if (type == "following")
         {
             if (!currentUserId.HasValue)
@@ -90,7 +109,6 @@ public class PostsController : ControllerBase
             if (followingIds.Count > 0)
             {
                 // Chỉ lấy bài viết của người mình follow HOẶC của chính mình
-                // Ép kiểu list để tránh các lỗi logic tiềm ẩn trong LINQ
                 var validAuthors = followingIds.ToList();
                 validAuthors.Add(currentUserId.Value);
                 
@@ -103,22 +121,106 @@ public class PostsController : ControllerBase
                 Console.WriteLine(">>> DEBUG: User follows nobody, returning empty list.");
                 return Ok(new List<PostDto>());
             }
+
+            posts = await query
+                .OrderByDescending(p => p.PublishedAt)
+                .Take(50)
+                .ToListAsync();
         }
         else if (type == "discover")
         {
             // Lấy tất cả bài viết công khai, ưu tiên người mình follow + bài viết ngẫu nhiên của người lạ
-            // Để đơn giản, ta lấy bài viết không bị chặn và không phải Private (trừ khi là bạn bè)
             query = query.Where(p => 
                 !p.Author.IsPrivate || 
                 (currentUserId.HasValue && p.AuthorId == currentUserId.Value) ||
                 (currentUserId.HasValue && followingIds.Contains(p.AuthorId))
             );
-        }
 
-        var posts = await query
-            .OrderByDescending(p => p.PublishedAt)
+            posts = await query
+                .OrderByDescending(p => p.PublishedAt)
+                .Take(50)
+                .ToListAsync();
+        }
+        else if (type == "fyp")
+        {
+            // TikTok-like algorithm
+            query = query.Where(p => 
+                !p.Author.IsPrivate || 
+                (currentUserId.HasValue && p.AuthorId == currentUserId.Value) ||
+                (currentUserId.HasValue && followingIds.Contains(p.AuthorId))
+            );
+
+            var candidates = await query
+                .OrderByDescending(p => p.PublishedAt)
+                .Take(150) // Take a larger candidate pool to rank
+                .ToListAsync();
+
+            var candidateIds = candidates.Select(p => p.Id).ToList();
+            var postTagsMap = await _context.PostTags
+                .Where(pt => candidateIds.Contains(pt.PostId))
+                .ToListAsync();
+
+            var rand = new Random();
+            
+            var scored = candidates.Select(p => 
+            {
+                double score = 0.0;
+                
+                // 1. Recency Decay (Max 50 points, decays rapidly with age in hours)
+                var ageInHours = (DateTime.UtcNow - p.CreatedAt).TotalHours;
+                score += 100.0 / (ageInHours + 2.0);
+
+                // 2. Social Popularity (Likes, comments, views)
+                score += p.LikeCount * 5.0;
+                score += p.Comments.Count * 10.0;
+                score += p.ViewCount * 0.5;
+
+                // 3. User Interest Matching (if logged in)
+                if (currentUserId.HasValue)
+                {
+                    // Follow status bonus
+                    if (followingIds.Contains(p.AuthorId))
+                    {
+                        score += 50.0;
+                    }
+
+                    // User has liked this author's posts before boost
+                    if (p.AuthorId == currentUserId.Value)
+                    {
+                        score += 30.0; // Show user's own posts occasionally
+                    }
+
+                    // Tags matching favorite tags
+                    var postTagIds = postTagsMap.Where(pt => pt.PostId == p.Id).Select(pt => pt.TagId).ToList();
+                    var matchingTagsCount = postTagIds.Intersect(favoriteTagIds).Count();
+                    score += matchingTagsCount * 30.0;
+                }
+
+                // 4. TikTok Random Exploration factor (0 - 20 points)
+                score += rand.NextDouble() * 20.0;
+
+                return new { Post = p, Score = score };
+            })
+            .OrderByDescending(x => x.Score)
             .Take(50)
-            .ToListAsync();
+            .ToList();
+
+            posts = scored.Select(x => x.Post).ToList();
+        }
+        else
+        {
+            // Default to fyp
+            query = query.Where(p => 
+                !p.Author.IsPrivate || 
+                (currentUserId.HasValue && p.AuthorId == currentUserId.Value) ||
+                (currentUserId.HasValue && followingIds.Contains(p.AuthorId))
+            );
+
+            posts = await query
+                .OrderByDescending(p => p.PublishedAt)
+                .Take(50)
+                .ToListAsync();
+        }
 
         var postDtos = posts.Select(p => new PostDto
         {

@@ -96,6 +96,14 @@ public class PostSearchResult
     public DateTime CreatedAt { get; set; }
 }
 
+public class AiSearchResultItemDto
+{
+    public Guid Id { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public double Score { get; set; }
+    public string Explanation { get; set; } = string.Empty;
+}
+
 public class ForgotPasswordRequest
 {
     public string Email { get; set; } = string.Empty;

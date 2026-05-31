@@ -22,6 +22,13 @@ public class ShopApplication
     public string Hometown { get; set; } = string.Empty;
     public string Occupation { get; set; } = string.Empty;
 
+    // AI Biometric & Verification Fields
+    public string? CccdFrontUrl { get; set; }
+    public string? CccdBackUrl { get; set; }
+    public string? SelfieUrl { get; set; }
+    public int AiMatchPercentage { get; set; }
+    public bool IsAiVerified { get; set; }
+
     public ShopApplicationStatus Status { get; set; } = ShopApplicationStatus.Pending;
     public string? AdminNote { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
