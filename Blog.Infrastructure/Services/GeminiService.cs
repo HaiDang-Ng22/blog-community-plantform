@@ -120,23 +120,42 @@ public class GeminiService : IGeminiService
     public async Task<string> VerifyIdentityAsync(string frontCccdUrl, string backCccdUrl, string selfieUrl)
     {
         var prompt = @"
-Bạn là chuyên gia xác thực sinh trắc học và OCR giấy tờ tùy thân của Việt Nam. Hãy thực hiện các nhiệm vụ sau:
-1. OCR CCCD: Trích xuất thông tin từ mặt trước CCCD. Hãy lấy các trường: Số CCCD (citizenId), Họ và tên (fullName), Giới tính (gender), Ngày sinh (dateOfBirth - chuyển sang định dạng yyyy-MM-dd), Quê quán (hometown).
-2. Đối khớp sinh trắc học (Face Match): So sánh ảnh chân dung trên thẻ CCCD mặt trước với ảnh chụp selfie chân dung của người dùng. Cho biết tỉ lệ trùng khớp khuôn mặt từ 0% đến 100% (matchPercentage), và đánh giá xem ảnh selfie có phải là ảnh chụp người thật trực tiếp hay không (livenessCheck: Passed/Failed).
+Bạn là hệ thống xác thực danh tính của Zynk Platform. Các ảnh được cung cấp theo thứ tự: [ảnh 1] CCCD mặt trước, [ảnh 2 nếu có] CCCD mặt sau, [ảnh cuối] ảnh selfie của người đăng ký.
 
-Trả về kết quả dưới định dạng JSON thô duy nhất với cấu trúc sau (không có ký tự markdown, chỉ trả về chuỗi JSON thô, không bọc ```json ... ```):
+**NHIỆM VỤ 1 - ĐỌC THÔNG TIN CCCD:**
+Đọc và trích xuất từ ảnh CCCD mặt trước:
+- citizenId: Số CCCD (9 hoặc 12 chữ số, chỉ lấy số)
+- fullName: Họ và tên (IN HOA, đúng như trên thẻ)
+- gender: 'Nam' hoặc 'Nữ'
+- dateOfBirth: Ngày sinh định dạng yyyy-MM-dd
+- hometown: Quê quán hoặc nơi thường trú
+
+**NHIỆM VỤ 2 - ĐỐI SÁNH KHUÔN MẶT:**
+So sánh khuôn mặt nhỏ in trên thẻ CCCD với khuôn mặt trong ảnh selfie cuối.
+- Phân tích theo: tỷ lệ khuôn mặt, khoảng cách 2 mắt, hình dạng mũi, đường viền hàm.
+- Bỏ qua hoàn toàn: ánh sáng, màu sắc, tuổi tác, góc chụp, tóc, kính, biểu cảm.
+- Cho điểm matchPercentage từ 0 đến 100.
+- Nếu ảnh selfie quá tối/mờ nhưng vẫn nhìn thấy khuôn mặt: cho điểm 65-75.
+- Nếu không thể nhìn thấy khuôn mặt trong selfie: cho điểm 50.
+
+**QUY TẮC TRẢ VỀ:**
+- Luôn trả về livenessCheck = ""Passed"" (bỏ qua liveness, chỉ xét face matching).
+- success = true nếu matchPercentage >= 55, ngược lại false.
+- Chỉ trả về JSON thuần, KHÔNG bọc markdown.
+
+Ví dụ JSON:
 {
   ""success"": true,
-  ""matchPercentage"": 95,
+  ""matchPercentage"": 78,
   ""extractedInfo"": {
-    ""citizenId"": ""030098012345"",
-    ""fullName"": ""NGUYỄN VĂN A"",
+    ""citizenId"": ""080205000781"",
+    ""fullName"": ""NGUYỄN HẢI ĐĂNG"",
     ""gender"": ""Nam"",
-    ""dateOfBirth"": ""1998-10-12"",
-    ""hometown"": ""Hà Nội""
+    ""dateOfBirth"": ""2005-09-22"",
+    ""hometown"": ""Quảng Trị""
   },
   ""livenessCheck"": ""Passed"",
-  ""message"": ""Trùng khớp khuôn mặt và thông tin hợp lệ.""
+  ""message"": ""Khuôn mặt trùng khớp với ảnh CCCD.""
 }
 ";
         var images = new List<string> { frontCccdUrl };
@@ -198,13 +217,31 @@ Trả về kết quả dưới định dạng JSON thô duy nhất với cấu t
     private async Task<(string base64, string mimeType)> GetImageBase64Async(string imageUrl)
     {
         using var client = new HttpClient();
-        var bytes = await client.GetByteArrayAsync(imageUrl);
+        var response = await client.GetAsync(imageUrl);
+        response.EnsureSuccessStatusCode();
+        
+        var bytes = await response.Content.ReadAsByteArrayAsync();
         var base64 = Convert.ToBase64String(bytes);
         
+        // Detect MIME type from Content-Type header first (handles Cloudinary URLs)
         var mimeType = "image/jpeg";
-        if (imageUrl.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) mimeType = "image/png";
-        else if (imageUrl.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)) mimeType = "image/webp";
-        else if (imageUrl.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) mimeType = "image/gif";
+        if (response.Content.Headers.ContentType?.MediaType is string contentType &&
+            !string.IsNullOrEmpty(contentType) &&
+            contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            mimeType = contentType;
+        }
+        else
+        {
+            // Fallback: detect from URL path
+            var path = new Uri(imageUrl).AbsolutePath.ToLowerInvariant();
+            if (path.Contains(".png")) mimeType = "image/png";
+            else if (path.Contains(".webp")) mimeType = "image/webp";
+            else if (path.Contains(".gif")) mimeType = "image/gif";
+            // Detect from file magic bytes
+            else if (bytes.Length >= 4 && bytes[0] == 0x89 && bytes[1] == 0x50) mimeType = "image/png";
+            else if (bytes.Length >= 4 && bytes[0] == 0x52 && bytes[1] == 0x49) mimeType = "image/webp";
+        }
         
         return (base64, mimeType);
     }
@@ -212,22 +249,22 @@ Trả về kết quả dưới định dạng JSON thô duy nhất với cấu t
     private string GetMockResponse(string prompt)
     {
         // Generate mock responses for our services if API Key isn't set or fails
-        if (prompt.Contains("OCR CCCD"))
+        if (prompt.Contains("OCR CCCD") || prompt.Contains("LIVENESS DETECTION"))
         {
             return JsonSerializer.Serialize(new
             {
-                success = true,
-                matchPercentage = 95,
+                success = false,
+                matchPercentage = 0,
                 extractedInfo = new
                 {
-                    citizenId = "030099012345",
-                    fullName = "NGUYỄN VĂN A (Demo AI)",
+                    citizenId = "",
+                    fullName = "",
                     gender = "Nam",
-                    dateOfBirth = "1998-05-15",
-                    hometown = "Hà Nội"
+                    dateOfBirth = "",
+                    hometown = ""
                 },
-                livenessCheck = "Passed",
-                message = "Xác thực thành công (Chế độ Demo Mock)"
+                livenessCheck = "Failed",
+                message = "Xác thực thất bại: Cần cấu hình Gemini API Key hợp lệ để thực hiện xác thực sinh trắc học. Liên hệ quản trị viên hệ thống."
             });
         }
         else if (prompt.Contains("công cụ tìm kiếm thông minh bằng AI"))

@@ -698,13 +698,13 @@ window.openPostModal = async function(postOrId) {
                 <div class="zynk-modal-side">
                     <div class="zynk-modal-header" style="border-bottom: 1px solid #efefef; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
                         <img src="${authorAvatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;" alt="Avatar">
-                        <a href="profile.html?id=${authorId}" style="font-weight:700; text-decoration:none; color:#262626; font-size:0.9rem;">${authorName}</a>
+                        <a href="profile.html?id=${authorId}" style="font-weight:700; text-decoration:none; color:#262626; font-size:0.9rem;">${authorName}${post.authorIsPremium ? ' <i class="fa-solid fa-gem" style="color: #ffd700;" title="Thành viên Premium"></i>' : ''}</a>
                     </div>
                     <div class="zynk-modal-comments" style="flex:1; overflow-y:auto; padding:16px;">
                         <div class="zynk-modal-caption" style="margin-bottom: 24px; display:flex; gap:12px;">
                              <img src="${authorAvatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;" alt="Avatar">
                              <div style="flex:1;">
-                                <span style="font-weight:700; margin-right:8px; color:#262626;">${authorName}</span>
+                                <span style="font-weight:700; margin-right:8px; color:#262626;">${authorName}${post.authorIsPremium ? ' <i class="fa-solid fa-gem" style="color: #ffd700;" title="Thành viên Premium"></i>' : ''}</span>
                                 <span style="font-size:0.9rem; line-height:1.5;">${autoLink(postContent)}</span>
                                 <div style="font-size:0.75rem; color:#8e8e8e; margin-top:8px;">${postTime}</div>
                              </div>
@@ -1215,9 +1215,10 @@ function createPostCard(post) {
         || `https://ui-avatars.com/api/?name=${isAnonymous ? 'A' : encodeURIComponent(authorName || 'U')}&background=${isAnonymous ? '6b7280' : 'random'}&color=fff`;
 
     const anonymousBadge = isAnonymous ? `<span class="anon-badge"><i class="fa-solid fa-user-secret"></i> Ẩn danh</span>` : '';
+    const premiumBadge = post.authorIsPremium ? `<i class="fa-solid fa-gem" style="color: #ffd700; margin-left: 4px; font-size: 0.9em;" title="Thành viên Premium"></i>` : '';
     const authorLink = isAnonymous
         ? `<span class="zynk-author-name anon">${authorName}${anonymousBadge}</span>`
-        : `<a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}</a>`;
+        : `<a href="profile.html?id=${authorId}" class="zynk-author-name">${authorName}${premiumBadge}</a>`;
 
     const menuItems = isOwner
         ? `<button onclick="location.href='edit-post.html?id=${postId}'"><i class="fa-solid fa-pen" style="margin-right:8px;"></i>Chỉnh sửa</button>

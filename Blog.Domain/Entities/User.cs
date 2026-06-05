@@ -19,6 +19,8 @@ public class User
     public bool IsEmailConfirmed { get; set; } = false;
     public string Role { get; set; } = "User"; // User, Admin
     public bool IsVerified { get; set; } = false;
+    public bool IsPremium { get; set; } = false;
+    public DateTime? PremiumExpiryDate { get; set; }
 
 
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();

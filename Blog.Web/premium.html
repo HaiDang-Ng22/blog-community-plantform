@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zynk Premium - Trải nghiệm Đỉnh cao</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=1.5">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .premium-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .premium-icon {
+            font-size: 4rem;
+            color: #ffd700;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .premium-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .premium-desc {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-item i {
+            font-size: 1.5rem;
+            color: #ffd700;
+            width: 40px;
+            text-align: center;
+            margin-right: 1rem;
+        }
+
+        .feature-text h4 {
+            margin: 0 0 4px 0;
+            font-size: 1.1rem;
+        }
+
+        .feature-text p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .upgrade-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .price-tag {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="premium-container">
+        <i class="fa-solid fa-gem premium-icon"></i>
+        <h1 class="premium-title">Zynk Premium</h1>
+        <p class="premium-desc">Nâng tầm trải nghiệm mạng xã hội của bạn với các đặc quyền độc quyền.</p>
+
+        <div class="feature-list">
+            <div class="feature-item">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div class="feature-text">
+                    <h4>Không Quảng Cáo</h4>
+                    <p>Trải nghiệm mượt mà, không bị làm phiền bởi quảng cáo.</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="fa-solid fa-gem"></i>
+                <div class="feature-text">
+                    <h4>Huy hiệu Đặc quyền</h4>
+                    <p>Hiển thị huy hiệu Kim cương 💎 nổi bật cạnh tên của bạn trên mọi bình luận, bài viết.</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="fa-solid fa-palette"></i>
+                <div class="feature-text">
+                    <h4>Giao diện Độc quyền</h4>
+                    <p>Mở khóa các chủ đề và màu sắc cá nhân hóa chỉ dành cho Premium.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-tag">
+            99.000 VNĐ <span style="font-size: 1rem; color: var(--text-secondary); font-weight: normal;">/tháng</span>
+        </div>
+
+        <button id="btn-upgrade" class="upgrade-btn">
+            Nâng Cấp Ngay
+        </button>
+
+        <a href="profile.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại hồ sơ</a>
+    </div>
+
+    <!-- Modal Success -->
+    <div id="success-modal" class="modal-overlay hidden" style="z-index: 10000; align-items: center; justify-content: center; display: flex;">
+        <div class="modal-content" style="text-align: center; max-width: 400px; padding: 2rem;">
+            <i class="fa-solid fa-circle-check" style="font-size: 4rem; color: #22c55e; margin-bottom: 1rem;"></i>
+            <h2 style="margin-bottom: 1rem;">Chúc mừng!</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Tài khoản của bạn đã được nâng cấp lên Premium. Huy hiệu 💎 đã được kích hoạt.</p>
+            <button onclick="window.location.href='profile.html'" class="btn primary-btn" style="width: 100%;">Trải nghiệm ngay</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js?v=2.1"></script>
+    <script src="js/common.js?v=2.2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                window.location.href = 'auth.html';
+                return;
+            }
+
+            document.getElementById('btn-upgrade').addEventListener('click', async () => {
+                const btn = document.getElementById('btn-upgrade');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Đang xử lý...';
+                btn.disabled = true;
+
+                try {
+                    // Gọi API giả lập nâng cấp
+                    const result = await window.api.post('users/upgrade-premium');
+                    
+                    // Cập nhật lại thông tin local
+                    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+                    userInfo.isPremium = true;
+                    localStorage.setItem('user_info', JSON.stringify(userInfo));
+
+                    // Hiện modal thành công
+                    const modal = document.getElementById('success-modal');
+                    modal.classList.remove('hidden');
+                } catch (error) {
+                    alert('Lỗi: ' + (error.message || 'Không thể nâng cấp lúc này.'));
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

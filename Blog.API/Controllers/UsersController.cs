@@ -53,6 +53,8 @@ public class UsersController : ControllerBase
             user.Gender,
             user.IsPrivate,
             user.IsVerified,
+            user.IsPremium,
+            user.PremiumExpiryDate,
             FollowerCount = user.Followers.Count,
             FollowingCount = user.Following.Count,
             IsFollowing = isFollowing
@@ -335,5 +337,39 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Tài khoản của bạn đã được xóa vĩnh viễn." });
+    }
+
+    [HttpPost("upgrade-premium")]
+    [Authorize]
+    public async Task<IActionResult> UpgradePremium()
+    {
+        var userIdStr = User.GetUserIdStr();
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+        var userId = Guid.Parse(userIdStr);
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        // Nâng cấp: Giả lập thanh toán thành công
+        user.IsPremium = true;
+
+        // Gia hạn 1 tháng tính từ thời điểm hiện tại hoặc từ ngày hết hạn cũ
+        if (user.PremiumExpiryDate.HasValue && user.PremiumExpiryDate.Value > DateTime.UtcNow)
+        {
+            user.PremiumExpiryDate = user.PremiumExpiryDate.Value.AddMonths(1);
+        }
+        else
+        {
+            user.PremiumExpiryDate = DateTime.UtcNow.AddMonths(1);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Nâng cấp Premium thành công!",
+            isPremium = user.IsPremium,
+            premiumExpiryDate = user.PremiumExpiryDate
+        });
     }
 }

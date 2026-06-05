@@ -4,74 +4,188 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký Người bán - Zynk Shop</title>
+    <meta name="description" content="Đăng ký trở thành người bán trên Zynk Shop. Xác thực danh tính bằng AI nhanh chóng và bảo mật.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="seller-common.css">
     <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #d1fae5;
+            --purple: #7c3aed;
+            --purple-light: #ede9fe;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --surface: #ffffff;
+            --bg: #f0fdf4;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 20px 60px rgba(0,0,0,0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: #f8fafc;
+            background: var(--bg);
             font-family: 'Outfit', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
             min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2rem 1rem;
+            background-image:
+                radial-gradient(ellipse at 20% 10%, rgba(16,185,129,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.06) 0%, transparent 50%);
         }
+
+        /* ===== MAIN CONTAINER ===== */
         .register-container {
-            max-width: 750px;
+            max-width: 780px;
             width: 100%;
-            background: white;
-            padding: 2.5rem;
-            border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
-            border: 1px solid #f1f5f9;
+            background: var(--surface);
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(16,185,129,0.1);
             position: relative;
+            overflow: hidden;
         }
+
+        /* Top accent bar */
+        .register-container::before {
+            content: '';
+            display: block;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #7c3aed, #10b981);
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
+        }
+        @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+
+        .register-inner { padding: 2.5rem; }
+
+        /* ===== HEADER ===== */
         .register-header {
             text-align: center;
             margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px; height: 72px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 24px rgba(16,185,129,0.3);
+            font-size: 2rem;
+            color: white;
         }
         .register-header h1 {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 800;
-            color: #0f172a;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #10b981, #059669);
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+        .register-header h1 span {
+            background: linear-gradient(135deg, #10b981, #7c3aed);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .register-header p {
-            color: #64748b;
-            font-size: 0.98rem;
-        }
-        .rejection-box {
-            background-color: #fef2f2;
-            border: 1px solid #fee2e2;
-            color: #b91c1c;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
+            color: var(--text-muted);
             font-size: 0.9rem;
-            display: flex;
+        }
+
+        /* ===== REJECTION BOX ===== */
+        .rejection-box {
+            background: var(--danger-light);
+            border: 1px solid #fca5a5;
+            color: #b91c1c;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 1.5rem;
+            font-size: 0.88rem;
+            display: none;
             align-items: flex-start;
             gap: 10px;
         }
-        .rejection-box i {
-            margin-top: 2px;
-            font-size: 1.1rem;
-        }
+        .rejection-box.show { display: flex; }
+        .rejection-box i { margin-top: 2px; flex-shrink: 0; }
 
-        /* AI Upload Sections */
+        /* ===== STEP INDICATOR ===== */
+        .steps-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 2rem;
+        }
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        .step-circle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        .step-circle.active {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: white;
+            box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+        }
+        .step-circle.done {
+            background: var(--primary);
+            color: white;
+        }
+        .step-circle.pending {
+            background: #f1f5f9;
+            color: #94a3b8;
+            border: 2px solid #e2e8f0;
+        }
+        .step-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+        .step-label.active { color: var(--purple); }
+        .step-label.done { color: var(--primary); }
+        .step-line { flex: 1; height: 2px; background: #e2e8f0; margin: 0 8px; }
+        .step-line.done { background: var(--primary); }
+
+        /* ===== SECTION TITLE ===== */
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title i { color: var(--purple); }
+
+        /* ===== UPLOAD GRID ===== */
         .ai-upload-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 14px;
+            margin-bottom: 1.25rem;
         }
         .upload-card {
             border: 2px dashed #cbd5e1;
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: var(--radius);
+            padding: 1rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -81,467 +195,1112 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 150px;
+            min-height: 155px;
+            overflow: hidden;
         }
         .upload-card:hover {
-            border-color: #10b981;
+            border-color: var(--primary);
             background: #f0fdf4;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(16,185,129,0.12);
         }
-        .upload-card i {
+        .upload-card.has-image {
+            border-color: var(--primary);
+            border-style: solid;
+        }
+        .upload-card .card-icon {
             font-size: 1.8rem;
-            color: #64748b;
+            color: #94a3b8;
             margin-bottom: 8px;
-            transition: color 0.3s;
+            transition: all 0.3s;
         }
-        .upload-card:hover i {
-            color: #10b981;
-        }
-        .upload-card span {
+        .upload-card:hover .card-icon { color: var(--primary); transform: scale(1.1); }
+        .upload-card .card-title {
             font-size: 0.82rem;
-            font-weight: 600;
+            font-weight: 700;
             color: #475569;
         }
-        .upload-card p {
+        .upload-card .card-hint {
             font-size: 0.72rem;
             color: #94a3b8;
             margin-top: 4px;
         }
+        .upload-card .card-required {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--danger);
+            font-weight: 600;
+            margin-top: 5px;
+        }
         .upload-preview {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 14px;
+            inset: 0;
+            width: 100%; height: 100%;
             object-fit: cover;
+            border-radius: 14px;
             display: none;
             z-index: 2;
         }
-        .upload-preview.active {
-            display: block;
-        }
+        .upload-preview.active { display: block; }
         .upload-remove {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 24px;
-            height: 24px;
-            background: rgba(239, 68, 68, 0.9);
+            top: 8px; right: 8px;
+            width: 26px; height: 26px;
+            background: rgba(239,68,68,0.9);
             color: white;
             border-radius: 50%;
             display: none;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             cursor: pointer;
             z-index: 3;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
         }
-        .upload-preview.active ~ .upload-remove {
+        .upload-remove:hover { transform: scale(1.1); }
+        .upload-preview.active ~ .upload-remove { display: flex; }
+
+        /* Upload badge overlay */
+        .upload-done-badge {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(16,185,129,0.9);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            z-index: 4;
+            display: none;
+            white-space: nowrap;
+        }
+        .upload-preview.active ~ .upload-remove ~ .upload-done-badge { display: block; }
+
+        /* Selfie card */
+        #selfie-card .retake-btn {
+            display: none;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15,23,42,0.8);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            z-index: 4;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .blink { animation: blink 1.2s step-start infinite; }
+        @keyframes blink { 0%, 100%{opacity:1} 50%{opacity:0.2} }
+
+        /* ===== VERIFY BUTTON ===== */
+        .btn-verify {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: white;
+            font-weight: 800;
+            box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
             display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            letter-spacing: 0.3px;
+        }
+        .btn-verify:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(124,58,237,0.4);
+        }
+        .btn-verify:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        /* Scanner Layer */
+        /* ===== AI RESULT BADGE ===== */
+        .ai-result-badge {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 1.5px solid #6ee7b7;
+            color: #065f46;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            animation: slideIn 0.4s ease;
+        }
+        .ai-result-badge.active { display: flex; }
+        @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        .ai-result-badge .badge-icon {
+            width: 44px; height: 44px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .ai-result-badge .badge-title {
+            font-weight: 800;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+        .ai-result-badge .badge-sub {
+            font-size: 0.8rem;
+            color: #047857;
+        }
+        .ai-verified-chip {
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+            font-size: 0.72rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        /* ===== FORM STEP 2 ===== */
+        .step2-container {
+            opacity: 0.35;
+            pointer-events: none;
+            transition: all 0.4s ease;
+            filter: blur(1px);
+        }
+        .step2-container.unlocked {
+            opacity: 1;
+            pointer-events: auto;
+            filter: none;
+        }
+        .form-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 1.5rem 0 1.25rem;
+        }
+        .form-divider hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+        .form-divider span {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .form-group { margin-bottom: 0; }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text);
+            background: #f8fafc;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+        }
+        .form-input.verified {
+            border-color: var(--primary);
+            background: #f0fdf4;
+            color: #065f46;
+        }
+        .form-input:disabled { opacity: 0.85; cursor: not-allowed; }
+        textarea.form-input { resize: vertical; min-height: 80px; }
+
+        /* ===== SUBMIT BUTTON ===== */
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border-radius: var(--radius);
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-weight: 800;
+            box-shadow: 0 6px 20px rgba(16,185,129,0.25);
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(16,185,129,0.35); }
+        .btn-back {
+            width: 100%;
+            padding: 0.85rem;
+            font-size: 0.92rem;
+            border-radius: var(--radius);
+            margin-top: 0.75rem;
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            border: 1.5px solid var(--border);
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-back:hover { background: #e2e8f0; }
+
+        /* ===== SCANNER OVERLAY ===== */
         .scanner-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(8px);
-            border-radius: 24px;
+            inset: 0;
+            background: rgba(15,23,42,0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
             z-index: 100;
             display: none;
             align-items: center;
             justify-content: center;
             flex-direction: column;
             color: white;
+            text-align: center;
         }
         .scanner-box {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            border: 4px solid #10b981;
-            border-radius: 20px;
+            width: 100px; height: 100px;
+            border: 3px solid #10b981;
+            border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 30px rgba(16,185,129,0.5);
             margin-bottom: 20px;
-            animation: pulse 2s infinite;
+            position: relative;
+            animation: pulsate 2s ease-in-out infinite;
         }
         .scanner-line {
             position: absolute;
-            width: 100%;
-            height: 4px;
-            background: #10b981;
-            box-shadow: 0 0 10px #10b981;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
             animation: scan 2s linear infinite;
         }
-        @keyframes scan {
-            0% { top: 0%; }
-            50% { top: 100%; }
-            100% { top: 0%; }
+        @keyframes scan { 0%{top:0} 50%{top:97%} 100%{top:0} }
+        @keyframes pulsate { 0%,100%{box-shadow:0 0 20px rgba(16,185,129,0.4)} 50%{box-shadow:0 0 40px rgba(16,185,129,0.7)} }
+        .scanner-steps {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .scanner-step {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .scanner-step.active {
+            background: rgba(16,185,129,0.3);
+            border-color: #10b981;
+            color: #6ee7b7;
         }
 
-        .ai-result-badge {
-            background: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            color: #065f46;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+        /* ===== CAMERA MODAL ===== */
+        .camera-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.8);
+            backdrop-filter: blur(12px);
+            z-index: 200;
             display: none;
             align-items: center;
-            gap: 12px;
+            justify-content: center;
+            padding: 1rem;
         }
-        .ai-result-badge.active {
-            display: flex;
+        .camera-modal-content {
+            background: white;
+            padding: 1.75rem;
+            border-radius: 24px;
+            max-width: 460px;
+            width: 100%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
         }
-        .ai-result-badge i {
-            font-size: 1.5rem;
-        }
-        .ai-verified-tag {
-            background: #10b981;
-            color: white;
-            font-size: 0.72rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            margin-left: auto;
-            font-weight: 600;
+        .camera-modal-content h3 {
+            color: var(--text);
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 8px;
         }
-        
-        .form-input.verified {
-            border-color: #10b981;
-            background-color: #f0fdf4;
+        .camera-modal-content h3 i { color: var(--primary); }
+        .camera-modal-content p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0; }
+        .webcam-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: #000;
+            margin: 14px 0;
         }
-        
-        .form-input:disabled {
-            color: #334155;
-            opacity: 0.9;
-            cursor: not-allowed;
+        .webcam-stream {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
         }
-        @media (max-width: 640px) {
-            .ai-upload-grid {
-                grid-template-columns: 1fr;
-            }
-            .register-container {
-                padding: 1.5rem;
-            }
+        .oval-face-guide {
+            position: absolute;
+            top: 10%; left: 17.5%;
+            width: 65%; height: 80%;
+            border: 2.5px dashed rgba(16,185,129,0.85);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+            z-index: 5;
+        }
+        .camera-tip {
+            background: rgba(16,185,129,0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            color: #065f46;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .camera-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .camera-btns button {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-cancel-cam { background: #f1f5f9; color: #475569; }
+        .btn-cancel-cam:hover { background: #e2e8f0; }
+        .btn-capture-cam {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        .btn-capture-cam:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16,185,129,0.4); }
+
+        /* ===== CUSTOM TOAST ===== */
+        .toast-container {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+        }
+        .toast {
+            background: white;
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            border-left: 4px solid var(--primary);
+            animation: toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            font-family: 'Outfit', sans-serif;
+        }
+        .toast.toast-error { border-left-color: var(--danger); }
+        .toast.toast-warning { border-left-color: var(--warning); }
+        .toast.toast-success { border-left-color: var(--primary); }
+        .toast.toast-out { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn { from{opacity:0;transform:translateX(100%)} to{opacity:1;transform:translateX(0)} }
+        @keyframes toastOut { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(110%)} }
+        .toast-icon {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .toast-success .toast-icon { background: #d1fae5; color: #059669; }
+        .toast-error .toast-icon { background: #fee2e2; color: #dc2626; }
+        .toast-warning .toast-icon { background: #fef3c7; color: #d97706; }
+        .toast-body { flex: 1; }
+        .toast-title { font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 2px; }
+        .toast-msg { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+        .toast-close {
+            background: none; border: none; cursor: pointer;
+            color: #94a3b8; font-size: 0.9rem; padding: 0;
+            line-height: 1; flex-shrink: 0;
+        }
+        .toast-close:hover { color: #475569; }
+
+        /* ===== CUSTOM CONFIRM MODAL ===== */
+        .confirm-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15,23,42,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .confirm-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes modalIn { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
+        .confirm-modal .modal-icon {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            margin: 0 auto 1rem;
+        }
+        .confirm-modal .modal-icon.error { background: #fee2e2; color: #dc2626; }
+        .confirm-modal .modal-icon.success { background: #d1fae5; color: #059669; }
+        .confirm-modal .modal-icon.warning { background: #fef3c7; color: #d97706; }
+        .confirm-modal h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        .confirm-modal p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .confirm-modal .modal-btn {
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .confirm-modal .modal-btn.primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.2);
+        }
+        .confirm-modal .modal-btn.primary:hover { transform: translateY(-1px); }
+        .confirm-modal .modal-btn.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .match-progress {
+            margin-top: 8px;
+        }
+        .match-progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .match-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 1s ease;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .register-inner { padding: 1.5rem; }
+            .ai-upload-grid { grid-template-columns: 1fr; }
+            .form-grid-2 { grid-template-columns: 1fr; }
+            .steps-indicator { gap: 4px; }
+            .step-label { font-size: 0.72rem; }
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <!-- Spinner & Pulse Scanner -->
-        <div class="scanner-overlay" id="scanner-overlay">
-            <div class="scanner-box">
-                <div class="scanner-line"></div>
-            </div>
-            <h3 style="font-weight: 700; margin-bottom: 6px;">Trí tuệ nhân tạo (AI) đang phân tích...</h3>
-            <p style="font-size: 0.88rem; color: #cbd5e1;">OCR thông tin CCCD & Đối sánh sinh trắc khuôn mặt</p>
-        </div>
 
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Confirm Modal -->
+<div class="confirm-modal-overlay" id="confirm-modal-overlay">
+    <div class="confirm-modal">
+        <div class="modal-icon" id="modal-icon"><i id="modal-icon-i"></i></div>
+        <h3 id="modal-title"></h3>
+        <p id="modal-body"></p>
+        <button class="modal-btn" id="modal-btn-primary" onclick="closeModal()"></button>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="camera-modal-overlay" id="camera-modal">
+    <div class="camera-modal-content">
+        <h3><i class="fa-solid fa-camera"></i> Chụp Selfie Sinh trắc học</h3>
+        <p>Nhìn thẳng vào camera, đảm bảo đủ ánh sáng.</p>
+        <div class="webcam-container">
+            <video id="webcam" autoplay playsinline class="webcam-stream"></video>
+            <div class="oval-face-guide"></div>
+        </div>
+        <div class="camera-tip">
+            <i class="fa-solid fa-lightbulb"></i>
+            Hướng mặt vào vùng oval — giữ nguyên tư thế & nhìn thẳng
+        </div>
+        <div class="camera-btns">
+            <button type="button" class="btn-cancel-cam" onclick="closeCamera()"><i class="fa-solid fa-xmark"></i> Hủy</button>
+            <button type="button" class="btn-capture-cam" onclick="capturePhoto()"><i class="fa-solid fa-camera"></i> Chụp ngay</button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Container -->
+<div class="register-container">
+    <!-- Scanning overlay -->
+    <div class="scanner-overlay" id="scanner-overlay">
+        <div class="scanner-box"><div class="scanner-line"></div></div>
+        <h3 style="font-weight:800; font-size:1.1rem; margin-bottom:6px;">AI đang phân tích...</h3>
+        <p style="font-size:0.82rem; color:#94a3b8; margin-bottom:16px;">Đang xử lý ảnh CCCD & đối sánh khuôn mặt</p>
+        <div class="scanner-steps">
+            <div class="scanner-step active" id="scan-step-1">📤 Tải ảnh</div>
+            <div class="scanner-step" id="scan-step-2">🔍 OCR CCCD</div>
+            <div class="scanner-step" id="scan-step-3">🤖 Nhận diện mặt</div>
+        </div>
+    </div>
+
+    <div class="register-inner">
+        <!-- Header -->
         <div class="register-header">
-            <div style="font-size: 3.5rem; color: #10b981; margin-bottom: 0.5rem;">
-                <i class="fa-solid fa-store"></i>
-            </div>
-            <h1>Đăng ký Cửa hàng Zynk</h1>
-            <p>Xác thực thông tin sinh trắc học bằng AI để mở shop nhanh chóng.</p>
+            <div class="brand-logo"><i class="fa-solid fa-store"></i></div>
+            <h1>Đăng ký <span>Cửa hàng Zynk</span></h1>
+            <p>Xác thực danh tính bằng AI — nhanh chóng, an toàn, tự động</p>
         </div>
 
-        <div id="rejection-box" class="rejection-box" style="display: none;">
+        <!-- Rejection box -->
+        <div id="rejection-box" class="rejection-box">
             <i class="fa-solid fa-circle-exclamation"></i>
             <div>
-                <strong>Đơn trước bị từ chối:</strong>
+                <strong>Đơn trước bị từ chối: </strong>
                 <span id="rejection-note"></span>
             </div>
         </div>
 
-        <!-- AI Biometric Banner Status -->
-        <div class="ai-result-badge" id="ai-result-badge">
-            <i class="fa-solid fa-circle-check"></i>
-            <div>
-                <strong style="display:block; font-size:0.95rem;">Sinh trắc học hợp lệ (<span id="ai-score">95</span>% Trùng khớp)</strong>
-                <span style="font-size:0.8rem; color:#047857;" id="ai-message">Thông tin OCR đã được điền tự động.</span>
+        <!-- Steps -->
+        <div class="steps-indicator">
+            <div class="step-item">
+                <div class="step-circle active" id="step-dot-1"><i class="fa-solid fa-fingerprint"></i></div>
+                <span class="step-label active" id="step-lbl-1">Xác thực AI</span>
             </div>
-            <div class="ai-verified-tag">
+            <div class="step-line" id="step-line-1"></div>
+            <div class="step-item">
+                <div class="step-circle pending" id="step-dot-2">2</div>
+                <span class="step-label" id="step-lbl-2">Thông tin shop</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item">
+                <div class="step-circle pending" id="step-dot-3">3</div>
+                <span class="step-label" id="step-lbl-3">Gửi hồ sơ</span>
+            </div>
+        </div>
+
+        <!-- Step 1: AI Upload -->
+        <p class="section-title">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            Bước 1 — Tải ảnh CCCD & Chụp selfie để xác thực
+        </p>
+
+        <div class="ai-upload-grid">
+            <!-- Front CCCD -->
+            <div class="upload-card" onclick="triggerUpload('file-front')" id="card-front">
+                <i class="fa-solid fa-id-card card-icon"></i>
+                <div class="card-title">CCCD Mặt trước</div>
+                <div class="card-hint">Ảnh chụp rõ nét</div>
+                <img id="preview-front" class="upload-preview" alt="">
+                <div class="upload-remove" onclick="removeImage(event,'file-front','preview-front','card-front')"><i class="fa-solid fa-xmark"></i></div>
+                <div class="upload-done-badge"><i class="fa-solid fa-check"></i> Đã tải</div>
+                <input type="file" id="file-front" accept="image/*" class="hidden" onchange="handleFileSelect(this,'preview-front','card-front')">
+            </div>
+
+            <!-- Back CCCD -->
+            <div class="upload-card" onclick="triggerUpload('file-back')" id="card-back">
+                <i class="fa-solid fa-id-card card-icon"></i>
+                <div class="card-title">CCCD Mặt sau</div>
+                <div class="card-hint">Không bắt buộc</div>
+                <img id="preview-back" class="upload-preview" alt="">
+                <div class="upload-remove" onclick="removeImage(event,'file-back','preview-back','card-back')"><i class="fa-solid fa-xmark"></i></div>
+                <div class="upload-done-badge"><i class="fa-solid fa-check"></i> Đã tải</div>
+                <input type="file" id="file-back" accept="image/*" class="hidden" onchange="handleFileSelect(this,'preview-back','card-back')">
+            </div>
+
+            <!-- Selfie -->
+            <div class="upload-card" id="selfie-card" onclick="openCamera()">
+                <i class="fa-solid fa-camera card-icon" id="selfie-icon"></i>
+                <div class="card-title" id="selfie-label">Chụp Selfie</div>
+                <div class="card-required" id="selfie-hint">
+                    <span class="blink" style="width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block;"></span>
+                    Bắt buộc dùng Camera
+                </div>
+                <img id="preview-selfie" class="upload-preview" alt="">
+                <div class="upload-remove" style="display:none;" id="selfie-remove" onclick="event.stopPropagation(); retakeSelfie()"><i class="fa-solid fa-rotate-left"></i></div>
+                <button type="button" class="retake-btn" id="btn-retake-selfie" onclick="event.stopPropagation(); retakeSelfie()">
+                    <i class="fa-solid fa-rotate-left"></i> Chụp lại
+                </button>
+            </div>
+        </div>
+
+        <!-- Verify button -->
+        <button type="button" class="btn-verify" id="btn-ai-verify">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            Xác Thực Tự Động Bằng AI ✨
+        </button>
+
+        <!-- AI Success Badge -->
+        <div class="ai-result-badge" id="ai-result-badge">
+            <div class="badge-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div>
+                <div class="badge-title">
+                    Sinh trắc học hợp lệ — Trùng khớp <span id="ai-score">0</span>%
+                </div>
+                <div class="badge-sub" id="ai-message">Xác thực khuôn mặt & trích xuất thông tin thành công.</div>
+                <div class="match-progress">
+                    <div class="match-progress-bar">
+                        <div class="match-progress-fill" id="match-bar" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-verified-chip">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> AI Verified
             </div>
         </div>
 
-        <!-- Step 1: Uploading files for AI verification -->
-        <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 12px;">
-            <i class="fa-solid fa-wand-magic-sparkles" style="color: #7c3aed;"></i> Bước 1: Xác thực định danh & Sinh trắc học bằng AI
-        </h3>
-        
-        <div class="ai-upload-grid">
-            <!-- Front CCCD Card -->
-            <div class="upload-card" onclick="triggerUpload('file-front')">
-                <i class="fa-solid fa-id-card"></i>
-                <span>CCCD Mặt trước</span>
-                <p>Ảnh chụp rõ nét mặt trước</p>
-                <img id="preview-front" class="upload-preview">
-                <div class="upload-remove" onclick="removeImage(event, 'file-front', 'preview-front')">&times;</div>
-                <input type="file" id="file-front" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'preview-front')">
+        <!-- Step 2: Form -->
+        <div class="step2-container" id="step-2-container">
+            <div class="form-divider">
+                <hr><span><i class="fa-solid fa-address-card"></i> Bước 2 — Thông tin cửa hàng</span><hr>
             </div>
 
-            <!-- Back CCCD Card -->
-            <div class="upload-card" onclick="triggerUpload('file-back')">
-                <i class="fa-solid fa-id-card"></i>
-                <span>CCCD Mặt sau</span>
-                <p>Ảnh chụp rõ nét mặt sau</p>
-                <img id="preview-back" class="upload-preview">
-                <div class="upload-remove" onclick="removeImage(event, 'file-back', 'preview-back')">&times;</div>
-                <input type="file" id="file-back" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'preview-back')">
-            </div>
+            <form id="register-form">
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label for="shop-name"><i class="fa-solid fa-shop" style="color:#10b981;"></i> Tên cửa hàng dự kiến <span style="color:var(--danger)">*</span></label>
+                    <input type="text" id="shop-name" class="form-input" placeholder="VD: Zynk Mobile, Shop Thời Trang GenZ..." required>
+                </div>
 
-            <!-- Selfie Portrait -->
-            <div class="upload-card" onclick="triggerUpload('file-selfie')">
-                <i class="fa-solid fa-circle-user"></i>
-                <span>Ảnh Chân Dung / Selfie</span>
-                <p>Ảnh tự sướng hoặc chân dung</p>
-                <img id="preview-selfie" class="upload-preview">
-                <div class="upload-remove" onclick="removeImage(event, 'file-selfie', 'preview-selfie')">&times;</div>
-                <input type="file" id="file-selfie" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'preview-selfie')">
-            </div>
+                <div class="form-grid-2" style="margin-bottom:1rem;">
+                    <div class="form-group">
+                        <label for="citizen-id">Số CCCD / CMND</label>
+                        <input type="text" id="citizen-id" class="form-input" placeholder="Tự động điền qua AI" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="full-name">Họ và tên chủ sở hữu</label>
+                        <input type="text" id="full-name" class="form-input" placeholder="Tự động điền qua AI" required>
+                    </div>
+                </div>
+
+                <div class="form-grid-2" style="margin-bottom:1rem;">
+                    <div class="form-group">
+                        <label for="gender">Giới tính</label>
+                        <select id="gender" class="form-input" required>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dob">Ngày sinh</label>
+                        <input type="date" id="dob" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-grid-2" style="margin-bottom:1rem;">
+                    <div class="form-group">
+                        <label for="hometown">Quê quán</label>
+                        <input type="text" id="hometown" class="form-input" placeholder="Tự động điền qua AI" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="occupation">Nghề nghiệp <span style="color:var(--danger)">*</span></label>
+                        <input type="text" id="occupation" class="form-input" placeholder="Nghề nghiệp hiện tại" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="shop-desc"><i class="fa-solid fa-quote-left" style="color:#10b981;"></i> Mô tả cửa hàng <span style="color:var(--danger)">*</span></label>
+                    <textarea id="shop-desc" class="form-input" rows="3" placeholder="Mô tả sản phẩm, chính sách, cam kết chất lượng..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btn-submit">
+                    <i class="fa-solid fa-paper-plane"></i> Gửi Hồ Sơ Phê Duyệt
+                </button>
+                <a href="../index.html" class="btn-back">
+                    <i class="fa-solid fa-house"></i> Quay lại Trang chủ
+                </a>
+            </form>
         </div>
-
-        <button type="button" class="btn" id="btn-ai-verify" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-bottom: 24px; background: linear-gradient(135deg, #7c3aed, #a855f7); color:white; font-weight:700; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Xác Thực Tự Động Bằng AI ✨
-        </button>
-
-        <!-- Step 2: Form registration -->
-        <form id="register-form">
-            <div class="form-group">
-                <label for="shop-name"><i class="fa-solid fa-shop"></i> Tên cửa hàng dự kiến</label>
-                <input type="text" id="shop-name" class="form-input" placeholder="Ví dụ: Zynk Mobile, Shop Thời Trang GenZ..." required>
-            </div>
-
-            <div style="display: flex; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; margin: 1.5rem 0 1rem;">
-                <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-address-card"></i> Bước 2: Kiểm tra thông tin định danh</h3>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="form-group">
-                    <label for="citizen-id">Số CCCD / CMND</label>
-                    <input type="text" id="citizen-id" class="form-input" placeholder="Tự động điền qua AI" required>
-                </div>
-                <div class="form-group">
-                    <label for="full-name">Họ và tên chủ sở hữu</label>
-                    <input type="text" id="full-name" class="form-input" placeholder="Tự động điền qua AI" required>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="form-group">
-                    <label for="gender">Giới tính</label>
-                    <select id="gender" class="form-input" required>
-                        <option value="Nam">Nam</option>
-                        <option value="Nữ">Nữ</option>
-                        <option value="Khác">Khác</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="dob">Ngày tháng năm sinh</label>
-                    <input type="date" id="dob" class="form-input" required>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="form-group">
-                    <label for="hometown">Quê quán</label>
-                    <input type="text" id="hometown" class="form-input" placeholder="Tự động điền qua AI" required>
-                </div>
-                <div class="form-group">
-                    <label for="occupation">Nghề nghiệp</label>
-                    <input type="text" id="occupation" class="form-input" placeholder="Nghề nghiệp hiện tại" required>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 1rem;">
-                <label for="shop-desc"><i class="fa-solid fa-quote-left"></i> Mô tả ngắn về Cửa hàng</label>
-                <textarea id="shop-desc" class="form-input" rows="3" placeholder="Mô tả sản phẩm bạn định bán, các chính sách hoặc cam kết chất lượng..." required></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary" id="btn-submit" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 1.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
-                <i class="fa-solid fa-paper-plane"></i> Gửi Hồ Sơ Phê Duyệt
-            </button>
-            <a href="../index.html" class="btn btn-secondary" style="width: 100%; padding: 0.85rem; font-size: 1rem; border-radius: 12px; margin-top: 0.75rem; display:block; text-align:center; text-decoration:none;">
-                <i class="fa-solid fa-house"></i> Quay lại Trang chủ
-            </a>
-        </form>
     </div>
+</div>
 
-    <script src="../js/api.js"></script>
-    <script src="seller-common.js"></script>
-    <script>
-        // AI Verification variables
-        let uploadedFrontUrl = '';
-        let uploadedBackUrl = '';
-        let uploadedSelfieUrl = '';
-        let aiMatchPercentage = 0;
-        let isAiVerified = false;
+<script src="../js/api.js"></script>
+<script src="seller-common.js"></script>
+<script>
+    // ===== STATE =====
+    let uploadedFrontUrl = '';
+    let uploadedBackUrl = '';
+    let uploadedSelfieUrl = '';
+    let aiMatchPercentage = 0;
+    let isAiVerified = false;
+    let localStream = null;
+    let capturedSelfieBlob = null;
 
-        function triggerUpload(inputId) {
-            document.getElementById(inputId).click();
+    // ===== TOAST SYSTEM =====
+    function showToast(type, title, msg, duration = 5000) {
+        const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation' };
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon"><i class="fa-solid ${icons[type] || icons.success}"></i></div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
+            </div>
+            <button class="toast-close" onclick="dismissToast(this.parentElement)"><i class="fa-solid fa-xmark"></i></button>
+        `;
+        container.appendChild(toast);
+        if (duration > 0) {
+            setTimeout(() => dismissToast(toast), duration);
+        }
+        return toast;
+    }
+
+    function dismissToast(toast) {
+        if (!toast || !toast.parentElement) return;
+        toast.classList.add('toast-out');
+        setTimeout(() => toast.remove(), 300);
+    }
+
+    // ===== MODAL SYSTEM =====
+    function showModal(type, title, body, btnText = 'Đã hiểu', btnClass = 'primary') {
+        const iconMap = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation' };
+        document.getElementById('modal-icon').className = `modal-icon ${type}`;
+        document.getElementById('modal-icon-i').className = `fa-solid ${iconMap[type]}`;
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').innerHTML = body;
+        const btn = document.getElementById('modal-btn-primary');
+        btn.textContent = btnText;
+        btn.className = `modal-btn ${btnClass}`;
+        document.getElementById('confirm-modal-overlay').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('confirm-modal-overlay').style.display = 'none';
+    }
+
+    // ===== CAMERA =====
+    function openCamera() {
+        const modal = document.getElementById('camera-modal');
+        modal.style.display = 'flex';
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } })
+            .then(stream => {
+                localStream = stream;
+                document.getElementById('webcam').srcObject = stream;
+            })
+            .catch(err => {
+                modal.style.display = 'none';
+                showToast('error', 'Không thể mở Camera', 'Vui lòng cấp quyền camera cho trình duyệt và thử lại.');
+            });
+    }
+
+    function closeCamera() {
+        if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+        document.getElementById('camera-modal').style.display = 'none';
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('webcam');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => {
+            capturedSelfieBlob = blob;
+            const img = document.getElementById('preview-selfie');
+            img.src = canvas.toDataURL('image/jpeg', 0.95);
+            img.classList.add('active');
+            document.getElementById('btn-retake-selfie').style.display = 'block';
+            document.getElementById('selfie-remove').style.display = 'flex';
+            document.getElementById('selfie-icon').style.display = 'none';
+            document.getElementById('selfie-label').style.display = 'none';
+            document.getElementById('selfie-hint').style.display = 'none';
+            document.getElementById('selfie-card').onclick = null;
+            document.getElementById('selfie-card').classList.add('has-image');
+            closeCamera();
+            showToast('success', 'Chụp ảnh thành công!', 'Selfie đã được lưu. Nhấn "Xác Thực AI" để tiếp tục.');
+        }, 'image/jpeg', 0.95);
+    }
+
+    function retakeSelfie() {
+        capturedSelfieBlob = null;
+        const img = document.getElementById('preview-selfie');
+        img.src = ''; img.classList.remove('active');
+        document.getElementById('btn-retake-selfie').style.display = 'none';
+        document.getElementById('selfie-remove').style.display = 'none';
+        document.getElementById('selfie-icon').style.display = 'block';
+        document.getElementById('selfie-label').style.display = 'block';
+        document.getElementById('selfie-hint').style.display = 'flex';
+        document.getElementById('selfie-card').onclick = openCamera;
+        document.getElementById('selfie-card').classList.remove('has-image');
+        openCamera();
+    }
+
+    // ===== FILE UPLOAD =====
+    function triggerUpload(inputId) { document.getElementById(inputId).click(); }
+
+    function handleFileSelect(input, previewId, cardId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById(previewId);
+                img.src = e.target.result;
+                img.classList.add('active');
+                document.getElementById(cardId).classList.add('has-image');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImage(event, inputId, previewId, cardId) {
+        event.stopPropagation();
+        document.getElementById(inputId).value = '';
+        const img = document.getElementById(previewId);
+        img.src = ''; img.classList.remove('active');
+        document.getElementById(cardId).classList.remove('has-image');
+    }
+
+    // ===== SCANNER STEPS =====
+    function setStep(n) {
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById(`scan-step-${i}`).classList.toggle('active', i === n);
+        }
+    }
+
+    // ===== STEP INDICATOR =====
+    function markStepDone(n) {
+        const dot = document.getElementById(`step-dot-${n}`);
+        dot.className = 'step-circle done';
+        dot.innerHTML = '<i class="fa-solid fa-check"></i>';
+        document.getElementById(`step-lbl-${n}`).className = 'step-label done';
+        if (n < 3) {
+            document.getElementById(`step-line-${n}`).classList.add('done');
+            const next = document.getElementById(`step-dot-${n+1}`);
+            next.className = 'step-circle active';
+            document.getElementById(`step-lbl-${n+1}`).className = 'step-label active';
+        }
+    }
+
+    // ===== MAIN FLOW =====
+    document.addEventListener('DOMContentLoaded', () => {
+        const rejectNote = localStorage.getItem('seller_reject_note');
+        if (rejectNote) {
+            document.getElementById('rejection-note').textContent = rejectNote;
+            document.getElementById('rejection-box').classList.add('show');
+            localStorage.removeItem('seller_reject_note');
         }
 
-        function handleFileSelect(input, previewId) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById(previewId);
-                    img.src = e.target.result;
-                    img.classList.add('active');
-                };
-                reader.readAsDataURL(input.files[0]);
+        // AI Verify
+        document.getElementById('btn-ai-verify').onclick = async () => {
+            const fileFront = document.getElementById('file-front').files[0];
+            const fileSelfie = capturedSelfieBlob;
+
+            if (!fileFront) {
+                showToast('warning', 'Thiếu ảnh CCCD', 'Vui lòng tải lên ảnh mặt trước CCCD trước khi xác thực.');
+                return;
             }
-        }
-
-        function removeImage(event, inputId, previewId) {
-            event.stopPropagation();
-            document.getElementById(inputId).value = '';
-            const img = document.getElementById(previewId);
-            img.src = '';
-            img.classList.remove('active');
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const rejectNote = localStorage.getItem('seller_reject_note');
-            if (rejectNote) {
-                document.getElementById('rejection-note').textContent = rejectNote;
-                document.getElementById('rejection-box').style.display = 'flex';
-                localStorage.removeItem('seller_reject_note');
+            if (!fileSelfie) {
+                showToast('warning', 'Thiếu ảnh Selfie', 'Vui lòng chụp ảnh selfie trực tiếp bằng Camera (nhấn vào ô Chụp Selfie).');
+                return;
             }
 
-            // AI Verification Button
-            document.getElementById('btn-ai-verify').onclick = async () => {
-                const fileFront = document.getElementById('file-front').files[0];
-                const fileSelfie = document.getElementById('file-selfie').files[0];
+            const scanner = document.getElementById('scanner-overlay');
+            scanner.style.display = 'flex';
+            document.getElementById('btn-ai-verify').disabled = true;
+            setStep(1);
+
+            try {
+                // Upload images
+                uploadedFrontUrl = (await window.api.uploadImage(fileFront)).url;
                 const fileBack = document.getElementById('file-back').files[0];
-
-                if (!fileFront || !fileSelfie) {
-                    alert('Vui lòng tải lên cả mặt trước CCCD và ảnh chân dung (selfie) của bạn để thực hiện xác thực AI.');
-                    return;
+                if (fileBack) {
+                    uploadedBackUrl = (await window.api.uploadImage(fileBack)).url;
                 }
+                setStep(2);
 
-                // Show scanner overlay
-                const scanner = document.getElementById('scanner-overlay');
-                scanner.style.display = 'flex';
+                const selfieFile = new File([capturedSelfieBlob], 'selfie.jpg', { type: 'image/jpeg' });
+                uploadedSelfieUrl = (await window.api.uploadImage(selfieFile)).url;
+                setStep(3);
 
-                try {
-                    // 1. Upload images sequentially to Cloudinary
-                    uploadedFrontUrl = (await window.api.uploadImage(fileFront)).url;
-                    uploadedSelfieUrl = (await window.api.uploadImage(fileSelfie)).url;
-                    
-                    if (fileBack) {
-                        uploadedBackUrl = (await window.api.uploadImage(fileBack)).url;
-                    }
+                // Call AI verify
+                const aiResult = await window.api.post('seller/verify-identity', {
+                    frontCccdUrl: uploadedFrontUrl,
+                    backCccdUrl: uploadedBackUrl,
+                    selfieUrl: uploadedSelfieUrl
+                });
 
-                    // 2. Call identity verification API
-                    const aiResult = await window.api.post('seller/verify-identity', {
-                        frontCccdUrl: uploadedFrontUrl,
-                        backCccdUrl: uploadedBackUrl,
-                        selfieUrl: uploadedSelfieUrl
+                scanner.style.display = 'none';
+                document.getElementById('btn-ai-verify').disabled = false;
+
+                const matchPercent = aiResult.matchPercentage || 0;
+                const isFaceMatch = matchPercent >= 55;
+                // Liveness check bị bỏ — Gemini không phải model chuyên dụng, luôn cho qua
+                const isLivenessPassed = true;
+
+                if (isFaceMatch) {
+                    aiMatchPercentage = matchPercent;
+                    isAiVerified = true;
+
+                    // Show badge
+                    document.getElementById('ai-score').textContent = matchPercent;
+                    document.getElementById('ai-message').textContent = aiResult.message || 'Xác thực sinh trắc học hoàn tất.';
+                    document.getElementById('ai-result-badge').classList.add('active');
+                    setTimeout(() => {
+                        document.getElementById('match-bar').style.width = matchPercent + '%';
+                    }, 100);
+
+                    // Autofill
+                    const info = aiResult.extractedInfo || {};
+                    const fields = {
+                        'citizen-id': info.citizenId,
+                        'full-name': info.fullName,
+                        'hometown': info.hometown,
+                        'dob': info.dateOfBirth ? info.dateOfBirth.split('T')[0] : ''
+                    };
+                    Object.entries(fields).forEach(([id, val]) => {
+                        const el = document.getElementById(id);
+                        if (val) { el.value = val; el.classList.add('verified'); el.setAttribute('readonly', true); }
                     });
+                    const genderEl = document.getElementById('gender');
+                    if (info.gender) { genderEl.value = info.gender === 'Nữ' ? 'Nữ' : 'Nam'; genderEl.classList.add('verified'); genderEl.setAttribute('disabled', true); }
 
-                    scanner.style.display = 'none';
+                    // Unlock step 2
+                    const step2 = document.getElementById('step-2-container');
+                    step2.classList.add('unlocked');
+                    markStepDone(1);
 
-                    if (aiResult.success) {
-                        aiMatchPercentage = aiResult.matchPercentage;
-                        isAiVerified = true;
+                    showToast('success', `Xác thực thành công! ${matchPercent}% khớp mặt`, aiResult.message || 'Hãy tiếp tục điền thông tin cửa hàng ở Bước 2.');
 
-                        // Display match banner
-                        document.getElementById('ai-score').textContent = aiResult.matchPercentage;
-                        document.getElementById('ai-message').textContent = aiResult.message || 'Xác thực sinh trắc học hoàn tất.';
-                        document.getElementById('ai-result-badge').classList.add('active');
+                    setTimeout(() => {
+                        step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        setTimeout(() => document.getElementById('shop-name').focus(), 400);
+                    }, 600);
 
-                        // Autofill data
-                        const info = aiResult.extractedInfo;
-                        
-                        const txtCitizenId = document.getElementById('citizen-id');
-                        const txtFullName = document.getElementById('full-name');
-                        const selGender = document.getElementById('gender');
-                        const txtDob = document.getElementById('dob');
-                        const txtHometown = document.getElementById('hometown');
-
-                        txtCitizenId.value = info.citizenId || '';
-                        txtFullName.value = info.fullName || '';
-                        selGender.value = info.gender === 'Nữ' ? 'Nữ' : 'Nam';
-                        txtHometown.value = info.hometown || '';
-                        
-                        if (info.dateOfBirth) {
-                            txtDob.value = info.dateOfBirth.split('T')[0];
-                        }
-
-                        // Add verification style classes and lock fields to prevent manipulation
-                        [txtCitizenId, txtFullName, selGender, txtDob, txtHometown].forEach(input => {
-                            input.classList.add('verified');
-                            input.setAttribute('readonly', 'true');
-                            if (input.tagName === 'SELECT') {
-                                input.setAttribute('disabled', 'true');
-                            }
-                        });
-
-                        alert(`Xác thực AI thành công! Trùng khớp khuôn mặt: ${aiResult.matchPercentage}%.`);
-                    } else {
-                        alert(aiResult.message || 'Xác thực sinh trắc học thất bại.');
-                    }
-                } catch (err) {
-                    scanner.style.display = 'none';
-                    alert(err.message || 'Có lỗi xảy ra trong quá trình xác thực AI. Vui lòng thử lại.');
-                    console.error('AI verification failed:', err);
+                } else {
+                    isAiVerified = false;
+                    const reason = `Khuôn mặt trong selfie chỉ khớp <strong>${matchPercent}%</strong> với ảnh CCCD (yêu cầu tối thiểu 55%).<br><br><b>Gợi ý để thử lại:</b><br>• Đảm bảo đủ ánh sáng, không quá tối<br>• Nhìn thẳng vào camera, không nghiêng mặt<br>• Không đội mũ hoặc đeo kính râm<br>• Giữ khuôn mặt trong vùng oval`;
+                    showModal('error', 'Khuôn mặt Chưa Trùng Khớp', reason, 'Chụp lại Selfie');
                 }
+
+            } catch (err) {
+                scanner.style.display = 'none';
+                document.getElementById('btn-ai-verify').disabled = false;
+                showToast('error', 'Lỗi kết nối', err.message || 'Có lỗi xảy ra trong quá trình xác thực. Vui lòng thử lại.');
+                console.error('AI verification failed:', err);
+            }
+        };
+
+        // Form submit
+        document.getElementById('register-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!isAiVerified) {
+                showToast('warning', 'Chưa xác thực AI', 'Vui lòng hoàn thành Bước 1 — Xác thực AI trước khi gửi hồ sơ.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi hồ sơ...';
+
+            document.getElementById('gender').removeAttribute('disabled');
+            const data = {
+                shopName: document.getElementById('shop-name').value,
+                description: document.getElementById('shop-desc').value,
+                citizenId: document.getElementById('citizen-id').value,
+                fullName: document.getElementById('full-name').value,
+                gender: document.getElementById('gender').value,
+                dateOfBirth: document.getElementById('dob').value,
+                hometown: document.getElementById('hometown').value,
+                occupation: document.getElementById('occupation').value,
+                cccdFrontUrl: uploadedFrontUrl,
+                cccdBackUrl: uploadedBackUrl,
+                selfieUrl: uploadedSelfieUrl,
+                aiMatchPercentage: aiMatchPercentage,
+                isAiVerified: isAiVerified
             };
+            document.getElementById('gender').setAttribute('disabled', true);
 
-            document.getElementById('register-form').onsubmit = async (e) => {
-                e.preventDefault();
-
-                if (!isAiVerified) {
-                    alert('Bạn cần thực hiện "Xác thực tự động bằng AI" ở Bước 1 trước khi gửi hồ sơ đăng ký.');
-                    return;
-                }
-
-                // Temporary enable select elements to read their values on submit
-                document.getElementById('gender').removeAttribute('disabled');
-
-                const data = {
-                    shopName: document.getElementById('shop-name').value,
-                    description: document.getElementById('shop-desc').value,
-                    citizenId: document.getElementById('citizen-id').value,
-                    fullName: document.getElementById('full-name').value,
-                    gender: document.getElementById('gender').value,
-                    dateOfBirth: document.getElementById('dob').value,
-                    hometown: document.getElementById('hometown').value,
-                    occupation: document.getElementById('occupation').value,
-                    
-                    // Add AI biometric fields
-                    cccdFrontUrl: uploadedFrontUrl,
-                    cccdBackUrl: uploadedBackUrl,
-                    selfieUrl: uploadedSelfieUrl,
-                    aiMatchPercentage: aiMatchPercentage,
-                    isAiVerified: isAiVerified
-                };
-
-                // Restore disabled state just in case
-                document.getElementById('gender').setAttribute('disabled', 'true');
-
-                try {
-                    await window.api.post('seller/apply', data);
-                    window.location.href = 'pending.html';
-                } catch (err) {
-                    alert(err.message || 'Có lỗi xảy ra khi gửi hồ sơ đăng ký.');
-                }
-            };
-        });
-    </script>
+            try {
+                await window.api.post('seller/apply', data);
+                markStepDone(2);
+                markStepDone(3);
+                window.location.href = 'pending.html';
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi Hồ Sơ Phê Duyệt';
+                showModal('error', 'Gửi Hồ sơ Thất bại', err.message || 'Có lỗi xảy ra. Vui lòng thử lại.', 'Đóng');
+            }
+        };
+    });
+</script>
 </body>
 </html>

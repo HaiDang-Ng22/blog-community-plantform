@@ -131,7 +131,11 @@ async function loadUserProfile(userId) {
         const isMyProfile = currentId === targetId;
 
         const userName = profile.fullName || profile.username || 'Người dùng';
-        document.getElementById('profile-name').textContent = userName;
+        let nameHtml = userName;
+        if (profile.isPremium) {
+            nameHtml += ` <i class="fa-solid fa-gem" style="color: #ffd700;" title="Thành viên Premium"></i>`;
+        }
+        document.getElementById('profile-name').innerHTML = nameHtml;
         document.getElementById('profile-username').textContent = '@' + profile.username;
         
         const largeAvatar = (profile.avatarUrl && profile.avatarUrl !== 'null') 
@@ -172,6 +176,11 @@ async function loadUserProfile(userId) {
             followBtn.className = 'btn secondary-btn';
             followBtn.onclick = () => window.location.href = 'settings.html';
             document.getElementById('message-btn').classList.add('hidden');
+            
+            if (!profile.isPremium) {
+                const upgradeBtn = document.getElementById('upgrade-premium-btn');
+                if (upgradeBtn) upgradeBtn.classList.remove('hidden');
+            }
         } else {
             friendsTabBtn.classList.add('hidden');
             updateFollowButton(profile.isFollowing);

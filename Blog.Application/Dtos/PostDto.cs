@@ -12,6 +12,7 @@ public class PostDto
     public int LikeCount { get; set; }
     public string Status { get; set; } = string.Empty;
     public string AuthorName { get; set; } = string.Empty;
+    public bool AuthorIsPremium { get; set; }
     public string? AuthorAvatarUrl { get; set; }
     public Guid AuthorId { get; set; }
     public DateTime CreatedAt { get; set; }

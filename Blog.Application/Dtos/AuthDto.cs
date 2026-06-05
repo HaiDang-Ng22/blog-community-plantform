@@ -35,6 +35,8 @@ public class AuthResponse
     public string? AvatarUrl { get; set; }
     public string Role { get; set; } = "User";
     public bool IsVerified { get; set; } = false;
+    public bool IsPremium { get; set; } = false;
+    public DateTime? PremiumExpiryDate { get; set; }
 }
 
 public class UserProfileResponse
@@ -51,6 +53,8 @@ public class UserProfileResponse
     public bool IsPrivate { get; set; }
     public string Role { get; set; } = "User";
     public bool IsVerified { get; set; } = false;
+    public bool IsPremium { get; set; } = false;
+    public DateTime? PremiumExpiryDate { get; set; }
 }
 
 public class UpdatePrivacyRequest
