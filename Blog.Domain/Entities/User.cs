@@ -32,4 +32,6 @@ public class User
     public virtual ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
     public virtual ICollection<Story> Stories { get; set; } = new List<Story>();
     public virtual ICollection<VerificationRequest> VerificationRequests { get; set; } = new List<VerificationRequest>();
+    public virtual ICollection<GroupMember> GroupMemberships { get; set; } = new List<GroupMember>();
+    public virtual ICollection<Group> OwnedGroups { get; set; } = new List<Group>();
 }

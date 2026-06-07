@@ -297,6 +297,9 @@ function renderSidebar() {
             <a href="${pathPrefix}marketplace.html" class="mbn-link">
                 <i class="fa-solid fa-compass"></i>
             </a>
+            <a href="${pathPrefix}groups.html" class="mbn-link">
+                <i class="fa-solid fa-users"></i>
+            </a>
             <a href="${pathPrefix}profile.html" class="mbn-link">
                 <img src="${userAvatar}" class="mbn-avatar" onerror="this.src='https://ui-avatars.com/api/?name=U'">
             </a>
@@ -332,6 +335,10 @@ function renderSidebar() {
             <a href="${pathPrefix}marketplace.html" class="sidebar-link">
                 <i class="fa-solid fa-compass"></i>
                 <span>Khám phá</span>
+            </a>
+            <a href="${pathPrefix}groups.html" class="sidebar-link">
+                <i class="fa-solid fa-users"></i>
+                <span>Cộng đồng</span>
             </a>
             <div class="sidebar-link mobile-hide" id="sidebar-noti-trigger" style="position:relative;">
                 <i class="fa-regular fa-heart"></i>

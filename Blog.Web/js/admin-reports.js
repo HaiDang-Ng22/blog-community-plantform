@@ -36,27 +36,45 @@ async function loadAdminReports() {
                 ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; font-weight:600; padding:2px 7px; border-radius:20px; background:#fef3c7; color:#92400e; margin-left:6px;" title="Bài viết trong tài khoản riêng tư"><i class="fa-solid fa-lock"></i> Riêng tư</span>`
                 : '';
 
-            row.innerHTML = `
-                <td>${report.reporterName}</td>
-                <td>
+            let targetHtml = '';
+            let actionHtml = '';
+
+            if (report.targetType === 'Group' || report.groupId) {
+                targetHtml = `
+                    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                        <span style="font-weight:600;"><i class="fa-solid fa-users"></i> ${report.groupName || 'Nhóm đã bị xóa'}</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Mô tả: ${report.groupDescription || ''}</div>
+                `;
+                
+                actionHtml = `
+                    <button class="btn-action" style="color: #10b981;" title="Đánh dấu đã xử lý" onclick="resolveReport('${report.id}')"><i class="fa-solid fa-check"></i></button>
+                    ${report.groupId ? `<button class="btn-action danger" title="Xóa nhóm" onclick="deleteViolatingGroup('${report.groupId}', '${report.id}')"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                `;
+            } else {
+                targetHtml = `
                     <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
                         <span class="clickable-title" onclick="showPostPreview('${report.id}')" style="font-weight:600;">${report.postTitle || 'Bài viết đã bị xóa'}</span>
                         ${privacyBadge}
                     </div>
                     <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Tác giả: ${report.postAuthorName}</div>
-                </td>
+                `;
+                actionHtml = `
+                    <button class="btn-action" title="Xem nội dung bài viết" onclick="showPostPreview('${report.id}')"><i class="fa-solid fa-eye"></i></button>
+                    <button class="btn-action" style="color: #10b981;" title="Đánh dấu đã xử lý" onclick="resolveReport('${report.id}')"><i class="fa-solid fa-check"></i></button>
+                    ${report.postId ? `<button class="btn-action danger" title="Xóa bài viết & Cảnh báo" onclick="deleteViolatingPost('${report.postId}', '${report.id}')"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                `;
+            }
+
+            row.innerHTML = `
+                <td>${report.reporterName}</td>
+                <td>${targetHtml}</td>
                 <td style="color:#ef4444; font-weight:500;">${report.reason}</td>
                 <td style="color:#64748b; font-size:0.85rem;">${new Date(report.createdAt).toLocaleString('vi-VN')}</td>
                 <td><span class="badge ${report.isResolved ? 'badge-resolved' : 'badge-pending'}">${report.isResolved ? 'Đã xử lý' : 'Chờ xử lý'}</span></td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn-action" title="Xem nội dung bài viết" onclick="showPostPreview('${report.id}')"><i class="fa-solid fa-eye"></i></button>
-                        ${!report.isResolved ? `
-                            <button class="btn-action" style="color: #10b981;" title="Đánh dấu đã xử lý" onclick="resolveReport('${report.id}')"><i class="fa-solid fa-check"></i></button>
-                            ${report.postId ? `
-                                <button class="btn-action danger" title="Xóa bài viết & Cảnh báo" onclick="deleteViolatingPost('${report.postId}', '${report.id}')"><i class="fa-solid fa-trash-can"></i></button>
-                            ` : ''}
-                        ` : '<i class="fa-solid fa-circle-check" style="color:#10b981; margin-left:10px; font-size: 1.2rem;"></i>'}
+                        ${!report.isResolved ? actionHtml : '<i class="fa-solid fa-circle-check" style="color:#10b981; margin-left:10px; font-size: 1.2rem;"></i>'}
                     </div>
                 </td>
             `;
@@ -204,9 +222,23 @@ async function resolveReport(reportId) {
     }
 }
 
+async function deleteViolatingGroup(groupId, reportId) {
+    if (!confirm('Xác nhận xóa nhóm này vĩnh viễn?')) return;
+
+    try {
+        const result = await window.api.delete(`admin/groups/${groupId}`);
+        await window.api.post(`admin/reports/${reportId}/resolve`);
+        window.common.showToast(result.message || 'Đã xóa nhóm', 'success');
+        loadAdminReports();
+    } catch (error) {
+        window.common.showToast('Lỗi: ' + error.message, 'error');
+    }
+}
+
 // Global scope attachment
 window.loadAdminReports = loadAdminReports;
 window.showPostPreview = showPostPreview;
 window.closePostPreview = closePostPreview;
 window.deleteViolatingPost = deleteViolatingPost;
+window.deleteViolatingGroup = deleteViolatingGroup;
 window.resolveReport = resolveReport;

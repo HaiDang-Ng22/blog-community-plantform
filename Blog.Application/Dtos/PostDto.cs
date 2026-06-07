@@ -64,6 +64,7 @@ public class CreatePostDto
     public string Type { get; set; } = "Standard";
     public CreatePollDto? Poll { get; set; }
     public bool IsAnonymous { get; set; }
+    public Guid? GroupId { get; set; }
 }
 
 public class UpdatePostDto

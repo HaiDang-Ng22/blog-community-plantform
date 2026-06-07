@@ -377,6 +377,7 @@ public class PostsController : ControllerBase
             Type = Enum.TryParse<PostType>(createPostDto.Type, true, out var postType) ? postType : PostType.Standard,
             VideoUrl = createPostDto.VideoUrl,
             IsAnonymous = createPostDto.IsAnonymous,
+            GroupId = createPostDto.GroupId,
             Poll = createPostDto.Poll == null ? null : new Poll
             {
                 Question = createPostDto.Poll.Question,

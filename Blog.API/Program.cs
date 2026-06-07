@@ -105,6 +105,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFirebaseChatService, FirebaseChatService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IGeminiService, GeminiService>();
+builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
 builder.Services.AddResponseCompression(options =>

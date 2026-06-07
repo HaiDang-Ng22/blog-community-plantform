@@ -1,5 +1,8 @@
 // js/create-post.js
 
+const urlParams = new URLSearchParams(window.location.search);
+const targetGroupId = urlParams.get('groupId');
+
 let postImages = []; // Array of objects: { url, filters, transforms }
 let currentStep = 0;
 let currentImageIndex = 0;
@@ -527,11 +530,16 @@ async function handlePublish() {
             videoUrl: isReel ? reelUrl : null,
             type: isReel ? 'Reel' : (isPoll ? 'Poll' : 'Standard'),
             poll: pollData,
-            isAnonymous: document.getElementById('anonymous-toggle')?.checked || false
+            isAnonymous: document.getElementById('anonymous-toggle')?.checked || false,
+            groupId: targetGroupId
         });
 
         alert('Đã chia sẻ bài viết thành công!');
-        window.location.href = 'index.html';
+        if (targetGroupId) {
+            window.location.href = `group-detail.html?id=${targetGroupId}`;
+        } else {
+            window.location.href = 'index.html';
+        }
     } catch (error) {
         alert(error.message || 'Lỗi khi đăng bài.');
         shareBtn.disabled = false;

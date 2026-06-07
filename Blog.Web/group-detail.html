@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Nhóm - Zynk</title>
+    <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css?v=2.6">
+    <link rel="stylesheet" href="css/home.css?v=2.6">
+    <link rel="stylesheet" href="css/groups.css?v=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .group-banner {
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .group-banner-cover {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            background: #e0e0e0;
+        }
+        .group-banner-info {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            position: relative;
+        }
+        .group-banner-text {
+            flex: 1;
+        }
+        .group-banner-name {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .group-banner-meta {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .group-banner-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .group-about-widget {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .group-about-widget h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .group-about-widget p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="group-detail-page">
+    <div class="group-banner">
+        <img src="" id="gd-cover" class="group-banner-cover" alt="Cover">
+        <div class="group-banner-info">
+            <div class="group-banner-text">
+                <h1 id="gd-name" class="group-banner-name">Tên nhóm</h1>
+                <div class="group-banner-meta">
+                    <span id="gd-privacy"><i class="fa-solid fa-globe"></i> Công khai</span>
+                    &bull;
+                    <span id="gd-members">0 thành viên</span>
+                </div>
+            </div>
+            <div class="group-banner-actions">
+                <button id="gd-btn-report" class="btn secondary-btn" style="color:#ff3b30;" onclick="openReportGroupModal()"><i class="fa-solid fa-flag"></i> Báo cáo</button>
+                <button id="gd-btn-join" class="btn primary-btn hidden" onclick="toggleJoinGroup()"><i class="fa-solid fa-user-plus"></i> Tham gia nhóm</button>
+                <button id="gd-btn-leave" class="btn secondary-btn hidden" onclick="toggleJoinGroup()"><i class="fa-solid fa-user-check"></i> Đã tham gia</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-content" id="main-content" style="padding-top: 0;">
+        <div class="home-layout">
+            <!-- Left: Feed -->
+            <div class="feed-col">
+                <!-- Quick Post -->
+                <div class="quick-post-card" id="group-quick-post" style="display:none;" onclick="goToCreateGroupPost()">
+                    <img src="https://ui-avatars.com/api/?name=U&background=random" id="quick-post-avatar" alt="Avatar">
+                    <span>Bạn đang nghĩ gì thế? Viết gì đó cho nhóm này...</span>
+                </div>
+
+                <div id="private-lock-msg" class="hidden" style="text-align:center; padding: 50px; background:var(--bg-color); border:1px solid var(--border-color); border-radius:12px;">
+                    <i class="fa-solid fa-lock fa-3x" style="color:var(--text-secondary); margin-bottom:15px;"></i>
+                    <h3>Nhóm Riêng Tư</h3>
+                    <p style="color:var(--text-secondary); margin-top:10px;">Chỉ thành viên mới có thể xem các bài viết trong nhóm này.</p>
+                </div>
+
+                <!-- Posts -->
+                <div id="posts-grid" class="posts-grid">
+                    <div class="post-card skeleton"></div>
+                </div>
+
+                <div id="no-posts" class="no-posts hidden">
+                    <i class="fa-regular fa-compass"></i>
+                    <p>Nhóm này chưa có bài viết nào.</p>
+                </div>
+            </div>
+
+            <!-- Right: Sidebar Widgets -->
+            <aside class="right-sidebar">
+                <div class="group-about-widget">
+                    <h3>Giới thiệu về nhóm này</h3>
+                    <p id="gd-desc">Đang tải...</p>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Report Group Modal -->
+    <div id="report-group-modal" class="modal-overlay hidden">
+        <div class="modal-content report-modal-content">
+            <div class="modal-header">
+                <h3>Báo cáo Nhóm vi phạm</h3>
+                <button class="close-btn" onclick="closeReportGroupModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="report-group-form">
+                    <div class="report-options">
+                        <label class="report-opt"><input type="radio" name="report-group-reason" value="Nhóm lừa đảo, giả mạo" checked><span>Nhóm lừa đảo, giả mạo</span></label>
+                        <label class="report-opt"><input type="radio" name="report-group-reason" value="Nội dung khiêu dâm, đồi trụy"><span>Nội dung khiêu dâm, đồi trụy</span></label>
+                        <label class="report-opt"><input type="radio" name="report-group-reason" value="Kích động thù địch, bạo lực"><span>Kích động thù địch, bạo lực</span></label>
+                        <label class="report-opt"><input type="radio" name="report-group-reason" value="Bán hàng giả, hàng cấm"><span>Bán hàng giả, hàng cấm</span></label>
+                        <label class="report-opt"><input type="radio" name="report-group-reason" value="Khác" id="reason-group-other-radio"><span>Khác...</span></label>
+                    </div>
+                    <textarea id="report-group-other-text" class="hidden" placeholder="Vui lòng cung cấp thêm thông tin..." rows="3" style="width:100%;margin-top:10px;padding:10px;border-radius:8px;border:1px solid #dbdbdb;"></textarea>
+                    <div style="margin-top:1.5rem;display:flex;gap:10px;">
+                        <button type="button" class="btn secondary-btn" style="width:100%;" onclick="closeReportGroupModal()">Hủy</button>
+                        <button type="submit" class="btn primary-btn" style="width:100%;">Gửi báo cáo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Re-use Report Modal for Posts from home.html if needed -->
+    <!-- Re-use Split Modal for Posts from common.js -->
+
+    <script src="js/api.js?v=4.1"></script>
+    <script src="js/common.js?v=4.1"></script>
+    <script src="js/post-actions.js?v=4.1"></script>
+    <script src="js/group-detail.js?v=1.0"></script>
+</body>
+</html>

@@ -55,6 +55,8 @@ public class AppDbContext : DbContext
     public DbSet<Auction> Auctions { get; set; }
     public DbSet<AuctionBid> AuctionBids { get; set; }
     public DbSet<PostProductTag> PostProductTags { get; set; }
+    public DbSet<Group> Groups { get; set; }
+    public DbSet<GroupMember> GroupMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -487,6 +489,40 @@ public class AppDbContext : DbContext
             .HasOne(pt => pt.Product)
             .WithMany()
             .HasForeignKey(pt => pt.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // --- Group & Community ---
+        modelBuilder.Entity<Group>()
+            .HasOne(g => g.Owner)
+            .WithMany(u => u.OwnedGroups)
+            .HasForeignKey(g => g.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GroupMember>()
+            .HasKey(gm => new { gm.GroupId, gm.UserId });
+
+        modelBuilder.Entity<GroupMember>()
+            .HasOne(gm => gm.Group)
+            .WithMany(g => g.Members)
+            .HasForeignKey(gm => gm.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GroupMember>()
+            .HasOne(gm => gm.User)
+            .WithMany(u => u.GroupMemberships)
+            .HasForeignKey(gm => gm.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Group)
+            .WithMany(g => g.Posts)
+            .HasForeignKey(p => p.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Report>()
+            .HasOne(r => r.Group)
+            .WithMany()
+            .HasForeignKey(r => r.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // --- Global DateTime UTC Converter ---

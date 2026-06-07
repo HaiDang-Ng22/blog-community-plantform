@@ -25,6 +25,8 @@ public class Post
 
     // Navigation properties
     public virtual User Author { get; set; } = null!;
+    public Guid? GroupId { get; set; }
+    public virtual Group? Group { get; set; }
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
     public virtual ICollection<PostLike> PostLikes { get; set; } = new List<PostLike>();

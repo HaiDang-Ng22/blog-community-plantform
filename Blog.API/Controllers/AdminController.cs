@@ -160,6 +160,7 @@ public class AdminController : ControllerBase
                 .ThenInclude(p => p.Author)
             .Include(r => r.Post)
                 .ThenInclude(p => p.Images)
+            .Include(r => r.Group)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
@@ -167,6 +168,8 @@ public class AdminController : ControllerBase
         {
             r.Id,
             r.PostId,
+            r.GroupId,
+            TargetType = r.TargetType.ToString(),
             r.Reason,
             r.CreatedAt,
             r.IsResolved,
@@ -179,7 +182,9 @@ public class AdminController : ControllerBase
                 : new List<string>(),
             PostAuthorName = r.Post != null ? r.Post.Author.FullName : "Không rõ",
             PostAuthorId = r.Post != null ? r.Post.AuthorId : (Guid?)null,
-            PostAuthorIsPrivate = r.Post != null && r.Post.Author.IsPrivate
+            PostAuthorIsPrivate = r.Post != null && r.Post.Author.IsPrivate,
+            GroupName = r.Group != null ? r.Group.Name : null,
+            GroupDescription = r.Group != null ? r.Group.Description : null
         });
 
         return Ok(result);
@@ -1010,5 +1015,32 @@ public class AdminController : ControllerBase
         _context.Vouchers.Remove(voucher);
         await _context.SaveChangesAsync();
         return Ok();
+    }
+    [HttpDelete("groups/{id}")]
+    public async Task<IActionResult> DeleteGroupAdmin(Guid id)
+    {
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .Include(g => g.Posts)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (group == null) return NotFound();
+
+        // 1. Remove all members
+        _context.GroupMembers.RemoveRange(group.Members);
+
+        // 2. Remove all reports related to this group
+        var reports = await _context.Reports.Where(r => r.GroupId == id).ToListAsync();
+        _context.Reports.RemoveRange(reports);
+
+        // 3. (Optional) Remove posts in group or set GroupId to null
+        // Let's remove them since they belong to the group
+        _context.Posts.RemoveRange(group.Posts);
+
+        // 4. Remove group
+        _context.Groups.Remove(group);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Đã xóa Group thành công." });
     }
 }
