@@ -418,10 +418,10 @@
             const div = document.createElement('div');
             div.className = 'variant-row';
             div.innerHTML = `
-                <input type="text" class="form-input var-lbl1" placeholder="Nhãn 1 (VD: Đỏ)" required>
-                <input type="text" class="form-input var-lbl2" placeholder="Nhãn 2 (VD: L)" required>
-                <input type="number" class="form-input var-price" placeholder="Giá..." required>
-                <input type="number" class="form-input var-stock" placeholder="Kho..." required>
+                <input type="text" class="form-input var-lbl1" placeholder="Nhãn 1 (VD: Đỏ)">
+                <input type="text" class="form-input var-lbl2" placeholder="Nhãn 2 (VD: L)">
+                <input type="number" class="form-input var-price" placeholder="Giá...">
+                <input type="number" class="form-input var-stock" placeholder="Kho...">
                 <button type="button" class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
             `;
             container.appendChild(div);
@@ -435,11 +435,16 @@
             const rows = container.querySelectorAll('.variant-row');
             const variants = [];
             rows.forEach(r => {
+                const lbl1 = r.querySelector('.var-lbl1').value.trim();
+                const lbl2 = r.querySelector('.var-lbl2').value.trim();
+                // Build variant name from labels (e.g. "Đỏ - L")
+                const variantName = [lbl1, lbl2].filter(Boolean).join(' - ') || 'Mặc định';
                 variants.push({
-                    label1: r.querySelector('.var-lbl1').value.trim(),
-                    label2: r.querySelector('.var-lbl2').value.trim(),
-                    price: parseFloat(r.querySelector('.var-price').value),
-                    stock: parseInt(r.querySelector('.var-stock').value)
+                    name: variantName,
+                    color: lbl1 || null,
+                    size: lbl2 || null,
+                    priceOverride: parseFloat(r.querySelector('.var-price').value) || 0,
+                    stock: parseInt(r.querySelector('.var-stock').value) || 0
                 });
             });
             return variants;
@@ -466,10 +471,9 @@
                 stock: parseInt(document.getElementById('p-stock').value),
                 categoryId: catId,
                 description: document.getElementById('p-desc').value,
-                featuredImageUrl: images[0],
-                images: images,
-                variantGroup1: document.getElementById('p-variant-group1').value.trim() || null,
-                variantGroup2: document.getElementById('p-variant-group2').value.trim() || null,
+                imageUrls: images,
+                variantGroupName1: document.getElementById('p-variant-group1').value.trim() || null,
+                variantGroupName2: document.getElementById('p-variant-group2').value.trim() || null,
                 variants: getVariantsData(false)
             };
 
@@ -529,10 +533,10 @@
                     const div = document.createElement('div');
                     div.className = 'variant-row';
                     div.innerHTML = `
-                        <input type="text" class="form-input var-lbl1" value="${v.label1 || ''}" placeholder="Nhãn 1" required>
-                        <input type="text" class="form-input var-lbl2" value="${v.label2 || ''}" placeholder="Nhãn 2" required>
-                        <input type="number" class="form-input var-price" value="${v.price || 0}" placeholder="Giá" required>
-                        <input type="number" class="form-input var-stock" value="${v.stock || 0}" placeholder="Kho" required>
+                        <input type="text" class="form-input var-lbl1" value="${v.color || v.label1 || ''}" placeholder="Nhãn 1 (Màu sắc)">
+                        <input type="text" class="form-input var-lbl2" value="${v.size || v.label2 || ''}" placeholder="Nhãn 2 (Kích cỡ)">
+                        <input type="number" class="form-input var-price" value="${v.priceOverride || v.price || 0}" placeholder="Giá">
+                        <input type="number" class="form-input var-stock" value="${v.stock || 0}" placeholder="Kho">
                         <button type="button" class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
                     `;
                     variantContainer.appendChild(div);
@@ -559,16 +563,14 @@
             }
 
             const data = {
-                id: id,
                 name: document.getElementById('edit-p-name').value,
                 price: parseFloat(document.getElementById('edit-p-price').value),
                 stock: parseInt(document.getElementById('edit-p-stock').value),
                 categoryId: catId,
                 description: document.getElementById('edit-p-desc').value,
-                featuredImageUrl: images[0],
-                images: images,
-                variantGroup1: document.getElementById('edit-p-variant-group1').value.trim() || null,
-                variantGroup2: document.getElementById('edit-p-variant-group2').value.trim() || null,
+                imageUrls: images,
+                variantGroupName1: document.getElementById('edit-p-variant-group1').value.trim() || null,
+                variantGroupName2: document.getElementById('edit-p-variant-group2').value.trim() || null,
                 variants: getVariantsData(true)
             };
 

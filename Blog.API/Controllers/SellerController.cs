@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Blog.API.Extensions;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.Extensions.Configuration;
 
 namespace Blog.API.Controllers;
 
@@ -23,6 +26,7 @@ public class SellerController : ControllerBase
     private readonly IOrderRepository _orderRepository;
     private readonly AppDbContext _context;
     private readonly IGeminiService _geminiService;
+    private readonly Cloudinary _cloudinary;
 
     public SellerController(
         IShopRepository shopRepository,
@@ -31,7 +35,8 @@ public class SellerController : ControllerBase
         IRepository<ProductImage> imageRepository,
         IOrderRepository orderRepository,
         AppDbContext context,
-        IGeminiService geminiService)
+        IGeminiService geminiService,
+        IConfiguration configuration)
     {
         _shopRepository = shopRepository;
         _appRepository = appRepository;
@@ -40,6 +45,12 @@ public class SellerController : ControllerBase
         _orderRepository = orderRepository;
         _context = context;
         _geminiService = geminiService;
+
+        var cloudName = configuration["CloudinarySettings:CloudName"];
+        var apiKey = configuration["CloudinarySettings:ApiKey"];
+        var apiSecret = configuration["CloudinarySettings:ApiSecret"];
+        var account = new Account(cloudName, apiKey, apiSecret);
+        _cloudinary = new Cloudinary(account);
     }
 
     [HttpPost("apply")]
@@ -76,12 +87,42 @@ public class SellerController : ControllerBase
             SelfieUrl = dto.SelfieUrl,
             AiMatchPercentage = dto.AiMatchPercentage,
             IsAiVerified = dto.IsAiVerified,
-            Status = ShopApplicationStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
 
-        await _appRepository.AddAsync(app);
-        return Ok(new { message = "Gửi đơn đăng ký thành công. Vui lòng chờ Admin duyệt." });
+        if (dto.IsAiVerified)
+        {
+            app.Status = ShopApplicationStatus.Approved;
+            app.UpdatedAt = DateTime.UtcNow;
+
+            var slug = dto.ShopName.ToLower().Replace(" ", "-") + "-" + Guid.NewGuid().ToString().Substring(0, 8);
+            var officialShop = new Shop
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Name = dto.ShopName,
+                Slug = slug,
+                Description = dto.Description,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _shopRepository.AddAsync(officialShop);
+            await _appRepository.AddAsync(app);
+
+            return Ok(new { 
+                message = "Xác thực danh tính bằng AI thành công! Cửa hàng của bạn đã được kích hoạt tự động.",
+                isInstant = true
+            });
+        }
+        else
+        {
+            app.Status = ShopApplicationStatus.Pending;
+            await _appRepository.AddAsync(app);
+            return Ok(new { 
+                message = "Gửi đơn đăng ký thành công. Vui lòng chờ Admin kiểm tra và xác nhận.",
+                isInstant = false
+            });
+        }
     }
 
     [HttpPost("verify-identity")]
@@ -99,12 +140,77 @@ public class SellerController : ControllerBase
                 request.BackCccdUrl ?? string.Empty, 
                 request.SelfieUrl);
 
+            // Delete the images from Cloudinary to save storage space
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var frontPublicId = ExtractPublicId(request.FrontCccdUrl);
+                    if (!string.IsNullOrEmpty(frontPublicId))
+                    {
+                        await _cloudinary.DestroyAsync(new DeletionParams(frontPublicId));
+                    }
+
+                    if (!string.IsNullOrEmpty(request.BackCccdUrl))
+                    {
+                        var backPublicId = ExtractPublicId(request.BackCccdUrl);
+                        if (!string.IsNullOrEmpty(backPublicId))
+                        {
+                            await _cloudinary.DestroyAsync(new DeletionParams(backPublicId));
+                        }
+                    }
+
+                    var selfiePublicId = ExtractPublicId(request.SelfieUrl);
+                    if (!string.IsNullOrEmpty(selfiePublicId))
+                    {
+                        await _cloudinary.DestroyAsync(new DeletionParams(selfiePublicId));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[VerifyIdentity] Error deleting images from Cloudinary: {ex.Message}");
+                }
+            });
+
             return Content(result, "application/json");
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"Lỗi hệ thống khi xử lý xác thực AI: {ex.Message}" });
         }
+    }
+
+    private string ExtractPublicId(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return string.Empty;
+        try
+        {
+            var uri = new Uri(url);
+            var path = uri.AbsolutePath;
+            var folderKeyword = "zynk_uploads/";
+            var index = path.IndexOf(folderKeyword, StringComparison.OrdinalIgnoreCase);
+            if (index == -1)
+            {
+                folderKeyword = "zynk_reels/";
+                index = path.IndexOf(folderKeyword, StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (index != -1)
+            {
+                var publicIdWithExtension = path.Substring(index);
+                var dotIndex = publicIdWithExtension.LastIndexOf('.');
+                if (dotIndex != -1)
+                {
+                    return publicIdWithExtension.Substring(0, dotIndex);
+                }
+                return publicIdWithExtension;
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors
+        }
+        return string.Empty;
     }
 
     [HttpGet("application-status")]
@@ -215,7 +321,10 @@ public class SellerController : ControllerBase
         // Update Images (Differential Update to preserve IDs)
         var newImageUrls = dto.ImageUrls.Where(u => !string.IsNullOrEmpty(u)).ToList();
         var imagesToRemove = product.Images.Where(i => !newImageUrls.Contains(i.Url)).ToList();
-        foreach (var img in imagesToRemove) product.Images.Remove(img);
+        foreach (var img in imagesToRemove)
+        {
+            _context.ProductImages.Remove(img);
+        }
 
         foreach (var url in newImageUrls)
         {
@@ -245,7 +354,7 @@ public class SellerController : ControllerBase
             else
             {
                 // Remove missing variant
-                product.Variants.Remove(existing);
+                _context.ProductVariants.Remove(existing);
             }
         }
 
@@ -443,6 +552,84 @@ public class SellerController : ControllerBase
         _context.Vouchers.Remove(voucher);
         await _context.SaveChangesAsync();
         return Ok(new { message = "Đã xóa mã giảm giá." });
+    }
+
+    [HttpDelete("my-shop")]
+    public async Task<IActionResult> DeleteMyShop()
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var shop = await _shopRepository.GetByUserIdAsync(userId);
+        if (shop == null) return NotFound(new { message = "Không tìm thấy cửa hàng của bạn." });
+
+        var shopId = shop.Id;
+
+        // 1. Lấy tất cả ProductId thuộc shop này
+        var productIds = await _context.Products
+            .Where(p => p.ShopId == shopId)
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        if (productIds.Any())
+        {
+            // 2. Xóa PostProductTag tham chiếu đến sản phẩm của shop
+            var postProductTags = await _context.PostProductTags
+                .Where(t => productIds.Contains(t.ProductId))
+                .ToListAsync();
+            if (postProductTags.Any())
+                _context.PostProductTags.RemoveRange(postProductTags);
+
+            // 3. Xóa OrderItem và các Order rỗng liên quan đến sản phẩm của shop
+            var orderItems = await _context.OrderItems
+                .Where(oi => productIds.Contains(oi.ProductId))
+                .ToListAsync();
+
+            if (orderItems.Any())
+            {
+                var affectedOrderIds = orderItems.Select(oi => oi.OrderId).Distinct().ToList();
+                _context.OrderItems.RemoveRange(orderItems);
+                await _context.SaveChangesAsync();
+
+                // Xóa các Order không còn OrderItem nào
+                var emptyOrders = await _context.Orders
+                    .Where(o => affectedOrderIds.Contains(o.Id) && !o.Items.Any())
+                    .ToListAsync();
+                if (emptyOrders.Any())
+                    _context.Orders.RemoveRange(emptyOrders);
+            }
+        }
+
+        // 4. Xóa ShopMessage trước, rồi đến ShopConversation
+        var conversations = await _context.ShopConversations
+            .Where(c => c.ShopId == shopId)
+            .ToListAsync();
+
+        if (conversations.Any())
+        {
+            var convIds = conversations.Select(c => c.Id).ToList();
+            var messages = await _context.ShopMessages
+                .Where(m => convIds.Contains(m.ConversationId))
+                .ToListAsync();
+            if (messages.Any())
+                _context.ShopMessages.RemoveRange(messages);
+            _context.ShopConversations.RemoveRange(conversations);
+        }
+
+        // 5. Xóa ShopApplication của người dùng này
+        var applications = await _context.ShopApplications
+            .Where(a => a.UserId == userId)
+            .ToListAsync();
+        if (applications.Any())
+            _context.ShopApplications.RemoveRange(applications);
+
+        // 6. Xóa Shop — EF Cascade sẽ tự xóa: Products, ProductImages,
+        //    ProductVariants, ProductReviews, Vouchers, UserVouchers
+        _context.Shops.Remove(shop);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Cửa hàng và toàn bộ dữ liệu liên quan đã được xóa vĩnh viễn." });
     }
 }
 

@@ -116,8 +116,17 @@ async function loadCurrentSettings() {
         document.getElementById('set-avatar-url').value = profile.avatarUrl || '';
         document.getElementById('set-cover-url').value = profile.coverImageUrl || '';
 
-        if (profile.avatarUrl) document.getElementById('avatar-preview').src = profile.avatarUrl;
-        if (profile.coverImageUrl) document.getElementById('cover-preview').src = profile.coverImageUrl;
+        const avatarPreview = document.getElementById('avatar-preview');
+        const coverPreview = document.getElementById('cover-preview');
+
+        if (profile.avatarUrl) {
+            avatarPreview.src = profile.avatarUrl;
+            avatarPreview.dataset.originalUrl = profile.avatarUrl;
+        }
+        if (profile.coverImageUrl) {
+            coverPreview.src = profile.coverImageUrl;
+            coverPreview.dataset.originalUrl = profile.coverImageUrl;
+        }
 
         // Cập nhật công tắc Private Account
         const privateToggle = document.getElementById('private-account-toggle');
@@ -146,13 +155,24 @@ async function togglePrivateAccount() {
 
 async function saveSettings() {
     const btn = document.getElementById('save-settings-btn');
+    // Read avatar/cover URL: prefer the hidden input (which gets set on upload),
+    // but fall back to the current preview src (which was loaded from API)
+    const avatarUrlInput = document.getElementById('set-avatar-url').value.trim();
+    const coverUrlInput = document.getElementById('set-cover-url').value.trim();
+
+    // Use data attributes to store the original loaded URLs as fallback
+    const avatarPreview = document.getElementById('avatar-preview');
+    const coverPreview = document.getElementById('cover-preview');
+    const avatarUrl = avatarUrlInput || avatarPreview.dataset.originalUrl || '';
+    const coverUrl = coverUrlInput || coverPreview.dataset.originalUrl || '';
+
     const data = {
         username: document.getElementById('set-username').value.trim().replace('@', ''),
         fullName: document.getElementById('set-fullname').value.trim(),
         bio: document.getElementById('set-bio').value.trim(),
         gender: document.getElementById('set-gender').value,
-        avatarUrl: document.getElementById('set-avatar-url').value.trim(),
-        coverImageUrl: document.getElementById('set-cover-url').value.trim()
+        avatarUrl: avatarUrl,
+        coverImageUrl: coverUrl
     };
 
     try {

@@ -40,7 +40,7 @@ public class GeminiService : IGeminiService
 
         try
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
             
             var parts = new List<object>
             {
@@ -85,15 +85,42 @@ public class GeminiService : IGeminiService
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync(url, content);
+            var responseText = await response.Content.ReadAsStringAsync();
+            
             if (!response.IsSuccessStatusCode)
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"[GeminiService ERROR] Gemini API returned status code {response.StatusCode}: {errorContent}");
+                Console.WriteLine($"[GeminiService ERROR] Gemini API returned {response.StatusCode}. Response body: {responseText}");
+                
+                // Try to extract Gemini error message
+                string apiErrorMsg = string.Empty;
+                try
+                {
+                    using var errDoc = JsonDocument.Parse(responseText);
+                    if (errDoc.RootElement.TryGetProperty("error", out var errObj) &&
+                        errObj.TryGetProperty("message", out var msgProp))
+                    {
+                        apiErrorMsg = msgProp.GetString() ?? string.Empty;
+                    }
+                }
+                catch { /* ignore parse errors */ }
+                
+                // Return error result with actual API message if available
+                if (!string.IsNullOrEmpty(apiErrorMsg))
+                {
+                    return JsonSerializer.Serialize(new
+                    {
+                        success = false,
+                        matchPercentage = 0,
+                        extractedInfo = new { citizenId = "", fullName = "", gender = "Nam", dateOfBirth = "", hometown = "" },
+                        livenessCheck = "Failed",
+                        message = $"Lỗi Gemini API: {apiErrorMsg}"
+                    });
+                }
+                
                 return GetMockResponse(prompt);
             }
 
-            var responseJson = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(responseJson);
+            using var doc = JsonDocument.Parse(responseText);
             
             // Extract the text content from the Gemini response structure:
             // candidates[0].content.parts[0].text
@@ -132,11 +159,15 @@ Bạn là hệ thống xác thực danh tính của Zynk Platform. Các ảnh đ
 
 **NHIỆM VỤ 2 - ĐỐI SÁNH KHUÔN MẶT:**
 So sánh khuôn mặt nhỏ in trên thẻ CCCD với khuôn mặt trong ảnh selfie cuối.
-- Phân tích theo: tỷ lệ khuôn mặt, khoảng cách 2 mắt, hình dạng mũi, đường viền hàm.
-- Bỏ qua hoàn toàn: ánh sáng, màu sắc, tuổi tác, góc chụp, tóc, kính, biểu cảm.
+- Phân tích theo: tỷ lệ khuôn mặt, khoảng cách 2 mắt, hình dạng mũi, đường viền hàm, hình dạng tai.
+- Bỏ qua hoàn toàn: ánh sáng, màu sắc, tuổi tác, góc chụp, tóc, kính, biểu cảm, mụn, râu.
+- Hãy cực kỳ khoan dung: ảnh CCCD thường chất lượng thấp, nhỏ và bị nén. Nếu khuôn mặt trông giống nhau theo bất kỳ tiêu chí nào, hãy cho điểm cao.
 - Cho điểm matchPercentage từ 0 đến 100.
+- Nếu cùng là một người nhưng ảnh CCCD nhỏ/mờ: cho điểm 70-85.
 - Nếu ảnh selfie quá tối/mờ nhưng vẫn nhìn thấy khuôn mặt: cho điểm 65-75.
-- Nếu không thể nhìn thấy khuôn mặt trong selfie: cho điểm 50.
+- Nếu không thể nhìn thấy khuôn mặt trong selfie: cho điểm 45.
+- Nếu rõ ràng là cùng một người: cho điểm tối thiểu 75.
+- Ngưỡng tối thiểu để xác thực là 55%.
 
 **QUY TẮC TRẢ VỀ:**
 - Luôn trả về livenessCheck = ""Passed"" (bỏ qua liveness, chỉ xét face matching).
@@ -249,7 +280,10 @@ Trả về kết quả dưới định dạng JSON thô duy nhất với cấu t
     private string GetMockResponse(string prompt)
     {
         // Generate mock responses for our services if API Key isn't set or fails
-        if (prompt.Contains("OCR CCCD") || prompt.Contains("LIVENESS DETECTION"))
+        // Detect identity verification prompts by checking for key phrases in both old and new format
+        if (prompt.Contains("OCR CCCD") || prompt.Contains("LIVENESS DETECTION") ||
+            prompt.Contains("ĐỐI SÁNH KHUÔN MẶT") || prompt.Contains("CCCD mặt trước") ||
+            prompt.Contains("ĐỌC THÔNG TIN CCCD") || prompt.Contains("xác thực danh tính"))
         {
             return JsonSerializer.Serialize(new
             {
@@ -264,7 +298,7 @@ Trả về kết quả dưới định dạng JSON thô duy nhất với cấu t
                     hometown = ""
                 },
                 livenessCheck = "Failed",
-                message = "Xác thực thất bại: Cần cấu hình Gemini API Key hợp lệ để thực hiện xác thực sinh trắc học. Liên hệ quản trị viên hệ thống."
+                message = "Xác thực thất bại: Gemini API Key không hợp lệ hoặc chưa được cấu hình. Vui lòng lấy API Key tại https://aistudio.google.com (định dạng: AIza...) và cấu hình trong appsettings.json."
             });
         }
         else if (prompt.Contains("công cụ tìm kiếm thông minh bằng AI"))

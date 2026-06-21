@@ -760,6 +760,53 @@
             transition: width 1s ease;
         }
 
+        /* ===== VERIFICATION METHOD SELECTOR ===== */
+        .method-card {
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius);
+            padding: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+        .method-card:hover {
+            border-color: var(--purple);
+            background: var(--purple-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        .method-card.active {
+            border-color: var(--purple);
+            background: var(--purple-light);
+            box-shadow: 0 4px 12px rgba(124,58,237,0.15);
+        }
+        .method-icon {
+            font-size: 1.8rem;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+        .method-card:hover .method-icon,
+        .method-card.active .method-icon {
+            color: var(--purple);
+        }
+        .method-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+        }
+        .method-details strong {
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+        .method-details span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 600px) {
             .register-inner { padding: 1.5rem; }
@@ -767,6 +814,7 @@
             .form-grid-2 { grid-template-columns: 1fr; }
             .steps-indicator { gap: 4px; }
             .step-label { font-size: 0.72rem; }
+            .verification-method-selector div { grid-template-columns: 1fr !important; }
         }
     </style>
 </head>
@@ -824,7 +872,30 @@
         <div class="register-header">
             <div class="brand-logo"><i class="fa-solid fa-store"></i></div>
             <h1>Đăng ký <span>Cửa hàng Zynk</span></h1>
-            <p>Xác thực danh tính bằng AI — nhanh chóng, an toàn, tự động</p>
+            <p>Chọn phương thức xác thực phù hợp để mở cửa hàng của bạn</p>
+        </div>
+
+        <!-- Selection of verification method -->
+        <div class="verification-method-selector" style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;">
+            <p class="section-title" style="margin-bottom: 14px; font-weight:700;">
+                <i class="fa-solid fa-shield-halved"></i> Chọn phương thức xác thực danh tính
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="method-card active" id="method-ai" onclick="switchMethod('ai')">
+                    <div class="method-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="method-details">
+                        <strong>Lựa chọn 1: AI xác thực</strong>
+                        <span>Tự động nhận diện & mở shop tức thì</span>
+                    </div>
+                </div>
+                <div class="method-card" id="method-manual" onclick="switchMethod('manual')">
+                    <div class="method-icon"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="method-details">
+                        <strong>Lựa chọn 2: Gửi Admin kiểm tra</strong>
+                        <span>Điền thông tin thủ công, Admin phê duyệt</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Rejection box -->
@@ -1000,6 +1071,80 @@
     let isAiVerified = false;
     let localStream = null;
     let capturedSelfieBlob = null;
+    let verificationMethod = 'ai'; // 'ai' or 'manual'
+
+    function switchMethod(method) {
+        if (verificationMethod === method) return;
+        verificationMethod = method;
+
+        // Toggle selector cards
+        document.getElementById('method-ai').classList.toggle('active', method === 'ai');
+        document.getElementById('method-manual').classList.toggle('active', method === 'manual');
+
+        // Reset step 1 verification state
+        isAiVerified = false;
+        aiMatchPercentage = 0;
+        
+        // Hide AI result badge
+        document.getElementById('ai-result-badge').classList.remove('active');
+        document.getElementById('match-bar').style.width = '0%';
+
+        // Update indicators
+        const stepLbl1 = document.getElementById('step-lbl-1');
+        const stepDot1 = document.getElementById('step-dot-1');
+        const stepLine1 = document.getElementById('step-line-1');
+        const step2Container = document.getElementById('step-2-container');
+
+        // Reset indicators state to active for step 1, pending for step 2
+        stepDot1.className = 'step-circle active';
+        stepDot1.innerHTML = verificationMethod === 'ai' ? '<i class="fa-solid fa-fingerprint"></i>' : '<i class="fa-solid fa-user-shield"></i>';
+        stepLbl1.className = 'step-label active';
+        stepLbl1.textContent = verificationMethod === 'ai' ? 'Xác thực AI' : 'Xác thực thủ công';
+        stepLine1.classList.remove('done');
+
+        const stepDot2 = document.getElementById('step-dot-2');
+        stepDot2.className = 'step-circle pending';
+        stepDot2.innerHTML = '2';
+        document.getElementById('step-lbl-2').className = 'step-label';
+
+        const stepDot3 = document.getElementById('step-dot-3');
+        stepDot3.className = 'step-circle pending';
+        stepDot3.innerHTML = '3';
+        document.getElementById('step-lbl-3').className = 'step-label';
+
+        // Lock step 2 container initially
+        step2Container.classList.remove('unlocked');
+
+        // Update step 1 texts
+        const sectionTitle = document.querySelector('.ai-upload-grid').previousElementSibling;
+        if (verificationMethod === 'ai') {
+            sectionTitle.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Bước 1 — Tải ảnh CCCD & Chụp selfie để xác thực';
+            document.getElementById('btn-ai-verify').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Xác Thực Tự Động Bằng AI ✨';
+            document.getElementById('btn-ai-verify').disabled = false;
+        } else {
+            sectionTitle.innerHTML = '<i class="fa-solid fa-user-shield"></i> Bước 1 — Tải tài liệu để gửi Admin duyệt';
+            document.getElementById('btn-ai-verify').innerHTML = '<i class="fa-solid fa-arrow-right"></i> Xác Nhận & Điền Thông Tin';
+            document.getElementById('btn-ai-verify').disabled = false;
+        }
+
+        // Reset form inputs & attributes
+        const fields = ['citizen-id', 'full-name', 'hometown', 'dob'];
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            el.value = '';
+            el.classList.remove('verified');
+            el.removeAttribute('readonly');
+            if (method === 'ai') {
+                el.placeholder = 'Tự động điền qua AI';
+            } else {
+                el.placeholder = 'Nhập thông tin';
+            }
+        });
+        const genderEl = document.getElementById('gender');
+        genderEl.value = 'Nam';
+        genderEl.classList.remove('verified');
+        genderEl.removeAttribute('disabled');
+    }
 
     // ===== TOAST SYSTEM =====
     function showToast(type, title, msg, duration = 5000) {
@@ -1165,15 +1310,28 @@
             const fileSelfie = capturedSelfieBlob;
 
             if (!fileFront) {
-                showToast('warning', 'Thiếu ảnh CCCD', 'Vui lòng tải lên ảnh mặt trước CCCD trước khi xác thực.');
+                showToast('warning', 'Thiếu ảnh CCCD', 'Vui lòng tải lên ảnh mặt trước CCCD.');
                 return;
             }
             if (!fileSelfie) {
-                showToast('warning', 'Thiếu ảnh Selfie', 'Vui lòng chụp ảnh selfie trực tiếp bằng Camera (nhấn vào ô Chụp Selfie).');
+                showToast('warning', 'Thiếu ảnh Selfie', 'Vui lòng chụp ảnh selfie trực tiếp bằng Camera.');
                 return;
             }
 
             const scanner = document.getElementById('scanner-overlay');
+            // If manual method, update scanning message to say "Uploading..."
+            if (verificationMethod === 'manual') {
+                const scannerTitle = scanner.querySelector('h3');
+                const scannerSub = scanner.querySelector('p');
+                if (scannerTitle) scannerTitle.textContent = "Đang tải ảnh lên...";
+                if (scannerSub) scannerSub.textContent = "Tài liệu đang được upload lên hệ thống";
+            } else {
+                const scannerTitle = scanner.querySelector('h3');
+                const scannerSub = scanner.querySelector('p');
+                if (scannerTitle) scannerTitle.textContent = "AI đang phân tích...";
+                if (scannerSub) scannerSub.textContent = "Đang xử lý ảnh CCCD & đối sánh khuôn mặt";
+            }
+
             scanner.style.display = 'flex';
             document.getElementById('btn-ai-verify').disabled = true;
             setStep(1);
@@ -1191,7 +1349,23 @@
                 uploadedSelfieUrl = (await window.api.uploadImage(selfieFile)).url;
                 setStep(3);
 
-                // Call AI verify
+                if (verificationMethod === 'manual') {
+                    // Manual verification - skip AI verification API call
+                    scanner.style.display = 'none';
+                    const step2 = document.getElementById('step-2-container');
+                    step2.classList.add('unlocked');
+                    markStepDone(1);
+
+                    showToast('success', 'Đã lưu tài liệu!', 'Vui lòng điền thông tin cửa hàng ở Bước 2.');
+
+                    setTimeout(() => {
+                        step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        setTimeout(() => document.getElementById('shop-name').focus(), 400);
+                    }, 600);
+                    return;
+                }
+
+                // Call AI verify (for AI method)
                 const aiResult = await window.api.post('seller/verify-identity', {
                     frontCccdUrl: uploadedFrontUrl,
                     backCccdUrl: uploadedBackUrl,
@@ -1199,10 +1373,10 @@
                 });
 
                 scanner.style.display = 'none';
-                document.getElementById('btn-ai-verify').disabled = false;
+                document.getElementById('btn-ai-verify').disabled = true; // Keep disabled on success
 
                 const matchPercent = aiResult.matchPercentage || 0;
-                const isFaceMatch = matchPercent >= 55;
+                const isFaceMatch = aiResult.success === true;
                 // Liveness check bị bỏ — Gemini không phải model chuyên dụng, luôn cho qua
                 const isLivenessPassed = true;
 
@@ -1246,9 +1420,13 @@
                     }, 600);
 
                 } else {
+                    document.getElementById('btn-ai-verify').disabled = false; // Re-enable if failed
                     isAiVerified = false;
-                    const reason = `Khuôn mặt trong selfie chỉ khớp <strong>${matchPercent}%</strong> với ảnh CCCD (yêu cầu tối thiểu 55%).<br><br><b>Gợi ý để thử lại:</b><br>• Đảm bảo đủ ánh sáng, không quá tối<br>• Nhìn thẳng vào camera, không nghiêng mặt<br>• Không đội mũ hoặc đeo kính râm<br>• Giữ khuôn mặt trong vùng oval`;
-                    showModal('error', 'Khuôn mặt Chưa Trùng Khớp', reason, 'Chụp lại Selfie');
+                    let reason = aiResult.message;
+                    if (!reason) {
+                        reason = `Khuôn mặt trong selfie chỉ khớp <strong>${matchPercent}%</strong> với ảnh CCCD (yêu cầu tối thiểu 55%).<br><br><b>Gợi ý để thử lại:</b><br>• Đảm bảo đủ ánh sáng, không quá tối<br>• Nhìn thẳng vào camera, không nghiêng mặt<br>• Không đội mũ hoặc đeo kính râm<br>• Giữ khuôn mặt trong vùng oval`;
+                    }
+                    showModal('error', 'Xác thực Không Thành Công', reason, 'Thử lại');
                 }
 
             } catch (err) {
@@ -1262,8 +1440,13 @@
         // Form submit
         document.getElementById('register-form').onsubmit = async (e) => {
             e.preventDefault();
-            if (!isAiVerified) {
+            
+            if (verificationMethod === 'ai' && !isAiVerified) {
                 showToast('warning', 'Chưa xác thực AI', 'Vui lòng hoàn thành Bước 1 — Xác thực AI trước khi gửi hồ sơ.');
+                return;
+            }
+            if (verificationMethod === 'manual' && (!uploadedFrontUrl || !uploadedSelfieUrl)) {
+                showToast('warning', 'Thiếu tài liệu', 'Vui lòng hoàn thành Bước 1 — Xác nhận ảnh và Selfie.');
                 return;
             }
 
@@ -1285,15 +1468,25 @@
                 cccdBackUrl: uploadedBackUrl,
                 selfieUrl: uploadedSelfieUrl,
                 aiMatchPercentage: aiMatchPercentage,
-                isAiVerified: isAiVerified
+                isAiVerified: verificationMethod === 'ai' && isAiVerified
             };
             document.getElementById('gender').setAttribute('disabled', true);
 
             try {
-                await window.api.post('seller/apply', data);
+                const result = await window.api.post('seller/apply', data);
                 markStepDone(2);
                 markStepDone(3);
-                window.location.href = 'pending.html';
+
+                if (result && result.isInstant) {
+                    // AI-verified: shop created instantly — go straight to seller dashboard
+                    showToast('success', 'Cửa hàng đã được kích hoạt!', result.message || 'Chào mừng bạn đến với Zynk Seller Center!');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    // Manual: waiting for admin review
+                    window.location.href = 'pending.html';
+                }
             } catch (err) {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi Hồ Sơ Phê Duyệt';
