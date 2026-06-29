@@ -92,7 +92,7 @@ public class PostsController : ControllerBase
             .Include(p => p.Comments)
             .Include(p => p.Poll)
                 .ThenInclude(poll => poll.Options)
-            .Where(p => p.Status == PostStatus.Published && !blockedIds.Contains(p.AuthorId));
+            .Where(p => p.Status == PostStatus.Published && !blockedIds.Contains(p.AuthorId) && p.GroupId == null);
 
         List<Post> posts = new List<Post>();
 

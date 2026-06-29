@@ -96,4 +96,43 @@ public class GroupsController : ControllerBase
         if (posts == null) return NotFound("Group not found");
         return Ok(posts);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateGroup(Guid id, [FromBody] UpdateGroupRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest("Name is required");
+
+        var updated = await _groupService.UpdateGroupAsync(id, request, GetCurrentUserId());
+        if (updated == null) return Forbid(); // Unauthorized or not found
+
+        return Ok(updated);
+    }
+
+    [HttpGet("{id}/pending-members")]
+    public async Task<IActionResult> GetPendingMembers(Guid id)
+    {
+        var pending = await _groupService.GetPendingMembersAsync(id, GetCurrentUserId());
+        if (pending == null) return Forbid(); // Unauthorized or not found
+
+        return Ok(pending);
+    }
+
+    [HttpPost("{id}/approve/{userId}")]
+    public async Task<IActionResult> ApproveMember(Guid id, Guid userId)
+    {
+        var success = await _groupService.ApproveMemberAsync(id, userId, GetCurrentUserId());
+        if (!success) return BadRequest("Could not approve request");
+
+        return Ok(new { message = "Approved successfully" });
+    }
+
+    [HttpPost("{id}/reject/{userId}")]
+    public async Task<IActionResult> RejectMember(Guid id, Guid userId)
+    {
+        var success = await _groupService.RejectMemberAsync(id, userId, GetCurrentUserId());
+        if (!success) return BadRequest("Could not reject request");
+
+        return Ok(new { message = "Rejected successfully" });
+    }
 }

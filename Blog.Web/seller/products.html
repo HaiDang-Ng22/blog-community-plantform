@@ -497,9 +497,11 @@
             document.getElementById('edit-p-price').value = p.price;
             document.getElementById('edit-p-stock').value = p.stock;
             document.getElementById('edit-p-desc').value = p.description || '';
-            document.getElementById('edit-p-images').value = p.images ? p.images.join(', ') : p.featuredImageUrl || '';
-            document.getElementById('edit-p-variant-group1').value = p.variantGroup1 || '';
-            document.getElementById('edit-p-variant-group2').value = p.variantGroup2 || '';
+            document.getElementById('edit-p-images').value = p.images && p.images.length > 0
+                ? p.images.map(img => typeof img === 'string' ? img : img.url).filter(Boolean).join(', ')
+                : (p.featuredImageUrl || '');
+            document.getElementById('edit-p-variant-group1').value = p.variantGroupName1 || p.variantGroup1 || '';
+            document.getElementById('edit-p-variant-group2').value = p.variantGroupName2 || p.variantGroup2 || '';
 
             // Handle edit cascade selects
             document.getElementById('edit-p-category').value = p.categoryId || '';

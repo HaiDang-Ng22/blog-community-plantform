@@ -302,10 +302,10 @@ public class UsersController : ControllerBase
         
         if (user == null) return NotFound();
 
-        // Kiểm tra username duy nhất nếu thay đổi
+        // Kiểm tra username duy nhất nếu thay đổi (bỏ qua chính người dùng hiện tại)
         if (user.Username != request.Username)
         {
-            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username && u.Id != userId))
                 return BadRequest(new { message = "Tên người dùng đã được sử dụng." });
             
             user.Username = request.Username;

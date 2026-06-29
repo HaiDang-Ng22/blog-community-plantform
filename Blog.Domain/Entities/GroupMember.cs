@@ -6,6 +6,12 @@ public enum GroupRole
     Admin
 }
 
+public enum GroupMemberStatus
+{
+    Pending,
+    Approved
+}
+
 public class GroupMember
 {
     public Guid GroupId { get; set; }
@@ -15,5 +21,6 @@ public class GroupMember
     public virtual User User { get; set; } = null!;
 
     public GroupRole Role { get; set; } = GroupRole.Member;
+    public GroupMemberStatus Status { get; set; } = GroupMemberStatus.Approved;
     public DateTime JoinedAt { get; set; }
 }

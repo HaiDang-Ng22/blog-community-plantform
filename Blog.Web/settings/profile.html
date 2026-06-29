@@ -21,7 +21,6 @@
     </header>
 
     <div class="settings-container">
-        <!-- Sidebar dynamically rendered by settings-core.js -->
         <aside class="s-sidebar" id="s-sidebar"></aside>
 
         <main class="s-content">
@@ -30,34 +29,81 @@
                 <p class="s-subtitle">Quản lý thông tin hiển thị công khai của bạn trên mạng xã hội Zynk.</p>
             </div>
 
+            <!-- Status message -->
+            <div id="settings-msg" class="message-box hidden" style="margin-bottom:1rem;"></div>
+
+            <!-- Images Card -->
             <div class="s-card">
-                <h2 class="s-card-title"><i class="fa-solid fa-address-card"></i> Thông tin cơ bản</h2>
-                
-                <form id="profile-form">
-                    <div class="s-avatar-upload">
-                        <img id="avatar-preview" src="../assets/default-avatar.png" class="s-avatar-preview">
-                        <div>
-                            <button type="button" class="s-btn s-btn-primary" onclick="document.getElementById('avatar-file').click()">
-                                <i class="fa-solid fa-camera"></i> Đổi ảnh đại diện
-                            </button>
-                            <p style="font-size: 0.8rem; color: var(--s-text-muted); margin-top: 8px;">Dịnh dạng JPG, PNG. Tối đa 2MB.</p>
-                            <input type="file" id="avatar-file" hidden accept="image/*" onchange="handleFileSelect(this, 'avatar')">
+                <h2 class="s-card-title"><i class="fa-solid fa-images"></i> Ảnh đại diện &amp; Ảnh bìa</h2>
+
+                <!-- Avatar Upload -->
+                <div class="s-avatar-upload" style="margin-bottom:1.5rem;">
+                    <div style="position:relative;flex-shrink:0;">
+                        <img id="avatar-preview" src="../assets/default-avatar.png" class="s-avatar-preview"
+                             onerror="this.src='https://ui-avatars.com/api/?name=U&background=6366f1&color=fff'">
+                        <div id="avatar-upload-overlay" style="
+                            display:none;position:absolute;inset:0;border-radius:50%;
+                            background:rgba(99,102,241,0.7);align-items:center;
+                            justify-content:center;color:#fff;font-size:1.2rem;cursor:pointer;">
+                            <i class="fa-solid fa-camera"></i>
                         </div>
                     </div>
+                    <div>
+                        <label class="s-label" style="margin-bottom:6px;">Ảnh đại diện</label>
+                        <button type="button" class="s-btn s-btn-primary" id="avatar-upload-btn"
+                                onclick="document.getElementById('avatar-file').click()">
+                            <i class="fa-solid fa-camera"></i> Thay đổi ảnh đại diện
+                        </button>
+                        <p style="font-size:0.8rem;color:var(--s-text-muted);margin-top:8px;">JPG, PNG. Tối đa 5MB.</p>
+                        <input type="file" id="avatar-file" hidden accept="image/*" onchange="handleAvatarSelect(this)">
+                    </div>
+                </div>
 
+                <!-- Cover Upload -->
+                <div>
+                    <label class="s-label" style="margin-bottom:8px;display:block;">Ảnh bìa</label>
+                    <div style="position:relative;width:100%;height:130px;border-radius:12px;overflow:hidden;
+                                background:linear-gradient(135deg,#1a1a2e,#0f3460);margin-bottom:10px;cursor:pointer;"
+                         onclick="document.getElementById('cover-file').click()">
+                        <img id="cover-preview" src="" alt="Ảnh bìa"
+                             style="width:100%;height:100%;object-fit:cover;display:none;">
+                        <div id="cover-placeholder" style="
+                            position:absolute;inset:0;display:flex;flex-direction:column;
+                            align-items:center;justify-content:center;color:rgba(255,255,255,0.5);gap:6px;">
+                            <i class="fa-solid fa-panorama" style="font-size:1.8rem;"></i>
+                            <span style="font-size:0.8rem;">Nhấn để chọn ảnh bìa</span>
+                        </div>
+                    </div>
+                    <input type="file" id="cover-file" hidden accept="image/*" onchange="handleCoverSelect(this)">
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="s-card" style="margin-top:1rem;">
+                <h2 class="s-card-title"><i class="fa-solid fa-user-pen"></i> Thông tin cơ bản</h2>
+
+                <form id="profile-form">
                     <div class="s-form-group">
                         <label class="s-label">Tên người dùng (@username)</label>
-                        <input type="text" id="set-username" class="s-input" placeholder="Ví dụ: haidang_nguyen">
+                        <input type="text" id="set-username" class="s-input"
+                               placeholder="Ví dụ: haidang_nguyen" autocomplete="username">
+                        <p style="font-size:0.78rem;color:var(--s-text-muted);margin-top:4px;">
+                            Chỉ dùng chữ cái, số và dấu gạch dưới.
+                        </p>
                     </div>
 
                     <div class="s-form-group">
                         <label class="s-label">Họ và tên</label>
-                        <input type="text" id="set-fullname" class="s-input" placeholder="Nhập họ tên đầy đủ">
+                        <input type="text" id="set-fullname" class="s-input"
+                               placeholder="Nhập họ tên đầy đủ" autocomplete="name">
                     </div>
 
                     <div class="s-form-group">
                         <label class="s-label">Tiểu sử (Bio)</label>
-                        <textarea id="set-bio" class="s-textarea" rows="4" placeholder="Giới thiệu ngắn về bản thân..."></textarea>
+                        <textarea id="set-bio" class="s-textarea" rows="4"
+                                  placeholder="Giới thiệu ngắn về bản thân..."></textarea>
+                        <p style="font-size:0.78rem;color:var(--s-text-muted);margin-top:4px;"
+                           id="bio-char-count">0 / 200 ký tự</p>
                     </div>
 
                     <div class="s-form-group">
@@ -69,85 +115,202 @@
                         </select>
                     </div>
 
-                    <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                        <button type="submit" class="s-btn s-btn-primary">Lưu thay đổi</button>
-                        <button type="reset" class="s-btn" style="background: var(--s-border);">Hủy</button>
+                    <div style="margin-top:2rem;display:flex;gap:1rem;">
+                        <button type="submit" class="s-btn s-btn-primary" id="save-profile-btn">
+                            <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+                        </button>
+                        <button type="button" class="s-btn" style="background:var(--s-border);"
+                                onclick="loadSettingsData()">
+                            <i class="fa-solid fa-rotate-right"></i> Hoàn tác
+                        </button>
                     </div>
                 </form>
             </div>
-
-            <div id="settings-msg" class="message-box hidden"></div>
         </main>
     </div>
 
+    <!-- Load api + common first -->
     <script src="../js/api.js"></script>
     <script src="../js/common.js"></script>
-    <script src="../js/settings-core.js"></script>
-    <script>
-        // Track actual uploaded avatar URL separately from preview
-        let _currentAvatarUrl = '';
-        let _currentCoverUrl = '';
 
-        // Specific logic for Profile page
-        async function onSettingsLoad(user) {
-            document.getElementById('set-username').value = user.username || '';
-            document.getElementById('set-fullname').value = user.fullName || '';
-            document.getElementById('set-bio').value = user.bio || '';
-            document.getElementById('set-gender').value = user.gender || 'Male';
-            _currentAvatarUrl = user.avatarUrl || '';
-            _currentCoverUrl = user.coverImageUrl || '';
-            if (user.avatarUrl) {
-                document.getElementById('avatar-preview').src = user.avatarUrl;
+    <!-- Define onSettingsLoad BEFORE settings-core.js so it's available when called -->
+    <script>
+        let _currentAvatarUrl = '';
+        let _currentCoverUrl  = '';
+
+        // This function is called by settings-core.js after loading user data
+        function onSettingsLoad(user) {
+            if (!user) return;
+
+            const usernameEl = document.getElementById('set-username');
+            const fullnameEl = document.getElementById('set-fullname');
+            const bioEl      = document.getElementById('set-bio');
+            const genderEl   = document.getElementById('set-gender');
+            const bioCount   = document.getElementById('bio-char-count');
+
+            if (usernameEl) usernameEl.value = user.username || '';
+            if (fullnameEl) fullnameEl.value = user.fullName || '';
+            if (bioEl)      bioEl.value      = user.bio      || '';
+            if (genderEl)   genderEl.value   = user.gender   || 'Other';
+            if (bioEl && bioCount) bioCount.textContent = bioEl.value.length + ' / 200 ký tự';
+
+            _currentAvatarUrl = user.avatarUrl     || '';
+            _currentCoverUrl  = user.coverImageUrl || '';
+
+            const avatarImg = document.getElementById('avatar-preview');
+            if (user.avatarUrl && avatarImg) avatarImg.src = user.avatarUrl;
+
+            const coverImg = document.getElementById('cover-preview');
+            const coverPlh = document.getElementById('cover-placeholder');
+            if (user.coverImageUrl && coverImg) {
+                coverImg.src = user.coverImageUrl;
+                coverImg.style.display = 'block';
+                if (coverPlh) coverPlh.style.display = 'none';
             }
         }
+    </script>
 
-        document.getElementById('profile-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = e.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+    <!-- Now load settings-core.js (will call onSettingsLoad which is now defined) -->
+    <script src="../js/settings-core.js"></script>
 
-            const data = {
-                username: document.getElementById('set-username').value,
-                fullName: document.getElementById('set-fullname').value,
-                bio: document.getElementById('set-bio').value,
-                gender: document.getElementById('set-gender').value,
-                avatarUrl: _currentAvatarUrl,
-                coverImageUrl: _currentCoverUrl
-            };
-
-            try {
-                const res = await window.api.put('users/profile', data);
-                showSettingsStatus('Cập nhật hồ sơ thành công!');
-                // Update local cache
-                const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-                localStorage.setItem('user_info', JSON.stringify({ ...userInfo, ...data }));
-            } catch (err) {
-                showSettingsStatus(err.message || 'Lỗi khi lưu hồ sơ', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Lưu thay đổi';
+    <!-- Rest of page-specific logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Bio char counter
+            const bioEl    = document.getElementById('set-bio');
+            const bioCount = document.getElementById('bio-char-count');
+            if (bioEl && bioCount) {
+                bioEl.addEventListener('input', () => {
+                    const len = bioEl.value.length;
+                    bioCount.textContent = len + ' / 200 ký tự';
+                    bioCount.style.color = len > 200 ? '#ef4444' : 'var(--s-text-muted)';
+                });
             }
-        };
 
-        async function handleFileSelect(input) {
+            // Avatar hover overlay
+            const avatarImg     = document.getElementById('avatar-preview');
+            const avatarOverlay = document.getElementById('avatar-upload-overlay');
+            if (avatarImg && avatarOverlay) {
+                avatarImg.addEventListener('mouseenter',     () => avatarOverlay.style.display = 'flex');
+                avatarImg.addEventListener('mouseleave',     () => avatarOverlay.style.display = 'none');
+                avatarOverlay.addEventListener('mouseenter', () => avatarOverlay.style.display = 'flex');
+                avatarOverlay.addEventListener('mouseleave', () => avatarOverlay.style.display = 'none');
+                avatarOverlay.addEventListener('click',      () => document.getElementById('avatar-file').click());
+            }
+
+            // Form submit
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('save-profile-btn');
+
+                const username = (document.getElementById('set-username').value || '').trim().replace('@', '');
+                const fullName = (document.getElementById('set-fullname').value || '').trim();
+                const bio      = (document.getElementById('set-bio').value      || '').trim();
+                const gender   =  document.getElementById('set-gender').value;
+
+                if (!username) {
+                    showSettingsStatus('Tên người dùng không được để trống.', 'error');
+                    return;
+                }
+                if (!fullName) {
+                    showSettingsStatus('Họ và tên không được để trống.', 'error');
+                    return;
+                }
+                if (bio.length > 200) {
+                    showSettingsStatus('Tiểu sử không được vượt quá 200 ký tự.', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+
+                const payload = {
+                    username,
+                    fullName,
+                    bio,
+                    gender,
+                    avatarUrl:     _currentAvatarUrl,
+                    coverImageUrl: _currentCoverUrl
+                };
+
+                try {
+                    await window.api.put('users/profile', payload);
+
+                    // Sync cache
+                    const cached = JSON.parse(localStorage.getItem('user_info') || '{}');
+                    localStorage.setItem('user_info', JSON.stringify({ ...cached, ...payload }));
+
+                    showSettingsStatus('✅ Cập nhật hồ sơ thành công!', 'success');
+                } catch (err) {
+                    console.error('Profile update error:', err);
+                    showSettingsStatus(err.message || 'Lỗi khi lưu hồ sơ. Vui lòng thử lại.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi';
+                }
+            });
+        });
+
+        // Avatar upload handler
+        async function handleAvatarSelect(input) {
             const file = input.files[0];
             if (!file) return;
 
-            const preview = document.getElementById('avatar-preview');
-            const originalSrc = preview.src;
-            preview.style.opacity = '0.5';
+            const btn  = document.getElementById('avatar-upload-btn');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải...';
+
+            // Instant local preview
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const ap = document.getElementById('avatar-preview');
+                if (ap) ap.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
 
             try {
                 const result = await window.api.uploadImage(file);
-                preview.src = result.url;
-                _currentAvatarUrl = result.url; // Store the actual URL
-                showSettingsStatus('Đã tải ảnh lên thành công!');
+                _currentAvatarUrl = result.url;
+                const ap = document.getElementById('avatar-preview');
+                if (ap) ap.src = result.url;
+                showSettingsStatus('Đã tải ảnh đại diện lên thành công!', 'success');
             } catch (err) {
-                showSettingsStatus(err.message, 'error');
-                preview.src = originalSrc;
+                showSettingsStatus('Lỗi khi tải ảnh: ' + (err.message || ''), 'error');
             } finally {
-                preview.style.opacity = '1';
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                input.value = '';
+            }
+        }
+
+        // Cover upload handler
+        async function handleCoverSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const coverImg = document.getElementById('cover-preview');
+            const coverPlh = document.getElementById('cover-placeholder');
+
+            // Instant local preview
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                if (coverImg) {
+                    coverImg.src = ev.target.result;
+                    coverImg.style.display = 'block';
+                    if (coverPlh) coverPlh.style.display = 'none';
+                }
+            };
+            reader.readAsDataURL(file);
+
+            try {
+                const result = await window.api.uploadImage(file);
+                _currentCoverUrl = result.url;
+                showSettingsStatus('Đã tải ảnh bìa lên thành công!', 'success');
+            } catch (err) {
+                showSettingsStatus('Lỗi khi tải ảnh bìa: ' + (err.message || ''), 'error');
+            } finally {
+                input.value = '';
             }
         }
     </script>

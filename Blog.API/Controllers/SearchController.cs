@@ -53,6 +53,7 @@ public class SearchController : ControllerBase
         var posts = await _context.Posts
             .Where(p =>
                 p.Status == Blog.Domain.Entities.PostStatus.Published &&
+                p.GroupId == null &&
                 (
                     (p.Title != null && p.Title.ToLower().Contains(query)) ||
                     (p.Content != null && p.Content.ToLower().Contains(query)) ||
@@ -89,7 +90,7 @@ public class SearchController : ControllerBase
 
         // 1. Fetch recent posts and products to search semantically
         var posts = await _context.Posts
-            .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published)
+            .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published && p.GroupId == null)
             .OrderByDescending(p => p.CreatedAt)
             .Take(30)
             .Select(p => new { p.Id, p.Title, p.Summary, p.Content })
@@ -257,7 +258,7 @@ public class SearchController : ControllerBase
 
         // Fetch recent items to give Gemini context about what's currently on Zynk
         var posts = await _context.Posts
-            .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published)
+            .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published && p.GroupId == null)
             .OrderByDescending(p => p.CreatedAt)
             .Take(15)
             .Select(p => new { p.Id, p.Title, p.Summary })

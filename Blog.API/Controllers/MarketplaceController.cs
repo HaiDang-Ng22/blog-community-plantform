@@ -106,6 +106,16 @@ public class MarketplaceController : ControllerBase
         return Ok(dtos);
     }
 
+    [HttpGet("debug-db")]
+    public async Task<IActionResult> DebugDb()
+    {
+        var products = await _context.Products.Select(p => new { p.Id, p.Name, p.Status, p.ShopId, p.CategoryId }).ToListAsync();
+        var shops = await _context.Shops.Select(s => new { s.Id, s.Name, s.IsSuspended, s.UserId }).ToListAsync();
+        var categories = await _context.Categories.Select(c => new { c.Id, c.Name, c.ParentCategoryId }).ToListAsync();
+        var shopApps = await _context.ShopApplications.Select(sa => new { sa.Id, sa.ShopName, sa.Status, sa.UserId, sa.IsAiVerified }).ToListAsync();
+        return Ok(new { products, shops, categories, shopApps });
+    }
+
     private List<Guid> GetCategoryIdsRecursiveInMemory(Guid parentId, List<Category> allCategories)
     {
         var ids = new List<Guid> { parentId };

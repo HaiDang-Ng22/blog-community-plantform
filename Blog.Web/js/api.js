@@ -60,8 +60,10 @@ async function apiRequest(endpoint, options = {}) {
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_info');
                 // Only redirect if not already on auth.html
+                // Use absolute path so it works from any subfolder (settings/, seller/, etc.)
                 if (!window.location.pathname.includes('auth.html')) {
-                    window.location.href = 'auth.html?message=session_expired';
+                    const root = window.location.origin;
+                    window.location.href = `${root}/auth.html?message=session_expired`;
                 }
             }
             throw { status: response.status, message: data.message || 'Có lỗi xảy ra' };

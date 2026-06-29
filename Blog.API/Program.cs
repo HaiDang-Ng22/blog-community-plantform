@@ -52,7 +52,14 @@ builder.Services.AddCors(options =>
                 "http://localhost:5000",
                 "http://localhost:5001",
                 "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:5500",
+                "http://localhost:5501",
+                "http://localhost:8080",
                 "http://localhost:7000",
+                "http://127.0.0.1:5500",
+                "http://127.0.0.1:5501",
+                "http://127.0.0.1:8080",
                 "https://blog-community-plantform.onrender.com"
             )
             .AllowAnyMethod()

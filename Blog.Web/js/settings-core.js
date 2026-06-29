@@ -104,9 +104,12 @@ async function loadSettingsData() {
         try {
             const user = JSON.parse(cachedUser);
             console.log('[Settings] Using cached user data');
-            if (typeof onSettingsLoad === 'function') {
-                onSettingsLoad(user);
-            }
+            // Defer so inline scripts have time to define onSettingsLoad
+            setTimeout(() => {
+                if (typeof onSettingsLoad === 'function') {
+                    onSettingsLoad(user);
+                }
+            }, 0);
         } catch (e) { console.error('Parse error', e); }
     }
 
@@ -125,6 +128,13 @@ async function loadSettingsData() {
             localStorage.setItem('user_info', JSON.stringify(user));
             if (typeof onSettingsLoad === 'function') {
                 onSettingsLoad(user);
+            }
+        } else if (res.status === 401) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_info');
+            const root = window.location.origin;
+            if (!window.location.pathname.includes('auth.html')) {
+                window.location.href = `${root}/auth.html?message=session_expired`;
             }
         }
     } catch (err) {

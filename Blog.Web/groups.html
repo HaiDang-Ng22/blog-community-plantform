@@ -4,43 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cộng đồng - Zynk</title>
+    <meta name="description" content="Khám phá và tham gia các cộng đồng trên Zynk. Kết nối với những người có cùng sở thích.">
     <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=2.6">
-    <link rel="stylesheet" href="css/groups.css?v=1.0">
+    <link rel="stylesheet" href="css/groups.css?v=2.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="groups-page">
     <main class="main-content" id="main-content">
         <div class="groups-layout">
+            <!-- Main Column -->
             <div class="groups-col">
-                <div class="groups-header">
-                    <h2>Cộng đồng</h2>
-                    <button class="btn primary-btn" onclick="openCreateGroupModal()"><i class="fa-solid fa-plus"></i> Tạo cộng đồng mới</button>
-                </div>
-                
-                <div class="groups-tabs">
-                    <div class="group-tab active" data-type="my-groups">Đã tham gia</div>
-                    <div class="group-tab" data-type="discover">Khám phá</div>
+                <!-- Page Header -->
+                <div class="groups-page-header">
+                    <div class="groups-page-header-text">
+                        <h1><i class="fa-solid fa-people-group"></i> Cộng đồng</h1>
+                        <p>Tìm kiếm và kết nối với những người có cùng đam mê</p>
+                    </div>
+                    <button class="btn-create-group" onclick="openCreateGroupModal()">
+                        <i class="fa-solid fa-plus"></i> Tạo cộng đồng
+                    </button>
                 </div>
 
+                <!-- Search Bar -->
+                <div class="groups-search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="group-search-input" placeholder="Tìm kiếm cộng đồng..." oninput="filterGroups(this.value)">
+                </div>
+
+                <!-- Tabs -->
+                <div class="groups-tabs">
+                    <div class="group-tab active" data-type="my-groups">
+                        <i class="fa-solid fa-users"></i> Đã tham gia
+                    </div>
+                    <div class="group-tab" data-type="discover">
+                        <i class="fa-solid fa-compass"></i> Khám phá
+                    </div>
+                </div>
+
+                <!-- Groups Grid -->
                 <div id="groups-grid" class="groups-grid">
-                    <div style="text-align:center; padding: 40px; color: #8e8e8e;">
+                    <div class="groups-loading">
                         <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
-                        <p style="margin-top:10px;">Đang tải danh sách nhóm...</p>
+                        <p>Đang tải danh sách nhóm...</p>
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Right Sidebar -->
             <aside class="right-sidebar">
-                <div class="widget">
+                <!-- My Managed Groups -->
+                <div class="widget groups-widget">
                     <div class="widget-header">
+                        <i class="fa-solid fa-crown" style="color:#f59e0b;"></i>
                         <span class="widget-title">Cộng đồng bạn quản lý</span>
                     </div>
                     <div id="my-owned-groups-list" class="owned-groups-list">
-                        <!-- Admin groups here -->
+                        <!-- populated by JS -->
                     </div>
                 </div>
+
+                <!-- Footer Links -->
                 <div class="widget-footer-links">
                     <a href="about.html">Giới thiệu</a>
                     <a href="help.html">Trợ giúp</a>
@@ -53,34 +78,58 @@
 
     <!-- Create Group Modal -->
     <div id="create-group-modal" class="modal-overlay hidden">
-        <div class="modal-content report-modal-content" style="max-width:500px;">
-            <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                <h3 style="font-size:1.2rem;font-weight:700;">Tạo cộng đồng mới</h3>
-                <button class="close-btn" onclick="closeCreateGroupModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#737373;line-height:1;">&times;</button>
+        <div class="modal-content create-group-modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-people-group"></i> Tạo cộng đồng mới</h3>
+                <button class="close-btn" onclick="closeCreateGroupModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="create-group-form">
-                    <div class="form-group" style="margin-bottom:15px;">
-                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">Tên cộng đồng</label>
-                        <input type="text" id="group-name" style="width:100%;padding:10px 14px;border:1px solid #dbdbdb;border-radius:10px;font-size:0.95rem;outline:none;font-family:inherit;" required placeholder="Nhập tên nhóm...">
+                    <!-- Avatar Upload -->
+                    <div class="avatar-upload-section">
+                        <div class="group-avatar-preview" id="create-avatar-preview">
+                            <i class="fa-solid fa-image"></i>
+                        </div>
+                        <div class="avatar-upload-btns">
+                            <label class="btn-upload-label" for="create-group-avatar-file">
+                                <i class="fa-solid fa-camera"></i> Chọn ảnh đại diện
+                            </label>
+                            <input type="file" id="create-group-avatar-file" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+                        </div>
                     </div>
-                    <div class="form-group" style="margin-bottom:15px;">
-                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">Mô tả ngắn</label>
-                        <textarea id="group-desc" style="width:100%;padding:10px 14px;border:1px solid #dbdbdb;border-radius:10px;font-size:0.95rem;outline:none;font-family:inherit;resize:vertical;" rows="3" required placeholder="Nhóm này được tạo ra để..."></textarea>
+
+                    <div class="form-group">
+                        <label>Tên cộng đồng <span class="required">*</span></label>
+                        <input type="text" id="group-name" required placeholder="Nhập tên nhóm..." maxlength="80">
                     </div>
-                    <div class="form-group" style="margin-bottom:15px;">
-                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">Tên cộng đồng (URL)</label>
-                        <input type="url" id="group-cover" style="width:100%;padding:10px 14px;border:1px solid #dbdbdb;border-radius:10px;font-size:0.95rem;outline:none;font-family:inherit;" placeholder="https://...">
+                    <div class="form-group">
+                        <label>Mô tả ngắn <span class="required">*</span></label>
+                        <textarea id="group-desc" required placeholder="Nhóm này được tạo ra để..." rows="3"></textarea>
                     </div>
-                    <div class="form-group" style="margin-bottom:20px;">
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                            <input type="checkbox" id="group-private" style="width:18px;height:18px;accent-color:#000;">
-                            <span style="font-size:0.9rem;">Nhóm riêng tư (Chỉ thành viên mới thấy bài viết)</span>
+                    <div class="form-group">
+                        <label>Ảnh bìa (URL)</label>
+                        <input type="url" id="group-cover" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label class="privacy-toggle-label">
+                            <div class="toggle-info">
+                                <i class="fa-solid fa-lock"></i>
+                                <div>
+                                    <span>Nhóm riêng tư</span>
+                                    <small>Chỉ thành viên được duyệt mới thấy bài viết</small>
+                                </div>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="group-private">
+                                <span class="toggle-slider"></span>
+                            </div>
                         </label>
                     </div>
-                    <div style="display:flex;gap:10px;">
-                        <button type="button" style="flex:1;padding:12px;border:1px solid #dbdbdb;border-radius:10px;background:white;font-size:0.95rem;font-weight:600;cursor:pointer;" onclick="closeCreateGroupModal()">Hủy</button>
-                        <button type="submit" style="flex:1;padding:12px;border:none;border-radius:10px;background:#000;color:white;font-size:0.95rem;font-weight:600;cursor:pointer;">Tạo Nhóm</button>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-modal-cancel" onclick="closeCreateGroupModal()">Hủy</button>
+                        <button type="submit" class="btn-modal-submit">
+                            <i class="fa-solid fa-plus"></i> Tạo Nhóm
+                        </button>
                     </div>
                 </form>
             </div>
@@ -89,6 +138,6 @@
 
     <script src="js/api.js?v=4.1"></script>
     <script src="js/common.js?v=4.1"></script>
-    <script src="js/groups.js?v=1.0"></script>
+    <script src="js/groups.js?v=2.0"></script>
 </body>
 </html>

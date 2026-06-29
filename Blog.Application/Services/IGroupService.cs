@@ -12,4 +12,8 @@ public interface IGroupService
     Task<bool> LeaveGroupAsync(Guid groupId, Guid currentUserId);
     Task<IEnumerable<PostDto>?> GetGroupPostsAsync(Guid groupId, Guid currentUserId);
     Task<bool> ReportGroupAsync(Guid groupId, ReportGroupRequest request, Guid currentUserId);
+    Task<GroupDto?> UpdateGroupAsync(Guid groupId, UpdateGroupRequest request, Guid currentUserId);
+    Task<IEnumerable<GroupPendingMemberDto>?> GetPendingMembersAsync(Guid groupId, Guid currentUserId);
+    Task<bool> ApproveMemberAsync(Guid groupId, Guid userIdToApprove, Guid currentUserId);
+    Task<bool> RejectMemberAsync(Guid groupId, Guid userIdToReject, Guid currentUserId);
 }

@@ -164,12 +164,15 @@ public class AuthController : ControllerBase
             FullName = user.FullName,
             Email = user.Email,
             AvatarUrl = user.AvatarUrl,
+            CoverImageUrl = user.CoverImageUrl,
             Bio = user.Bio,
             Gender = user.Gender,
             CreatedAt = user.CreatedAt,
             IsPrivate = user.IsPrivate,
             Role = user.Role,
-            IsVerified = user.IsVerified
+            IsVerified = user.IsVerified,
+            IsPremium = user.IsPremium,
+            PremiumExpiryDate = user.PremiumExpiryDate
         });
     }
 

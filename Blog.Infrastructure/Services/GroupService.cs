@@ -56,6 +56,7 @@ public class GroupService : IGroupService
             Name = request.Name,
             Description = request.Description,
             CoverImageUrl = request.CoverImageUrl,
+            AvatarImageUrl = request.AvatarImageUrl,
             IsPrivate = request.IsPrivate,
             CreatedAt = DateTime.UtcNow,
             OwnerId = currentUserId
@@ -68,6 +69,7 @@ public class GroupService : IGroupService
             GroupId = group.Id,
             UserId = currentUserId,
             Role = GroupRole.Admin,
+            Status = GroupMemberStatus.Approved,
             JoinedAt = DateTime.UtcNow
         };
 
@@ -93,7 +95,8 @@ public class GroupService : IGroupService
             GroupId = groupId,
             UserId = currentUserId,
             Role = GroupRole.Member,
-            JoinedAt = DateTime.UtcNow
+            JoinedAt = DateTime.UtcNow,
+            Status = group.IsPrivate ? GroupMemberStatus.Pending : GroupMemberStatus.Approved
         };
 
         _context.GroupMembers.Add(member);
@@ -171,9 +174,9 @@ public class GroupService : IGroupService
 
         if (group == null) return null;
 
-        // If group is private, only members can see posts
-        bool isMember = group.Members.Any(m => m.UserId == currentUserId);
-        if (group.IsPrivate && !isMember && currentUserId == Guid.Empty)
+        // If group is private, only approved members can see posts. Owner is always approved.
+        bool isApprovedMember = group.OwnerId == currentUserId || group.Members.Any(m => m.UserId == currentUserId && m.Status == GroupMemberStatus.Approved);
+        if (group.IsPrivate && !isApprovedMember)
             return new List<PostDto>();
 
         var posts = await _context.Posts
@@ -232,9 +235,130 @@ public class GroupService : IGroupService
         }).ToList();
     }
 
+    public async Task<GroupDto?> UpdateGroupAsync(Guid groupId, UpdateGroupRequest request, Guid currentUserId)
+    {
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
+
+        if (group == null) return null;
+
+        // Check if user is the owner or an admin
+        var isAuthorized = group.OwnerId == currentUserId || 
+                           group.Members.Any(m => m.UserId == currentUserId && m.Role == GroupRole.Admin && m.Status == GroupMemberStatus.Approved);
+        
+        if (!isAuthorized) return null;
+
+        group.Name = request.Name;
+        group.Description = request.Description;
+        group.CoverImageUrl = request.CoverImageUrl;
+        group.AvatarImageUrl = request.AvatarImageUrl;
+        group.IsPrivate = request.IsPrivate;
+
+        _context.Groups.Update(group);
+        await _context.SaveChangesAsync();
+
+        return MapToDto(group, currentUserId);
+    }
+
+    public async Task<IEnumerable<GroupPendingMemberDto>?> GetPendingMembersAsync(Guid groupId, Guid currentUserId)
+    {
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
+
+        if (group == null) return null;
+
+        var isAuthorized = group.OwnerId == currentUserId || 
+                           group.Members.Any(m => m.UserId == currentUserId && m.Role == GroupRole.Admin && m.Status == GroupMemberStatus.Approved);
+
+        if (!isAuthorized) return null;
+
+        var pendingMembers = await _context.GroupMembers
+            .Include(gm => gm.User)
+            .Where(gm => gm.GroupId == groupId && gm.Status == GroupMemberStatus.Pending)
+            .OrderBy(gm => gm.JoinedAt)
+            .Select(gm => new GroupPendingMemberDto
+            {
+                UserId = gm.UserId,
+                FullName = gm.User.FullName,
+                Username = gm.User.Username,
+                AvatarUrl = gm.User.AvatarUrl,
+                RequestedAt = gm.JoinedAt
+            })
+            .ToListAsync();
+
+        return pendingMembers;
+    }
+
+    public async Task<bool> ApproveMemberAsync(Guid groupId, Guid userIdToApprove, Guid currentUserId)
+    {
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
+
+        if (group == null) return false;
+
+        var isAuthorized = group.OwnerId == currentUserId || 
+                           group.Members.Any(m => m.UserId == currentUserId && m.Role == GroupRole.Admin && m.Status == GroupMemberStatus.Approved);
+
+        if (!isAuthorized) return false;
+
+        var member = await _context.GroupMembers
+            .FirstOrDefaultAsync(gm => gm.GroupId == groupId && gm.UserId == userIdToApprove && gm.Status == GroupMemberStatus.Pending);
+
+        if (member == null) return false;
+
+        member.Status = GroupMemberStatus.Approved;
+        member.JoinedAt = DateTime.UtcNow;
+
+        _context.GroupMembers.Update(member);
+
+        // Send a notification to the approved user
+        var notification = new Notification
+        {
+            Id = Guid.NewGuid(),
+            ReceiverId = userIdToApprove,
+            ActorId = currentUserId,
+            Type = "SystemAlert",
+            Message = $"Yêu cầu tham gia nhóm '{group.Name}' của bạn đã được phê duyệt.",
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow,
+            TargetId = groupId
+        };
+        _context.Notifications.Add(notification);
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RejectMemberAsync(Guid groupId, Guid userIdToReject, Guid currentUserId)
+    {
+        var group = await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
+
+        if (group == null) return false;
+
+        var isAuthorized = group.OwnerId == currentUserId || 
+                           group.Members.Any(m => m.UserId == currentUserId && m.Role == GroupRole.Admin && m.Status == GroupMemberStatus.Approved);
+
+        if (!isAuthorized) return false;
+
+        var member = await _context.GroupMembers
+            .FirstOrDefaultAsync(gm => gm.GroupId == groupId && gm.UserId == userIdToReject && gm.Status == GroupMemberStatus.Pending);
+
+        if (member == null) return false;
+
+        _context.GroupMembers.Remove(member);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     private GroupDto MapToDto(Group group, Guid currentUserId)
     {
         var memberInfo = group.Members?.FirstOrDefault(m => m.UserId == currentUserId);
+        bool isOwner = group.OwnerId == currentUserId;
         
         return new GroupDto
         {
@@ -242,12 +366,14 @@ public class GroupService : IGroupService
             Name = group.Name,
             Description = group.Description,
             CoverImageUrl = group.CoverImageUrl,
+            AvatarImageUrl = group.AvatarImageUrl,
             IsPrivate = group.IsPrivate,
             CreatedAt = group.CreatedAt,
             OwnerId = group.OwnerId,
-            MemberCount = group.Members?.Count ?? 0,
-            IsMember = memberInfo != null,
-            Role = memberInfo?.Role.ToString()
+            MemberCount = group.Members?.Count(m => m.Status == GroupMemberStatus.Approved) ?? 0,
+            IsMember = isOwner || memberInfo != null,
+            Role = isOwner ? "Admin" : memberInfo?.Role.ToString(),
+            MemberStatus = isOwner ? "Approved" : memberInfo?.Status.ToString()
         };
     }
 }
