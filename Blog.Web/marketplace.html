@@ -221,6 +221,37 @@
         </div>
     </div>
 
+    <!-- AI Shopping Chatbot -->
+    <div class="ai-shop-chat-toggle" id="ai-shop-chat-toggle" onclick="toggleAiShopChat()" title="Trợ lý Mua sắm Zynk AI">
+        <div class="pulse-ring"></div>
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+    </div>
+
+    <div class="ai-shop-chat-window hidden" id="ai-shop-chat-window">
+        <div class="ai-shop-chat-header">
+            <div class="ai-shop-chat-header-info">
+                <div class="ai-shop-chat-avatar">
+                    <i class="fa-solid fa-robot"></i>
+                    <span class="ai-shop-status-dot"></span>
+                </div>
+                <div>
+                    <h4 class="ai-shop-chat-title">Trợ lý Mua sắm Zynk AI</h4>
+                    <p class="ai-shop-chat-subtitle">Hỏi AI để gợi ý & tìm sản phẩm phù hợp</p>
+                </div>
+            </div>
+            <button class="ai-shop-chat-close" onclick="toggleAiShopChat()">&times;</button>
+        </div>
+        <div class="ai-shop-chat-messages" id="ai-shop-chat-messages">
+            <!-- Messages will be rendered dynamically -->
+        </div>
+        <div class="ai-shop-chat-input-area">
+            <input type="text" id="ai-shop-chat-input" placeholder="Bạn muốn mua gì? (Ví dụ: giày chạy bộ, đầm...)" onkeypress="handleAiShopChatKeyPress(event)">
+            <button id="ai-shop-chat-send-btn" onclick="sendAiShopChatMessage()">
+                <i class="fa-regular fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
     <footer class="main-footer">
         <div class="container-wide">
             <p>&copy; 2026 Zynk Community. <span data-i18n="footer_desc">Nền tảng chia sẻ & mua sắm.</span></p>
@@ -232,6 +263,7 @@
     <script src="js/i18n.js"></script>
     <script src="js/common.js?v=2.5"></script>
     <script src="js/marketplace.js?v=1.4"></script>
+    <script src="js/marketplace-ai-chat.js?v=1.0"></script>
 </body>
 
 </html>

@@ -288,4 +288,189 @@ Câu hỏi của người dùng: ""{q}""
         var responseText = await _geminiService.CallGeminiAsync(prompt);
         return Ok(new { response = responseText });
     }
+
+    [HttpPost("chat-products")]
+    public async Task<IActionResult> ChatProducts([FromBody] ChatProductsRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Question))
+            return BadRequest(new { message = "Nội dung câu hỏi không được trống." });
+
+        // 1. Fetch active products to serve as context and candidates
+        var products = await _context.Products
+            .Where(p => p.Status == Blog.Domain.Entities.ProductStatus.Active)
+            .Include(p => p.Shop)
+            .Include(p => p.Category)
+            .OrderByDescending(p => p.SalesCount)
+            .Take(40)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Description,
+                p.Price,
+                ShopName = p.Shop != null ? p.Shop.Name : "Cửa hàng Zynk",
+                CategoryName = p.Category != null ? p.Category.Name : "",
+                p.FeaturedImageUrl,
+                p.Rating,
+                p.SalesCount
+            })
+            .ToListAsync();
+
+        // 2. Prepare the prompt for Gemini
+        var productsContext = products.Select(p => new
+        {
+            p.Id,
+            p.Name,
+            p.Description,
+            p.Price,
+            p.ShopName,
+            p.CategoryName,
+            p.Rating,
+            p.SalesCount
+        }).ToList();
+
+        var historyContext = request.History != null ? 
+            string.Join("\n", request.History.Select(h => $"{h.Sender}: {h.Text}")) : 
+            "Không có lịch sử.";
+
+        var prompt = $@"
+Bạn là Trợ lý Mua sắm Zynk AI (Zynk Shop Assistant), một chuyên viên tư vấn bán hàng thông minh và nhiệt tình trên sàn thương mại điện tử Zynk.
+Nhiệm vụ của bạn là trò chuyện với người dùng, hiểu nhu cầu của họ và gợi ý các sản phẩm phù hợp nhất trong danh sách sản phẩm hiện có dưới đây.
+
+DANH SÁCH SẢN PHẨM HIỆN CÓ TRÊN HỆ THỐNG:
+{JsonSerializer.Serialize(productsContext)}
+
+LỊCH SỬ TRÒ CHUYỆN:
+{historyContext}
+
+CÂU HỎI MỚI NHẤT CỦA NGƯỜI DÙNG:
+""{request.Question}""
+
+YÊU CẦU:
+1. Hãy trả lời người dùng bằng tiếng Việt tự nhiên, thân thiện, xưng hô là 'Em' hoặc 'Zynk AI' và gọi người dùng là 'Anh/Chị' hoặc 'Bạn'.
+2. Chỉ gợi ý các sản phẩm thực sự tồn tại trong danh sách sản phẩm ở trên. Hãy giới thiệu ngắn gọn các ưu điểm nổi bật của chúng (như giá bán, shop nào bán, đánh giá bao nhiêu sao).
+3. ĐƯA RA ĐỊNH DẠNG TRẢ VỀ: Bạn bắt buộc phải trả về một chuỗi JSON thuần chứa hai thuộc tính:
+   - ""response"": Lời nhắn/câu trả lời của bạn gửi cho người dùng (hỗ trợ định dạng văn bản thường và icon sinh động).
+   - ""recommendedProductIds"": Mảng các UUID của những sản phẩm được gợi ý (ví dụ: [""guid-1"", ""guid-2""]) để hệ thống hiển thị trực quan dưới dạng thẻ sản phẩm. Chỉ đưa vào danh sách này tối đa 3-4 sản phẩm phù hợp nhất. Nếu không có sản phẩm nào phù hợp, hãy để mảng này rỗng.
+4. KHÔNG bọc mã trong thẻ ```json ... ```. Chỉ trả về chuỗi JSON thô duy nhất có dạng:
+{{
+  ""response"": ""Nội dung trả lời..."",
+  ""recommendedProductIds"": [""id1"", ""id2""]
+}}
+";
+
+        string responseText = "";
+        bool parsedSuccess = false;
+        var recommendedIds = new List<string>();
+
+        try
+        {
+            // Call Gemini
+            var rawResponse = await _geminiService.CallGeminiAsync(prompt);
+            
+            // Clean JSON markdown if any
+            var cleanedJson = rawResponse.Trim();
+            if (cleanedJson.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+                cleanedJson = cleanedJson.Substring(7);
+            else if (cleanedJson.StartsWith("```", StringComparison.OrdinalIgnoreCase))
+                cleanedJson = cleanedJson.Substring(3);
+            if (cleanedJson.EndsWith("```", StringComparison.OrdinalIgnoreCase))
+                cleanedJson = cleanedJson.Substring(0, cleanedJson.Length - 3);
+            cleanedJson = cleanedJson.Trim();
+
+            // Try to parse
+            using var doc = JsonDocument.Parse(cleanedJson);
+            if (doc.RootElement.TryGetProperty("response", out var respProp))
+            {
+                responseText = respProp.GetString() ?? string.Empty;
+                parsedSuccess = true;
+            }
+            if (doc.RootElement.TryGetProperty("recommendedProductIds", out var idsProp) && idsProp.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in idsProp.EnumerateArray())
+                {
+                    var idStr = item.GetString();
+                    if (!string.IsNullOrEmpty(idStr))
+                    {
+                        recommendedIds.Add(idStr);
+                    }
+                }
+            }
+            
+            Console.WriteLine($"[ChatProducts] Gemini parsed OK. parsedSuccess={parsedSuccess}, responseLen={responseText.Length}, productIds={recommendedIds.Count}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ChatProducts] ERROR calling/parsing Gemini: {ex.GetType().Name} - {ex.Message}");
+        }
+
+        // 3. Fallback: smart keyword search if Gemini failed or gave empty recommendedProductIds
+        if (!parsedSuccess || string.IsNullOrWhiteSpace(responseText))
+        {
+            // Split query into individual keywords for broader matching
+            var keywords = request.Question.ToLower()
+                .Split(new[] { ' ', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(k => k.Length > 1)
+                .ToList();
+            
+            var matchedProducts = products
+                .Where(p =>
+                {
+                    var searchable = $"{p.Name} {p.Description} {p.CategoryName} {p.ShopName}".ToLower();
+                    return keywords.Any(k => searchable.Contains(k));
+                })
+                .OrderByDescending(p => {
+                    // Score: more keyword hits = higher priority
+                    var searchable = $"{p.Name} {p.Description} {p.CategoryName}".ToLower();
+                    return keywords.Count(k => searchable.Contains(k));
+                })
+                .Take(3)
+                .ToList();
+
+            if (matchedProducts.Count > 0)
+            {
+                var q = request.Question;
+                responseText = $"Chào bạn! 🔍 Em đã tìm thấy {matchedProducts.Count} sản phẩm liên quan đến \"{q}\" trong Zynk Shop. Bạn xem thử nhé: 😊";
+                recommendedIds = matchedProducts.Select(p => p.Id.ToString()).ToList();
+            }
+            else
+            {
+                // Absolute fallback: show bestsellers
+                responseText = $"Chào bạn! Em chưa tìm thấy sản phẩm khớp với \"{ request.Question }\". Nhưng đây là những sản phẩm bán chạy nhất hiện nay, bạn thử xem nhé! 🛒✨";
+                recommendedIds = products.Take(3).Select(p => p.Id.ToString()).ToList();
+            }
+        }
+
+        // 4. Map selected product details to return to frontend
+        var recommendedProductsList = new List<object>();
+        foreach (var idStr in recommendedIds)
+        {
+            if (Guid.TryParse(idStr, out var gId))
+            {
+                var prod = products.FirstOrDefault(p => p.Id == gId);
+                if (prod != null)
+                {
+                    recommendedProductsList.Add(prod);
+                }
+            }
+        }
+
+        return Ok(new
+        {
+            response = responseText,
+            recommendedProducts = recommendedProductsList
+        });
+    }
+}
+
+public class ChatProductsRequest
+{
+    public string Question { get; set; } = string.Empty;
+    public List<ChatHistoryItemDto>? History { get; set; }
+}
+
+public class ChatHistoryItemDto
+{
+    public string Sender { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
 }

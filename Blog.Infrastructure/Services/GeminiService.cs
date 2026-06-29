@@ -40,7 +40,8 @@ public class GeminiService : IGeminiService
 
         try
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
+            // Try gemini-1.5-flash (stable, widely available) then fall back to 2.0-flash
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
             
             var parts = new List<object>
             {
@@ -306,9 +307,22 @@ Trả về kết quả dưới định dạng JSON thô duy nhất với cấu t
             // Just return empty array, controller will fall back to basic matches or parse it gracefully
             return "[]";
         }
+        else if (prompt.Contains("Trợ lý Mua sắm Zynk AI") || prompt.Contains("Zynk Shop Assistant"))
+        {
+            // Return proper JSON format for chat-products endpoint so it doesn't fall through badly
+            return JsonSerializer.Serialize(new
+            {
+                response = "Xin chào! Em là Zynk AI đang chạy ở chế độ thử nghiệm. Gemini API Key chưa được kích hoạt nên em sẽ dùng tìm kiếm thông minh nội bộ để gợi ý cho bạn nhé! 😊",
+                recommendedProductIds = new string[] { }
+            });
+        }
         else
         {
-            return "{\"success\": true, \"message\": \"Demo Mock Response\"}";
+            return JsonSerializer.Serialize(new
+            {
+                response = "Demo Mock Response",
+                recommendedProductIds = new string[] { }
+            });
         }
     }
 }
