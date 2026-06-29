@@ -19,6 +19,9 @@ JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Local-only secrets (gitignored). Overrides appsettings.json for Gemini, etc.
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // Increase upload limit
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

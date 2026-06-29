@@ -9,6 +9,7 @@ obj/
 *.sln.docstates
 *.db
 .env
+Blog.API/appsettings.Local.json
 
 # User Uploads
 Blog.Web/uploads/*
