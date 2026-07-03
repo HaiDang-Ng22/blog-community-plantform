@@ -86,9 +86,18 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         if (sendBtn) sendBtn.disabled = true;
 
         try {
+            // Get search history from localStorage for personalization
+            let searchKeywords = [];
+            try {
+                searchKeywords = JSON.parse(localStorage.getItem('zynk_search_history') || '[]');
+            } catch(e) {
+                console.error(e);
+            }
+
             const payload = {
                 question: text,
-                history: chatHistory.slice(-8) // Send last 8 messages for context
+                history: chatHistory.slice(-8), // Send last 8 messages for context
+                searchKeywords: searchKeywords
             };
 
             const res = await window.api.post('search/chat-products', payload);
@@ -99,11 +108,12 @@ Bạn đang cần tìm gì hôm nay? 😊`;
 
             const botText = res.response || 'Xin lỗi, em chưa hiểu yêu cầu này. Bạn có thể mô tả rõ hơn không?';
             const products = res.recommendedProducts || [];
+            const groups = res.groups || [];
 
             // Add bot response to history
             chatHistory.push({ sender: 'Zynk AI', text: botText });
 
-            _appendBotMessage(botText, products);
+            _appendBotMessage(botText, products, groups);
 
         } catch (err) {
             _removeTyping(typingId);
@@ -111,7 +121,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             if (sendBtn) sendBtn.disabled = false;
 
             const errMsg = 'Ối! Có lỗi kết nối. Bạn vui lòng thử lại nhé 🙏';
-            _appendBotMessage(errMsg, []);
+            _appendBotMessage(errMsg, [], []);
             console.error('[AiShopChat] Error:', err);
         }
     };
@@ -214,7 +224,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         _scrollToBottom(container);
     }
 
-    function _appendBotMessage(text, products) {
+    function _appendBotMessage(text, products, groups) {
         const container = document.getElementById('ai-shop-chat-messages');
         if (!container) return;
 
@@ -226,8 +236,10 @@ Bạn đang cần tìm gì hôm nay? 😊`;
 
         let html = `<div class="ai-shop-bubble">${formattedText}</div>`;
 
-        // Render product cards
-        if (products && products.length > 0) {
+        // Render product cards (grouped or flat)
+        if (groups && groups.length > 0) {
+            html += _buildGroupedProductCards(groups);
+        } else if (products && products.length > 0) {
             html += _buildProductCards(products);
         }
 
@@ -259,6 +271,20 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         if (!id) return;
         const el = document.getElementById(id);
         if (el) el.remove();
+    }
+
+    function _buildGroupedProductCards(groups) {
+        let html = '<div class="ai-shop-grouped-container">';
+        groups.forEach(g => {
+            html += `
+                <div class="ai-shop-group-section">
+                    <div class="ai-shop-group-header">${_escapeHtml(g.label)}</div>
+                    ${_buildProductCards(g.products)}
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
     }
 
     function _buildProductCards(products) {

@@ -916,6 +916,16 @@ function executeSearch(kw = null) {
     document.getElementById('search-clear-btn').classList.remove('hidden');
     document.getElementById('search-suggestions').classList.remove('active');
     
+    // Save to search history in localStorage for AI recommendations
+    try {
+        let history = JSON.parse(localStorage.getItem('zynk_search_history') || '[]');
+        history = history.filter(h => h.toLowerCase() !== keyword.toLowerCase());
+        history.unshift(keyword);
+        localStorage.setItem('zynk_search_history', JSON.stringify(history.slice(0, 10)));
+    } catch(e) {
+        console.error(e);
+    }
+
     // De-activate categories
     document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
 

@@ -1492,3 +1492,35 @@
     }
     .ai-shop-chat-toggle { bottom: 80px; right: 16px; }
 }
+
+/* --- Grouped Product Recommendations --- */
+.ai-shop-grouped-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 8px;
+    width: 100%;
+}
+.ai-shop-group-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ai-shop-group-header {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #a855f7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    background: rgba(168, 85, 247, 0.08);
+    border-radius: 6px;
+    width: fit-content;
+    border-left: 3px solid #a855f7;
+}
+.dark-mode .ai-shop-group-header {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c4b5fd;
+    border-left-color: #c4b5fd;
+}
+
