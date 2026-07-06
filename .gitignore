@@ -9,7 +9,19 @@ obj/
 *.sln.docstates
 *.db
 .env
+
+# Local config with secrets — NEVER commit these
 Blog.API/appsettings.Local.json
+Blog.API/appsettings.*.local.json
+appsettings.Local.json
+appsettings.*.local.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+
+# Firebase Service Account Key
+firebase-key.json
+Blog.API/firebase-key.json
+**/firebase-key.json
 
 # User Uploads
 Blog.Web/uploads/*
@@ -18,6 +30,19 @@ Blog.Web/uploads/*
 # Operating System
 [Th]umbs.db
 *.DS_Store
-# Secrets
-firebase-key.json
-Blog.API/firebase-key.json
+
+# Logs
+*.log
+logs/
+
+# Scratch / temporary files
+scratch/
+*.tmp
+*.bak
+*.swp
+
+# Rider IDE
+.idea/
+
+# Node
+node_modules/

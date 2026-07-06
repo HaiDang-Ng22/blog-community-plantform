@@ -1,0 +1,28 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/.DS_Store
+**/Thumbs.db
+
+# Secrets — never in Docker image
+**/appsettings.Local.json
+**/appsettings.*.local.json
+**/firebase-key.json
+**/*.env
+.env
+
+# Logs and temp
+**/logs
+**/*.log
+**/scratch
+**/*.tmp
+
+# Frontend dev files
+**/node_modules
+
+# Tests
+**/*.Tests/bin
+**/*.Tests/obj

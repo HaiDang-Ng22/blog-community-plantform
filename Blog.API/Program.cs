@@ -220,27 +220,31 @@ using (var scope = app.Services.CreateScope())
     // Seed initial data
         await DbInitializer.InitializeAsync(dbContext);
     
-    // Seed Real Admin User
-    var adminEmail = "hd813345@gmail.com";
-    var existingAdmin = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
-    if (existingAdmin == null)
+    // Seed Real Admin User (credentials loaded from appsettings.Local.json)
+    var adminEmail = builder.Configuration["AdminSettings:Email"];
+    var adminPassword = builder.Configuration["AdminSettings:Password"];
+    if (!string.IsNullOrEmpty(adminEmail) && !adminEmail.StartsWith("YOUR_"))
     {
-        dbContext.Users.Add(new User 
-        { 
-            Id = Guid.NewGuid(), 
-            Username = "admin_dang", 
-            Email = adminEmail,
-            FullName = "Admin Zynk",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("D@ng0799192226"),
-            Role = "Admin",
-            CreatedAt = DateTime.UtcNow
-        });
-        await dbContext.SaveChangesAsync();
-    }
-    else if (existingAdmin.Role != "Admin")
-    {
-        existingAdmin.Role = "Admin";
-        await dbContext.SaveChangesAsync();
+        var existingAdmin = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+        if (existingAdmin == null)
+        {
+            dbContext.Users.Add(new User 
+            { 
+                Id = Guid.NewGuid(), 
+                Username = "admin_dang", 
+                Email = adminEmail,
+                FullName = "Admin Zynk",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword ?? "ChangeMe@2026!"),
+                Role = "Admin",
+                CreatedAt = DateTime.UtcNow
+            });
+            await dbContext.SaveChangesAsync();
+        }
+        else if (existingAdmin.Role != "Admin")
+        {
+            existingAdmin.Role = "Admin";
+            await dbContext.SaveChangesAsync();
+        }
     }
 }
 app.Run();
