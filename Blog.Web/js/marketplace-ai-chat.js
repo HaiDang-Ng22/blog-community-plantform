@@ -234,15 +234,29 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         // Format text with bold (**text**) support
         const formattedText = _formatText(text);
 
-        let html = `<div class="ai-shop-bubble">${formattedText}</div>`;
+        let html = `<div class="ai-shop-bubble">${formattedText}`;
 
-        // Render product cards (grouped or flat)
-        if (groups && groups.length > 0) {
-            html += _buildGroupedProductCards(groups);
-        } else if (products && products.length > 0) {
-            html += _buildProductCards(products);
+        // Render on the main page instead of inside the chat window
+        const hasRecs = (groups && groups.length > 0) || (products && products.length > 0);
+        if (hasRecs) {
+            const query = chatHistory[chatHistory.length - 2]?.text || 'yêu cầu của bạn';
+            _renderRecommendationsOnMainPage(query, products, groups);
+
+            const totalCount = groups && groups.length > 0
+                ? groups.reduce((sum, g) => sum + (g.products ? g.products.length : 0), 0)
+                : (products ? products.length : 0);
+
+            html += `
+                <div class="ai-shop-main-page-indicator">
+                    <i class="fa-solid fa-circle-check"></i> Đã tìm thấy ${totalCount} sản phẩm phù hợp và hiển thị trực tiếp ở trang chính.
+                    <button class="ai-shop-scroll-to-main-btn" onclick="window.scrollToMainProducts()">
+                        Xem ngay <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                </div>
+            `;
         }
 
+        html += `</div>`;
         html += `<span class="ai-shop-msg-time">${_getTime()}</span>`;
         msgDiv.innerHTML = html;
         container.appendChild(msgDiv);
@@ -273,64 +287,98 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         if (el) el.remove();
     }
 
-    function _buildGroupedProductCards(groups) {
-        let html = '<div class="ai-shop-grouped-container">';
-        groups.forEach(g => {
-            html += `
-                <div class="ai-shop-group-section">
-                    <div class="ai-shop-group-header">${_escapeHtml(g.label)}</div>
-                    ${_buildProductCards(g.products)}
-                </div>
-            `;
-        });
-        html += '</div>';
-        return html;
+    function _renderRecommendationsOnMainPage(query, products, groups) {
+        const grid = document.getElementById('product-grid');
+        const titleEl = document.getElementById('market-title');
+        if (!grid) return;
+
+        // 1. Update Title
+        if (titleEl) {
+            titleEl.innerHTML = `🤖 Zynk AI gợi ý cho: "${_escapeHtml(query)}" 
+                <button onclick="window.resetAiRecommendations()" class="glass-btn-reset">
+                    <i class="fa-solid fa-rotate-left"></i> Quay lại gợi ý thường
+                </button>`;
+        }
+
+        // 2. Clear grid
+        grid.innerHTML = '';
+
+        // 3. Render Groups or Flat list
+        let index = 0;
+        if (groups && groups.length > 0) {
+            groups.forEach(g => {
+                const header = document.createElement('div');
+                header.className = 'ai-recommendation-group-header';
+                header.innerHTML = `<i class="fa-solid fa-sparkles" style="color: #a855f7;"></i> ${_escapeHtml(g.label)}`;
+                grid.appendChild(header);
+
+                g.products.forEach(p => {
+                    grid.appendChild(_createProductCardElement(p, index++));
+                });
+            });
+        } else if (products && products.length > 0) {
+            products.forEach(p => {
+                grid.appendChild(_createProductCardElement(p, index++));
+            });
+        } else {
+            grid.innerHTML = '<div class="no-posts" style="grid-column: 1/-1;"><i class="fa fa-box-open"></i><p>Không tìm thấy sản phẩm phù hợp.</p></div>';
+        }
     }
 
-    function _buildProductCards(products) {
-        let html = '<div class="ai-shop-product-cards">';
-        products.forEach(p => {
-            const price = _formatCurrency(p.price ?? 0);
-            const rating = (p.rating ?? 5).toFixed(1);
-            const stars = '★'.repeat(Math.round(p.rating ?? 5)) + '☆'.repeat(5 - Math.round(p.rating ?? 5));
-            const shopName = _escapeHtml(p.shopName ?? 'Zynk Shop');
-            const name = _escapeHtml(p.name ?? 'Sản phẩm');
-            const imgUrl = p.featuredImageUrl ?? '';
-            const id = p.id ?? '';
-
-            const imgHtml = imgUrl
-                ? `<img class="ai-shop-product-img" src="${_escapeHtml(imgUrl)}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-                : '';
-            const placeholderHtml = `<div class="ai-shop-product-img-placeholder" style="${imgUrl ? 'display:none' : ''}">🛍️</div>`;
-
-            html += `
-                <div class="ai-shop-product-card">
-                    ${imgHtml}
-                    ${placeholderHtml}
-                    <div class="ai-shop-product-info">
-                        <div class="ai-shop-product-name" title="${name}">${name}</div>
-                        <div class="ai-shop-product-shop">
-                            <i class="fa-solid fa-store"></i>${shopName}
-                        </div>
-                        <div class="ai-shop-product-meta">
-                            <span class="ai-shop-product-price">${price}</span>
-                            <span class="ai-shop-product-rating" title="${rating} sao">${stars} ${rating}</span>
-                        </div>
-                        <div class="ai-shop-product-actions">
-                            <button class="ai-shop-product-btn view" onclick="openProductModal('${_escapeHtml(id)}')">
-                                <i class="fa-regular fa-eye"></i> Xem
-                            </button>
-                            <button class="ai-shop-product-btn cart" onclick="addCartFromChat('${_escapeHtml(id)}','${name.replace(/'/g,"\\'")}',${p.price ?? 0},'${_escapeHtml(imgUrl)}','${shopName.replace(/'/g,"\\'")}')">
-                                <i class="fa-solid fa-cart-plus"></i> Giỏ hàng
-                            </button>
-                        </div>
+    function _createProductCardElement(p, index) {
+        const isMall = index % 3 === 0;
+        const hasDiscount = index % 2 === 0;
+        const discountPct = Math.floor(Math.random() * 20) + 10;
+        const price = _formatCurrency(p.price ?? 0);
+        const originalPrice = _formatCurrency((p.price ?? 0) * 1.2);
+        const shopName = _escapeHtml(p.shopName ?? 'Zynk Shop');
+        const name = _escapeHtml(p.name ?? 'Sản phẩm');
+        const imgUrl = p.featuredImageUrl || 'https://via.placeholder.com/300';
+        
+        const card = document.createElement('div');
+        card.className = 'product-card fadeInUp';
+        card.innerHTML = `
+            ${isMall ? '<div class="badge-mall">Mall</div>' : ''}
+            ${hasDiscount ? `<div class="discount-tag"><span>${discountPct}%</span><span>GIẢM</span></div>` : ''}
+            <div class="product-image-box">
+                <img src="${imgUrl}" alt="${name}">
+            </div>
+            <div class="product-info">
+                <span class="product-shop"><i class="fa fa-shop"></i> ${shopName}</span>
+                <h3 class="product-name">${name}</h3>
+                <div class="product-meta">
+                    <div>
+                        <span class="product-price">${price}</span>
+                        ${hasDiscount ? `<div class="price-original">${originalPrice}</div>` : ''}
                     </div>
+                    <span class="product-stats">${p.salesCount ?? 0} đã bán</span>
                 </div>
-            `;
-        });
-        html += '</div>';
-        return html;
+            </div>
+        `;
+        card.onclick = () => {
+            if (typeof openProductModal === 'function') {
+                openProductModal(p.id);
+            }
+        };
+        return card;
     }
+
+    window.resetAiRecommendations = function () {
+        const titleEl = document.getElementById('market-title');
+        if (titleEl) {
+            titleEl.innerHTML = 'Gợi ý hôm nay';
+        }
+        if (typeof loadProducts === 'function') {
+            loadProducts();
+        }
+    };
+
+    window.scrollToMainProducts = function () {
+        const titleEl = document.getElementById('market-title');
+        if (titleEl) {
+            titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
 
     function _scrollToBottom(container) {
         requestAnimationFrame(() => {

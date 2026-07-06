@@ -1524,3 +1524,90 @@
     border-left-color: #c4b5fd;
 }
 
+
+/* --- Main Page AI Recommendations Grid Header & Reset Button --- */
+.ai-recommendation-group-header {
+    grid-column: 1 / -1;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #a855f7;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 2rem 0 0.8rem 0;
+    padding: 10px 16px;
+    background: rgba(168, 85, 247, 0.05);
+    border-left: 4px solid #a855f7;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dark-mode .ai-recommendation-group-header {
+    background: rgba(168, 85, 247, 0.12);
+    color: #c4b5fd;
+    border-left-color: #c4b5fd;
+}
+
+.glass-btn-reset {
+    margin-left: 15px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    vertical-align: middle;
+}
+.glass-btn-reset:hover {
+    background: #ef4444;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
+    transform: translateY(-1px);
+}
+
+/* --- Chatbox Indicator for Main Page Suggestions --- */
+.ai-shop-main-page-indicator {
+    margin-top: 10px;
+    padding: 12px;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px dashed rgba(168, 85, 247, 0.3);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: #7c3aed;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    text-align: center;
+}
+.dark-mode .ai-shop-main-page-indicator {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #c4b5fd;
+}
+.ai-shop-scroll-to-main-btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #667eea, #a855f7);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.72rem;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(102, 126, 234, 0.25);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+.ai-shop-scroll-to-main-btn:hover {
+    transform: scale(1.04);
+    box-shadow: 0 5px 12px rgba(168, 85, 247, 0.45);
+}
