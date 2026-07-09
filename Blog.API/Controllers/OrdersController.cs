@@ -724,6 +724,38 @@ public class OrdersController : ControllerBase
         public bool IsDefault { get; set; }
     }
 
+    [HttpPost("{id}/confirm-bank-payment")]
+    public async Task<IActionResult> ConfirmBankTransferPayment(Guid id)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var order = await _orderRepository.GetOrderDetailAsync(id);
+        if (order == null) return NotFound(new { message = "Không tìm thấy đơn hàng." });
+
+        // Only the seller of this order can confirm
+        var userShop = await _shopRepository.GetByUserIdAsync(userId);
+        bool isSeller = userShop != null && order.Items.Any(i => i.Product != null && i.Product.ShopId == userShop.Id);
+        if (!isSeller) return Forbid();
+
+        if (order.PaymentMethod?.ToUpper() != "BANK_TRANSFER")
+            return BadRequest(new { message = "Đơn hàng này không phải thanh toán chuyển khoản." });
+
+        if (order.Status != OrderStatus.Unpaid)
+            return BadRequest(new { message = $"Đơn hàng không ở trạng thái chờ thanh toán (trạng thái hiện tại: {order.Status})." });
+
+        order.Status = OrderStatus.AwaitingShipment;
+        order.UpdatedAt = DateTime.UtcNow;
+        await _orderRepository.UpdateAsync(order);
+
+        // Notify the buyer
+        await _notiService.SendNotificationAsync(order.BuyerId, userId, "OrderStatusUpdated", order.Id, "đã xác nhận thanh toán chuyển khoản. Đơn hàng của bạn đang được chuẩn bị.");
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Đã xác nhận thanh toán thành công. Đơn hàng chuyển sang Chờ vận chuyển." });
+    }
+
     [AllowAnonymous]
     [HttpPost("payos-webhook")]
     public async Task<IActionResult> PayOSWebhook([FromBody] Webhook request)

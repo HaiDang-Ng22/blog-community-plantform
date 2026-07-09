@@ -37,6 +37,7 @@ public class AppDbContext : DbContext
     public DbSet<ProductVariant> ProductVariants { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
     public DbSet<ProductReview> ProductReviews { get; set; }
     public DbSet<ProductReviewImage> ProductReviewImages { get; set; }
     public DbSet<Story> Stories { get; set; }

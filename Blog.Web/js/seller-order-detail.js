@@ -63,7 +63,7 @@ function renderSellerOrder(order) {
     `).join('');
 
     // 4. Actions
-    renderSellerActions(order.id || order.Id, status);
+    renderSellerActions(order.id || order.Id, status, order.paymentMethod || order.PaymentMethod);
 
     // 5. Invoice
     renderInvoicePreview(order);
@@ -95,7 +95,7 @@ function updateSellerStepper(status) {
     });
 }
 
-function renderSellerActions(orderId, status) {
+function renderSellerActions(orderId, status, paymentMethod) {
     const container = document.getElementById('seller-actions-container');
     container.innerHTML = '';
 
@@ -121,7 +121,22 @@ function renderSellerActions(orderId, status) {
     } else if (status === 'cancelled') {
         container.innerHTML = `<p style="color: #ef4444; font-size: 0.85rem; text-align: center; font-weight: bold;">Đơn hàng đã bị hủy.</p>`;
     } else if (status === 'unpaid') {
-        container.innerHTML = `<p style="color: #f59e0b; font-size: 0.85rem; text-align: center;">Đang chờ người mua thanh toán qua cổng online.</p>`;
+        const isBankTransfer = paymentMethod && paymentMethod.toUpperCase() === 'BANK_TRANSFER';
+        if (isBankTransfer) {
+            container.innerHTML = `
+                <p style="color: #f59e0b; font-size: 0.85rem; text-align: center; margin-bottom: 0.75rem;">
+                    <i class="fa fa-clock"></i> Chờ xác nhận thanh toán chuyển khoản.
+                </p>
+                <button class="btn-action btn-confirm" onclick="confirmBankPayment('${orderId}')" style="background: #10b981;">
+                    <i class="fa fa-check-circle"></i> Xác nhận đã nhận tiền
+                </button>
+                <button class="btn-action btn-reject" onclick="rejectOrder('${orderId}')">
+                    <i class="fa fa-times"></i> Từ chối đơn hàng
+                </button>
+            `;
+        } else {
+            container.innerHTML = `<p style="color: #f59e0b; font-size: 0.85rem; text-align: center;">Đang chờ người mua thanh toán qua cổng online.</p>`;
+        }
     }
 }
 
@@ -129,6 +144,17 @@ async function updateStatus(orderId, newStatus) {
     try {
         await window.api.patch(`orders/${orderId}/status`, { status: newStatus });
         window.common?.showToast('Cập nhật trạng thái thành công.', 'success');
+        loadSellerOrderDetails(orderId);
+    } catch (e) {
+        alert('Lỗi: ' + e.message);
+    }
+}
+
+async function confirmBankPayment(orderId) {
+    if (!confirm('Xác nhận bạn đã nhận được tiền chuyển khoản từ khách hàng? Đơn hàng sẽ được chuyển sang trạng thái Chờ vận chuyển.')) return;
+    try {
+        await window.api.post(`orders/${orderId}/confirm-bank-payment`, {});
+        window.common?.showToast('Đã xác nhận thanh toán thành công!', 'success');
         loadSellerOrderDetails(orderId);
     } catch (e) {
         alert('Lỗi: ' + e.message);
@@ -239,6 +265,7 @@ async function confirmPrintAndPrepare() {
 // Global exposure
 window.updateStatus = updateStatus;
 window.rejectOrder = rejectOrder;
+window.confirmBankPayment = confirmBankPayment;
 window.openPrintModal = openPrintModal;
 window.closePrintModal = closePrintModal;
 window.confirmPrintAndPrepare = confirmPrintAndPrepare;
