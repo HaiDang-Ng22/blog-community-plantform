@@ -481,6 +481,9 @@
                 <button class="filter-tab" data-filter="fixed" onclick="filterVouchers('fixed', this)">
                     <i class="fa-solid fa-money-bill"></i> Giảm tiền
                 </button>
+                <button class="filter-tab" data-filter="freeshipping" onclick="filterVouchers('freeshipping', this)">
+                    <i class="fa-solid fa-truck-fast"></i> Miễn ship
+                </button>
                 <button class="filter-tab" data-filter="hot" onclick="filterVouchers('hot', this)">
                     <i class="fa-solid fa-bolt"></i> Sắp hết
                 </button>
@@ -524,13 +527,7 @@
                 document.getElementById('stat-savings').textContent = maxDiscount > 0 ? maxDiscount + '%' : '—';
 
                 renderVouchers(_allVouchers);
-            } catch (e) {
-                console.error(e);
-                grid.innerHTML = '<div class="vr-empty"><i class="fa-solid fa-circle-exclamation"></i><h3>Lỗi tải dữ liệu</h3><p>Vui lòng thử lại sau.</p></div>';
-            }
-        }
-
-        function filterVouchers(type, btn) {
+             function filterVouchers(type, btn) {
             // Update tab UI
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
@@ -542,6 +539,9 @@
                     break;
                 case 'fixed':
                     filtered = _allVouchers.filter(v => v.discountType === 'FixedAmount');
+                    break;
+                case 'freeshipping':
+                    filtered = _allVouchers.filter(v => v.discountType === 'FreeShipping');
                     break;
                 case 'hot':
                     filtered = _allVouchers.filter(v => {
@@ -574,10 +574,24 @@
                 const isClaimed = _claimedIds.includes(v.id);
                 const usagePercent = v.usageLimit > 0 ? Math.min((v.usedCount / v.usageLimit) * 100, 100) : 0;
                 const gradient = gradients[idx % gradients.length];
-                const discountDisplay = v.discountType === 'Percentage'
-                    ? `<span class="vr-discount-val">${v.discountValue}%</span><span class="vr-discount-label">Giảm</span>`
-                    : `<span class="vr-discount-val">${fmtShort(v.discountValue)}</span><span class="vr-discount-label">Giảm</span>`;
-                const desc = v.description || `Giảm ${v.discountValue}${v.discountType === 'Percentage' ? '%' : 'đ'} cho đơn từ ${fmtShort(v.minOrderValue || 0)}`;
+                
+                let discountDisplay = '';
+                if (v.discountType === 'Percentage') {
+                    discountDisplay = `<span class="vr-discount-val">${v.discountValue}%</span><span class="vr-discount-label">Giảm</span>`;
+                } else if (v.discountType === 'FreeShipping') {
+                    discountDisplay = `<span class="vr-discount-val" style="font-size: 1.4rem;">FREE</span><span class="vr-discount-label">SHIP</span>`;
+                } else {
+                    discountDisplay = `<span class="vr-discount-val">${fmtShort(v.discountValue)}</span><span class="vr-discount-label">Giảm</span>`;
+                }
+
+                let desc = v.description;
+                if (!desc) {
+                    if (v.discountType === 'FreeShipping') {
+                        desc = `Miễn phí vận chuyển cho đơn từ ${fmtShort(v.minOrderValue || 0)}`;
+                    } else {
+                        desc = `Giảm ${v.discountValue}${v.discountType === 'Percentage' ? '%' : 'đ'} cho đơn từ ${fmtShort(v.minOrderValue || 0)}`;
+                    }
+                }
 
                 return `
                     <div class="vr-ticket">
@@ -601,8 +615,8 @@
                                     ${v.minOrderValue ? `<span class="vr-min-order">Đơn tối thiểu: ${fmtShort(v.minOrderValue)}</span>` : ''}
                                 </div>
                                 <button class="btn-vr-claim ${isClaimed ? 'claimed' : 'active'}"
-                                        id="vr-btn-${v.id}"
-                                        onclick="${isClaimed ? '' : `claimPageVoucher('${v.id}')`}">
+                                         id="vr-btn-${v.id}"
+                                         onclick="${isClaimed ? '' : `claimPageVoucher('${v.id}')`}">
                                     ${isClaimed ? '<i class="fa-solid fa-check"></i> Đã lưu' : '<i class="fa-solid fa-plus"></i> Lưu mã'}
                                 </button>
                             </div>

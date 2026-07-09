@@ -5,7 +5,8 @@ namespace Blog.Domain.Entities;
 public enum DiscountType
 {
     Percentage, // Phần trăm (ví dụ 10%)
-    FixedAmount // Số tiền cố định (ví dụ 20.000đ)
+    FixedAmount, // Số tiền cố định (ví dụ 20.000đ)
+    FreeShipping // Miễn phí vận chuyển
 }
 
 public class Voucher

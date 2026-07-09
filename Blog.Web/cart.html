@@ -510,30 +510,38 @@
             // Calculate Shipping Fee
             let shipping = 0;
             if (checkedBoxes.length > 0) {
-                const province = document.getElementById('ship-province').value;
-                // Simple logic: If province selected, calculate. If not, use base.
-                // Assuming base 15k, inter-province 35k.
-                // We'll just use a flat 25k for now if any province is selected, or 0 if nothing selected.
                 shipping = 25000;
             }
 
-            const total = subtotal + shipping - (appliedVoucher ? appliedVoucher.discountAmount : 0);
+            let isFreeShippingApplied = appliedVoucher && appliedVoucher.isFreeShipping;
+            let finalShipping = isFreeShippingApplied ? 0 : shipping;
+
+            const total = subtotal + finalShipping - (appliedVoucher && !isFreeShippingApplied ? appliedVoucher.discountAmount : 0);
 
             document.getElementById('subtotal-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal);
-            document.getElementById('shipping-fee').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping);
+            
+            if (isFreeShippingApplied) {
+                document.getElementById('shipping-fee').innerHTML = `<span style="text-decoration: line-through; color: #64748b; font-size: 0.95rem;">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping)}</span> <span style="color: #10b981; font-weight: bold;">Miễn phí</span>`;
+            } else {
+                document.getElementById('shipping-fee').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping);
+            }
             
             if (appliedVoucher) {
                 const discEl = document.getElementById('voucher-discount-row');
+                const displayVal = isFreeShippingApplied ? "Miễn phí vận chuyển" : `-${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appliedVoucher.discountAmount)}`;
                 if (!discEl) {
                     const row = document.createElement('div');
                     row.className = 'cart-total';
                     row.id = 'voucher-discount-row';
                     row.style = 'font-size: 1.1rem; color: #10b981; margin-bottom: 0.5rem; border: none;';
-                    row.innerHTML = `<span>Giảm giá:</span><span id="voucher-discount-val">-${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appliedVoucher.discountAmount)}</span>`;
+                    row.innerHTML = `<span>Giảm giá:</span><span id="voucher-discount-val">${displayVal}</span>`;
                     document.getElementById('total-price').parentElement.insertAdjacentElement('beforebegin', row);
                 } else {
-                    document.getElementById('voucher-discount-val').textContent = `-${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appliedVoucher.discountAmount)}`;
+                    document.getElementById('voucher-discount-val').textContent = displayVal;
                 }
+            } else {
+                const discEl = document.getElementById('voucher-discount-row');
+                if (discEl) discEl.remove();
             }
 
             document.getElementById('total-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.max(0, total));
@@ -574,10 +582,15 @@
                 
                 appliedVoucher = {
                     code: code,
-                    discountAmount: res.discountAmount
+                    discountAmount: res.discountAmount,
+                    isFreeShipping: res.isFreeShipping
                 };
                 
-                msg.textContent = `Đã áp dụng mã! Giảm ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(res.discountAmount)}`;
+                if (res.isFreeShipping) {
+                    msg.textContent = `Đã áp dụng mã! Miễn phí vận chuyển`;
+                } else {
+                    msg.textContent = `Đã áp dụng mã! Giảm ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(res.discountAmount)}`;
+                }
                 msg.style.color = '#10b981';
                 
                 renderVouchersList();
@@ -790,17 +803,14 @@
                             eligible = false;
                             reason = `Đơn shop ${v.shopName} cần tối thiểu ${new Intl.NumberFormat('vi-VN').format(v.minOrderValue)}đ (hiện có ${new Intl.NumberFormat('vi-VN').format(shopVal)}đ)`;
                         }
-                    } else {
-                        if (v.minOrderValue && subtotal < v.minOrderValue) {
-                            eligible = false;
-                            reason = `Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN').format(v.minOrderValue)}đ (hiện có ${new Intl.NumberFormat('vi-VN').format(subtotal)}đ)`;
-                        }
-                    }
+                    let discountText = '';
+                if (v.discountType === 'Percentage') {
+                    discountText = `${v.discountValue}%`;
+                } else if (v.discountType === 'FreeShipping') {
+                    discountText = 'Miễn phí Ship';
+                } else {
+                    discountText = `${new Intl.NumberFormat('vi-VN').format(v.discountValue)}đ`;
                 }
-
-                const discountText = v.discountType === 'Percentage' 
-                    ? `${v.discountValue}%`
-                    : `${new Intl.NumberFormat('vi-VN').format(v.discountValue)}đ`;
                 
                 const isSelected = appliedVoucher && appliedVoucher.code.toUpperCase() === v.code.toUpperCase();
                 
@@ -815,17 +825,31 @@
                     badgeText = reason;
                 }
 
-                return `
-                    <div class="voucher-card-item ${eligible ? 'eligible' : 'ineligible'} ${isSelected ? 'selected' : ''}" 
-                         onclick="${eligible ? `selectVoucherCard('${v.code}')` : ''}">
+                let stubHtml = '';
+                if (v.discountType === 'FreeShipping') {
+                    stubHtml = `
+                        <div class="voucher-left-stub" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <div><i class="fa-solid fa-truck"></i></div>
+                            <div style="font-size:0.6rem; font-weight:normal; margin-top:2px; letter-spacing: 0.5px;">FREE</div>
+                        </div>
+                    `;
+                } else {
+                    stubHtml = `
                         <div class="voucher-left-stub">
                             <div>${v.discountType === 'Percentage' ? '%' : 'đ'}</div>
                             <div style="font-size:0.65rem; font-weight:normal; margin-top:2px; letter-spacing: 0.5px;">GIẢM</div>
                         </div>
+                    `;
+                }
+
+                return `
+                    <div class="voucher-card-item ${eligible ? 'eligible' : 'ineligible'} ${isSelected ? 'selected' : ''}" 
+                          onclick="${eligible ? `selectVoucherCard('${v.code}')` : ''}">
+                        ${stubHtml}
                         <div class="voucher-right-body">
                             <div>
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span class="voucher-title">${v.code} - Giảm ${discountText}</span>
+                                    <span class="voucher-title">${v.code} - ${discountText}</span>
                                     ${isSelected ? `<i class="fa-solid fa-circle-check" style="color:#10b981;"></i>` : ''}
                                 </div>
                                 <div class="voucher-desc">${v.description || 'Ưu đãi đặt mua ngay cùng Zynk'}</div>

@@ -169,22 +169,33 @@ public class OrdersController : ControllerBase
             {
                 if (appliedVoucher.MinOrderValue == null || total >= appliedVoucher.MinOrderValue.Value)
                 {
-                    decimal discount = 0;
-                    if (appliedVoucher.DiscountType == DiscountType.Percentage)
+                    if (appliedVoucher.DiscountType == DiscountType.FreeShipping)
                     {
-                        discount = total * (appliedVoucher.DiscountValue / 100);
-                        if (appliedVoucher.MaxDiscountAmount.HasValue)
-                            discount = Math.Min(discount, appliedVoucher.MaxDiscountAmount.Value);
+                        // Free shipping: set shipping fee to zero
+                        order.ShippingFee = 0;
+                        order.VoucherId = appliedVoucher.Id;
+                        appliedVoucher.UsedCount++;
+                        _context.Vouchers.Update(appliedVoucher);
                     }
                     else
                     {
-                        discount = appliedVoucher.DiscountValue;
-                    }
+                        decimal discount = 0;
+                        if (appliedVoucher.DiscountType == DiscountType.Percentage)
+                        {
+                            discount = total * (appliedVoucher.DiscountValue / 100);
+                            if (appliedVoucher.MaxDiscountAmount.HasValue)
+                                discount = Math.Min(discount, appliedVoucher.MaxDiscountAmount.Value);
+                        }
+                        else
+                        {
+                            discount = appliedVoucher.DiscountValue;
+                        }
 
-                    order.VoucherId = appliedVoucher.Id;
-                    order.DiscountAmount = Math.Min(discount, total); // Cannot discount more than total
-                    appliedVoucher.UsedCount++;
-                    _context.Vouchers.Update(appliedVoucher);
+                        order.VoucherId = appliedVoucher.Id;
+                        order.DiscountAmount = Math.Min(discount, total); // Cannot discount more than total
+                        appliedVoucher.UsedCount++;
+                        _context.Vouchers.Update(appliedVoucher);
+                    }
                 }
             }
 
@@ -652,26 +663,31 @@ public class OrdersController : ControllerBase
         }
 
         decimal discountAmount = 0;
-        if (voucher.DiscountType == DiscountType.Percentage)
-        {
-            discountAmount = dto.OrderValue * (voucher.DiscountValue / 100);
-            if (voucher.MaxDiscountAmount.HasValue)
-            {
-                discountAmount = Math.Min(discountAmount, voucher.MaxDiscountAmount.Value);
-            }
-        }
-        else
-        {
-            discountAmount = voucher.DiscountValue;
-        }
+        bool isFreeShipping = voucher.DiscountType == DiscountType.FreeShipping;
 
-        discountAmount = Math.Min(discountAmount, dto.OrderValue);
+        if (!isFreeShipping)
+        {
+            if (voucher.DiscountType == DiscountType.Percentage)
+            {
+                discountAmount = dto.OrderValue * (voucher.DiscountValue / 100);
+                if (voucher.MaxDiscountAmount.HasValue)
+                {
+                    discountAmount = Math.Min(discountAmount, voucher.MaxDiscountAmount.Value);
+                }
+            }
+            else
+            {
+                discountAmount = voucher.DiscountValue;
+            }
+            discountAmount = Math.Min(discountAmount, dto.OrderValue);
+        }
 
         return Ok(new { 
             code = voucher.Code,
             discountType = voucher.DiscountType.ToString(),
             discountValue = voucher.DiscountValue,
             discountAmount = discountAmount,
+            isFreeShipping = isFreeShipping,
             shopId = voucher.ShopId,
             shopName = voucher.Shop?.Name ?? "Zynk Platform"
         });
