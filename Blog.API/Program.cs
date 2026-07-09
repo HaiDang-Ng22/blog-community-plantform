@@ -103,8 +103,36 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        var uri = new Uri(connectionString);
+        var userInfo = uri.UserInfo.Split(':');
+        var username = userInfo[0];
+        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+        
+        connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};Ssl Mode=Require;Trust Server Certificate=true;Include Error Detail=True;";
+        Console.WriteLine($"[Database] Parsed connection string from DATABASE_URL env var. Host={host}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Database Error] Failed to parse DATABASE_URL: {ex.Message}");
+        connectionString = null;
+    }
+}
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IShopRepository, ShopRepository>();
@@ -129,7 +157,9 @@ builder.Services.AddResponseCompression(options =>
 var payOsClientId = builder.Configuration["PayOSSettings:ClientId"];
 var payOsApiKey = builder.Configuration["PayOSSettings:ApiKey"];
 var payOsChecksumKey = builder.Configuration["PayOSSettings:ChecksumKey"];
-if (!string.IsNullOrEmpty(payOsClientId) && payOsClientId != "YOUR_CLIENT_ID_HERE")
+if (!string.IsNullOrEmpty(payOsClientId) && 
+    !payOsClientId.StartsWith("YOUR_") && 
+    payOsClientId != "YOUR_CLIENT_ID_HERE")
 {
     var payOS = new PayOSClient(payOsClientId, payOsApiKey, payOsChecksumKey);
     builder.Services.AddSingleton(payOS);
@@ -212,13 +242,24 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     // Ensure database and update schema using Migrations
-    dbContext.Database.Migrate();
-    // Schema updates should be handled by EF Core Migrations (dotnet ef database update).
-    // Raw SQL Server scripts (e.g. using sys.columns, NVARCHAR, DATETIME2) have been removed 
-    // because they are incompatible with PostgreSQL and will crash the application on startup.
-    
-    // Seed initial data
-        await DbInitializer.InitializeAsync(dbContext);
+    var connStr = dbContext.Database.GetConnectionString();
+    if (string.IsNullOrEmpty(connStr) || connStr.Contains("YOUR_DB_HOST"))
+    {
+        Console.WriteLine("[Database Warning] Connection string is using placeholder 'YOUR_DB_HOST'. Skipping Database Migration.");
+    }
+    else
+    {
+        try
+        {
+            dbContext.Database.Migrate();
+            // Seed initial data
+            await DbInitializer.InitializeAsync(dbContext);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Database Migration/Seed Error] Failed to run migration/seed: {ex.Message}");
+        }
+    }
     
     // Seed Real Admin User (credentials loaded from appsettings.Local.json)
     var adminEmail = builder.Configuration["AdminSettings:Email"];
