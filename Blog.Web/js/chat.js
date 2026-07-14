@@ -542,7 +542,7 @@ function createMessageEl(msg, isConsecutive = false) {
     if (msg.sharedPost) {
         sharedPostHtml = `<div class="msg-shared-post" onclick="window.open('index.html?postId=${msg.sharedPost.id}', '_blank')">
             <div class="msg-sp-author">
-                <img src="${msg.sharedPost.authorAvatar || 'assets/default-avatar.png'}" alt="Avatar">
+                <img src="${msg.sharedPost.authorAvatar || 'assets/logo-icon.png'}" alt="Avatar">
                 <span>${escHtml(msg.sharedPost.authorName)}</span>
             </div>
             ${msg.sharedPost.firstImage ? `<img src="${msg.sharedPost.firstImage}" class="msg-sp-img">` : ''}

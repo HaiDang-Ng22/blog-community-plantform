@@ -184,7 +184,7 @@ public class GroupService : IGroupService
             .Include(p => p.Images)
             .Include(p => p.PostLikes)
             .Include(p => p.Comments)
-            .Include(p => p.Poll).ThenInclude(poll => poll.Options)
+            .Include(p => p.Poll).ThenInclude(poll => poll!.Options)
             .Where(p => p.GroupId == groupId && p.Status == PostStatus.Published)
             .OrderByDescending(p => p.CreatedAt)
             .Take(50)

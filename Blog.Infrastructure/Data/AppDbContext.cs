@@ -59,6 +59,11 @@ public class AppDbContext : DbContext
     public DbSet<Group> Groups { get; set; }
     public DbSet<GroupMember> GroupMembers { get; set; }
 
+    // AI Chat Shopping Assistant
+    public DbSet<AiChatSession> AiChatSessions { get; set; }
+    public DbSet<AiChatMessage> AiChatMessages { get; set; }
+    public DbSet<AiRecommendationLog> AiRecommendationLogs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -525,6 +530,42 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(r => r.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // AI Chat Shopping Assistant Configurations
+        modelBuilder.Entity<AiChatSession>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.AnonymousSessionId).HasMaxLength(100);
+            entity.Property(s => s.Title).HasMaxLength(200);
+            entity.HasIndex(s => s.AnonymousSessionId);
+            entity.HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiChatMessage>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Role).HasMaxLength(50);
+            // Intent stores full JSON - no length limit
+            entity.Property(m => m.Intent).HasMaxLength(2000);
+            entity.HasIndex(m => m.ClientMessageId);
+            entity.HasOne(m => m.Session)
+                .WithMany(s => s.Messages)
+                .HasForeignKey(m => m.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiRecommendationLog>(entity =>
+        {
+            entity.HasKey(l => l.Id);
+            entity.Property(l => l.GroupType).HasMaxLength(50);
+            entity.HasOne(l => l.Product)
+                .WithMany()
+                .HasForeignKey(l => l.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // --- Global DateTime UTC Converter ---
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

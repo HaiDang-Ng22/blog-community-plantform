@@ -11,6 +11,6 @@ namespace Blog.Domain.Entities
         public string Auth { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public virtual User User { get; set; }
+        public virtual User User { get; set; } = null!;
     }
 }

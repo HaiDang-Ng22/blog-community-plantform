@@ -157,9 +157,9 @@ public class AdminController : ControllerBase
         var reports = await _context.Reports
             .Include(r => r.Reporter)
             .Include(r => r.Post)
-                .ThenInclude(p => p.Author)
+                .ThenInclude(p => p!.Author)
             .Include(r => r.Post)
-                .ThenInclude(p => p.Images)
+                .ThenInclude(p => p!.Images)
             .Include(r => r.Group)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -791,7 +791,7 @@ public class AdminController : ControllerBase
         return Ok(words);
     }
 
-    public class BannedWordDto { public string Word { get; set; } }
+    public class BannedWordDto { public string Word { get; set; } = string.Empty; }
 
     [HttpPost("banned-words")]
     public async Task<IActionResult> AddBannedWord([FromBody] BannedWordDto dto)

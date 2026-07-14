@@ -123,7 +123,7 @@ public class OrdersController : ControllerBase
                     v.IsActive && 
                     v.StartDate <= DateTime.UtcNow && 
                     v.EndDate >= DateTime.UtcNow &&
-                    (v.UsageLimit == null || v.UsedCount < v.UsageLimit));
+                    (v.UsageLimit == 0 || v.UsedCount < v.UsageLimit));
             }
 
             foreach (var itemDto in group)

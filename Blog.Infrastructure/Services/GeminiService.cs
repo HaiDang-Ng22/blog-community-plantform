@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Blog.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +23,10 @@ public class GeminiService : IGeminiService
         _httpClient = new HttpClient();
     }
 
-    public async Task<string> CallGeminiAsync(string prompt, List<string>? imageUrls = null)
+    public async Task<string> CallGeminiAsync(
+        string prompt,
+        List<string>? imageUrls = null,
+        CancellationToken cancellationToken = default)
     {
         var apiKey = _configuration["Gemini:ApiKey"];
         
@@ -40,8 +44,11 @@ public class GeminiService : IGeminiService
 
         try
         {
-            // Try gemini-1.5-flash (stable, widely available) then fall back to 2.0-flash
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+            // Keep the model configurable so deployments can upgrade without a
+            // code change. Gemini 3.5 Flash is the current stable default.
+            var model = _configuration["Gemini:Model"];
+            if (string.IsNullOrWhiteSpace(model)) model = "gemini-3.5-flash";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
             
             var parts = new List<object>
             {
@@ -57,7 +64,7 @@ public class GeminiService : IGeminiService
                     
                     try
                     {
-                        var (base64Data, mimeType) = await GetImageBase64Async(imageUrl);
+                        var (base64Data, mimeType) = await GetImageBase64Async(imageUrl, cancellationToken);
                         parts.Add(new
                         {
                             inlineData = new
@@ -85,8 +92,8 @@ public class GeminiService : IGeminiService
             var jsonPayload = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(url, content);
-            var responseText = await response.Content.ReadAsStringAsync();
+            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -137,6 +144,10 @@ public class GeminiService : IGeminiService
 
             Console.WriteLine("[GeminiService ERROR] Unexpected response format from Gemini API.");
             return GetMockResponse(prompt);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -246,13 +257,15 @@ Trả về kết quả dưới định dạng JSON thô duy nhất với cấu t
         return trimmed.Trim();
     }
 
-    private async Task<(string base64, string mimeType)> GetImageBase64Async(string imageUrl)
+    private async Task<(string base64, string mimeType)> GetImageBase64Async(
+        string imageUrl,
+        CancellationToken cancellationToken = default)
     {
         using var client = new HttpClient();
-        var response = await client.GetAsync(imageUrl);
+        var response = await client.GetAsync(imageUrl, cancellationToken);
         response.EnsureSuccessStatusCode();
         
-        var bytes = await response.Content.ReadAsByteArrayAsync();
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
         var base64 = Convert.ToBase64String(bytes);
         
         // Detect MIME type from Content-Type header first (handles Cloudinary URLs)

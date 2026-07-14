@@ -3,7 +3,6 @@ using Blog.Domain.Interfaces;
 using Google.Cloud.Firestore;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
