@@ -1264,7 +1264,10 @@ Yêu cầu:
     private string EscapeHtml(string? input)
     {
         if (string.IsNullOrEmpty(input)) return string.Empty;
-        // Basic sanitization: HtmlEncode to prevent XSS
-        return System.Net.WebUtility.HtmlEncode(input);
+        // Do NOT HtmlEncode here — this is a JSON API response.
+        // HtmlEncode converts Vietnamese chars (à→&#224;) which then display
+        // literally in the frontend. XSS safety is handled by frontend via textContent.
+        // Only strip actual dangerous chars if needed.
+        return input.Trim();
     }
 }
