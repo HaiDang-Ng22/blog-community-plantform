@@ -64,6 +64,14 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             .replace(/"/g, '&quot;');
     }
 
+    // Decode HTML entities from DB data (e.g. Gi&#224;y -> Giày)
+    function _decodeHtml(str) {
+        if (!str) return '';
+        const el = document.createElement('textarea');
+        el.innerHTML = str;
+        return el.value;
+    }
+
     function _formatText(text) {
         let escaped = _escapeHtml(text);
         escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -229,7 +237,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             const groups = data.groups || [];
             const suggestedReplies = data.suggestedReplies || [];
 
-            _appendBotMessage(botText, groups, suggestedReplies, data.sessionId, data.messageId);
+            _appendBotMessage(botText, groups, suggestedReplies, text, data.messageId);
 
         } catch (err) {
             _removeTyping(typingId);
@@ -270,7 +278,8 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         _scrollBottom();
     }
 
-    function _appendBotMessage(text, groups, suggestedReplies, sessionId, messageId) {
+    // userQuery = original user message for page title
+    function _appendBotMessage(text, groups, suggestedReplies, userQuery, messageId) {
         const msgs = _getMessages();
         if (!msgs) return;
 
@@ -290,18 +299,16 @@ Bạn đang cần tìm gì hôm nay? 😊`;
                 const scrollArea = _buildProductScrollArea(allProducts);
                 div.appendChild(scrollArea);
 
-                // "View on page" button
                 const viewBtn = document.createElement('button');
                 viewBtn.className = 'ai-view-on-page-btn';
                 viewBtn.innerHTML = `✅ Đã tìm thấy ${allProducts.length} gợi ý phù hợp và hiển thị trực tiếp ở trang chính. <span style="font-weight:700">Xem ngay ➔</span>`;
                 viewBtn.onclick = () => {
-                    _renderRecommendationsOnMainPage(text, groups);
                     window.scrollToMainProducts();
                 };
                 div.appendChild(viewBtn);
 
-                // Auto-render to main page
-                _renderRecommendationsOnMainPage(text, groups);
+                // Auto-render to main page using user's original query
+                _renderRecommendationsOnMainPage(userQuery, groups);
             }
         }
 
@@ -391,10 +398,13 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         const originalPrice = p.originalPrice ? _formatCurrency(p.originalPrice) : '';
         const productId = p.id || '';
         const trackingId = p.recommendationLogId || '';
+        // Decode HTML entities from DB (e.g. Gi&#224;y -> Giày)
+        const decodedName = _decodeHtml(p.name ?? 'Sản phẩm');
+        const decodedShop = _decodeHtml(p.shopName ?? 'Zynk Shop');
 
         const card = document.createElement('div');
         card.className = 'product-card fadeInUp';
-        card.style.cssText = 'min-width:160px; max-width:160px; flex-shrink:0;';
+        card.style.cssText = 'min-width:160px; max-width:160px; flex-shrink:0; cursor:pointer;';
 
         card.innerHTML = `
             ${isMall ? '<div class="badge-mall">Mall</div>' : ''}
@@ -421,20 +431,24 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             </div>
         `;
 
-        // Set text safely (no HTML entity encoding for Vietnamese)
+        // Set text safely — decode HTML entities from DB then set via textContent
         const nameEl = card.querySelector('.pcard-name');
         const shopEl = card.querySelector('.pcard-shop');
         const imgEl = card.querySelector('.pcard-img');
-        if (nameEl) nameEl.textContent = p.name ?? 'Sản phẩm';
-        if (shopEl) shopEl.textContent = p.shopName ?? 'Zynk Shop';
-        if (imgEl) imgEl.alt = p.name ?? '';
+        if (nameEl) nameEl.textContent = decodedName;
+        if (shopEl) shopEl.textContent = decodedShop;
+        if (imgEl) imgEl.alt = decodedName;
 
-        // Event listeners
-        const imageBox = card.querySelector('.product-image-box');
-        if (imageBox) imageBox.addEventListener('click', () => window.trackAndOpenDetails && window.trackAndOpenDetails(productId, trackingId) || window.openProductModal && window.openProductModal(productId));
-        if (nameEl) nameEl.addEventListener('click', () => window.trackAndOpenDetails && window.trackAndOpenDetails(productId, trackingId) || window.openProductModal && window.openProductModal(productId));
-        card.querySelector('.pcard-detail')?.addEventListener('click', () => window.trackAndOpenDetails && window.trackAndOpenDetails(productId, trackingId) || window.openProductModal && window.openProductModal(productId));
-        card.querySelector('.pcard-cart')?.addEventListener('click', (e) => window.trackAndAddToCart && window.trackAndAddToCart(productId, trackingId, e));
+        // Event listeners — full card clickable
+        const openProduct = () => {
+            if (window.trackAndOpenDetails) window.trackAndOpenDetails(productId, trackingId);
+            else if (window.openProductModal) window.openProductModal(productId);
+        };
+        card.addEventListener('click', openProduct);
+        card.querySelector('.pcard-cart')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.trackAndAddToCart) window.trackAndAddToCart(productId, trackingId, e);
+        });
 
         return card;
     }
@@ -499,40 +513,48 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         const price = _formatCurrency(p.price ?? 0);
         const productId = p.id || '';
         const trackingId = p.recommendationLogId || '';
+        // Decode HTML entities from DB
+        const decodedName = _decodeHtml(p.name ?? 'Sản phẩm');
+        const decodedShop = _decodeHtml(p.shopName ?? 'Zynk Shop');
 
         const card = document.createElement('div');
         card.className = 'product-card';
+        card.style.cursor = 'pointer';
 
+        // No "Chi tiết" button — full card is clickable
         card.innerHTML = `
-            <div class="product-image-box" style="cursor:pointer;">
+            <div class="product-image-box">
                 <img src="${_escapeHtml(p.featuredImageUrl || '')}" alt="" style="width:100%;object-fit:cover;">
             </div>
             <div class="product-info">
                 <span class="product-shop"><i class="fa fa-shop"></i> <span class="mc-shop"></span></span>
-                <h3 class="product-name mc-name" style="cursor:pointer;"></h3>
+                <h3 class="product-name mc-name"></h3>
                 <div class="product-meta">
                     <span class="product-price">${price}</span>
                     <span class="product-stats">${p.salesCount ?? 0} đã bán</span>
                 </div>
                 <div class="product-actions" style="display:flex;gap:6px;margin-top:8px;">
-                    <button class="btn btn-small mc-detail" style="flex:1;"><i class="fa-solid fa-eye"></i> Chi tiết</button>
-                    <button class="btn btn-small primary-btn mc-cart" style="flex:1;"><i class="fa-solid fa-cart-plus"></i> Thêm giỏ</button>
+                    <button class="btn btn-small primary-btn mc-cart" style="width:100%;"><i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ</button>
                 </div>
             </div>
         `;
 
-        // Set text via textContent to avoid Vietnamese encoding
+        // Set text via textContent (decode HTML entities)
         const nameEl = card.querySelector('.mc-name');
         const shopEl = card.querySelector('.mc-shop');
-        if (nameEl) nameEl.textContent = p.name ?? 'Sản phẩm';
-        if (shopEl) shopEl.textContent = p.shopName ?? 'Zynk Shop';
+        if (nameEl) nameEl.textContent = decodedName;
+        if (shopEl) shopEl.textContent = decodedShop;
 
-        // Events
-        const imgBox = card.querySelector('.product-image-box');
-        if (imgBox) imgBox.addEventListener('click', () => window.trackAndOpenDetails ? window.trackAndOpenDetails(productId, trackingId) : window.openProductModal && window.openProductModal(productId));
-        if (nameEl) nameEl.addEventListener('click', () => window.trackAndOpenDetails ? window.trackAndOpenDetails(productId, trackingId) : window.openProductModal && window.openProductModal(productId));
-        card.querySelector('.mc-detail')?.addEventListener('click', () => window.trackAndOpenDetails ? window.trackAndOpenDetails(productId, trackingId) : window.openProductModal && window.openProductModal(productId));
-        card.querySelector('.mc-cart')?.addEventListener('click', (e) => window.trackAndAddToCart && window.trackAndAddToCart(productId, trackingId, e));
+        // Full card click = open product
+        const openProduct = () => {
+            if (window.trackAndOpenDetails) window.trackAndOpenDetails(productId, trackingId);
+            else if (window.openProductModal) window.openProductModal(productId);
+        };
+        card.addEventListener('click', openProduct);
+        card.querySelector('.mc-cart')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.trackAndAddToCart) window.trackAndAddToCart(productId, trackingId, e);
+        });
 
         return card;
     }
