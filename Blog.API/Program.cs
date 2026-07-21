@@ -144,6 +144,7 @@ builder.Services.AddScoped<IFirebaseChatService, FirebaseChatService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IGeminiService, GeminiService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
+builder.Services.AddScoped<Blog.Application.Services.IAiShoppingAssistantService, Blog.Infrastructure.Services.AiShoppingAssistantService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
 builder.Services.AddResponseCompression(options =>
