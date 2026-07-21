@@ -909,7 +909,13 @@
                             eligible = false;
                             reason = `Đơn shop ${v.shopName} cần tối thiểu ${new Intl.NumberFormat('vi-VN').format(v.minOrderValue)}đ (hiện có ${new Intl.NumberFormat('vi-VN').format(shopVal)}đ)`;
                         }
-                    let discountText = '';
+                    } else if (v.minOrderValue && subtotal < v.minOrderValue) {
+                        eligible = false;
+                        reason = `Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN').format(v.minOrderValue)}đ (hiện có ${new Intl.NumberFormat('vi-VN').format(subtotal)}đ)`;
+                    }
+                }
+
+                let discountText = '';
                 if (v.discountType === 'Percentage') {
                     discountText = `${v.discountValue}%`;
                 } else if (v.discountType === 'FreeShipping') {

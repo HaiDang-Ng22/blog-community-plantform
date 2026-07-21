@@ -228,10 +228,19 @@ if (Directory.Exists(webPath))
         FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webPath),
         OnPrepareResponse = ctx =>
         {
-            // Cache static assets like CSS, JS, images, and fonts for 30 days
-            const int durationInSeconds = 60 * 60 * 24 * 30;
-            ctx.Context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.CacheControl] = 
-                $"public,max-age={durationInSeconds}";
+            var fileName = ctx.File.Name.ToLower();
+            if (fileName.EndsWith(".html") || app.Environment.IsDevelopment())
+            {
+                ctx.Context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.CacheControl] = "no-cache, no-store, must-revalidate";
+                ctx.Context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Pragma] = "no-cache";
+                ctx.Context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Expires] = "0";
+            }
+            else
+            {
+                const int durationInSeconds = 60 * 60 * 24 * 7;
+                ctx.Context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.CacheControl] =
+                    $"public,max-age={durationInSeconds}";
+            }
         }
     });
 }
