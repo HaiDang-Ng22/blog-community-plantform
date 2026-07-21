@@ -252,13 +252,72 @@ public class AiShoppingAssistantService : IAiShoppingAssistantService
         var candidates = new List<Product>();
         bool isFallback = false;
         bool searchWasRelaxed = false;
+        string? actionType = null;
+        List<AiOrderSummaryDto>? ordersList = null;
 
-        // Process order_lookup intent directly
-        if (intent.Type == "order_lookup")
+        // ── Smart order management intents (checked FIRST) ──────────────────────
+        if (intent.Type == "view_cart")
+        {
+            actionType = "view_cart";
+            responseText = "Em sẽ mở giỏ hàng của bạn ngay bây giờ! 🛒 Bạn có thể xem và chỉnh sửa các sản phẩm đã chọn.";
+            suggestedReplies = new List<string> { "Thanh toán ngay", "Tiếp tục mua sắm", "Xóa sản phẩm khỏi giỏ" };
+        }
+        else if (intent.Type == "checkout")
+        {
+            actionType = "redirect_cart";
+            responseText = "Em sẽ đưa bạn đến trang giỏ hàng để thanh toán! 💳 Tại đó bạn có thể kiểm tra lại đơn hàng và chọn phương thức thanh toán phù hợp.";
+            suggestedReplies = new List<string> { "Xem giỏ hàng", "Tiếp tục mua sắm", "Xem đơn hàng của tôi" };
+        }
+        else if (intent.Type == "my_orders" || intent.Type == "order_status")
+        {
+            var (orderResponse, orderReplies, ordAction, ordList) = await HandleSmartOrderIntentAsync(userId, intent.Type, cancellationToken);
+            responseText = orderResponse;
+            suggestedReplies = orderReplies;
+            actionType = ordAction;
+            ordersList = ordList;
+        }
+        else if (intent.Type == "cancel_order")
+        {
+            actionType = "cancel_order_info";
+            responseText = "Để hủy đơn hàng, bạn vui lòng:\n\n" +
+                           "1️⃣ Vào **Đơn hàng của tôi** trong menu tài khoản\n" +
+                           "2️⃣ Chọn đơn cần hủy\n" +
+                           "3️⃣ Nhấn **Hủy đơn** và xác nhận lý do\n\n" +
+                           "⚠️ Lưu ý: Chỉ có thể hủy đơn khi đơn chưa được vận chuyển. Nếu đơn đã giao vận chuyển, vui lòng liên hệ hỗ trợ Zynk.";
+            suggestedReplies = new List<string> { "Xem đơn hàng của tôi", "Liên hệ hỗ trợ", "Tiếp tục mua sắm" };
+        }
+        else if (intent.Type == "return_refund")
+        {
+            actionType = "return_refund_info";
+            responseText = "Để trả hàng hoặc hoàn tiền, bạn vui lòng:\n\n" +
+                           "1️⃣ Vào **Đơn hàng của tôi** trong menu tài khoản\n" +
+                           "2️⃣ Chọn đơn cần trả/hoàn tiền\n" +
+                           "3️⃣ Nhấn **Yêu cầu trả hàng** và điền lý do\n\n" +
+                           "📌 Điều kiện: Sản phẩm còn nguyên tem, chưa qua sử dụng và trong thời hạn đổi trả của shop. " +
+                           "Em không thể tự thực hiện hoàn tiền thay bạn, vui lòng làm theo hướng dẫn trên. 😊";
+            suggestedReplies = new List<string> { "Xem đơn hàng của tôi", "Liên hệ hỗ trợ", "Tiếp tục mua sắm" };
+        }
+        else if (intent.Type == "help")
+        {
+            actionType = "help";
+            responseText = "Em có thể giúp bạn:\n\n" +
+                           "🔍 Tìm kiếm sản phẩm theo nhu cầu\n" +
+                           "💡 Gợi ý sản phẩm phù hợp với ngân sách\n" +
+                           "🛒 Xem giỏ hàng của bạn\n" +
+                           "💳 Hướng dẫn thanh toán\n" +
+                           "📦 Kiểm tra đơn hàng & trạng thái giao hàng\n" +
+                           "❌ Hủy đơn hàng\n" +
+                           "↩️ Hướng dẫn trả hàng & hoàn tiền\n" +
+                           "⭐ Tìm sản phẩm bán chạy / đánh giá cao";
+            suggestedReplies = new List<string> { "Tìm sản phẩm", "Xem đơn hàng của tôi", "Xem giỏ hàng" };
+        }
+        // ── Existing order_lookup intent ─────────────────────────────────────────
+        else if (intent.Type == "order_lookup")
         {
             var (orderResponse, replies) = await HandleOrderLookupAsync(userId, msgText, cancellationToken);
             responseText = orderResponse;
             suggestedReplies = replies;
+            actionType = userId.HasValue ? "view_orders" : "require_login";
         }
         else
         {
@@ -412,7 +471,9 @@ public class AiShoppingAssistantService : IAiShoppingAssistantService
             Intent = intent,
             Groups = groups,
             SuggestedReplies = suggestedReplies,
-            HasMore = false
+            HasMore = false,
+            ActionType = actionType,
+            Orders = ordersList
         };
     }
 
@@ -514,9 +575,16 @@ public class AiShoppingAssistantService : IAiShoppingAssistantService
     {
         return intentType switch
         {
-            "product_search" => new List<string> { "Mức giá rẻ hơn", "Chỉ xem sản phẩm từ 4 sao", "So sánh các mẫu này" },
-            "order_lookup" => new List<string> { "Kiểm tra đơn hàng khác", "Liên hệ hỗ trợ" },
-            _ => new List<string> { "Tìm thêm sản phẩm", "Gợi ý giày sneaker", "Xem giỏ hàng" }
+            "product_search"  => new List<string> { "Mức giá rẻ hơn", "Chỉ xem sản phẩm từ 4 sao", "So sánh các mẫu này" },
+            "order_lookup"
+                or "my_orders"
+                or "order_status" => new List<string> { "Kiểm tra đơn hàng khác", "Hủy đơn hàng", "Liên hệ hỗ trợ" },
+            "view_cart"
+                or "checkout"    => new List<string> { "Tiếp tục mua sắm", "Xem đơn hàng của tôi", "Gợi ý sản phẩm" },
+            "cancel_order"       => new List<string> { "Xem đơn hàng của tôi", "Liên hệ hỗ trợ", "Tiếp tục mua sắm" },
+            "return_refund"      => new List<string> { "Xem đơn hàng của tôi", "Liên hệ hỗ trợ", "Tiếp tục mua sắm" },
+            "help"               => new List<string> { "Tìm sản phẩm", "Xem đơn hàng của tôi", "Xem giỏ hàng" },
+            _                    => new List<string> { "Tìm thêm sản phẩm", "Gợi ý giày sneaker", "Xem giỏ hàng" }
         };
     }
 
@@ -630,7 +698,57 @@ public class AiShoppingAssistantService : IAiShoppingAssistantService
 
         var lower = message.ToLower();
 
-        // 1. Check order related
+        // 0. Smart order management intents (checked before order_lookup)
+        if (lower.Contains("giỏ hàng") || lower.Contains("xem giỏ") || lower.Contains("trong giỏ") ||
+            (lower.Contains("cart") && !lower.Contains("checkout")))
+        {
+            intent.Type = "view_cart";
+            return intent;
+        }
+
+        if (lower.Contains("thanh toán") || lower.Contains("mua ngay") ||
+            lower.Contains("đặt hàng ngay") || lower.Contains("checkout"))
+        {
+            intent.Type = "checkout";
+            return intent;
+        }
+
+        if (lower.Contains("hủy đơn") || lower.Contains("muốn hủy") ||
+            (lower.Contains("cancel") && (lower.Contains("đơn") || lower.Contains("order"))))
+        {
+            intent.Type = "cancel_order";
+            return intent;
+        }
+
+        if (lower.Contains("trả hàng") || lower.Contains("hoàn tiền") ||
+            lower.Contains("refund") || lower.Contains("đổi hàng"))
+        {
+            intent.Type = "return_refund";
+            return intent;
+        }
+
+        if (lower.Contains("trạng thái đơn") || lower.Contains("đơn giao chưa") ||
+            lower.Contains("theo dõi đơn") || lower.Contains("ship đến đâu"))
+        {
+            intent.Type = "order_status";
+            return intent;
+        }
+
+        if (lower.Contains("đơn của tôi") || lower.Contains("lịch sử mua") ||
+            lower.Contains("đã mua gì") || lower.Contains("mua gì rồi"))
+        {
+            intent.Type = "my_orders";
+            return intent;
+        }
+
+        if (lower.Contains("giúp tôi") || lower.Contains("hướng dẫn") ||
+            lower.Contains("làm được gì") || lower.Contains("tính năng"))
+        {
+            intent.Type = "help";
+            return intent;
+        }
+
+        // 1. Check general order related (keep existing for backward compat)
         if (lower.Contains("đơn hàng") || lower.Contains("mua gì") || lower.Contains("lịch sử mua") || lower.Contains("trạng thái đơn"))
         {
             intent.Type = "order_lookup";
@@ -1243,6 +1361,46 @@ Yêu cầu:
             var response = $"Em thấy bạn có đơn hàng gần nhất đặt ngày {latestOrder.CreatedAt:dd/MM/yyyy} với tổng giá trị {latestOrder.TotalAmount:N0}đ. Trạng thái đơn hàng hiện tại là: **{GetOrderStatusText(latestOrder.Status)}**. 😊";
             return (response, new List<string> { "Xem lịch sử mua hàng" });
         }
+    }
+
+    private async Task<(string response, List<string> suggestedReplies, string actionType, List<AiOrderSummaryDto>? orders)> HandleSmartOrderIntentAsync(Guid? userId, string intentType, CancellationToken cancellationToken)
+    {
+        if (!userId.HasValue)
+        {
+            return ("Vui lòng đăng nhập tài khoản Zynk để em hỗ trợ kiểm tra thông tin đơn hàng của bạn nhé! 😊", new List<string> { "Đăng nhập ngay" }, "require_login", null);
+        }
+
+        var orders = await _context.Orders
+            .AsNoTracking()
+            .Where(o => o.BuyerId == userId.Value)
+            .OrderByDescending(o => o.CreatedAt)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+        if (orders.Count == 0)
+        {
+            return ("Em kiểm tra trên hệ thống và thấy bạn chưa có đơn hàng nào. Bạn có thể chọn các sản phẩm yêu thích và đặt hàng ngay nhé! 🛒", new List<string> { "Tìm sản phẩm hot", "Xem giỏ hàng" }, "view_orders", new List<AiOrderSummaryDto>());
+        }
+
+        var dtos = orders.Select(o => new AiOrderSummaryDto
+        {
+            Id = o.Id,
+            CreatedAt = o.CreatedAt,
+            TotalAmount = o.TotalAmount,
+            Status = o.Status.ToString(),
+            CustomerName = o.CustomerName,
+            ShippingAddress = o.ShippingAddress
+        }).ToList();
+
+        if (intentType == "order_status")
+        {
+            var latest = orders.First();
+            var text = $"Đơn hàng gần nhất **#{latest.Id.ToString().Substring(0, 8)}** của bạn đặt ngày {latest.CreatedAt:dd/MM/yyyy} hiện có trạng thái: **{GetOrderStatusText(latest.Status)}**. Tổng tiền: {latest.TotalAmount:N0}đ.";
+            return (text, new List<string> { "Xem tất cả đơn hàng", "Hủy đơn hàng", "Liên hệ hỗ trợ" }, "view_orders", dtos);
+        }
+
+        var resText = $"Dưới đây là {dtos.Count} đơn hàng gần nhất của bạn. Bạn có thể nhấn vào từng đơn để xem chi tiết:";
+        return (resText, new List<string> { "Kiểm tra đơn khác", "Hủy đơn hàng", "Trợ giúp" }, "view_orders", dtos);
     }
 
     private string GetOrderStatusText(OrderStatus status)

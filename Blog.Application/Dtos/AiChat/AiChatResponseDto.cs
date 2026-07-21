@@ -12,4 +12,15 @@ public class AiChatResponseDto
     public List<AiRecommendationGroupDto> Groups { get; set; } = new();
     public List<string> SuggestedReplies { get; set; } = new();
     public bool HasMore { get; set; } = false;
+
+    /// <summary>
+    /// Optional action hint for the frontend. Values: "view_cart", "redirect_cart",
+    /// "view_orders", "require_login", "cancel_order_info", "return_refund_info", "help", null.
+    /// </summary>
+    public string? ActionType { get; set; }
+
+    /// <summary>
+    /// Populated when ActionType is "view_orders": list of the user's recent orders.
+    /// </summary>
+    public List<AiOrderSummaryDto>? Orders { get; set; }
 }

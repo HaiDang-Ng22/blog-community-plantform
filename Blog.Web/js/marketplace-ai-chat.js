@@ -1,5 +1,5 @@
-// marketplace-ai-chat.js — Zynk AI Shopping Assistant v2
-// Uses the new /api/ai-chat/* endpoints with session management.
+// marketplace-ai-chat.js — Zynk AI Shopping Assistant v3 (Redesigned & Smart)
+// Uses /api/ai-chat/* endpoints with session management, smart order intents, and premium UI.
 
 (function () {
     'use strict';
@@ -16,21 +16,22 @@
     let _originalGridContent = null;
 
     const SUGGESTIONS = [
-        '🧥 Tìm áo khoác đẹp',
-        '👟 Gợi ý giày sneaker',
-        '👜 Túi xách thời trang',
-        '💄 Sản phẩm làm đẹp',
-        '📱 Phụ kiện điện tử',
+        '🧥 Áo khoác đẹp',
+        '👟 Giày sneaker',
+        '📦 Đơn hàng của tôi',
+        '🛒 Xem giỏ hàng',
+        '⚡ Sản phẩm bán chạy',
     ];
 
     const GREETING = `Chào bạn! 👋 Em là **Zynk AI**, trợ lý mua sắm thông minh của Zynk Shop.
 
 Em có thể giúp bạn:
-• 🔍 Tìm sản phẩm theo nhu cầu
-• 💡 Gợi ý sản phẩm phù hợp
-• 🛒 Thêm nhanh vào giỏ hàng
+• 🔍 Tìm kiếm sản phẩm theo nhu cầu & ngân sách
+• 🛒 Xem & quản lý giỏ hàng
+• 📦 Kiểm tra đơn hàng & trạng thái giao hàng
+• 💳 Hướng dẫn thanh toán & đổi trả hàng
 
-Bạn đang cần tìm gì hôm nay? 😊`;
+Bạn cần hỗ trợ gì hôm nay? 😊`;
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
     function isLoggedIn() {
@@ -47,7 +48,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
     }
 
     function _formatCurrency(amount) {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
     }
 
     function _formatTime(d) {
@@ -56,7 +57,6 @@ Bạn đang cần tìm gì hôm nay? 😊`;
 
     function _escapeHtml(str) {
         if (!str) return '';
-        // Only escape HTML-dangerous chars, NOT unicode/Vietnamese chars
         return String(str)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -64,7 +64,6 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             .replace(/"/g, '&quot;');
     }
 
-    // Decode HTML entities from DB data (e.g. Gi&#224;y -> Giày)
     function _decodeHtml(str) {
         if (!str) return '';
         const el = document.createElement('textarea');
@@ -91,15 +90,11 @@ Bạn đang cần tìm gì hôm nay? 😊`;
     // ── Session management ───────────────────────────────────────────────────────
     async function initSession() {
         anonymousSessionId = getAnonymousSessionId();
-
-        // Try to restore saved session
         const savedId = localStorage.getItem(LS_SESSION_KEY);
         if (savedId) {
             currentSessionId = savedId;
-            return; // Will validate on first message send
+            return;
         }
-
-        // Create new session
         await _createSession();
     }
 
@@ -122,7 +117,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
                 localStorage.setItem(LS_SESSION_KEY, data.id);
             }
         } catch (e) {
-            console.warn('[AiChat] Could not create session, will retry on message:', e);
+            console.warn('[AiChat] Could not create session:', e);
         }
     }
 
@@ -153,6 +148,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
 
     async function _init() {
         _renderGreeting();
+        _renderQuickActionsBar();
         _renderSuggestions();
         await initSession();
         _setupHeaderActions();
@@ -186,7 +182,6 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         if (sendBtn) sendBtn.disabled = true;
 
         try {
-            // Ensure we have a valid session
             if (!currentSessionId) {
                 await _createSession();
             }
@@ -220,11 +215,10 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             if (sendBtn) sendBtn.disabled = false;
 
             if (res.status === 404) {
-                // Session expired, recreate
                 localStorage.removeItem(LS_SESSION_KEY);
                 currentSessionId = null;
                 await _createSession();
-                _appendBotMessage('Phiên chat đã hết hạn, em đã tạo phiên mới. Bạn vui lòng nhắn lại nhé! 😊', [], []);
+                _appendBotMessage('Phiên chat đã hết hạn, em đã tạo phiên mới. Bạn vui lòng nhắn lại nhé! 😊', [], [], text);
                 return;
             }
 
@@ -236,14 +230,16 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             const botText = data.response || 'Xin lỗi, em chưa hiểu yêu cầu. Bạn mô tả rõ hơn được không?';
             const groups = data.groups || [];
             const suggestedReplies = data.suggestedReplies || [];
+            const actionType = data.actionType || null;
+            const orders = data.orders || [];
 
-            _appendBotMessage(botText, groups, suggestedReplies, text, data.messageId);
+            _appendBotMessage(botText, groups, suggestedReplies, text, data.messageId, actionType, orders);
 
         } catch (err) {
             _removeTyping(typingId);
             isTyping = false;
             if (sendBtn) sendBtn.disabled = false;
-            _appendBotMessage('Ối! Có lỗi kết nối. Bạn vui lòng thử lại nhé 🙏', [], []);
+            _appendBotMessage('Ối! Có lỗi kết nối. Bạn vui lòng thử lại nhé 🙏', [], [], text);
             console.error('[AiChat] Error:', err);
         }
     };
@@ -271,15 +267,14 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         const div = document.createElement('div');
         div.className = 'ai-shop-msg user';
         div.innerHTML = `
-            <div class="ai-shop-bubble user-bubble">${_escapeHtml(text)}</div>
+            <div class="ai-shop-bubble">${_escapeHtml(text)}</div>
             <span class="ai-shop-time">${_formatTime()}</span>
         `;
         msgs.appendChild(div);
         _scrollBottom();
     }
 
-    // userQuery = original user message for page title
-    function _appendBotMessage(text, groups, suggestedReplies, userQuery, messageId) {
+    function _appendBotMessage(text, groups, suggestedReplies, userQuery, messageId, actionType, orders) {
         const msgs = _getMessages();
         if (!msgs) return;
 
@@ -287,36 +282,58 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         div.className = 'ai-shop-msg bot';
 
         const bubble = document.createElement('div');
-        bubble.className = 'ai-shop-bubble bot-bubble';
+        bubble.className = 'ai-shop-bubble';
         bubble.innerHTML = _formatText(text);
         div.appendChild(bubble);
 
-        // Render product groups
+        // Action handling
+        if (actionType === 'view_cart') {
+            const cartCard = _buildCartSummaryCard();
+            if (cartCard) div.appendChild(cartCard);
+        } else if (actionType === 'redirect_cart') {
+            const checkoutBtn = document.createElement('button');
+            checkoutBtn.className = 'ai-cart-checkout-btn';
+            checkoutBtn.style.marginTop = '6px';
+            checkoutBtn.innerHTML = `<i class="fa-solid fa-credit-card"></i> Đến trang giỏ hàng ngay ➔`;
+            checkoutBtn.onclick = () => window.location.href = '/cart.html';
+            div.appendChild(checkoutBtn);
+        } else if (actionType === 'view_orders' || (orders && orders.length > 0)) {
+            const ordersCard = _buildOrdersListCard(orders);
+            if (ordersCard) div.appendChild(ordersCard);
+        } else if (actionType === 'require_login') {
+            const loginBtn = document.createElement('button');
+            loginBtn.className = 'ai-view-on-page-btn';
+            loginBtn.style.cssText = 'background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-weight:700;margin-top:6px;';
+            loginBtn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Đăng nhập ngay`;
+            loginBtn.onclick = () => window.location.href = '/auth.html';
+            div.appendChild(loginBtn);
+        }
+
+        // Render product groups in chat
         if (groups && groups.length > 0) {
             const hasProducts = groups.some(g => g.products && g.products.length > 0);
             if (hasProducts) {
                 const allProducts = groups.flatMap(g => g.products || []);
-                const scrollArea = _buildProductScrollArea(allProducts);
+                const scrollArea = _buildProductScrollAreaH(allProducts);
                 div.appendChild(scrollArea);
 
                 const viewBtn = document.createElement('button');
                 viewBtn.className = 'ai-view-on-page-btn';
-                viewBtn.innerHTML = `✅ Đã tìm thấy ${allProducts.length} gợi ý phù hợp và hiển thị trực tiếp ở trang chính. <span style="font-weight:700">Xem ngay ➔</span>`;
+                viewBtn.innerHTML = `✅ Đã hiển thị ${allProducts.length} gợi ý ở trang chính. <span style="font-weight:700">Xem ngay ➔</span>`;
                 viewBtn.onclick = () => {
                     window.scrollToMainProducts();
                 };
                 div.appendChild(viewBtn);
 
-                // Auto-render to main page using user's original query
-                _renderRecommendationsOnMainPage(userQuery, groups);
+                // Render products on main page (NO Chi tiết button)
+                _renderRecommendationsOnMainPage(userQuery || 'Gợi ý Zynk AI', groups);
             }
         }
 
-        // Suggested replies
+        // Suggested reply chips
         if (suggestedReplies && suggestedReplies.length > 0) {
             const chips = document.createElement('div');
             chips.className = 'ai-shop-suggestions';
-            chips.style.marginTop = '8px';
             suggestedReplies.forEach(s => {
                 const chip = document.createElement('button');
                 chip.className = 'ai-shop-chip';
@@ -344,7 +361,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         const div = document.createElement('div');
         div.className = 'ai-shop-msg bot';
         div.id = id;
-        div.innerHTML = `<div class="ai-shop-bubble bot-bubble"><span class="typing-dots"><span></span><span></span><span></span></span></div>`;
+        div.innerHTML = `<div class="ai-shop-bubble"><span class="typing-dots"><span></span><span></span><span></span></span></div>`;
         msgs.appendChild(div);
         _scrollBottom();
         return id;
@@ -353,6 +370,35 @@ Bạn đang cần tìm gì hôm nay? 😊`;
     function _removeTyping(id) {
         const el = document.getElementById(id);
         if (el) el.remove();
+    }
+
+    // ── Quick Action Bar (above input area) ──────────────────────────────────────
+    function _renderQuickActionsBar() {
+        const win = document.getElementById('ai-shop-chat-window');
+        if (!win || win.querySelector('.ai-quick-actions')) return;
+
+        const inputArea = win.querySelector('.ai-shop-chat-input-area');
+        if (!inputArea) return;
+
+        const bar = document.createElement('div');
+        bar.className = 'ai-quick-actions';
+
+        const actions = [
+            { icon: 'fa-shopping-cart', label: 'Giỏ hàng', query: 'Xem giỏ hàng' },
+            { icon: 'fa-box', label: 'Đơn hàng', query: 'Đơn hàng của tôi' },
+            { icon: 'fa-fire', label: 'Bán chạy', query: 'Gợi ý sản phẩm bán chạy' },
+            { icon: 'fa-circle-question', label: 'Trợ giúp', query: 'Hướng dẫn tính năng' },
+        ];
+
+        actions.forEach(a => {
+            const btn = document.createElement('button');
+            btn.className = 'ai-quick-action-btn';
+            btn.innerHTML = `<i class="fa-solid ${a.icon}"></i> ${a.label}`;
+            btn.onclick = () => window.sendAiShopSuggestion(a.query);
+            bar.appendChild(btn);
+        });
+
+        win.insertBefore(bar, inputArea);
     }
 
     // ── Suggestions ──────────────────────────────────────────────────────────────
@@ -376,95 +422,170 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         if (container) container.style.display = 'none';
     }
 
-    // ── Product card ─────────────────────────────────────────────────────────────
-    function _buildProductScrollArea(products) {
+    // ── Horizontal compact product card in chat (NO buttons, full card clickable) ──
+    function _buildProductScrollAreaH(products) {
         const wrap = document.createElement('div');
-        wrap.className = 'ai-product-scroll-wrap';
-        wrap.style.cssText = 'display:flex; gap:10px; overflow-x:auto; padding:8px 0; margin-top:8px; scrollbar-width:thin;';
+        wrap.className = 'ai-product-scroll-h';
 
         products.slice(0, 6).forEach(p => {
-            const card = _createProductCardElement(p);
+            const card = _createProductCardH(p);
             wrap.appendChild(card);
         });
 
         return wrap;
     }
 
-    function _createProductCardElement(p) {
+    function _createProductCardH(p) {
         const price = _formatCurrency(p.price ?? 0);
-        const imgUrl = p.featuredImageUrl || 'https://via.placeholder.com/200';
-        const isMall = p.isMall === true;
-        const hasDiscount = (p.discountPct ?? 0) > 0;
-        const originalPrice = p.originalPrice ? _formatCurrency(p.originalPrice) : '';
+        const imgUrl = p.featuredImageUrl || 'https://via.placeholder.com/150';
         const productId = p.id || '';
         const trackingId = p.recommendationLogId || '';
-        // Decode HTML entities from DB (e.g. Gi&#224;y -> Giày)
         const decodedName = _decodeHtml(p.name ?? 'Sản phẩm');
         const decodedShop = _decodeHtml(p.shopName ?? 'Zynk Shop');
 
         const card = document.createElement('div');
-        card.className = 'product-card fadeInUp';
-        card.style.cssText = 'min-width:160px; max-width:160px; flex-shrink:0; cursor:pointer;';
+        card.className = 'ai-product-card-h';
+        card.title = `Click để xem chi tiết: ${decodedName}`;
 
         card.innerHTML = `
-            ${isMall ? '<div class="badge-mall">Mall</div>' : ''}
-            ${hasDiscount ? `<div class="discount-tag"><span>${p.discountPct}%</span><span>GIẢM</span></div>` : ''}
-            <div class="product-image-box">
-                <img src="${_escapeHtml(imgUrl)}" alt="" class="pcard-img" style="width:100%;height:120px;object-fit:cover;border-radius:8px;">
+            <img src="${_escapeHtml(imgUrl)}" alt="" class="pch-img">
+            <div class="pch-info">
+                <span class="pch-shop"><i class="fa-solid fa-shop"></i> <span class="pch-shop-txt"></span></span>
+                <div class="pch-name"></div>
+                <div class="pch-price">${price}</div>
+                <span class="pch-sold">${p.salesCount ?? 0} đã bán</span>
             </div>
-            <div class="product-info" style="padding:6px 4px;">
-                <span class="product-shop" style="font-size:0.7rem;color:#64748b;"><i class="fa fa-shop"></i> <span class="pcard-shop"></span></span>
-                <h3 class="product-name pcard-name" style="font-size:0.8rem;margin:4px 0;line-height:1.3;cursor:pointer;"></h3>
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                    <span class="product-price" style="font-weight:700;font-size:0.85rem;color:#a855f7;">${price}</span>
-                    ${hasDiscount && originalPrice ? `<span style="text-decoration:line-through;font-size:0.7rem;color:#94a3b8;">${originalPrice}</span>` : ''}
-                </div>
-                <span style="font-size:0.7rem;color:#94a3b8;">${p.salesCount ?? 0} đã bán</span>
-                <div style="display:flex;gap:4px;margin-top:6px;">
-                    <button class="pcard-detail" style="flex:1;padding:4px;font-size:0.7rem;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:6px;cursor:pointer;">
-                        <i class="fa-solid fa-eye"></i> Chi tiết
-                    </button>
-                    <button class="pcard-cart" style="flex:1;padding:4px;font-size:0.7rem;border:none;background:linear-gradient(135deg,#667eea,#a855f7);color:#fff;border-radius:6px;cursor:pointer;font-weight:700;">
-                        <i class="fa-solid fa-cart-plus"></i>
-                    </button>
-                </div>
-            </div>
+            <i class="fa-solid fa-chevron-right pch-arrow"></i>
         `;
 
-        // Set text safely — decode HTML entities from DB then set via textContent
-        const nameEl = card.querySelector('.pcard-name');
-        const shopEl = card.querySelector('.pcard-shop');
-        const imgEl = card.querySelector('.pcard-img');
+        const nameEl = card.querySelector('.pch-name');
+        const shopEl = card.querySelector('.pch-shop-txt');
         if (nameEl) nameEl.textContent = decodedName;
         if (shopEl) shopEl.textContent = decodedShop;
-        if (imgEl) imgEl.alt = decodedName;
 
-        // Event listeners — full card clickable
-        const openProduct = () => {
+        // Click full card to view product details
+        card.addEventListener('click', () => {
             if (window.trackAndOpenDetails) window.trackAndOpenDetails(productId, trackingId);
             else if (window.openProductModal) window.openProductModal(productId);
-        };
-        card.addEventListener('click', openProduct);
-        card.querySelector('.pcard-cart')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (window.trackAndAddToCart) window.trackAndAddToCart(productId, trackingId, e);
         });
 
         return card;
     }
 
-    // ── Render on main page ──────────────────────────────────────────────────────
+    // ── Cart Summary Card in Chat ─────────────────────────────────────────────────
+    function _buildCartSummaryCard() {
+        const cartStr = localStorage.getItem('zynk_cart');
+        const cart = cartStr ? JSON.parse(cartStr) : [];
+
+        const wrap = document.createElement('div');
+        wrap.className = 'ai-cart-summary';
+
+        if (!cart || cart.length === 0) {
+            wrap.innerHTML = `
+                <div style="text-align:center;padding:12px;color:#94a3b8;font-size:0.8rem;">
+                    <i class="fa-solid fa-basket-shopping" style="font-size:1.8rem;display:block;margin-bottom:6px;opacity:0.5;"></i>
+                    Giỏ hàng của bạn đang trống
+                </div>
+                <button class="ai-view-on-page-btn" style="margin-top:6px;" onclick="window.sendAiShopSuggestion('Gợi ý sản phẩm bán chạy')">
+                    🔍 Khám phá sản phẩm hot
+                </button>
+            `;
+            return wrap;
+        }
+
+        let total = 0;
+        let itemsHtml = '';
+
+        cart.slice(0, 4).forEach(item => {
+            const price = item.price || 0;
+            const qty = item.qty || 1;
+            total += price * qty;
+            const img = item.image || 'https://via.placeholder.com/80';
+            itemsHtml += `
+                <div class="ai-cart-item">
+                    <img src="${_escapeHtml(img)}" alt="">
+                    <div class="ci-name">${_escapeHtml(_decodeHtml(item.name || 'Sản phẩm'))}</div>
+                    <span class="ci-qty">x${qty}</span>
+                    <span class="ci-price">${_formatCurrency(price * qty)}</span>
+                </div>
+            `;
+        });
+
+        if (cart.length > 4) {
+            itemsHtml += `<div style="font-size:0.7rem;color:#94a3b8;text-align:center;padding-top:4px;">... và thêm ${cart.length - 4} sản phẩm khác</div>`;
+        }
+
+        wrap.innerHTML = `
+            <div style="font-size:0.78rem;font-weight:700;color:#334155;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+                <span>🛒 Giỏ hàng (${cart.length} món)</span>
+                <a href="/cart.html" style="font-size:0.7rem;color:#6366f1;text-decoration:none;font-weight:600;">Xem tất cả ➔</a>
+            </div>
+            ${itemsHtml}
+            <div class="ai-cart-total">
+                <span class="ct-label">Tổng cộng:</span>
+                <span class="ct-amount">${_formatCurrency(total)}</span>
+            </div>
+            <button class="ai-cart-checkout-btn" onclick="window.location.href='/cart.html'">
+                <i class="fa-solid fa-credit-card"></i> Tiến hành thanh toán
+            </button>
+        `;
+
+        return wrap;
+    }
+
+    // ── Orders List Card in Chat ──────────────────────────────────────────────────
+    function _buildOrdersListCard(orders) {
+        if (!orders || orders.length === 0) return null;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'ai-order-list';
+
+        orders.slice(0, 3).forEach(o => {
+            const card = document.createElement('div');
+            card.className = 'ai-order-card';
+
+            const statusMap = {
+                'Pending': { text: '⏳ Chờ xác nhận', cls: 'pending' },
+                'Processing': { text: '⚙️ Đang xử lý', cls: 'pending' },
+                'Shipping': { text: '🚚 Đang giao hàng', cls: 'shipping' },
+                'InTransit': { text: '🚚 Đang giao hàng', cls: 'shipping' },
+                'Completed': { text: '✅ Đã giao', cls: 'done' },
+                'Delivered': { text: '✅ Đã giao', cls: 'done' },
+                'Cancelled': { text: '❌ Đã hủy', cls: 'cancel' }
+            };
+
+            const statusInfo = statusMap[o.status] || { text: o.statusText || o.status, cls: 'pending' };
+            const orderIdShort = o.id ? o.id.substring(0, 8) : '#';
+
+            card.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span class="oc-id">Mã: #${_escapeHtml(orderIdShort)}</span>
+                    <span class="oc-status ${statusInfo.cls}">${statusInfo.text}</span>
+                </div>
+                <div class="oc-total">Tổng: ${_formatCurrency(o.totalAmount || o.price || 0)}</div>
+                <div class="oc-date">Ngày tạo: ${new Date(o.createdAt || Date.now()).toLocaleDateString('vi-VN')}</div>
+            `;
+
+            card.onclick = () => {
+                window.location.href = '/settings.html#orders';
+            };
+
+            wrap.appendChild(card);
+        });
+
+        return wrap;
+    }
+
+    // ── Render on main page (NO Chi tiết button, NO Thêm vào giỏ button) ───────────
     function _renderRecommendationsOnMainPage(query, groups) {
         const grid = document.getElementById('product-grid');
         const titleEl = document.getElementById('market-title');
         if (!grid) return;
 
-        // Save original content
         if (!_originalGridContent) {
             _originalGridContent = grid.innerHTML;
         }
 
-        // Update title safely
         if (titleEl) {
             titleEl.innerHTML = `🤖 Zynk AI gợi ý cho: "<span id="ai-query-text"></span>"
                 <button onclick="window.resetAiRecommendations()" class="glass-btn-reset">
@@ -490,7 +611,7 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             const header = document.createElement('h3');
             header.className = 'section-title';
             header.style.cssText = 'font-size:1rem;font-weight:700;margin-bottom:12px;color:#334155;';
-            header.innerHTML = `<i class="fa-solid fa-sparkles"></i> `;
+            header.innerHTML = `<i class="fa-solid fa-sparkles" style="color:#a855f7;"></i> `;
             const headerText = document.createElement('span');
             headerText.textContent = g.label || 'Phù hợp nhất';
             header.appendChild(headerText);
@@ -509,22 +630,22 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         });
     }
 
+    // Main page card: Full card is clickable. NO "Chi tiết" or "Thêm giỏ" buttons per user request.
     function _createMainProductCard(p) {
         const price = _formatCurrency(p.price ?? 0);
         const productId = p.id || '';
         const trackingId = p.recommendationLogId || '';
-        // Decode HTML entities from DB
         const decodedName = _decodeHtml(p.name ?? 'Sản phẩm');
         const decodedShop = _decodeHtml(p.shopName ?? 'Zynk Shop');
 
         const card = document.createElement('div');
         card.className = 'product-card';
         card.style.cursor = 'pointer';
+        card.title = `Click để xem chi tiết: ${decodedName}`;
 
-        // No "Chi tiết" button — full card is clickable
         card.innerHTML = `
             <div class="product-image-box">
-                <img src="${_escapeHtml(p.featuredImageUrl || '')}" alt="" style="width:100%;object-fit:cover;">
+                <img src="${_escapeHtml(p.featuredImageUrl || 'https://via.placeholder.com/300')}" alt="">
             </div>
             <div class="product-info">
                 <span class="product-shop"><i class="fa fa-shop"></i> <span class="mc-shop"></span></span>
@@ -533,28 +654,20 @@ Bạn đang cần tìm gì hôm nay? 😊`;
                     <span class="product-price">${price}</span>
                     <span class="product-stats">${p.salesCount ?? 0} đã bán</span>
                 </div>
-                <div class="product-actions" style="display:flex;gap:6px;margin-top:8px;">
-                    <button class="btn btn-small primary-btn mc-cart" style="width:100%;"><i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ</button>
-                </div>
             </div>
         `;
 
-        // Set text via textContent (decode HTML entities)
         const nameEl = card.querySelector('.mc-name');
         const shopEl = card.querySelector('.mc-shop');
         if (nameEl) nameEl.textContent = decodedName;
         if (shopEl) shopEl.textContent = decodedShop;
 
-        // Full card click = open product
+        // Click full card = open details
         const openProduct = () => {
             if (window.trackAndOpenDetails) window.trackAndOpenDetails(productId, trackingId);
             else if (window.openProductModal) window.openProductModal(productId);
         };
         card.addEventListener('click', openProduct);
-        card.querySelector('.mc-cart')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (window.trackAndAddToCart) window.trackAndAddToCart(productId, trackingId, e);
-        });
 
         return card;
     }
@@ -584,7 +697,6 @@ Bạn đang cần tìm gì hôm nay? 😊`;
 
         const actions = document.createElement('div');
         actions.className = 'ai-header-actions';
-        actions.style.cssText = 'display:flex;align-items:center;margin-left:auto;margin-right:8px;gap:4px;';
 
         const newBtn = document.createElement('button');
         newBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
@@ -593,10 +705,9 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         newBtn.onclick = _startNewSession;
         actions.appendChild(newBtn);
 
-        // History button only for logged-in users
         if (isLoggedIn()) {
             const histBtn = document.createElement('button');
-            histBtn.innerHTML = '<i class="fa-solid fa-history"></i>';
+            histBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
             histBtn.title = 'Lịch sử trò chuyện';
             histBtn.className = 'ai-shop-header-btn';
             histBtn.onclick = _showSessionHistory;
@@ -635,15 +746,15 @@ Bạn đang cần tìm gì hôm nay? 😊`;
             if (!msgs) return;
 
             const panel = document.createElement('div');
-            panel.style.cssText = 'background:#f8fafc;border-radius:12px;padding:12px;margin:8px 0;border:1px solid #e2e8f0;';
-            panel.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#334155;">📜 Lịch sử trò chuyện</div>';
+            panel.style.cssText = 'background:#ffffff;border-radius:12px;padding:12px;margin:8px 0;border:1px solid #e2e8f0;box-shadow:0 4px 12px rgba(0,0,0,0.06);';
+            panel.innerHTML = '<div style="font-weight:700;margin-bottom:8px;color:#334155;font-size:0.8rem;">📜 Lịch sử trò chuyện</div>';
 
             if (sessions.length === 0) {
-                panel.innerHTML += '<p style="color:#94a3b8;font-size:0.85rem;">Chưa có lịch sử nào.</p>';
+                panel.innerHTML += '<p style="color:#94a3b8;font-size:0.78rem;">Chưa có lịch sử nào.</p>';
             } else {
                 sessions.forEach(s => {
                     const item = document.createElement('div');
-                    item.style.cssText = 'padding:8px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid #e2e8f0;background:#fff;font-size:0.82rem;';
+                    item.style.cssText = 'padding:7px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid #f1f5f9;background:#f8fafc;font-size:0.78rem;color:#1e293b;';
                     item.textContent = s.title || 'Cuộc trò chuyện';
                     item.onclick = () => {
                         currentSessionId = s.id;
@@ -651,8 +762,8 @@ Bạn đang cần tìm gì hôm nay? 😊`;
                         panel.remove();
                         _renderGreeting();
                     };
-                    item.onmouseover = () => item.style.background = '#f1f5f9';
-                    item.onmouseout = () => item.style.background = '#fff';
+                    item.onmouseover = () => item.style.background = '#ede9fe';
+                    item.onmouseout = () => item.style.background = '#f8fafc';
                     panel.appendChild(item);
                 });
             }
@@ -662,51 +773,6 @@ Bạn đang cần tìm gì hôm nay? 😊`;
         } catch (e) {
             console.warn('[AiChat] Could not load history:', e);
         }
-    }
-
-    // ── Add to cart from chat ─────────────────────────────────────────────────────
-    window.addCartFromChat = function (id, name, price, img, shopName) {
-        let cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
-        const existing = cart.find(i => i.cartItemId === id);
-        if (existing) {
-            existing.qty += 1;
-        } else {
-            cart.push({
-                id,
-                cartItemId: id,
-                variantId: null,
-                variantName: null,
-                shopName: shopName || 'Zynk Shop',
-                name,
-                price,
-                image: img,
-                qty: 1
-            });
-        }
-        localStorage.setItem('zynk_cart', JSON.stringify(cart));
-        _showCartFeedback();
-        if (typeof updateCartCount === 'function') updateCartCount();
-    };
-
-    // ── Compare from chat ─────────────────────────────────────────────────────────
-    window.compareProductFromChat = function (name) {
-        if (window.sendAiShopSuggestion) {
-            window.sendAiShopSuggestion(`So sánh sản phẩm "${name}" với các sản phẩm khác.`);
-        }
-    };
-
-    // ── Cart feedback ─────────────────────────────────────────────────────────────
-    function _showCartFeedback() {
-        const cartFloat = document.getElementById('cart-float');
-        if (cartFloat) {
-            cartFloat.style.transform = 'scale(1.3)';
-            setTimeout(() => { cartFloat.style.transform = ''; }, 300);
-        }
-        const toast = document.createElement('div');
-        toast.textContent = '✅ Đã thêm vào giỏ hàng!';
-        toast.style.cssText = `position:fixed;bottom:90px;right:20px;background:#22c55e;color:#fff;padding:10px 18px;border-radius:20px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:fadeInUp .3s ease;`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2500);
     }
 
     // ── UUID generator ────────────────────────────────────────────────────────────
