@@ -788,8 +788,9 @@ function addToCart(id, name) {
             variantName,
             shopName,
             name, 
-            price, 
+            price: typeof price === 'number' ? price : parseInt(String(price).replace(/[^0-9]/g, '')) || 0,
             img, 
+            image: img,  // alias for compatibility with AI chat and other modules
             qty 
         });
     }

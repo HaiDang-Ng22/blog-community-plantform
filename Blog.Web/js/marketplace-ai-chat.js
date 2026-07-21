@@ -497,10 +497,10 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
         let itemsHtml = '';
 
         cart.slice(0, 4).forEach(item => {
-            const price = item.price || 0;
+            const price = typeof (item.price) === 'number' ? item.price : parseInt(String(item.price || '0').replace(/[^0-9]/g, '')) || 0;
             const qty = item.qty || 1;
             total += price * qty;
-            const img = item.image || 'https://via.placeholder.com/80';
+            const img = item.img || item.image || item.featuredImageUrl || 'https://via.placeholder.com/80';
             itemsHtml += `
                 <div class="ai-cart-item">
                     <img src="${_escapeHtml(img)}" alt="">

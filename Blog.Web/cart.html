@@ -400,67 +400,95 @@
             if (userInfo.phoneNumber) document.getElementById('ship-phone').value = userInfo.phoneNumber;
         });
 
-        function renderCart() {
-            const list = document.getElementById('cart-list');
-            const checkoutSection = document.getElementById('checkout-section');
-            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
-            
-            if (cart.length === 0) {
-                list.innerHTML = `<div style="text-align:center; padding: 3rem; color: #64748b;"><i class="fa-solid fa-cart-xmark" style="font-size:3rem; display:block; margin-bottom:1rem; opacity:0.4;"></i><p style="font-weight:600;">Giỏ hàng của bạn đang trống</p><a href="marketplace.html" class="btn primary-btn" style="display:inline-block; margin-top:1rem;">Tiếp tục mua sắm</a></div>`;
-                if (checkoutSection) checkoutSection.style.display = 'none';
-                return;
+        function safePrice(val) {
+            if (typeof val === 'number' && !isNaN(val)) return val;
+            if (typeof val === 'string') {
+                const cleaned = val.replace(/[^0-9]/g, '');
+                const num = parseInt(cleaned, 10);
+                return isNaN(num) ? 0 : num;
             }
-            if (checkoutSection) checkoutSection.style.display = 'block';
+            return 0;
+        }
 
-            // Group by shopName
-            const grouped = {};
-            cart.forEach((item, index) => {
-                const shop = item.shopName || 'Shop Zynk';
-                if (!grouped[shop]) grouped[shop] = [];
-                grouped[shop].push({ ...item, originalIndex: index });
-            });
+        function formatVnd(val) {
+            const num = safePrice(val);
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+        }
 
-            let html = `
-                <div class="cart-select-all">
-                    <input type="checkbox" id="check-all-global" class="checkbox-custom" checked onchange="toggleAllGlobal(this)">
-                    <label for="check-all-global" style="cursor: pointer;">${window.t('select_all')} (${cart.length})</label>
-                </div>
-            `;
-
-            for (const [shop, items] of Object.entries(grouped)) {
-                html += `
-                    <div class="cart-shop-group">
-                        <div class="cart-shop-header">
-                            <input type="checkbox" class="checkbox-custom shop-cb" data-shop="${shop}" checked onchange="toggleShop('${shop}', this)">
-                            <i class="fa fa-shop" style="color: #64748b;"></i> ${shop}
-                        </div>
-                        <div class="cart-shop-items">
-                `;
+        function renderCart() {
+            try {
+                const list = document.getElementById('cart-list');
+                const checkoutSection = document.getElementById('checkout-section');
+                const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
                 
-                items.forEach(item => {
-                    html += `
-                        <div class="cart-item">
-                            <input type="checkbox" class="checkbox-custom item-cb shop-${shop.replace(/\s+/g, '-')}" data-index="${item.originalIndex}" data-shop="${shop}" checked onchange="toggleItem('${shop}')">
-                            <img src="${item.img || 'https://via.placeholder.com/80'}">
-                            <div class="cart-item-info">
-                                <h4>${item.name}</h4>
-                                ${item.variantName ? `<div style="font-size:0.85rem; color:#64748b; margin-bottom:5px;">${window.t('type_label') || 'Loại'}: ${item.variantName}</div>` : ''}
-                                <div class="cart-qty">${window.t('quantity_label') || 'Số lượng'}: ${item.qty}</div>
-                            </div>
-                            <div class="cart-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.qty)}</div>
-                            <button class="btn-action danger" onclick="removeFromCart(${item.originalIndex})"><i class="fa fa-trash"></i></button>
-                        </div>
-                    `;
+                if (cart.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; padding: 3rem; color: #64748b;"><i class="fa-solid fa-cart-xmark" style="font-size:3rem; display:block; margin-bottom:1rem; opacity:0.4;"></i><p style="font-weight:600;">Giỏ hàng của bạn đang trống</p><a href="marketplace.html" class="btn primary-btn" style="display:inline-block; margin-top:1rem;">Tiếp tục mua sắm</a></div>`;
+                    if (checkoutSection) checkoutSection.style.display = 'none';
+                    return;
+                }
+                if (checkoutSection) checkoutSection.style.display = 'block';
+
+                // Group by shopName
+                const grouped = {};
+                cart.forEach((item, index) => {
+                    const shop = item.shopName || 'Shop Zynk';
+                    if (!grouped[shop]) grouped[shop] = [];
+                    grouped[shop].push({ ...item, originalIndex: index });
                 });
 
-                html += `
-                        </div>
+                const tSelectAll = (typeof window.t === 'function' ? window.t('select_all') : null) || 'Chọn tất cả';
+                const tTypeLabel = (typeof window.t === 'function' ? window.t('type_label') : null) || 'Loại';
+                const tQtyLabel = (typeof window.t === 'function' ? window.t('quantity_label') : null) || 'Số lượng';
+
+                let html = `
+                    <div class="cart-select-all">
+                        <input type="checkbox" id="check-all-global" class="checkbox-custom" checked onchange="toggleAllGlobal(this)">
+                        <label for="check-all-global" style="cursor: pointer;">${tSelectAll} (${cart.length})</label>
                     </div>
                 `;
-            }
 
-            list.innerHTML = html;
-            updateTotalPrice();
+                for (const [shop, items] of Object.entries(grouped)) {
+                    const cleanShopKey = shop.replace(/[^a-zA-Z0-9-_]/g, '-');
+                    html += `
+                        <div class="cart-shop-group">
+                            <div class="cart-shop-header">
+                                <input type="checkbox" class="checkbox-custom shop-cb" data-shop="${shop}" checked onchange="toggleShop('${shop}', this)">
+                                <i class="fa fa-shop" style="color: #64748b;"></i> ${shop}
+                            </div>
+                            <div class="cart-shop-items">
+                    `;
+                    
+                    items.forEach(item => {
+                        const itemPrice = safePrice(item.price);
+                        const itemQty = Math.max(1, parseInt(item.qty || 1, 10));
+                        const itemImg = item.img || item.image || item.featuredImageUrl || 'https://via.placeholder.com/80';
+
+                        html += `
+                            <div class="cart-item">
+                                <input type="checkbox" class="checkbox-custom item-cb shop-${cleanShopKey}" data-index="${item.originalIndex}" data-shop="${shop}" checked onchange="toggleItem('${shop}')">
+                                <img src="${itemImg}">
+                                <div class="cart-item-info">
+                                    <h4>${item.name || 'Sản phẩm'}</h4>
+                                    ${item.variantName ? `<div style="font-size:0.85rem; color:#64748b; margin-bottom:5px;">${tTypeLabel}: ${item.variantName}</div>` : ''}
+                                    <div class="cart-qty">${tQtyLabel}: ${itemQty}</div>
+                                </div>
+                                <div class="cart-price">${formatVnd(itemPrice * itemQty)}</div>
+                                <button class="btn-action danger" onclick="removeFromCart(${item.originalIndex})"><i class="fa fa-trash"></i></button>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+
+                list.innerHTML = html;
+                updateTotalPrice();
+            } catch (err) {
+                console.error('[Cart] Error in renderCart:', err);
+            }
         }
 
         // --- Selection Logic ---
@@ -472,13 +500,15 @@
 
         function toggleShop(shop, checkbox) {
             const isChecked = checkbox.checked;
-            document.querySelectorAll(`.item-cb.shop-${shop.replace(/\s+/g, '-')}`).forEach(cb => cb.checked = isChecked);
+            const cleanShopKey = shop.replace(/[^a-zA-Z0-9-_]/g, '-');
+            document.querySelectorAll(`.item-cb.shop-${cleanShopKey}`).forEach(cb => cb.checked = isChecked);
             syncGlobalCheck();
             updateTotalPrice();
         }
 
         function toggleItem(shop) {
-            const shopItems = document.querySelectorAll(`.item-cb.shop-${shop.replace(/\s+/g, '-')}`);
+            const cleanShopKey = shop.replace(/[^a-zA-Z0-9-_]/g, '-');
+            const shopItems = document.querySelectorAll(`.item-cb.shop-${cleanShopKey}`);
             const shopCb = document.querySelector(`.shop-cb[data-shop="${shop}"]`);
             
             const allChecked = Array.from(shopItems).every(cb => cb.checked);
@@ -497,59 +527,70 @@
         }
 
         function updateTotalPrice() {
-            const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
-            const checkedBoxes = document.querySelectorAll('.item-cb:checked');
-            
-            let subtotal = 0;
-            checkedBoxes.forEach(cb => {
-                const idx = parseInt(cb.getAttribute('data-index'));
-                const item = cart[idx];
-                if (item) subtotal += item.price * item.qty;
-            });
+            try {
+                const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+                const checkedBoxes = document.querySelectorAll('.item-cb:checked');
+                
+                let subtotal = 0;
+                checkedBoxes.forEach(cb => {
+                    const idx = parseInt(cb.getAttribute('data-index'));
+                    const item = cart[idx];
+                    if (item) {
+                        const price = safePrice(item.price);
+                        const qty = Math.max(1, parseInt(item.qty || 1, 10));
+                        subtotal += price * qty;
+                    }
+                });
 
-            // Calculate Shipping Fee
-            let shipping = 0;
-            if (checkedBoxes.length > 0) {
-                shipping = 25000;
-            }
-
-            let isFreeShippingApplied = appliedVoucher && appliedVoucher.isFreeShipping;
-            let finalShipping = isFreeShippingApplied ? 0 : shipping;
-
-            const total = subtotal + finalShipping - (appliedVoucher && !isFreeShippingApplied ? appliedVoucher.discountAmount : 0);
-
-            document.getElementById('subtotal-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal);
-            
-            if (isFreeShippingApplied) {
-                document.getElementById('shipping-fee').innerHTML = `<span style="text-decoration: line-through; color: #64748b; font-size: 0.95rem;">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping)}</span> <span style="color: #10b981; font-weight: bold;">Miễn phí</span>`;
-            } else {
-                document.getElementById('shipping-fee').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping);
-            }
-            
-            if (appliedVoucher) {
-                const discEl = document.getElementById('voucher-discount-row');
-                const displayVal = isFreeShippingApplied ? "Miễn phí vận chuyển" : `-${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appliedVoucher.discountAmount)}`;
-                if (!discEl) {
-                    const row = document.createElement('div');
-                    row.className = 'cart-total';
-                    row.id = 'voucher-discount-row';
-                    row.style = 'font-size: 1.1rem; color: #10b981; margin-bottom: 0.5rem; border: none;';
-                    row.innerHTML = `<span>Giảm giá:</span><span id="voucher-discount-val">${displayVal}</span>`;
-                    document.getElementById('total-price').parentElement.insertAdjacentElement('beforebegin', row);
-                } else {
-                    document.getElementById('voucher-discount-val').textContent = displayVal;
+                // Calculate Shipping Fee
+                let shipping = 0;
+                if (checkedBoxes.length > 0) {
+                    shipping = 25000;
                 }
-            } else {
-                const discEl = document.getElementById('voucher-discount-row');
-                if (discEl) discEl.remove();
-            }
 
-            document.getElementById('total-price').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.max(0, total));
+                let isFreeShippingApplied = appliedVoucher && appliedVoucher.isFreeShipping;
+                let finalShipping = isFreeShippingApplied ? 0 : shipping;
 
-            // Dynamic eligibility refresh
-            const voucherList = document.getElementById('my-vouchers-list');
-            if (voucherList && !voucherList.classList.contains('hidden')) {
-                renderVouchersList();
+                const total = subtotal + finalShipping - (appliedVoucher && !isFreeShippingApplied ? (appliedVoucher.discountAmount || 0) : 0);
+
+                const subEl = document.getElementById('subtotal-price');
+                if (subEl) subEl.textContent = formatVnd(subtotal);
+                
+                const shipEl = document.getElementById('shipping-fee');
+                if (shipEl) {
+                    if (isFreeShippingApplied) {
+                        shipEl.innerHTML = `<span style="text-decoration: line-through; color: #64748b; font-size: 0.95rem;">${formatVnd(shipping)}</span> <span style="color: #10b981; font-weight: bold;">Miễn phí</span>`;
+                    } else {
+                        shipEl.textContent = formatVnd(shipping);
+                    }
+                }
+                
+                if (appliedVoucher) {
+                    const discEl = document.getElementById('voucher-discount-row');
+                    const displayVal = isFreeShippingApplied ? "Miễn phí vận chuyển" : `-${formatVnd(appliedVoucher.discountAmount)}`;
+                    if (!discEl) {
+                        const row = document.createElement('div');
+                        row.className = 'cart-total';
+                        row.id = 'voucher-discount-row';
+                        row.style = 'font-size: 1.1rem; color: #10b981; margin-bottom: 0.5rem; border: none;';
+                        row.innerHTML = `<span>Giảm giá:</span><span id="voucher-discount-val">${displayVal}</span>`;
+                        const totEl = document.getElementById('total-price');
+                        if (totEl && totEl.parentElement) {
+                            totEl.parentElement.insertAdjacentElement('beforebegin', row);
+                        }
+                    } else {
+                        const discVal = document.getElementById('voucher-discount-val');
+                        if (discVal) discVal.textContent = displayVal;
+                    }
+                } else {
+                    const discEl = document.getElementById('voucher-discount-row');
+                    if (discEl) discEl.remove();
+                }
+
+                const totEl = document.getElementById('total-price');
+                if (totEl) totEl.textContent = formatVnd(Math.max(0, total));
+            } catch (err) {
+                console.error('[Cart] Error in updateTotalPrice:', err);
             }
         }
 
@@ -877,9 +918,11 @@
                 const idx = parseInt(cb.getAttribute('data-index'));
                 const item = cart[idx];
                 if (item) {
-                    subtotal += item.price * item.qty;
+                    const itemPrice = safePrice(item.price);
+                    const itemQty = Math.max(1, parseInt(item.qty || 1, 10));
+                    subtotal += itemPrice * itemQty;
                     const shopName = item.shopName || 'Shop Zynk';
-                    shopSubtotals[shopName] = (shopSubtotals[shopName] || 0) + (item.price * item.qty);
+                    shopSubtotals[shopName] = (shopSubtotals[shopName] || 0) + (itemPrice * itemQty);
                     selectedShopNames.add(shopName);
                 }
             });
