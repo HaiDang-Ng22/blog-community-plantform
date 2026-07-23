@@ -534,14 +534,16 @@ async function handlePublish() {
             groupId: targetGroupId
         });
 
-        alert('Đã chia sẻ bài viết thành công!');
-        if (targetGroupId) {
-            window.location.href = `group-detail.html?id=${targetGroupId}`;
-        } else {
-            window.location.href = 'index.html';
-        }
+        window.common.showToast('Đã chia sẻ bài viết thành công!', 'success');
+        setTimeout(() => {
+            if (targetGroupId) {
+                window.location.href = `group-detail.html?id=${targetGroupId}`;
+            } else {
+                window.location.href = 'index.html';
+            }
+        }, 1500);
     } catch (error) {
-        alert(error.message || 'Lỗi khi đăng bài.');
+        window.common.showToast(error.message || 'Lỗi khi đăng bài.', 'error');
         shareBtn.disabled = false;
         shareBtn.textContent = 'Chia sẻ';
     }

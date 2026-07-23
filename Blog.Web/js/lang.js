@@ -211,6 +211,24 @@ window.zynkTranslations = {
         no_posts_found: "Không tìm thấy bài viết nào.",
         by_author: "Bởi",
         
+        // Search i18n
+        search_title: "Tìm kiếm - Zynk",
+        tab_all: "Tất cả",
+        tab_users: "Người dùng",
+        tab_posts: "Bài viết",
+        tab_reels: "Reels",
+        tab_hashtags: "Hashtag",
+        tab_groups: "Cộng đồng",
+        tab_products: "Sản phẩm",
+        tab_shops: "Cửa hàng",
+        recent_searches: "Tìm kiếm gần đây",
+        clear_all: "Xóa tất cả",
+        trending_now: "Đang thịnh hành",
+        search_input_placeholder: "Tìm người dùng, bài viết, reels, hashtag, sản phẩm...",
+        search_results_title: "Kết quả tìm kiếm cho \"{query}\"",
+        no_results_found: "Không tìm thấy kết quả phù hợp cho \"{query}\"",
+        no_results_tip: "Kiểm tra lại chính tả, thử từ khóa ngắn hơn hoặc tìm theo hashtag.",
+
         // Marketplace & Search
         search_btn: "Tìm",
         market_search_placeholder: "Tìm kiếm sản phẩm, cửa hàng...",
@@ -651,6 +669,24 @@ window.zynkTranslations = {
         no_users_found: "No users found.",
         no_posts_found: "No posts found.",
         by_author: "By",
+
+        // Search i18n
+        search_title: "Search - Zynk",
+        tab_all: "All",
+        tab_users: "Users",
+        tab_posts: "Posts",
+        tab_reels: "Reels",
+        tab_hashtags: "Hashtags",
+        tab_groups: "Communities",
+        tab_products: "Products",
+        tab_shops: "Shops",
+        recent_searches: "Recent searches",
+        clear_all: "Clear all",
+        trending_now: "Trending now",
+        search_input_placeholder: "Search users, posts, reels, hashtags, products...",
+        search_results_title: "Search results for \"{query}\"",
+        no_results_found: "No results found for \"{query}\"",
+        no_results_tip: "Check spelling, try shorter keywords or search by hashtag.",
 
         // Marketplace & Search
         search_btn: "Search",

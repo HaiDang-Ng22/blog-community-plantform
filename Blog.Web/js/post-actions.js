@@ -234,22 +234,27 @@ window.postActions = {
         if (!confirmed) return;
         
         try {
-            const btnDelete = document.querySelector(`.post-card[data-id="${postId}"] .options-menu .delete`);
+            const card = document.getElementById(`post-${postId}`) || 
+                         document.querySelector(`.zynk-post-card[data-id="${postId}"]`) || 
+                         document.querySelector(`.post-card[data-id="${postId}"]`);
+                         
+            const btnDelete = card ? card.querySelector('.delete') : null;
             if (btnDelete) btnDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Xóa...';
             
             await window.api.delete(`posts/${postId}`);
             
-            const card = document.querySelector(`.post-card[data-id="${postId}"]`);
+            window.common.showToast('Xóa bài viết thành công!', 'success');
+            
             if (card) {
                 card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
                 card.style.opacity = '0';
                 card.style.transform = 'scale(0.9)';
                 setTimeout(() => card.remove(), 400);
             } else {
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1000);
             }
         } catch (error) {
-            window.common.zynkModal.alert('Lỗi: ' + error.message);
+            window.common.showToast('Lỗi khi xóa bài viết: ' + error.message, 'error');
         }
     },
 

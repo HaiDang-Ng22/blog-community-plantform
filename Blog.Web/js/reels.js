@@ -43,6 +43,7 @@ function createReelItem(reel) {
 
     div.innerHTML = `
         <video class="reel-video" preload="metadata" loop playsinline src="${reel.videoUrl || reel.imageUrls[0]}"></video>
+        <div class="reel-progress-bar"></div>
         
         <div class="reel-overlay">
             <div class="reel-user">
@@ -72,6 +73,15 @@ function createReelItem(reel) {
     `;
 
     const video = div.querySelector('video');
+    const progressBar = div.querySelector('.reel-progress-bar');
+
+    video.addEventListener('timeupdate', () => {
+        if (video.duration) {
+            const percent = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = `${percent}%`;
+        }
+    });
+
     video.addEventListener('click', (e) => {
         e.stopPropagation();
         if (video.paused) {
@@ -193,7 +203,7 @@ async function submitReelComment() {
             countSpan.textContent = currentCount + 1;
         }
     } catch (e) {
-        alert('Lỗi khi gửi bình luận');
+        window.common.showToast(e.message || 'Lỗi khi gửi bình luận', 'error');
     } finally {
         btn.disabled = false;
     }
@@ -219,6 +229,8 @@ function setupVideoObserver() {
             if (!video) return;
 
             if (entry.isIntersecting) {
+                // Respect global muted state (default: muted for autoplay policy)
+                video.muted = typeof isMuted !== 'undefined' ? isMuted : true;
                 video.play().catch(() => {
                     video.muted = true;
                     video.play();

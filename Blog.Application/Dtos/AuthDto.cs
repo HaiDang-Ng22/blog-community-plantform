@@ -76,6 +76,11 @@ public class SearchResultDto
 {
     public List<UserSearchResult> Users { get; set; } = new();
     public List<PostSearchResult> Posts { get; set; } = new();
+    public List<ReelSearchResult> Reels { get; set; } = new();
+    public List<HashtagSearchResult> Hashtags { get; set; } = new();
+    public List<GroupSearchResult> Groups { get; set; } = new();
+    public List<ProductSearchResult> Products { get; set; } = new();
+    public List<ShopSearchResult> Shops { get; set; } = new();
 }
 
 public class UserSearchResult
@@ -98,6 +103,56 @@ public class PostSearchResult
     public string? AuthorAvatarUrl { get; set; }
     public int LikeCount { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+public class ReelSearchResult
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? VideoUrl { get; set; }
+    public string? FeaturedImageUrl { get; set; }
+    public List<string> ImageUrls { get; set; } = new();
+    public string AuthorName { get; set; } = string.Empty;
+    public string? AuthorAvatarUrl { get; set; }
+    public int LikeCount { get; set; }
+}
+
+public class HashtagSearchResult
+{
+    public string Name { get; set; } = string.Empty;
+    public int PostCount { get; set; }
+}
+
+public class GroupSearchResult
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? AvatarUrl { get; set; }
+    public int MemberCount { get; set; }
+    public bool IsPublic { get; set; }
+}
+
+public class ProductSearchResult
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal Price { get; set; }
+    public string? FeaturedImageUrl { get; set; }
+    public string ShopName { get; set; } = string.Empty;
+}
+
+public class ShopSearchResult
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? AvatarUrl { get; set; }
+    public bool IsVerified { get; set; }
+    public double Rating { get; set; } = 5.0;
+    public int FollowerCount { get; set; }
+    public int ProductCount { get; set; }
 }
 
 public class AiSearchResultItemDto

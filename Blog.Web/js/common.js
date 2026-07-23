@@ -1078,19 +1078,38 @@ function formatDate(dateString) {
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
+    
+    // Custom Icon based on type
+    const iconHtml = type === 'success' 
+        ? '<i class="fa-solid fa-circle-check"></i>' 
+        : (type === 'error' ? '<i class="fa-solid fa-circle-xmark"></i>' : '<i class="fa-solid fa-circle-info"></i>');
+
     toast.style.cssText = `
         position: fixed;
-        bottom: 20px;
-        right: 20px;
+        bottom: 24px;
+        right: 24px;
         padding: 12px 24px;
         border-radius: 12px;
         background: ${type === 'success' ? '#10b981' : '#ef4444'};
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #ffffff;
+        font-weight: 600;
+        font-family: inherit;
         z-index: 20002;
-        box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transform: translateY(120%);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
+        opacity: 0;
     `;
-    toast.textContent = message;
+    toast.innerHTML = `${iconHtml} <span>${message}</span>`;
     document.body.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+    });
 
     setTimeout(() => {
         toast.style.opacity = '0';

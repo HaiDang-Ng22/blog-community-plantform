@@ -34,41 +34,61 @@ public class SearchController : ControllerBase
         if (string.IsNullOrWhiteSpace(q))
             return Ok(new SearchResultDto());
 
-        var query = q.ToLower();
+        var rawQuery = q.Trim().ToLower();
+        var normQuery = RemoveDiacritics(rawQuery);
         Guid? searchId = null;
         if (Guid.TryParse(q, out var guid)) searchId = guid;
 
-        var users = await _context.Users
-            .Where(u =>
-                (u.Username != null && u.Username.ToLower().Contains(query)) ||
-                (u.FullName != null && u.FullName.ToLower().Contains(query)) ||
-                (searchId.HasValue && u.Id == searchId.Value))
-            .Take(10)
+        // 1. Users Search (Accent-insensitive)
+        var rawUsers = await _context.Users
+            .Take(100)
             .Select(u => new UserSearchResult
             {
                 Id = u.Id,
-                Username = u.Username,
-                FullName = u.FullName,
+                Username = u.Username ?? string.Empty,
+                FullName = u.FullName ?? string.Empty,
                 AvatarUrl = u.AvatarUrl,
                 Bio = u.Bio
             })
             .ToListAsync();
 
-        var posts = await _context.Posts
-            .Where(p =>
-                p.Status == Blog.Domain.Entities.PostStatus.Published &&
-                p.GroupId == null &&
-                (
-                    (p.Title != null && p.Title.ToLower().Contains(query)) ||
-                    (p.Content != null && p.Content.ToLower().Contains(query)) ||
-                    (searchId.HasValue && p.Id == searchId.Value)
+        var users = rawUsers
+            .Where(u =>
+                (searchId.HasValue && u.Id == searchId.Value) ||
+                (!string.IsNullOrEmpty(u.Username) && u.Username.ToLower().Contains(rawQuery)) ||
+                (!string.IsNullOrEmpty(u.FullName) && (
+                    u.FullName.ToLower().Contains(rawQuery) ||
+                    RemoveDiacritics(u.FullName).ToLower().Contains(normQuery)
                 ))
+            )
+            .Take(10)
+            .ToList();
+
+        // 2. Posts Search (Accent-insensitive)
+        var rawPosts = await _context.Posts
+            .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published)
             .Include(p => p.Author)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+
+        var posts = rawPosts
+            .Where(p =>
+                (searchId.HasValue && p.Id == searchId.Value) ||
+                (!string.IsNullOrEmpty(p.Title) && (
+                    p.Title.ToLower().Contains(rawQuery) ||
+                    RemoveDiacritics(p.Title).ToLower().Contains(normQuery)
+                )) ||
+                (!string.IsNullOrEmpty(p.Content) && (
+                    p.Content.ToLower().Contains(rawQuery) ||
+                    RemoveDiacritics(p.Content).ToLower().Contains(normQuery)
+                ))
+            )
             .Take(10)
             .Select(p => new PostSearchResult
             {
                 Id = p.Id,
-                Title = p.Title,
+                Title = p.Title ?? string.Empty,
                 Summary = p.Summary,
                 Content = p.Content,
                 FeaturedImageUrl = p.FeaturedImageUrl,
@@ -77,13 +97,165 @@ public class SearchController : ControllerBase
                 LikeCount = p.LikeCount,
                 CreatedAt = p.CreatedAt
             })
+            .ToList();
+
+        // 3. Reels Search (Posts with video/reels content)
+        var reels = rawPosts
+            .Where(p => p.Type == "Reel" || !string.IsNullOrEmpty(p.VideoUrl))
+            .Where(p =>
+                (!string.IsNullOrEmpty(p.Title) && (p.Title.ToLower().Contains(rawQuery) || RemoveDiacritics(p.Title).ToLower().Contains(normQuery))) ||
+                (!string.IsNullOrEmpty(p.Content) && (p.Content.ToLower().Contains(rawQuery) || RemoveDiacritics(p.Content).ToLower().Contains(normQuery)))
+            )
+            .Take(10)
+            .Select(p => new ReelSearchResult
+            {
+                Id = p.Id,
+                Title = p.Title ?? string.Empty,
+                VideoUrl = p.VideoUrl,
+                FeaturedImageUrl = p.FeaturedImageUrl,
+                ImageUrls = p.ImageUrls ?? new List<string>(),
+                AuthorName = p.Author != null ? p.Author.FullName : "Người dùng",
+                AuthorAvatarUrl = p.Author != null ? p.Author.AvatarUrl : null,
+                LikeCount = p.LikeCount
+            })
+            .ToList();
+
+        // 4. Hashtags Search
+        var rawTags = await _context.Tags
+            .Include(t => t.PostTags)
+            .Take(50)
+            .Select(t => new HashtagSearchResult
+            {
+                Name = t.Name ?? string.Empty,
+                PostCount = t.PostTags != null ? t.PostTags.Count : 0
+            })
             .ToListAsync();
+
+        var cleanQueryTag = rawQuery.StartsWith("#") ? rawQuery.Substring(1) : rawQuery;
+        var normQueryTag = RemoveDiacritics(cleanQueryTag);
+
+        var hashtags = rawTags
+            .Where(t =>
+                !string.IsNullOrEmpty(t.Name) && (
+                    t.Name.ToLower().Contains(cleanQueryTag) ||
+                    RemoveDiacritics(t.Name).ToLower().Contains(normQueryTag)
+                )
+            )
+            .Take(10)
+            .ToList();
+
+        if (hashtags.Count == 0 && !string.IsNullOrWhiteSpace(cleanQueryTag))
+        {
+            hashtags.Add(new HashtagSearchResult { Name = cleanQueryTag, PostCount = posts.Count });
+        }
+
+        // 5. Groups Search
+        var rawGroups = await _context.Groups
+            .Include(g => g.Members)
+            .Take(50)
+            .Select(g => new GroupSearchResult
+            {
+                Id = g.Id,
+                Name = g.Name ?? string.Empty,
+                Description = g.Description,
+                AvatarUrl = g.AvatarUrl,
+                MemberCount = g.Members != null ? g.Members.Count : 0,
+                IsPublic = g.IsPublic
+            })
+            .ToListAsync();
+
+        var groups = rawGroups
+            .Where(g =>
+                !string.IsNullOrEmpty(g.Name) && (
+                    g.Name.ToLower().Contains(rawQuery) ||
+                    RemoveDiacritics(g.Name).ToLower().Contains(normQuery)
+                )
+            )
+            .Take(10)
+            .ToList();
+
+        // 6. Products Search
+        var rawProducts = await _context.Products
+            .Include(p => p.Shop)
+            .Take(50)
+            .ToListAsync();
+
+        var products = rawProducts
+            .Where(p =>
+                (!string.IsNullOrEmpty(p.Name) && (
+                    p.Name.ToLower().Contains(rawQuery) ||
+                    RemoveDiacritics(p.Name).ToLower().Contains(normQuery)
+                )) ||
+                (!string.IsNullOrEmpty(p.Description) && (
+                    p.Description.ToLower().Contains(rawQuery) ||
+                    RemoveDiacritics(p.Description).ToLower().Contains(normQuery)
+                ))
+            )
+            .Take(10)
+            .Select(p => new ProductSearchResult
+            {
+                Id = p.Id,
+                Name = p.Name ?? string.Empty,
+                Description = p.Description,
+                Price = p.Price,
+                FeaturedImageUrl = p.FeaturedImageUrl,
+                ShopName = p.Shop != null ? p.Shop.Name : "Cửa hàng Zynk"
+            })
+            .ToList();
+
+        // 7. Shops Search
+        var rawShops = await _context.Shops
+            .Include(s => s.Products)
+            .Take(50)
+            .Select(s => new ShopSearchResult
+            {
+                Id = s.Id,
+                Name = s.Name ?? string.Empty,
+                Description = s.Description,
+                AvatarUrl = s.LogoUrl,
+                IsVerified = s.IsApproved,
+                Rating = 5.0,
+                FollowerCount = 120,
+                ProductCount = s.Products != null ? s.Products.Count : 0
+            })
+            .ToListAsync();
+
+        var shops = rawShops
+            .Where(s =>
+                !string.IsNullOrEmpty(s.Name) && (
+                    s.Name.ToLower().Contains(rawQuery) ||
+                    RemoveDiacritics(s.Name).ToLower().Contains(normQuery)
+                )
+            )
+            .Take(10)
+            .ToList();
 
         return Ok(new SearchResultDto
         {
             Users = users,
-            Posts = posts
+            Posts = posts,
+            Reels = reels,
+            Hashtags = hashtags,
+            Groups = groups,
+            Products = products,
+            Shops = shops
         });
+    }
+
+    private static string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+        var normalizedString = text.Normalize(System.Text.NormalizationForm.FormD);
+        var stringBuilder = new System.Text.StringBuilder();
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+        return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC).Replace('đ', 'd').Replace('Đ', 'D');
     }
 
     [HttpGet("ai")]

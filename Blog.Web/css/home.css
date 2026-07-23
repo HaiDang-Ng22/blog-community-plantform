@@ -112,11 +112,10 @@
     min-width: 0;
 }
 
-/* Home Tabs (Discover/Following) */
 .home-tabs {
     display: flex;
     justify-content: center;
-    border-bottom: 3px solid var(--glass-border);
+    border-bottom: var(--glass-border);
     margin-bottom: 1.5rem;
     position: sticky;
     top: 0;
@@ -156,7 +155,6 @@
 
 .home-tab:hover {
     color: var(--text-primary);
-    background: rgba(0, 0, 0, 0.02);
 }
 
 /* Right Sidebar Column */

@@ -46,8 +46,11 @@
             padding: 4px;
             background: var(--input-bg);
             border-radius: 14px;
-            width: fit-content;
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+
+        .noti-tabs::-webkit-scrollbar { display: none; }
 
         .noti-tab {
             padding: 10px 20px;
@@ -78,9 +81,31 @@
             background: #ef4444;
             border-radius: 50%;
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 6px;
+            right: 6px;
             border: 2px solid var(--bg-color);
+        }
+
+        .noti-delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            opacity: 0;
+        }
+
+        .noti-item:hover .noti-delete-btn {
+            opacity: 1;
+        }
+
+        .noti-delete-btn:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
         }
 
         .noti-actions {
@@ -247,16 +272,23 @@
         <div class="noti-header">
             <h1>Thông báo</h1>
             <div class="noti-tabs">
-                <div class="noti-tab active" data-tab="social">
-                    Tương tác & Blog 
+                <div class="noti-tab active" data-tab="all">
+                    Tat ca
+                </div>
+                <div class="noti-tab" data-tab="unread">
+                    Chua doc
+                    <span class="tab-badge" id="badge-unread"></span>
+                </div>
+                <div class="noti-tab" data-tab="social">
+                    Tuong tac
                     <span class="tab-badge" id="badge-social"></span>
                 </div>
                 <div class="noti-tab" data-tab="orders">
-                    Đơn hàng
+                    Don hang
                     <span class="tab-badge" id="badge-orders"></span>
                 </div>
                 <div class="noti-tab" data-tab="system">
-                    Hệ thống
+                    He thong
                     <span class="tab-badge" id="badge-system"></span>
                 </div>
             </div>
@@ -281,7 +313,7 @@
             const notiList = document.getElementById('noti-list');
             const markAllBtn = document.getElementById('mark-all-read');
             const tabs = document.querySelectorAll('.noti-tab');
-            let currentTab = 'social';
+            let currentTab = 'all';
             let allNotifications = [];
 
             async function loadNotifications() {
@@ -293,7 +325,7 @@
                     notiList.innerHTML = `
                         <div class="noti-empty">
                             <i class="fa-solid fa-triangle-exclamation"></i>
-                            <p>Không thể kết nối đến máy chủ.</p>
+                            <p>Khong the ket noi den may chu.</p>
                         </div>
                     `;
                 }
@@ -304,16 +336,20 @@
                 const orderTypes = ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'];
                 const systemTypes = ['System'];
                 
-                // Update badges
+                const unreadAll    = allNotifications.filter(n => !n.isRead).length;
                 const unreadSocial = allNotifications.filter(n => !n.isRead && socialTypes.includes(n.type)).length;
                 const unreadOrders = allNotifications.filter(n => !n.isRead && orderTypes.includes(n.type)).length;
                 const unreadSystem = allNotifications.filter(n => !n.isRead && systemTypes.includes(n.type)).length;
                 
+                const badgeUnread = document.getElementById('badge-unread');
+                if (badgeUnread) badgeUnread.style.display = unreadAll > 0 ? 'block' : 'none';
                 document.getElementById('badge-social').style.display = unreadSocial > 0 ? 'block' : 'none';
                 document.getElementById('badge-orders').style.display = unreadOrders > 0 ? 'block' : 'none';
                 document.getElementById('badge-system').style.display = unreadSystem > 0 ? 'block' : 'none';
 
                 const filtered = allNotifications.filter(n => {
+                    if (currentTab === 'all')    return true;
+                    if (currentTab === 'unread') return !n.isRead;
                     if (currentTab === 'social') return socialTypes.includes(n.type);
                     if (currentTab === 'orders') return orderTypes.includes(n.type);
                     if (currentTab === 'system') return systemTypes.includes(n.type);
@@ -322,10 +358,11 @@
 
                 if (filtered.length === 0) {
                     let emptyIcon = 'fa-bell';
-                    let emptyText = 'Không có thông báo nào.';
-                    if (currentTab === 'social') { emptyIcon = 'fa-heart'; emptyText = 'Chưa có tương tác nào mới.'; }
-                    if (currentTab === 'orders') { emptyIcon = 'fa-box-open'; emptyText = 'Chưa có thông báo về đơn hàng.'; }
-                    if (currentTab === 'system') { emptyIcon = 'fa-shield-halved'; emptyText = 'Hệ thống chưa có cập nhật gì mới.'; }
+                    let emptyText = 'Khong co thong bao nao.';
+                    if (currentTab === 'unread') { emptyIcon = 'fa-check-circle'; emptyText = 'Da doc het tat ca thong bao!'; }
+                    if (currentTab === 'social') { emptyIcon = 'fa-heart'; emptyText = 'Chua co tuong tac nao moi.'; }
+                    if (currentTab === 'orders') { emptyIcon = 'fa-box-open'; emptyText = 'Chua co thong bao ve don hang.'; }
+                    if (currentTab === 'system') { emptyIcon = 'fa-shield-halved'; emptyText = 'He thong chua co cap nhat gi moi.'; }
                     
                     notiList.innerHTML = `
                         <div class="noti-empty">
@@ -339,20 +376,23 @@
 
                 notiList.style.border = '1px solid var(--input-border)';
                 notiList.innerHTML = filtered.map(n => `
-                    <div class="noti-item ${n.isRead ? '' : 'unread'}" onclick="handleNotiClick('${n.id}', '${n.type}', '${n.targetId}', '${n.actorId}')">
-                        <div class="noti-avatar-wrap">
+                    <div class="noti-item ${n.isRead ? '' : 'unread'}" id="noti-item-${n.id}">
+                        <div class="noti-avatar-wrap" onclick="handleNotiClick('${n.id}', '${n.type}', '${n.targetId}', '${n.actorId}')" style="cursor:pointer;">
                             <img src="${n.actorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n.actorName)}" class="noti-avatar">
                         </div>
-                        <div class="noti-info">
+                        <div class="noti-info" onclick="handleNotiClick('${n.id}', '${n.type}', '${n.targetId}', '${n.actorId}')" style="cursor:pointer;">
                             <div class="noti-text">
                                 <span class="noti-user">${n.actorName}</span>
-                                <span class="noti-msg">${n.message}</span>
+                                <span class="noti-msg"> ${n.message}</span>
                             </div>
                             <span class="noti-time">${typeof window.formatDate === 'function' ? window.formatDate(n.createdAt) : new Date(n.createdAt).toLocaleString()}</span>
                         </div>
                         <div class="noti-type-icon ${getIconClass(n.type)}">
                             ${getIconForType(n.type)}
                         </div>
+                        <button class="noti-delete-btn" onclick="deleteNotification('${n.id}')" title="Xoa">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 `).join('');
             }
@@ -394,8 +434,12 @@
                 try {
                     await window.api.post(`notifications/${id}/read`);
                     const noti = allNotifications.find(n => n.id === id);
-                    const message = noti ? noti.message : '';
+                    if (noti) noti.isRead = true;
+                    const item = document.getElementById('noti-item-' + id);
+                    if (item) item.classList.remove('unread');
+                    renderNotifications();
 
+                    const message = noti ? noti.message : '';
                     if (['Like', 'Comment', 'Reply'].includes(type)) {
                         window.location.href = `index.html?postId=${targetId}`;
                     } else if (type === 'LikeStory' || type === 'Follow') {
@@ -405,18 +449,40 @@
                     } else if (type === 'OrderStatusUpdated') {
                         window.location.href = `order-detail.html?id=${targetId}`;
                     } else if (type === 'System') {
-                        if (message.toLowerCase().includes('cửa hàng')) window.location.href = 'seller/index.html';
-                        else if (message.toLowerCase().includes('xác minh')) window.location.href = 'settings.html';
+                        if (message.toLowerCase().includes('cua hang')) window.location.href = 'seller/index.html';
+                        else if (message.toLowerCase().includes('xac minh')) window.location.href = 'settings.html';
                     }
                 } catch (err) { console.error(err); }
+            };
+
+            window.deleteNotification = async (id) => {
+                try {
+                    await window.api.delete(`notifications/${id}`);
+                    allNotifications = allNotifications.filter(n => n.id !== id);
+                    const item = document.getElementById('noti-item-' + id);
+                    if (item) {
+                        item.style.transition = 'opacity 0.3s, transform 0.3s';
+                        item.style.opacity = '0';
+                        item.style.transform = 'translateX(20px)';
+                        setTimeout(() => { item.remove(); }, 300);
+                    }
+                } catch (err) {
+                    // Silently fail if API doesn't support delete
+                    const item = document.getElementById('noti-item-' + id);
+                    if (item) { item.style.opacity = '0'; setTimeout(() => item.remove(), 300); }
+                    allNotifications = allNotifications.filter(n => n.id !== id);
+                }
             };
 
             markAllBtn.onclick = async () => {
                 try {
                     await window.api.post('notifications/read-all');
                     loadNotifications();
+                    if (window.common?.showToast) window.common.showToast('Da danh dau tat ca la da doc!', 'success');
                     if (window.loadNotificationBadge) window.loadNotificationBadge();
-                } catch (err) { alert('Lỗi khi cập nhật'); }
+                } catch (err) {
+                    if (window.common?.showToast) window.common.showToast('Loi khi cap nhat thong bao.', 'error');
+                }
             };
 
             loadNotifications();

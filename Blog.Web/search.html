@@ -1,6 +1,5 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
@@ -9,85 +8,73 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=2.2">
     <link rel="stylesheet" href="css/home.css?v=2.2">
-    <link rel="stylesheet" href="css/search.css?v=1.0">
+    <link rel="stylesheet" href="css/search.css?v=2.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
 <body class="home-page" data-i18n-title="search_title">
-
     <main class="main-content search-page">
         <div class="home-layout">
-            <!-- Center Column: Search Results -->
             <div class="feed-col search-center">
                 <div class="search-page-header">
-                    <h3 id="search-title" class="search-page-title">Tìm kiếm</h3>
-                    <div class="search-bar-modern" style="margin-bottom: 10px;">
-                        <input type="text" id="page-search-input" placeholder="Tìm kiếm bài viết, người dùng...">
-                        <button id="page-search-btn" class="btn primary-btn">Tìm</button>
+                    <div class="search-bar-wrap">
+                        <i class="fa-solid fa-magnifying-glass search-bar-icon"></i>
+                        <input type="text" id="page-search-input" data-i18n="search_input_placeholder" placeholder="Tìm người dùng, bài viết, reels, hashtag, sản phẩm..." autocomplete="off">
+                        <button class="search-clear-btn hidden" id="search-clear-btn" title="Xóa"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <div class="ai-search-toggle-container" style="display: flex; align-items: center; gap: 8px; margin-left: 4px; margin-top: 10px;">
-                        <input type="checkbox" id="ai-search-checkbox" style="width: 16px; height: 16px; cursor: pointer; accent-color: #7c3aed;">
-                        <label for="ai-search-checkbox" style="font-size: 0.88rem; font-weight: 600; color: #7c3aed; cursor: pointer; display: flex; align-items: center; gap: 5px; user-select: none;">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> Tìm kiếm thông minh bằng AI ✨
-                        </label>
+                    <div class="search-tabs" id="search-tabs">
+                        <button class="search-tab active" data-tab="all" data-i18n="tab_all">Tất cả</button>
+                        <button class="search-tab" data-tab="users" data-i18n="tab_users">Người dùng</button>
+                        <button class="search-tab" data-tab="posts" data-i18n="tab_posts">Bài viết</button>
+                        <button class="search-tab" data-tab="reels" data-i18n="tab_reels">Reels</button>
+                        <button class="search-tab" data-tab="hashtags" data-i18n="tab_hashtags">Hashtag</button>
+                        <button class="search-tab" data-tab="groups" data-i18n="tab_groups">Cộng đồng</button>
+                        <button class="search-tab" data-tab="products" data-i18n="tab_products">Sản phẩm</button>
+                        <button class="search-tab" data-tab="shops" data-i18n="tab_shops">Cửa hàng</button>
                     </div>
                 </div>
-            
-                <div class="search-results-container">
-                    <!-- Users -->
-                    <section class="search-section">
-                        <h2 data-i18n="users_section">Người dùng</h2>
-                        <div id="users-results-list"></div>
-                    </section>
-
-                    <!-- Posts -->
-                    <section class="search-section">
-                        <h2 data-i18n="posts_section">Bài viết</h2>
-                        <div id="posts-results-list"></div>
-                    </section>
-
-                    <!-- Products -->
-                    <section class="search-section" id="products-search-section">
-                        <h2>Sản phẩm</h2>
-                        <div id="products-results-list"></div>
-                    </section>
+                <div id="search-suggestions" class="search-suggestions hidden"></div>
+                <div id="search-body" class="search-body">
+                    <div id="search-default-view">
+                        <div id="recent-searches-section" class="search-card hidden">
+                            <div class="search-card-header">
+                                <span data-i18n="recent_searches">Tìm kiếm gần đây</span>
+                                <button class="clear-all-btn" id="clear-all-history" data-i18n="clear_all">Xóa tất cả</button>
+                            </div>
+                            <div id="recent-list"></div>
+                        </div>
+                        <div class="search-card">
+                            <div class="search-card-header">
+                                <span><i class="fa-solid fa-fire" style="color:#f97316;"></i> <span data-i18n="trending_now">Đang thịnh hành</span></span>
+                            </div>
+                            <div class="trending-list" id="trending-list">
+                                <div class="trending-item"><span class="trending-rank">1</span><span>#laptrinh</span><small>12.5k bài viết</small></div>
+                                <div class="trending-item"><span class="trending-rank">2</span><span>#congnghe</span><small>8.2k bài viết</small></div>
+                                <div class="trending-item"><span class="trending-rank">3</span><span>Laptop gaming</span><small>6.7k tìm kiếm</small></div>
+                                <div class="trending-item"><span class="trending-rank">4</span><span>#dulich</span><small>5.1k bài viết</small></div>
+                                <div class="trending-item"><span class="trending-rank">5</span><span>ASP.NET Core</span><small>4.3k tìm kiếm</small></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="search-results-view" class="hidden">
+                        <div id="results-title" class="results-title"></div>
+                        <div id="tab-all" class="tab-content"><div id="all-results-container"></div></div>
+                        <div id="tab-users" class="tab-content hidden"><div id="users-results-list" class="results-list"></div></div>
+                        <div id="tab-posts" class="tab-content hidden"><div id="posts-results-list" class="results-list"></div></div>
+                        <div id="tab-reels" class="tab-content hidden"><div id="reels-results-list" class="results-grid reels-grid"></div></div>
+                        <div id="tab-hashtags" class="tab-content hidden"><div id="hashtags-results-list" class="results-list"></div></div>
+                        <div id="tab-groups" class="tab-content hidden"><div id="groups-results-list" class="results-list"></div></div>
+                        <div id="tab-products" class="tab-content hidden"><div id="products-results-list" class="results-grid products-grid"></div></div>
+                        <div id="tab-shops" class="tab-content hidden"><div id="shops-results-list" class="results-list"></div></div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Optional Right Sidebar can be added here if needed, but for search usually center is better -->
         </div>
     </main>
-
     <script src="js/api.js"></script>
     <script src="js/lang.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/common.js?v=2.4"></script>
-    <!-- Floating AI Assistant Chatbot -->
-    <div id="ai-assistant-widget" class="ai-assistant-bubble">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-        <span class="tooltip-text">Hỏi Trợ Lý AI ✨</span>
-    </div>
-
-    <div id="ai-chat-window" class="ai-chat-window hidden">
-        <div class="ai-chat-header">
-            <div class="ai-chat-title">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Trợ lý ảo Zynk AI
-            </div>
-            <button class="ai-chat-close" onclick="toggleAiChat()">&times;</button>
-        </div>
-        <div class="ai-chat-messages" id="ai-chat-messages">
-            <div class="ai-message bot">
-                Dạ, em là Zynk AI. Anh/chị cần tìm bài viết, sản phẩm gì hay cần em hỗ trợ tư vấn mua sắm không ạ?
-            </div>
-        </div>
-        <div class="ai-chat-input-area">
-            <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi..." onkeypress="handleAiChatKeyPress(event)">
-            <button id="ai-chat-send-btn" onclick="sendAiChatMessage()"><i class="fa-regular fa-paper-plane"></i></button>
-        </div>
-    </div>
-
     <script src="js/post-actions.js"></script>
-    <script src="js/search.js"></script>
+    <script src="js/search.js?v=2.0"></script>
 </body>
-
 </html>

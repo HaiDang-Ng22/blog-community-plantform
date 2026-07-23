@@ -21,6 +21,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Local-only secrets (gitignored). Overrides appsettings.json for Gemini, etc.
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+var renderSecretsDirectory = "/etc/secrets";
+var renderLocalSettingsPath = Path.Combine(renderSecretsDirectory, "appsettings.Local.json");
+if (File.Exists(renderLocalSettingsPath))
+{
+    builder.Configuration.AddJsonFile(
+        new Microsoft.Extensions.FileProviders.PhysicalFileProvider(renderSecretsDirectory),
+        "appsettings.Local.json",
+        optional: false,
+        reloadOnChange: false);
+    Console.WriteLine("[Configuration] Loaded appsettings.Local.json from Render secret files.");
+}
 
 // Increase upload limit
 builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -104,17 +115,19 @@ builder.Services.AddAuthentication(options =>
 });
 
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+if (!string.IsNullOrWhiteSpace(connectionString) &&
+    (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)))
 {
     try
     {
         var uri = new Uri(connectionString);
-        var userInfo = uri.UserInfo.Split(':');
-        var username = userInfo[0];
-        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var username = Uri.UnescapeDataString(userInfo[0]);
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
         var host = uri.Host;
         var port = uri.Port > 0 ? uri.Port : 5432;
-        var database = uri.AbsolutePath.TrimStart('/');
+        var database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/'));
         
         connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};Ssl Mode=Require;Trust Server Certificate=true;Include Error Detail=True;";
         Console.WriteLine($"[Database] Parsed connection string from DATABASE_URL env var. Host={host}");

@@ -1,4 +1,9 @@
 // js/edit-post.js
+const _t = (key) => {
+    if (typeof window.t === 'function') return window.t(key);
+    return window.zynkTranslations?.vi?.[key] || window.zynkTranslations?.en?.[key] || key;
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!localStorage.getItem('auth_token')) {
         window.location.href = 'auth.html';
@@ -14,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
     if (!postId) {
-        alert(window.t('post_id_not_found'));
+        alert(_t('post_id_not_found'));
         window.location.href = 'index.html';
         return;
     }
@@ -30,7 +35,7 @@ async function loadPostData(postId) {
     try {
         const post = await window.api.get(`posts/${postId}`);
         if (!post) {
-            alert(window.t('load_post_failed'));
+            alert(_t('load_post_failed'));
             return;
         }
 
@@ -58,7 +63,7 @@ async function loadPostData(postId) {
                 container.appendChild(input);
             });
             renderPreviews();
-            document.getElementById('file-name').textContent = window.t('loaded_original_images').replace('{count}', imagesToLoad.length);
+            document.getElementById('file-name').textContent = _t('loaded_original_images').replace('{count}', imagesToLoad.length);
         } else {
             document.getElementById('image-empty-state').classList.remove('hidden');
         }
@@ -78,7 +83,7 @@ async function handleMultipleImageUpload(input) {
     const fileNameSpan = document.getElementById('file-name');
     const addMoreBtn = document.getElementById('btn-add-more-images');
 
-    fileNameSpan.textContent = window.t('uploading_images').replace('{count}', files.length);
+    fileNameSpan.textContent = _t('uploading_images').replace('{count}', files.length);
     previewGrid.classList.remove('hidden');
     document.getElementById('image-empty-state').classList.add('hidden');
     addMoreBtn.classList.remove('hidden');
@@ -221,21 +226,19 @@ async function handleEditSubmit(e, postId) {
     };
 
     submitBtn.disabled = true;
-    submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${window.t('processing')}`;
+    submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${_t('processing')}`;
 
     try {
         const result = await window.api.put(`posts/${postId}`, postData);
-        msgBox.className = 'message-box success';
-        msgBox.innerHTML = result.message || window.t('update_success');
+        window.common.showToast(result.message || 'Cập nhật bài viết thành công!', 'success');
         
         // Quay về trang cũ
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1500);
     } catch (error) {
-        msgBox.className = 'message-box error';
-        msgBox.innerHTML = error.message;
+        window.common.showToast(error.message || 'Lỗi khi cập nhật bài viết.', 'error');
         submitBtn.disabled = false;
-        submitBtn.innerHTML = window.t('save_changes');
+        submitBtn.innerHTML = _t('save_changes');
     }
 }
