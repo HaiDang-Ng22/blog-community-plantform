@@ -133,16 +133,23 @@
 }
 
 .suggestion-item {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 11px 16px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
     cursor: pointer;
     transition: background 0.15s;
     font-size: 0.9rem;
 }
 
-.suggestion-item:hover { background: var(--input-bg); }
+.suggestion-item:hover,
+.suggestion-item.active { background: var(--input-bg); }
 
 .suggestion-item-icon {
     width: 32px;
@@ -155,11 +162,16 @@
     color: var(--text-secondary);
     font-size: 0.85rem;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
+.suggestion-item-icon img { width: 100%; height: 100%; object-fit: cover; }
 .suggestion-item-text { flex: 1; color: var(--text-primary); font-weight: 500; }
 .suggestion-item-sub { font-size: 0.78rem; color: var(--text-secondary); font-weight: 400; margin-top: 1px; }
 .suggestion-item-badge { font-size: 0.75rem; color: var(--text-secondary); background: var(--input-bg); border-radius: 6px; padding: 2px 8px; }
+.suggestion-open-icon { color: var(--text-secondary); font-size: 0.7rem; opacity: 0; transition: opacity 0.15s; }
+.suggestion-item:hover .suggestion-open-icon,
+.suggestion-item.active .suggestion-open-icon { opacity: 0.75; }
 
 .skel-circle { width: 32px; height: 32px; border-radius: 50%; background: var(--input-bg); animation: shimmer 1.2s infinite linear; }
 .skel-line { height: 12px; border-radius: 6px; background: var(--input-bg); animation: shimmer 1.2s infinite linear; }

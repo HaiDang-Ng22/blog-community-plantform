@@ -8,6 +8,9 @@ let currentTab = 'all';
 let currentQuery = '';
 let debounceTimer = null;
 let abortController = null;
+let suggestionRequestId = 0;
+let suggestionItems = [];
+let activeSuggestionIndex = -1;
 
 // Helper translation wrapper
 function _t(key, fallback) {
@@ -54,9 +57,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Input keyboard & focus listeners
     if (searchInput) {
+        searchInput.setAttribute('role', 'combobox');
+        searchInput.setAttribute('aria-autocomplete', 'list');
+        searchInput.setAttribute('aria-controls', 'search-suggestions');
+        searchInput.setAttribute('aria-expanded', 'false');
         searchInput.addEventListener('input', onInput);
         searchInput.addEventListener('keydown', e => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                if (!suggestionItems.length || suggestBox?.classList.contains('hidden')) return;
+                e.preventDefault();
+                const direction = e.key === 'ArrowDown' ? 1 : -1;
+                activeSuggestionIndex = (activeSuggestionIndex + direction + suggestionItems.length) % suggestionItems.length;
+                updateActiveSuggestion();
+                return;
+            }
             if (e.key === 'Enter') {
+                if (activeSuggestionIndex >= 0 && suggestionItems[activeSuggestionIndex]) {
+                    e.preventDefault();
+                    chooseSuggestion(suggestionItems[activeSuggestionIndex]);
+                    return;
+                }
                 clearTimeout(debounceTimer);
                 hideSuggestions();
                 const q = searchInput.value.trim();
@@ -73,6 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    suggestBox?.addEventListener('click', e => {
+        const item = e.target.closest('[data-suggestion-index]');
+        if (!item) return;
+        const index = Number(item.dataset.suggestionIndex);
+        if (suggestionItems[index]) chooseSuggestion(suggestionItems[index]);
+    });
 
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
@@ -94,6 +121,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('clear-all-history')?.addEventListener('click', () => {
         localStorage.removeItem(HISTORY_KEY);
         renderRecentSearches();
+    });
+
+    document.getElementById('recent-list')?.addEventListener('click', e => {
+        const target = e.target.closest('[data-recent-query]');
+        if (!target) return;
+        const query = decodeURIComponent(target.dataset.recentQuery || '');
+        if (target.dataset.recentAction === 'delete') {
+            window.deleteHistoryItem(query);
+        } else {
+            window.selectSuggestion(query);
+        }
     });
 });
 
@@ -125,6 +163,8 @@ function onInput() {
 // ====== SUGGESTIONS ======
 function showSuggestionsSkeleton() {
     if (!suggestBox) return;
+    suggestionItems = [];
+    activeSuggestionIndex = -1;
     suggestBox.innerHTML = Array(3).fill(`
         <div class="suggestion-skeleton">
             <div class="skel-circle"></div>
@@ -135,65 +175,131 @@ function showSuggestionsSkeleton() {
         </div>
     `).join('');
     suggestBox.classList.remove('hidden');
+    searchInput?.setAttribute('aria-expanded', 'true');
 }
 
 async function showSuggestions(q) {
     if (!suggestBox) return;
-    const items = buildSuggestions(q);
+    const requestId = ++suggestionRequestId;
+    let remoteItems = [];
 
-    if (items.length === 0) {
-        hideSuggestions();
-        return;
+    try {
+        remoteItems = await window.api.get(`search/suggestions?q=${encodeURIComponent(q)}`);
+    } catch (error) {
+        console.warn('Không thể tải gợi ý tìm kiếm:', error);
     }
 
-    suggestBox.innerHTML = items.map(item => `
-        <div class="suggestion-item" onclick="selectSuggestion('${escHtml(item.text)}')">
-            <div class="suggestion-item-icon">${item.icon}</div>
+    if (requestId !== suggestionRequestId || searchInput?.value.trim() !== q) return;
+
+    const historyItems = getHistory()
+        .filter(item => normalizeText(item).includes(normalizeText(q)))
+        .slice(0, 2)
+        .map(text => ({ text, type: 'history', subtitle: 'Tìm kiếm gần đây' }));
+
+    suggestionItems = dedupeSuggestions([
+        ...historyItems,
+        ...(Array.isArray(remoteItems) ? remoteItems : []),
+        { text: q, type: 'search', subtitle: `Tìm kiếm tất cả kết quả cho “${q}”` }
+    ]).slice(0, 9);
+    activeSuggestionIndex = -1;
+
+    suggestBox.innerHTML = suggestionItems.map((item, index) => `
+        <button type="button" class="suggestion-item" role="option" aria-selected="false" data-suggestion-index="${index}">
+            <div class="suggestion-item-icon">${renderSuggestionVisual(item)}</div>
             <div style="flex:1;min-width:0;">
                 <div class="suggestion-item-text">${highlight(item.text, q)}</div>
-                ${item.sub ? `<div class="suggestion-item-sub">${item.sub}</div>` : ''}
+                ${item.subtitle ? `<div class="suggestion-item-sub">${escHtml(item.subtitle)}</div>` : ''}
             </div>
-            ${item.badge ? `<span class="suggestion-item-badge">${item.badge}</span>` : ''}
-        </div>
+            <span class="suggestion-item-badge">${suggestionTypeLabel(item.type)}</span>
+            <i class="fa-solid fa-arrow-right suggestion-open-icon" aria-hidden="true"></i>
+        </button>
     `).join('');
 
     suggestBox.classList.remove('hidden');
+    suggestBox.setAttribute('role', 'listbox');
+    searchInput?.setAttribute('aria-expanded', 'true');
 }
 
-function buildSuggestions(q) {
-    const lower = q.toLowerCase();
-    const suggestions = [];
+function renderSuggestionVisual(item) {
+    const safeImage = safeImageUrl(item.imageUrl);
+    if (safeImage) {
+        return `<img src="${escHtml(safeImage)}" alt="" loading="lazy">`;
+    }
 
-    const pool = [
-        { text: 'Laptop gaming', badge: _t('trending_now', 'Xu hướng'), icon: '<i class="fa-solid fa-fire"></i>', sub: '6.7k tìm kiếm' },
-        { text: 'Laptop văn phòng', badge: _t('tab_products', 'Sản phẩm'), icon: '<i class="fa-solid fa-store"></i>', sub: 'Sản phẩm' },
-        { text: '#laptop', badge: _t('tab_hashtags', 'Hashtag'), icon: '<i class="fa-solid fa-hashtag" style="color:#6366f1;"></i>', sub: '3.4k bài viết' },
-        { text: 'Shop Laptop Store', badge: _t('tab_shops', 'Cửa hàng'), icon: '<i class="fa-solid fa-store"></i>', sub: 'Cửa hàng' },
-        { text: 'Laptop Review', badge: _t('tab_users', 'Người dùng'), icon: '<i class="fa-solid fa-user"></i>', sub: '@laptop_review' },
-        { text: 'Đăng Hải', badge: _t('tab_users', 'Người dùng'), icon: '<i class="fa-solid fa-user"></i>', sub: '@dh813345' },
-        { text: 'Duy An Đặng', badge: _t('tab_users', 'Người dùng'), icon: '<i class="fa-solid fa-user"></i>', sub: '@dangduyan96' },
-        { text: 'Khaitan Bang', badge: _t('tab_users', 'Người dùng'), icon: '<i class="fa-solid fa-user"></i>', sub: '@khaitan2105' },
-        { text: 'Công nghệ thông tin', badge: _t('search_btn', 'Từ khóa'), icon: '<i class="fa-solid fa-magnifying-glass"></i>', sub: '' },
-        { text: '#congnghe', badge: _t('tab_hashtags', 'Hashtag'), icon: '<i class="fa-solid fa-hashtag" style="color:#6366f1;"></i>', sub: '8.2k bài viết' },
-        { text: '#dulich', badge: _t('tab_hashtags', 'Hashtag'), icon: '<i class="fa-solid fa-hashtag" style="color:#6366f1;"></i>', sub: '5.1k bài viết' },
-        { text: 'ASP.NET Core', badge: _t('search_btn', 'Từ khóa'), icon: '<i class="fa-solid fa-magnifying-glass"></i>', sub: '4.3k tìm kiếm' },
-        { text: '#laptrinh', badge: _t('tab_hashtags', 'Hashtag'), icon: '<i class="fa-solid fa-hashtag" style="color:#6366f1;"></i>', sub: '12.5k bài viết' },
-    ];
+    const icons = {
+        user: 'fa-user',
+        hashtag: 'fa-hashtag',
+        product: 'fa-bag-shopping',
+        group: 'fa-user-group',
+        shop: 'fa-store',
+        post: 'fa-newspaper',
+        history: 'fa-clock-rotate-left',
+        search: 'fa-magnifying-glass'
+    };
+    return `<i class="fa-solid ${icons[item.type] || icons.search}"></i>`;
+}
 
-    pool.forEach(item => {
-        if (item.text.toLowerCase().includes(lower)) {
-            suggestions.push(item);
-        }
+function suggestionTypeLabel(type) {
+    return ({
+        user: _t('tab_users', 'Người dùng'),
+        hashtag: _t('tab_hashtags', 'Hashtag'),
+        product: _t('tab_products', 'Sản phẩm'),
+        group: _t('tab_groups', 'Cộng đồng'),
+        shop: _t('tab_shops', 'Cửa hàng'),
+        post: _t('tab_posts', 'Bài viết'),
+        history: 'Gần đây',
+        search: 'Tìm kiếm'
+    })[type] || 'Gợi ý';
+}
+
+function dedupeSuggestions(items) {
+    const seen = new Set();
+    return items.filter(item => {
+        if (!item?.text) return false;
+        const key = `${item.type}:${normalizeText(item.text)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
     });
+}
 
-    return suggestions.slice(0, 6);
+function normalizeText(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function safeImageUrl(value) {
+    if (!value) return '';
+    const url = String(value).trim();
+    return /^(https?:\/\/|\/|\.\/|\.\.\/)/i.test(url) ? url : '';
+}
+
+function updateActiveSuggestion() {
+    suggestBox?.querySelectorAll('[data-suggestion-index]').forEach((el, index) => {
+        const active = index === activeSuggestionIndex;
+        el.classList.toggle('active', active);
+        el.setAttribute('aria-selected', String(active));
+        if (active) el.scrollIntoView({ block: 'nearest' });
+    });
+}
+
+function chooseSuggestion(item) {
+    if (!item) return;
+    const text = item.text || '';
+    if (searchInput) searchInput.value = text;
+    if (clearBtn) clearBtn.classList.remove('hidden');
+    hideSuggestions();
+    performSearch(text);
 }
 
 function hideSuggestions() {
+    suggestionRequestId++;
     if (suggestBox) {
         suggestBox.classList.add('hidden');
         suggestBox.innerHTML = '';
     }
+    suggestionItems = [];
+    activeSuggestionIndex = -1;
+    searchInput?.setAttribute('aria-expanded', 'false');
 }
 
 window.selectSuggestion = function(text) {
@@ -523,15 +629,17 @@ function renderRecentSearches() {
     }
 
     section.classList.remove('hidden');
-    list.innerHTML = history.map(q => `
+    list.innerHTML = history.map(q => {
+        const encodedQuery = encodeURIComponent(q).replace(/'/g, '%27');
+        return `
         <div class="recent-item">
             <span class="recent-item-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
-            <span class="recent-keyword" onclick="selectSuggestion('${escHtml(q)}')">${escHtml(q)}</span>
-            <button class="recent-delete-btn" onclick="deleteHistoryItem('${escHtml(q)}')" title="${_t('delete', 'Xóa')}">
+            <span class="recent-keyword" data-recent-query="${encodedQuery}">${escHtml(q)}</span>
+            <button class="recent-delete-btn" data-recent-query="${encodedQuery}" data-recent-action="delete" title="${_t('delete', 'Xóa')}">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 window.deleteHistoryItem = function(query) {

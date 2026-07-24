@@ -68,6 +68,7 @@ public class SearchController : ControllerBase
         var rawPosts = await _context.Posts
             .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published)
             .Include(p => p.Author)
+            .Include(p => p.Images)
             .OrderByDescending(p => p.CreatedAt)
             .Take(100)
             .ToListAsync();
@@ -101,7 +102,7 @@ public class SearchController : ControllerBase
 
         // 3. Reels Search (Posts with video/reels content)
         var reels = rawPosts
-            .Where(p => p.Type == "Reel" || !string.IsNullOrEmpty(p.VideoUrl))
+            .Where(p => p.Type == Blog.Domain.Entities.PostType.Reel || !string.IsNullOrEmpty(p.VideoUrl))
             .Where(p =>
                 (!string.IsNullOrEmpty(p.Title) && (p.Title.ToLower().Contains(rawQuery) || RemoveDiacritics(p.Title).ToLower().Contains(normQuery))) ||
                 (!string.IsNullOrEmpty(p.Content) && (p.Content.ToLower().Contains(rawQuery) || RemoveDiacritics(p.Content).ToLower().Contains(normQuery)))
@@ -113,7 +114,7 @@ public class SearchController : ControllerBase
                 Title = p.Title ?? string.Empty,
                 VideoUrl = p.VideoUrl,
                 FeaturedImageUrl = p.FeaturedImageUrl,
-                ImageUrls = p.ImageUrls ?? new List<string>(),
+                ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
                 AuthorName = p.Author != null ? p.Author.FullName : "Người dùng",
                 AuthorAvatarUrl = p.Author != null ? p.Author.AvatarUrl : null,
                 LikeCount = p.LikeCount
@@ -158,9 +159,9 @@ public class SearchController : ControllerBase
                 Id = g.Id,
                 Name = g.Name ?? string.Empty,
                 Description = g.Description,
-                AvatarUrl = g.AvatarUrl,
+                AvatarUrl = g.AvatarImageUrl,
                 MemberCount = g.Members != null ? g.Members.Count : 0,
-                IsPublic = g.IsPublic
+                IsPublic = !g.IsPrivate
             })
             .ToListAsync();
 
@@ -213,8 +214,8 @@ public class SearchController : ControllerBase
                 Name = s.Name ?? string.Empty,
                 Description = s.Description,
                 AvatarUrl = s.LogoUrl,
-                IsVerified = s.IsApproved,
-                Rating = 5.0,
+                IsVerified = s.User.IsVerified,
+                Rating = s.Rating,
                 FollowerCount = 120,
                 ProductCount = s.Products != null ? s.Products.Count : 0
             })
@@ -240,6 +241,187 @@ public class SearchController : ControllerBase
             Products = products,
             Shops = shops
         });
+    }
+
+    [HttpGet("suggestions")]
+    public async Task<ActionResult<List<SearchSuggestionDto>>> Suggestions([FromQuery] string q)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+            return Ok(new List<SearchSuggestionDto>());
+
+        var normalizedQuery = NormalizeForSearch(q.Trim().TrimStart('#'));
+
+        var users = await _context.Users
+            .AsNoTracking()
+            .Where(u => u.IsActive)
+            .OrderByDescending(u => u.IsVerified)
+            .ThenByDescending(u => u.CreatedAt)
+            .Take(80)
+            .Select(u => new { u.Id, u.FullName, u.Username, u.AvatarUrl, u.IsVerified })
+            .ToListAsync();
+
+        var tags = await _context.Tags
+            .AsNoTracking()
+            .OrderByDescending(t => t.PostTags.Count)
+            .Take(80)
+            .Select(t => new { t.Id, t.Name, PostCount = t.PostTags.Count })
+            .ToListAsync();
+
+        var products = await _context.Products
+            .AsNoTracking()
+            .Where(p => p.Status == Blog.Domain.Entities.ProductStatus.Active)
+            .OrderByDescending(p => p.SalesCount)
+            .ThenByDescending(p => p.Rating)
+            .Take(80)
+            .Select(p => new { p.Id, p.Name, p.FeaturedImageUrl, p.Price, p.SalesCount, p.Rating })
+            .ToListAsync();
+
+        var groups = await _context.Groups
+            .AsNoTracking()
+            .OrderByDescending(g => g.Members.Count)
+            .Take(60)
+            .Select(g => new { g.Id, g.Name, g.AvatarImageUrl, MemberCount = g.Members.Count })
+            .ToListAsync();
+
+        var shops = await _context.Shops
+            .AsNoTracking()
+            .Where(s => !s.IsSuspended)
+            .OrderByDescending(s => s.Rating)
+            .Take(60)
+            .Select(s => new { s.Id, s.Name, s.LogoUrl, s.Rating, ProductCount = s.Products.Count })
+            .ToListAsync();
+
+        var posts = await _context.Posts
+            .AsNoTracking()
+            .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published)
+            .OrderByDescending(p => p.LikeCount)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(80)
+            .Select(p => new { p.Id, p.Title, p.FeaturedImageUrl, p.LikeCount })
+            .ToListAsync();
+
+        var candidates = new List<SearchSuggestionDto>();
+
+        candidates.AddRange(users.Select(u => CreateSuggestion(
+            u.Id, u.FullName, $"@{u.Username}{(u.IsVerified ? " · Đã xác minh" : string.Empty)}",
+            "user", u.AvatarUrl, normalizedQuery, u.Username)));
+
+        candidates.AddRange(tags.Select(t => CreateSuggestion(
+            t.Id, $"#{t.Name.TrimStart('#')}", $"{t.PostCount:N0} bài viết",
+            "hashtag", null, normalizedQuery, t.Name, Math.Min(t.PostCount, 10000) / 10000d)));
+
+        candidates.AddRange(products.Select(p => CreateSuggestion(
+            p.Id, p.Name, $"{p.Price:N0} đ · {p.SalesCount:N0} đã bán",
+            "product", p.FeaturedImageUrl, normalizedQuery, null,
+            Math.Min(p.SalesCount, 1000) / 1000d + Math.Min(p.Rating, 5) / 20d)));
+
+        candidates.AddRange(groups.Select(g => CreateSuggestion(
+            g.Id, g.Name, $"{g.MemberCount:N0} thành viên",
+            "group", g.AvatarImageUrl, normalizedQuery, null, Math.Min(g.MemberCount, 5000) / 5000d)));
+
+        candidates.AddRange(shops.Select(s => CreateSuggestion(
+            s.Id, s.Name, $"Cửa hàng · {s.ProductCount:N0} sản phẩm",
+            "shop", s.LogoUrl, normalizedQuery, null, Math.Min(s.Rating, 5) / 20d)));
+
+        candidates.AddRange(posts.Select(p => CreateSuggestion(
+            p.Id, p.Title, $"{p.LikeCount:N0} lượt thích",
+            "post", p.FeaturedImageUrl, normalizedQuery, null, Math.Min(p.LikeCount, 5000) / 5000d)));
+
+        var matches = candidates
+            .Where(s => s.Score > 0)
+            .OrderByDescending(s => s.Score)
+            .ThenBy(s => s.Text.Length)
+            .ToList();
+
+        // Favor strong matches while keeping several content types represented.
+        var selected = new List<SearchSuggestionDto>();
+        foreach (var match in matches)
+        {
+            if (selected.Count >= 8) break;
+            if (selected.Count(s => s.Type == match.Type) >= 3) continue;
+            selected.Add(match);
+        }
+
+        return Ok(selected);
+    }
+
+    private static SearchSuggestionDto CreateSuggestion(
+        Guid id,
+        string? text,
+        string? subtitle,
+        string type,
+        string? imageUrl,
+        string normalizedQuery,
+        string? alternativeText = null,
+        double popularityBoost = 0)
+    {
+        var value = text?.Trim() ?? string.Empty;
+        var score = Math.Max(
+            CalculateMatchScore(normalizedQuery, NormalizeForSearch(value.TrimStart('#'))),
+            CalculateMatchScore(normalizedQuery, NormalizeForSearch(alternativeText ?? string.Empty)));
+
+        return new SearchSuggestionDto
+        {
+            Id = id,
+            Text = value,
+            Subtitle = subtitle,
+            Type = type,
+            ImageUrl = imageUrl,
+            Score = score <= 0 ? 0 : score + popularityBoost
+        };
+    }
+
+    private static double CalculateMatchScore(string query, string value)
+    {
+        if (string.IsNullOrEmpty(query) || string.IsNullOrEmpty(value)) return 0;
+        if (value == query) return 100;
+        if (value.StartsWith(query)) return 80 - Math.Min(value.Length - query.Length, 20) * 0.1;
+
+        var wordIndex = value.IndexOf(" " + query, StringComparison.Ordinal);
+        if (wordIndex >= 0) return 68 - Math.Min(wordIndex, 20) * 0.1;
+
+        var containsIndex = value.IndexOf(query, StringComparison.Ordinal);
+        if (containsIndex >= 0) return 55 - Math.Min(containsIndex, 20) * 0.1;
+
+        var queryTokens = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var matchedTokens = queryTokens.Count(token => value.Contains(token, StringComparison.Ordinal));
+        if (matchedTokens > 0)
+            return 30 + (25d * matchedTokens / queryTokens.Length);
+
+        if (query.Length >= 4)
+        {
+            var words = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Any(word => Math.Abs(word.Length - query.Length) <= 2 && LevenshteinDistance(query, word) <= 2))
+                return 24;
+        }
+
+        return 0;
+    }
+
+    private static int LevenshteinDistance(string left, string right)
+    {
+        var previous = Enumerable.Range(0, right.Length + 1).ToArray();
+        for (var i = 1; i <= left.Length; i++)
+        {
+            var current = new int[right.Length + 1];
+            current[0] = i;
+            for (var j = 1; j <= right.Length; j++)
+            {
+                var cost = left[i - 1] == right[j - 1] ? 0 : 1;
+                current[j] = Math.Min(
+                    Math.Min(current[j - 1] + 1, previous[j] + 1),
+                    previous[j - 1] + cost);
+            }
+            previous = current;
+        }
+        return previous[right.Length];
+    }
+
+    private static string NormalizeForSearch(string text)
+    {
+        return RemoveDiacritics(text)
+            .ToLowerInvariant()
+            .Trim();
     }
 
     private static string RemoveDiacritics(string text)

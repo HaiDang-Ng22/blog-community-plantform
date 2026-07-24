@@ -83,6 +83,16 @@ public class SearchResultDto
     public List<ShopSearchResult> Shops { get; set; } = new();
 }
 
+public class SearchSuggestionDto
+{
+    public Guid? Id { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public string? Subtitle { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public double Score { get; set; }
+}
+
 public class UserSearchResult
 {
     public Guid Id { get; set; }
