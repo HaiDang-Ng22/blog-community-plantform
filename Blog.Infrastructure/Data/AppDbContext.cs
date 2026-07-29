@@ -62,6 +62,7 @@ public class AppDbContext : DbContext
     // AI Chat Shopping Assistant
     public DbSet<AiChatSession> AiChatSessions { get; set; }
     public DbSet<AiChatMessage> AiChatMessages { get; set; }
+    public DbSet<AiFeedback> AiFeedbacks { get; set; }
     public DbSet<AiRecommendationLog> AiRecommendationLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -554,6 +555,18 @@ public class AppDbContext : DbContext
             entity.HasOne(m => m.Session)
                 .WithMany(s => s.Messages)
                 .HasForeignKey(m => m.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiFeedback>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.AnonymousSessionId).HasMaxLength(100);
+            entity.Property(f => f.Reason).HasMaxLength(500);
+            entity.HasIndex(f => f.AiMessageId).IsUnique();
+            entity.HasOne(f => f.AiMessage)
+                .WithMany()
+                .HasForeignKey(f => f.AiMessageId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

@@ -98,6 +98,40 @@ namespace Blog.Infrastructure.Migrations
                     b.ToTable("AiChatSessions");
                 });
 
+            modelBuilder.Entity("Blog.Domain.Entities.AiFeedback", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AiMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnonymousSessionId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AiMessageId")
+                        .IsUnique();
+
+                    b.ToTable("AiFeedbacks");
+                });
+
             modelBuilder.Entity("Blog.Domain.Entities.AiRecommendationLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1780,6 +1814,17 @@ namespace Blog.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.AiFeedback", b =>
+                {
+                    b.HasOne("Blog.Domain.Entities.AiChatMessage", "AiMessage")
+                        .WithMany()
+                        .HasForeignKey("AiMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AiMessage");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.AiRecommendationLog", b =>

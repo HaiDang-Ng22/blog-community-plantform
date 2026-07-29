@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blog.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Blog.Infrastructure.Services;
 
@@ -16,11 +17,13 @@ public class GeminiService : IGeminiService
 {
     private readonly IConfiguration _configuration;
     private readonly HttpClient _httpClient;
+    private readonly ILogger<GeminiService> _logger;
 
-    public GeminiService(IConfiguration configuration)
+    public GeminiService(IConfiguration configuration, HttpClient httpClient, ILogger<GeminiService> logger)
     {
         _configuration = configuration;
-        _httpClient = new HttpClient();
+        _httpClient = httpClient;
+        _logger = logger;
     }
 
     public async Task<string> CallGeminiAsync(
@@ -38,7 +41,7 @@ public class GeminiService : IGeminiService
         
         if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("YOUR_") || apiKey == "GeminiApiKey")
         {
-            Console.WriteLine("[GeminiService WARNING] Gemini API Key is missing or invalid. Running in DEMO/MOCK mode.");
+            _logger.LogWarning("Gemini API key is missing. Running AI features in local fallback mode.");
             return GetMockResponse(prompt);
         }
 
@@ -48,7 +51,7 @@ public class GeminiService : IGeminiService
             // code change. Gemini 3.5 Flash is the current stable default.
             var model = _configuration["Gemini:Model"];
             if (string.IsNullOrWhiteSpace(model)) model = "gemini-3.5-flash";
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(model)}:generateContent";
             
             var parts = new List<object>
             {
@@ -92,39 +95,32 @@ public class GeminiService : IGeminiService
             var jsonPayload = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+            request.Headers.Add("x-goog-api-key", apiKey);
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
             
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"[GeminiService ERROR] Gemini API returned {response.StatusCode}. Response body: {responseText}");
-                
-                // Try to extract Gemini error message
-                string apiErrorMsg = string.Empty;
+                string? apiErrorCode = null;
                 try
                 {
                     using var errDoc = JsonDocument.Parse(responseText);
                     if (errDoc.RootElement.TryGetProperty("error", out var errObj) &&
-                        errObj.TryGetProperty("message", out var msgProp))
+                        errObj.TryGetProperty("status", out var statusProp))
                     {
-                        apiErrorMsg = msgProp.GetString() ?? string.Empty;
+                        apiErrorCode = statusProp.GetString();
                     }
                 }
                 catch { /* ignore parse errors */ }
-                
-                // Return error result with actual API message if available
-                if (!string.IsNullOrEmpty(apiErrorMsg))
-                {
-                    return JsonSerializer.Serialize(new
-                    {
-                        success = false,
-                        matchPercentage = 0,
-                        extractedInfo = new { citizenId = "", fullName = "", gender = "Nam", dateOfBirth = "", hometown = "" },
-                        livenessCheck = "Failed",
-                        message = $"Lỗi Gemini API: {apiErrorMsg}"
-                    });
-                }
-                
+
+                _logger.LogWarning(
+                    "Gemini API returned status {StatusCode} ({ApiErrorCode}); using a safe local fallback.",
+                    response.StatusCode,
+                    apiErrorCode ?? "unknown");
+
+                // Never return the provider's raw error body to application users.
+                // It may contain technical details and its schema is unrelated to chat.
                 return GetMockResponse(prompt);
             }
 
@@ -142,7 +138,7 @@ public class GeminiService : IGeminiService
                 return textProp.GetString() ?? string.Empty;
             }
 
-            Console.WriteLine("[GeminiService ERROR] Unexpected response format from Gemini API.");
+            _logger.LogWarning("Gemini API returned an unexpected response format.");
             return GetMockResponse(prompt);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -151,7 +147,7 @@ public class GeminiService : IGeminiService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[GeminiService ERROR] Exception in CallGeminiAsync: {ex.Message}");
+            _logger.LogError(ex, "Gemini request failed; using local fallback.");
             return GetMockResponse(prompt);
         }
     }
@@ -312,7 +308,7 @@ Trả về kết quả dưới định dạng JSON thô duy nhất với cấu t
                     hometown = ""
                 },
                 livenessCheck = "Failed",
-                message = "Xác thực thất bại: Gemini API Key không hợp lệ hoặc chưa được cấu hình. Vui lòng lấy API Key tại https://aistudio.google.com (định dạng: AIza...) và cấu hình trong appsettings.json."
+                message = "Xác thực thất bại: Gemini API Key không hợp lệ hoặc chưa được cấu hình. Hãy cấu hình GEMINI_API_KEY hoặc appsettings.Local.json trên máy chủ."
             });
         }
         else if (prompt.Contains("công cụ tìm kiếm thông minh bằng AI"))

@@ -90,6 +90,19 @@ public class AiChatController : ControllerBase
         }
     }
 
+    [HttpPatch("sessions/{sessionId}")]
+    public async Task<IActionResult> RenameSession(Guid sessionId, [FromBody] RenameAiChatSessionRequestDto request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var session = await _aiShoppingAssistantService.RenameSessionAsync(sessionId, GetUserId(), request, cancellationToken);
+            return Ok(session);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+    }
+
     [HttpPost("messages")]
     [EnableRateLimiting("AiChatPolicy")]
     public async Task<IActionResult> SendMessage([FromBody] AiChatRequestDto request, CancellationToken cancellationToken)
@@ -122,6 +135,19 @@ public class AiChatController : ControllerBase
                 traceId = HttpContext.TraceIdentifier
             });
         }
+    }
+
+    [HttpPost("messages/{messageId}/feedback")]
+    public async Task<IActionResult> SaveFeedback(Guid messageId, [FromBody] AiFeedbackRequestDto request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _aiShoppingAssistantService.SaveFeedbackAsync(messageId, GetUserId(), request, cancellationToken);
+            return Ok(new { message = "Cảm ơn bạn đã góp ý cho Zynk AI." });
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
     [HttpPost("recommendations/{recommendationLogId}/click")]

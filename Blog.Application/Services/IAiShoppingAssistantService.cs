@@ -12,7 +12,9 @@ public interface IAiShoppingAssistantService
     Task<List<AiChatSessionDto>> GetUserSessionsAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken);
     Task<List<AiChatMessageDto>> GetSessionMessagesAsync(Guid sessionId, Guid? userId, string? anonymousSessionId, CancellationToken cancellationToken);
     Task<bool> DeleteSessionAsync(Guid sessionId, Guid? userId, string? anonymousSessionId, CancellationToken cancellationToken);
+    Task<AiChatSessionDto> RenameSessionAsync(Guid sessionId, Guid? userId, RenameAiChatSessionRequestDto request, CancellationToken cancellationToken);
     Task<AiChatResponseDto> SendMessageAsync(Guid? userId, AiChatRequestDto request, CancellationToken cancellationToken);
+    Task<bool> SaveFeedbackAsync(Guid messageId, Guid? userId, AiFeedbackRequestDto request, CancellationToken cancellationToken);
     Task<bool> TrackClickAsync(Guid recommendationLogId, Guid? userId, CancellationToken cancellationToken);
     Task<bool> TrackAddToCartAsync(Guid recommendationLogId, Guid? userId, CancellationToken cancellationToken);
 }

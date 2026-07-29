@@ -14,6 +14,8 @@ using Blog.Infrastructure.Services;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using PayOS;
+using System.Threading.RateLimiting;
+using Npgsql;
 // Clear default inbound claim type mapping to prevent mapping 'role' to long XML schema URIs
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -114,35 +116,62 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (!string.IsNullOrWhiteSpace(connectionString) &&
-    (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
-     connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)))
+static string? NormalizePostgresConnectionString(string? rawConnectionString)
 {
+    if (string.IsNullOrWhiteSpace(rawConnectionString)) return null;
+
+    var value = rawConnectionString.Trim();
     try
     {
-        var uri = new Uri(connectionString);
-        var userInfo = uri.UserInfo.Split(':', 2);
-        var username = Uri.UnescapeDataString(userInfo[0]);
-        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
-        var host = uri.Host;
-        var port = uri.Port > 0 ? uri.Port : 5432;
-        var database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/'));
-        
-        connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};Ssl Mode=Require;Trust Server Certificate=true;Include Error Detail=True;";
-        Console.WriteLine($"[Database] Parsed connection string from DATABASE_URL env var. Host={host}");
+        if (value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+            value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            var uri = new Uri(value);
+            var userInfo = uri.UserInfo.Split(':', 2);
+            var builderFromUri = new NpgsqlConnectionStringBuilder
+            {
+                Host = uri.Host,
+                Port = uri.Port > 0 ? uri.Port : 5432,
+                Database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/')),
+                Username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : string.Empty,
+                Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty,
+                SslMode = SslMode.Require,
+                IncludeErrorDetail = true
+            };
+            return builderFromUri.ConnectionString;
+        }
+
+        var builder = new NpgsqlConnectionStringBuilder(value);
+        var configuredHost = builder.Host?.Trim() ?? string.Empty;
+        if (configuredHost.StartsWith("tcp://", StringComparison.OrdinalIgnoreCase))
+        {
+            var tcpUri = new Uri(configuredHost);
+            builder.Host = tcpUri.Host;
+            if (!tcpUri.IsDefaultPort) builder.Port = tcpUri.Port;
+            Console.WriteLine("[Database] Removed unsupported tcp:// prefix from database host.");
+        }
+        else if (configuredHost.StartsWith("tcp:", StringComparison.OrdinalIgnoreCase))
+        {
+            builder.Host = configuredHost[4..].TrimStart('/');
+            Console.WriteLine("[Database] Removed unsupported tcp: prefix from database host.");
+        }
+
+        return builder.ConnectionString;
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[Database Error] Failed to parse DATABASE_URL: {ex.Message}");
-        connectionString = null;
+        Console.WriteLine($"[Database Error] Invalid PostgreSQL connection string: {ex.Message}");
+        return null;
     }
 }
 
-if (string.IsNullOrEmpty(connectionString))
-{
-    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-}
+var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (string.IsNullOrWhiteSpace(rawConnectionString))
+    rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+var connectionString = NormalizePostgresConnectionString(rawConnectionString);
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException("PostgreSQL connection string is missing or invalid. Configure DATABASE_URL or ConnectionStrings:DefaultConnection.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -155,10 +184,42 @@ builder.Services.AddScoped<IPushNotificationService, Blog.Infrastructure.Service
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFirebaseChatService, FirebaseChatService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IGeminiService, GeminiService>();
+builder.Services.AddHttpClient<IGeminiService, GeminiService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<Blog.Application.Services.IAiShoppingAssistantService, Blog.Infrastructure.Services.AiShoppingAssistantService>();
 builder.Services.AddMemoryCache();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            code = "AI_RATE_LIMITED",
+            message = "Bạn đã gửi quá nhiều yêu cầu tới Zynk AI. Vui lòng thử lại sau."
+        }, cancellationToken);
+    };
+    options.AddPolicy("AiChatPolicy", httpContext =>
+    {
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var isAuthenticated = !string.IsNullOrWhiteSpace(userId);
+        var partitionKey = isAuthenticated
+            ? $"user:{userId}"
+            : $"guest:{httpContext.Connection.RemoteIpAddress}";
+
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = isAuthenticated ? 30 : 5,
+            Window = isAuthenticated ? TimeSpan.FromHours(1) : TimeSpan.FromDays(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
+});
 builder.Services.AddSignalR();
 builder.Services.AddResponseCompression(options =>
 {
@@ -171,11 +232,15 @@ builder.Services.AddResponseCompression(options =>
 var payOsClientId = builder.Configuration["PayOSSettings:ClientId"];
 var payOsApiKey = builder.Configuration["PayOSSettings:ApiKey"];
 var payOsChecksumKey = builder.Configuration["PayOSSettings:ChecksumKey"];
-if (!string.IsNullOrEmpty(payOsClientId) && 
-    !payOsClientId.StartsWith("YOUR_") && 
-    payOsClientId != "YOUR_CLIENT_ID_HERE")
+static bool IsConfiguredSecret(string? value) =>
+    !string.IsNullOrWhiteSpace(value) &&
+    !value.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase);
+
+if (IsConfiguredSecret(payOsClientId) &&
+    IsConfiguredSecret(payOsApiKey) &&
+    IsConfiguredSecret(payOsChecksumKey))
 {
-    var payOS = new PayOSClient(payOsClientId, payOsApiKey, payOsChecksumKey);
+    var payOS = new PayOSClient(payOsClientId!, payOsApiKey!, payOsChecksumKey!);
     builder.Services.AddSingleton(payOS);
 }
 
@@ -203,7 +268,7 @@ if (File.Exists(firebaseKeyPath))
 {
     FirebaseApp.Create(new AppOptions()
     {
-        Credential = GoogleCredential.FromFile(firebaseKeyPath),
+        Credential = CredentialFactory.FromFile<ServiceAccountCredential>(firebaseKeyPath).ToGoogleCredential(),
     });
     // Set Firestore environment variable
     Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", firebaseKeyPath);
@@ -226,6 +291,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAll");
 app.UseResponseCompression();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 // Serve static files from Blog.Web

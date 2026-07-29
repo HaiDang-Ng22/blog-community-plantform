@@ -12,6 +12,7 @@
     let currentSessionId = null;
     let anonymousSessionId = null;
     let isTyping = false;
+    let activeRequestController = null;
     let initialized = false;
     let _originalGridContent = null;
 
@@ -72,10 +73,27 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
     }
 
     function _formatText(text) {
-        let escaped = _escapeHtml(text);
+        let escaped = _escapeHtml(_normalizeBotText(text));
         escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         escaped = escaped.replace(/^[•\-]\s(.+)$/gm, '<span style="display:block;padding-left:8px">• $1</span>');
         return escaped;
+    }
+
+    function _normalizeBotText(text) {
+        if (typeof text !== 'string') return '';
+        const trimmed = text.trim();
+        if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return text;
+
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (typeof parsed?.response === 'string') return parsed.response;
+            if (parsed?.success === false && (parsed.extractedInfo || parsed.livenessCheck)) {
+                return 'Zynk AI đang có nhiều yêu cầu cùng lúc. Thông tin đơn hàng vẫn được lấy trực tiếp từ hệ thống; bạn vui lòng thử lại nhé.';
+            }
+        } catch (_) {
+            // Keep non-JSON text unchanged.
+        }
+        return text;
     }
 
     function _getMessages() {
@@ -163,7 +181,10 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
     };
 
     window.sendAiShopChatMessage = async function () {
-        if (isTyping) return;
+        if (isTyping) {
+            activeRequestController?.abort();
+            return;
+        }
 
         const input = document.getElementById('ai-shop-chat-input');
         const sendBtn = document.getElementById('ai-shop-chat-send-btn');
@@ -179,7 +200,13 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
 
         const typingId = _appendTyping();
         isTyping = true;
-        if (sendBtn) sendBtn.disabled = true;
+        activeRequestController = new AbortController();
+        const timeoutId = setTimeout(() => activeRequestController?.abort(), 30000);
+        if (sendBtn) {
+            sendBtn.classList.add('is-stopping');
+            sendBtn.title = 'Dừng trả lời';
+            sendBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+        }
 
         try {
             if (!currentSessionId) {
@@ -207,12 +234,11 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
                 method: 'POST',
                 headers,
                 body: JSON.stringify(body),
-                signal: AbortSignal.timeout(30000)
+                signal: activeRequestController.signal
             });
 
             _removeTyping(typingId);
             isTyping = false;
-            if (sendBtn) sendBtn.disabled = false;
 
             if (res.status === 404) {
                 localStorage.removeItem(LS_SESSION_KEY);
@@ -237,10 +263,22 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
 
         } catch (err) {
             _removeTyping(typingId);
+            if (err.name === 'AbortError') {
+                _appendBotMessage('Đã dừng câu trả lời. Bạn có thể thử lại bất cứ lúc nào.', [], [], text);
+            } else {
+                _appendBotMessage('Ối! Có lỗi kết nối. Bạn vui lòng thử lại nhé 🙏', [], [], text);
+                console.error('[AiChat] Error:', err);
+            }
+        } finally {
+            clearTimeout(timeoutId);
             isTyping = false;
-            if (sendBtn) sendBtn.disabled = false;
-            _appendBotMessage('Ối! Có lỗi kết nối. Bạn vui lòng thử lại nhé 🙏', [], [], text);
-            console.error('[AiChat] Error:', err);
+            activeRequestController = null;
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('is-stopping');
+                sendBtn.title = 'Gửi';
+                sendBtn.innerHTML = '<i class="fa-regular fa-paper-plane"></i>';
+            }
         }
     };
 
@@ -251,6 +289,13 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
             window.sendAiShopChatMessage();
         }
     };
+
+    function _retryMessage(text) {
+        const input = document.getElementById('ai-shop-chat-input');
+        if (!input || isTyping) return;
+        input.value = text || '';
+        window.sendAiShopChatMessage();
+    }
 
     // ── Render functions ─────────────────────────────────────────────────────────
     function _renderGreeting() {
@@ -277,13 +322,14 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
     function _appendBotMessage(text, groups, suggestedReplies, userQuery, messageId, actionType, orders) {
         const msgs = _getMessages();
         if (!msgs) return;
+        const displayText = _normalizeBotText(text);
 
         const div = document.createElement('div');
         div.className = 'ai-shop-msg bot';
 
         const bubble = document.createElement('div');
         bubble.className = 'ai-shop-bubble';
-        bubble.innerHTML = _formatText(text);
+        bubble.innerHTML = _formatText(displayText);
         div.appendChild(bubble);
 
         // Action handling
@@ -349,8 +395,66 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
         timeEl.textContent = _formatTime();
         div.appendChild(timeEl);
 
+        const tools = document.createElement('div');
+        tools.className = 'ai-message-tools';
+
+        const copyBtn = _createMessageTool('fa-copy', 'Sao chép', async () => {
+            try {
+                await navigator.clipboard.writeText(displayText || '');
+                copyBtn.classList.add('active');
+                copyBtn.title = 'Đã sao chép';
+                setTimeout(() => { copyBtn.classList.remove('active'); copyBtn.title = 'Sao chép'; }, 1500);
+            } catch (_) {
+                copyBtn.title = 'Không thể sao chép';
+            }
+        });
+        tools.appendChild(copyBtn);
+
+        if (userQuery) {
+            tools.appendChild(_createMessageTool('fa-rotate-right', 'Trả lời lại', () => _retryMessage(userQuery)));
+        }
+
+        if (messageId) {
+            const helpfulBtn = _createMessageTool('fa-thumbs-up', 'Hữu ích', () => _submitFeedback(messageId, 1, helpfulBtn, tools));
+            const unhelpfulBtn = _createMessageTool('fa-thumbs-down', 'Chưa hữu ích', () => _submitFeedback(messageId, -1, unhelpfulBtn, tools));
+            tools.append(helpfulBtn, unhelpfulBtn);
+        }
+
+        div.appendChild(tools);
+
         msgs.appendChild(div);
         _scrollBottom();
+    }
+
+    function _createMessageTool(icon, title, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'ai-message-tool';
+        button.title = title;
+        button.setAttribute('aria-label', title);
+        button.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+        button.onclick = onClick;
+        return button;
+    }
+
+    async function _submitFeedback(messageId, rating, button, container) {
+        const token = localStorage.getItem('zynk_token') || localStorage.getItem('auth_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = 'Bearer ' + token;
+
+        try {
+            const response = await fetch(`/api/ai-chat/messages/${messageId}/feedback`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ rating, anonymousSessionId })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            container.querySelectorAll('.ai-message-tool.feedback-active').forEach(el => el.classList.remove('feedback-active'));
+            button.classList.add('feedback-active');
+            button.title = 'Đã ghi nhận';
+        } catch (_) {
+            button.title = 'Không thể gửi đánh giá lúc này';
+        }
     }
 
     function _appendTyping() {
@@ -754,16 +858,41 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
             } else {
                 sessions.forEach(s => {
                     const item = document.createElement('div');
-                    item.style.cssText = 'padding:7px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid #f1f5f9;background:#f8fafc;font-size:0.78rem;color:#1e293b;';
-                    item.textContent = s.title || 'Cuộc trò chuyện';
-                    item.onclick = () => {
-                        currentSessionId = s.id;
-                        localStorage.setItem(LS_SESSION_KEY, s.id);
-                        panel.remove();
-                        _renderGreeting();
+                    item.className = 'ai-history-item';
+
+                    const title = document.createElement('button');
+                    title.type = 'button';
+                    title.className = 'ai-history-title';
+                    title.textContent = s.title || 'Cuộc trò chuyện';
+                    title.onclick = () => _loadSession(s.id, panel);
+
+                    const rename = document.createElement('button');
+                    rename.type = 'button';
+                    rename.className = 'ai-history-action';
+                    rename.title = 'Đổi tên';
+                    rename.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                    rename.onclick = async () => {
+                        const nextTitle = window.prompt('Tên cuộc trò chuyện mới:', s.title || 'Cuộc trò chuyện');
+                        if (!nextTitle?.trim()) return;
+                        const updated = await _updateSession(s.id, 'PATCH', { title: nextTitle.trim(), anonymousSessionId });
+                        if (updated) {
+                            s.title = updated.title;
+                            title.textContent = updated.title;
+                        }
                     };
-                    item.onmouseover = () => item.style.background = '#ede9fe';
-                    item.onmouseout = () => item.style.background = '#f8fafc';
+
+                    const remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.className = 'ai-history-action danger';
+                    remove.title = 'Xóa';
+                    remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                    remove.onclick = async () => {
+                        if (!window.confirm('Xóa cuộc trò chuyện này?')) return;
+                        const deleted = await _updateSession(s.id, 'DELETE');
+                        if (deleted) item.remove();
+                    };
+
+                    item.append(title, rename, remove);
                     panel.appendChild(item);
                 });
             }
@@ -772,6 +901,59 @@ Bạn cần hỗ trợ gì hôm nay? 😊`;
             _scrollBottom();
         } catch (e) {
             console.warn('[AiChat] Could not load history:', e);
+        }
+    }
+
+    async function _loadSession(sessionId, panel) {
+        const token = localStorage.getItem('zynk_token') || localStorage.getItem('auth_token');
+        const headers = token ? { Authorization: 'Bearer ' + token } : {};
+        const query = token ? '' : `?anonymousSessionId=${encodeURIComponent(anonymousSessionId)}`;
+        try {
+            const response = await fetch(`/api/ai-chat/sessions/${sessionId}/messages${query}`, { headers });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const messages = await response.json();
+            currentSessionId = sessionId;
+            localStorage.setItem(LS_SESSION_KEY, sessionId);
+            panel?.remove();
+
+            const container = _getMessages();
+            if (!container) return;
+            container.innerHTML = '';
+            if (!messages.length) {
+                _renderGreeting();
+                return;
+            }
+            messages.forEach(message => {
+                if ((message.role || '').toLowerCase() === 'user') {
+                    _appendUserMessage(message.content);
+                } else if ((message.role || '').toLowerCase() === 'assistant') {
+                    _appendBotMessage(message.content, [], [], null, message.id);
+                }
+            });
+        } catch (_) {
+            _appendBotMessage('Không thể tải cuộc trò chuyện này. Bạn vui lòng thử lại sau.', [], []);
+        }
+    }
+
+    async function _updateSession(sessionId, method, body) {
+        const token = localStorage.getItem('zynk_token') || localStorage.getItem('auth_token');
+        const headers = {};
+        if (token) headers.Authorization = 'Bearer ' + token;
+        if (body) headers['Content-Type'] = 'application/json';
+        const query = method === 'DELETE' && !token
+            ? `?anonymousSessionId=${encodeURIComponent(anonymousSessionId)}`
+            : '';
+        try {
+            const response = await fetch(`/api/ai-chat/sessions/${sessionId}${query}`, {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : undefined
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return method === 'DELETE' ? true : await response.json();
+        } catch (_) {
+            _appendBotMessage('Không thể cập nhật cuộc trò chuyện. Bạn vui lòng thử lại.', [], []);
+            return null;
         }
     }
 
