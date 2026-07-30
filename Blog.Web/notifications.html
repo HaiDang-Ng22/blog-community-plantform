@@ -377,7 +377,7 @@
                             unreadCount: unread.length,
                             unreadSocialCount: unread.filter(notification => ['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'].includes(notification.type)).length,
                             unreadOrderCount: unread.filter(notification => ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'].includes(notification.type)).length,
-                            unreadSystemCount: unread.filter(notification => notification.type === 'System').length
+                            unreadSystemCount: unread.filter(notification => ['System', 'SystemAlert', 'GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(notification.type)).length
                         };
                     }
                     renderNotifications();
@@ -513,7 +513,7 @@
                         notificationSummary.unreadCount = Math.max(0, notificationSummary.unreadCount - 1);
                         if (['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'].includes(noti.type)) notificationSummary.unreadSocialCount = Math.max(0, notificationSummary.unreadSocialCount - 1);
                         if (['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'].includes(noti.type)) notificationSummary.unreadOrderCount = Math.max(0, notificationSummary.unreadOrderCount - 1);
-                        if (noti.type === 'System') notificationSummary.unreadSystemCount = Math.max(0, notificationSummary.unreadSystemCount - 1);
+                        if (['System', 'SystemAlert', 'GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(noti.type)) notificationSummary.unreadSystemCount = Math.max(0, notificationSummary.unreadSystemCount - 1);
                     }
                     const item = document.getElementById('noti-item-' + id);
                     if (item) item.classList.remove('unread');
@@ -528,6 +528,8 @@
                         window.location.href = `seller-order-detail.html?id=${targetId}`;
                     } else if (type === 'OrderStatusUpdated') {
                         window.location.href = `order-detail.html?id=${targetId}`;
+                    } else if (['GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(type)) {
+                        window.location.href = `group-detail.html?id=${targetId}`;
                     } else if (type === 'System') {
                         if (message.toLowerCase().includes('cua hang')) window.location.href = 'seller/index.html';
                         else if (message.toLowerCase().includes('xac minh')) window.location.href = 'settings.html';

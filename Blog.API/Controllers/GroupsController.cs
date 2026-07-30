@@ -54,7 +54,13 @@ public class GroupsController : ControllerBase
     public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest("Name is required");
+            return BadRequest("Tên cộng đồng là bắt buộc.");
+        if (request.Name.Trim().Length < 3 || request.Name.Trim().Length > 80)
+            return BadRequest("Tên cộng đồng phải có từ 3 đến 80 ký tự.");
+        if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Trim().Length < 10)
+            return BadRequest("Mô tả cộng đồng phải có ít nhất 10 ký tự.");
+        if (request.Description.Length > 500)
+            return BadRequest("Mô tả cộng đồng không được vượt quá 500 ký tự.");
 
         var group = await _groupService.CreateGroupAsync(request, GetCurrentUserId());
         return CreatedAtAction(nameof(GetGroupById), new { id = group.Id }, group);
@@ -65,7 +71,13 @@ public class GroupsController : ControllerBase
     {
         var success = await _groupService.JoinGroupAsync(id, GetCurrentUserId());
         if (!success) return BadRequest("Unable to join group or already joined.");
-        return Ok(new { message = "Joined successfully" });
+        var group = await _groupService.GetGroupByIdAsync(id, GetCurrentUserId());
+        return Ok(new
+        {
+            message = group?.MemberStatus == "Pending" ? "Yêu cầu đã được gửi đến quản trị viên." : "Đã tham gia nhóm.",
+            status = group?.MemberStatus,
+            requiresApproval = group?.MemberStatus == "Pending"
+        });
     }
 
     [HttpPost("{id}/leave")]
@@ -101,7 +113,11 @@ public class GroupsController : ControllerBase
     public async Task<IActionResult> UpdateGroup(Guid id, [FromBody] UpdateGroupRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest("Name is required");
+            return BadRequest("Tên cộng đồng là bắt buộc.");
+        if (request.Name.Trim().Length < 3 || request.Name.Trim().Length > 80)
+            return BadRequest("Tên cộng đồng phải có từ 3 đến 80 ký tự.");
+        if (request.Description?.Length > 500)
+            return BadRequest("Mô tả cộng đồng không được vượt quá 500 ký tự.");
 
         var updated = await _groupService.UpdateGroupAsync(id, request, GetCurrentUserId());
         if (updated == null) return Forbid(); // Unauthorized or not found

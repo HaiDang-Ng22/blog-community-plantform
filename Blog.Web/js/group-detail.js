@@ -1,4 +1,4 @@
-// js/group-detail.js v2.0
+// js/group-detail.js v3.0
 
 const urlParams = new URLSearchParams(window.location.search);
 const groupId = urlParams.get('id');
@@ -7,6 +7,7 @@ let isApprovedMember = false;
 let isAdmin = false;
 let editUploadedAvatarUrl = null;
 let editUploadedCoverUrl = null;
+let pendingMembers = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     requireAuth();
@@ -95,6 +96,13 @@ async function loadGroupDetails() {
 
         if (isApprovedMember) {
             btnLeave.classList.remove('hidden');
+            if (isAdmin) {
+                btnLeave.disabled = true;
+                btnLeave.innerHTML = '<i class="fa-solid fa-crown"></i> Bạn quản lý nhóm';
+            } else {
+                btnLeave.disabled = false;
+                btnLeave.innerHTML = '<i class="fa-solid fa-user-check"></i> Đã tham gia';
+            }
         } else if (memberStatus === 'Pending') {
             btnPending.classList.remove('hidden');
         } else {
@@ -102,9 +110,11 @@ async function loadGroupDetails() {
         }
 
         // Admin controls
+        const adminWidget = document.getElementById('admin-widget');
+        const pendingWidget = document.getElementById('pending-widget');
+        adminWidget.classList.toggle('hidden', !isAdmin);
+        pendingWidget.classList.toggle('hidden', !isAdmin);
         if (isAdmin) {
-            document.getElementById('admin-widget').classList.remove('hidden');
-            document.getElementById('pending-widget').classList.remove('hidden');
             await loadPendingMembers();
         }
 
@@ -185,7 +195,8 @@ async function toggleJoinGroup() {
             if (!confirm('Bạn có chắc muốn rời nhóm này?')) return;
             await window.api.post(`groups/${groupId}/leave`);
         } else {
-            await window.api.post(`groups/${groupId}/join`);
+            const result = await window.api.post(`groups/${groupId}/join`);
+            showToast(result?.message || 'Đã gửi yêu cầu tham gia.', result?.requiresApproval ? 'info' : 'success');
         }
         await loadGroupDetails();
     } catch (err) {
@@ -199,17 +210,19 @@ async function loadPendingMembers() {
     const list  = document.getElementById('pending-list');
     const badge = document.getElementById('pending-count-badge');
     try {
-        const pending = await window.api.get(`groups/${groupId}/pending-members`);
-        if (!pending || pending.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;">Không có yêu cầu nào.</p>';
+        pendingMembers = await window.api.get(`groups/${groupId}/pending-members`) || [];
+        const approveAllButton = document.getElementById('approve-all-members');
+        approveAllButton?.classList.toggle('hidden', pendingMembers.length < 2);
+        if (pendingMembers.length === 0) {
+            list.innerHTML = '<div class="pending-empty"><i class="fa-solid fa-circle-check"></i>Không có yêu cầu đang chờ.</div>';
             badge.style.display = 'none';
             return;
         }
 
-        badge.textContent = pending.length;
+        badge.textContent = pendingMembers.length;
         badge.style.display = '';
 
-        list.innerHTML = pending.map(m => `
+        list.innerHTML = pendingMembers.map(m => `
             <div class="pending-member-item" id="pending-${m.userId}">
                 <div class="pending-member-avatar">
                     ${m.avatarUrl
@@ -222,8 +235,8 @@ async function loadPendingMembers() {
                     <div class="pending-member-time">@${escHtml(m.username)} · ${formatRelTime(m.requestedAt)}</div>
                 </div>
                 <div class="pending-member-btns">
-                    <button class="btn-approve" onclick="approveMember('${m.userId}')">Duyệt</button>
-                    <button class="btn-reject"  onclick="rejectMember('${m.userId}')">Từ chối</button>
+                    <button type="button" class="btn-approve" onclick="approveMember('${m.userId}')"><i class="fa-solid fa-check"></i> Duyệt</button>
+                    <button type="button" class="btn-reject" onclick="rejectMember('${m.userId}')"><i class="fa-solid fa-xmark"></i> Từ chối</button>
                 </div>
             </div>
         `).join('');
@@ -243,6 +256,7 @@ async function approveMember(userId) {
         // Refresh member count
         currentGroup = await window.api.get(`groups/${groupId}`);
         document.getElementById('gd-members').innerHTML = `<i class="fa-solid fa-users"></i> ${currentGroup.memberCount || 0} thành viên`;
+        showToast('Đã duyệt thành viên vào nhóm.', 'success');
     } catch (err) {
         if (row) row.style.opacity = '1';
         alert(err.message || 'Lỗi khi duyệt thành viên');
@@ -250,15 +264,37 @@ async function approveMember(userId) {
 }
 
 async function rejectMember(userId) {
+    if (!confirm('Từ chối yêu cầu tham gia của người này?')) return;
     const row = document.getElementById(`pending-${userId}`);
     if (row) row.style.opacity = '0.5';
     try {
         await window.api.post(`groups/${groupId}/reject/${userId}`);
         if (row) row.remove();
         await loadPendingMembers();
+        showToast('Đã từ chối yêu cầu tham gia.', 'success');
     } catch (err) {
         if (row) row.style.opacity = '1';
         alert(err.message || 'Lỗi khi từ chối');
+    }
+}
+
+async function approveAllMembers() {
+    if (pendingMembers.length === 0 || !confirm(`Duyệt tất cả ${pendingMembers.length} yêu cầu đang chờ?`)) return;
+    const button = document.getElementById('approve-all-members');
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang duyệt';
+    try {
+        for (const member of [...pendingMembers]) {
+            await window.api.post(`groups/${groupId}/approve/${member.userId}`);
+        }
+        showToast(`Đã duyệt ${pendingMembers.length} thành viên.`, 'success');
+        await loadGroupDetails();
+    } catch (err) {
+        showToast(err.message || 'Không thể duyệt tất cả yêu cầu.', 'error');
+        await loadPendingMembers();
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Duyệt tất cả';
     }
 }
 
@@ -435,6 +471,7 @@ window.closeReportGroupModal = closeReportGroupModal;
 window.openEditGroupModal   = openEditGroupModal;
 window.closeEditGroupModal  = closeEditGroupModal;
 window.approveMember        = approveMember;
+window.approveAllMembers    = approveAllMembers;
 window.rejectMember         = rejectMember;
 window.goToCreateGroupPost  = goToCreateGroupPost;
 window.handleEditAvatarUpload = handleEditAvatarUpload;

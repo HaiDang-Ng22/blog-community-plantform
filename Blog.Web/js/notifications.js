@@ -95,6 +95,8 @@ async function loadNotifications() {
                     window.location.href = `order-detail.html?id=${n.targetId}`;
                 } else if (n.type === 'Report' || n.type === 'Complaint') {
                     window.location.href = `admin.html`;
+                } else if (['GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(n.type)) {
+                    window.location.href = `group-detail.html?id=${n.targetId}`;
                 } else if (n.targetId) {
                     // Fallback
                     window.location.href = `index.html#post-${n.targetId}`;

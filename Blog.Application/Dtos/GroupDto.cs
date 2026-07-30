@@ -14,4 +14,5 @@ public class GroupDto
     public bool IsMember { get; set; }
     public string? Role { get; set; } // "Admin" or "Member"
     public string? MemberStatus { get; set; } // "Approved", "Pending" or null
+    public int PendingRequestCount { get; set; }
 }

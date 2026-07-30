@@ -21,7 +21,10 @@ public class GroupService : IGroupService
     public async Task<IEnumerable<GroupDto>> GetAllGroupsAsync(Guid currentUserId)
     {
         var groups = await _context.Groups
+            .AsNoTracking()
             .Include(g => g.Members)
+            .OrderByDescending(g => g.Members.Count(m => m.Status == GroupMemberStatus.Approved))
+            .ThenByDescending(g => g.CreatedAt)
             .ToListAsync();
 
         return groups.Select(g => MapToDto(g, currentUserId));
@@ -30,8 +33,12 @@ public class GroupService : IGroupService
     public async Task<IEnumerable<GroupDto>> GetMyGroupsAsync(Guid currentUserId)
     {
         var groups = await _context.Groups
+            .AsNoTracking()
             .Include(g => g.Members)
-            .Where(g => g.Members.Any(m => m.UserId == currentUserId))
+            .Where(g => g.OwnerId == currentUserId || g.Members.Any(m =>
+                m.UserId == currentUserId && m.Status == GroupMemberStatus.Approved))
+            .OrderByDescending(g => g.OwnerId == currentUserId)
+            .ThenByDescending(g => g.CreatedAt)
             .ToListAsync();
 
         return groups.Select(g => MapToDto(g, currentUserId));
@@ -53,10 +60,10 @@ public class GroupService : IGroupService
         var group = new Group
         {
             Id = Guid.NewGuid(),
-            Name = request.Name,
-            Description = request.Description,
-            CoverImageUrl = request.CoverImageUrl,
-            AvatarImageUrl = request.AvatarImageUrl,
+            Name = request.Name.Trim(),
+            Description = request.Description.Trim(),
+            CoverImageUrl = string.IsNullOrWhiteSpace(request.CoverImageUrl) ? null : request.CoverImageUrl.Trim(),
+            AvatarImageUrl = string.IsNullOrWhiteSpace(request.AvatarImageUrl) ? null : request.AvatarImageUrl.Trim(),
             IsPrivate = request.IsPrivate,
             CreatedAt = DateTime.UtcNow,
             OwnerId = currentUserId
@@ -88,7 +95,7 @@ public class GroupService : IGroupService
         var existingMember = await _context.GroupMembers
             .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == currentUserId);
 
-        if (existingMember != null) return true; // Already member
+        if (existingMember != null) return true; // Idempotent: already joined or awaiting review.
 
         var member = new GroupMember
         {
@@ -100,6 +107,32 @@ public class GroupService : IGroupService
         };
 
         _context.GroupMembers.Add(member);
+
+        if (member.Status == GroupMemberStatus.Pending)
+        {
+            var administratorIds = await _context.GroupMembers
+                .Where(m => m.GroupId == groupId && m.Role == GroupRole.Admin && m.Status == GroupMemberStatus.Approved)
+                .Select(m => m.UserId)
+                .Distinct()
+                .ToListAsync();
+            if (!administratorIds.Contains(group.OwnerId)) administratorIds.Add(group.OwnerId);
+
+            foreach (var administratorId in administratorIds.Where(id => id != currentUserId))
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    ReceiverId = administratorId,
+                    ActorId = currentUserId,
+                    Type = "GroupJoinRequest",
+                    Message = $"Có yêu cầu mới muốn tham gia nhóm '{group.Name}'.",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow,
+                    TargetId = groupId
+                });
+            }
+        }
+
         await _context.SaveChangesAsync();
         return true;
     }
@@ -249,10 +282,10 @@ public class GroupService : IGroupService
         
         if (!isAuthorized) return null;
 
-        group.Name = request.Name;
-        group.Description = request.Description;
-        group.CoverImageUrl = request.CoverImageUrl;
-        group.AvatarImageUrl = request.AvatarImageUrl;
+        group.Name = request.Name.Trim();
+        group.Description = request.Description?.Trim() ?? string.Empty;
+        group.CoverImageUrl = string.IsNullOrWhiteSpace(request.CoverImageUrl) ? null : request.CoverImageUrl.Trim();
+        group.AvatarImageUrl = string.IsNullOrWhiteSpace(request.AvatarImageUrl) ? null : request.AvatarImageUrl.Trim();
         group.IsPrivate = request.IsPrivate;
 
         _context.Groups.Update(group);
@@ -320,7 +353,7 @@ public class GroupService : IGroupService
             Id = Guid.NewGuid(),
             ReceiverId = userIdToApprove,
             ActorId = currentUserId,
-            Type = "SystemAlert",
+            Type = "GroupJoinRequestApproved",
             Message = $"Yêu cầu tham gia nhóm '{group.Name}' của bạn đã được phê duyệt.",
             IsRead = false,
             CreatedAt = DateTime.UtcNow,
@@ -351,6 +384,17 @@ public class GroupService : IGroupService
         if (member == null) return false;
 
         _context.GroupMembers.Remove(member);
+        _context.Notifications.Add(new Notification
+        {
+            Id = Guid.NewGuid(),
+            ReceiverId = userIdToReject,
+            ActorId = currentUserId,
+            Type = "GroupJoinRequestRejected",
+            Message = $"Yêu cầu tham gia nhóm '{group.Name}' chưa được chấp nhận.",
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow,
+            TargetId = groupId
+        });
         await _context.SaveChangesAsync();
         return true;
     }
@@ -373,7 +417,10 @@ public class GroupService : IGroupService
             MemberCount = group.Members?.Count(m => m.Status == GroupMemberStatus.Approved) ?? 0,
             IsMember = isOwner || memberInfo != null,
             Role = isOwner ? "Admin" : memberInfo?.Role.ToString(),
-            MemberStatus = isOwner ? "Approved" : memberInfo?.Status.ToString()
+            MemberStatus = isOwner ? "Approved" : memberInfo?.Status.ToString(),
+            PendingRequestCount = (isOwner || memberInfo?.Role == GroupRole.Admin)
+                ? group.Members?.Count(m => m.Status == GroupMemberStatus.Pending) ?? 0
+                : 0
         };
     }
 }
