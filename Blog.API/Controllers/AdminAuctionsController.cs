@@ -60,7 +60,7 @@ public class AdminAuctionsController : ControllerBase
         var auction = new Auction
         {
             Id = Guid.NewGuid(),
-            SellerId = Guid.Parse(adminId), // Admin là người tạo
+            SellerId = Guid.Parse(adminId),
             Name = dto.Name,
             Description = dto.Description,
             ImageUrls = dto.ImageUrls ?? new List<string>(),
