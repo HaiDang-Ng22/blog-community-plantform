@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/common.css">
-    <link rel="stylesheet" href="../css/settings-v2.css">
+    <link rel="stylesheet" href="../css/settings-v2.css?v=3.1">
     <style>
         .theme-card {
             cursor: pointer;
@@ -59,6 +59,8 @@
         input:checked + .slider { background-color: var(--s-primary); }
         input:checked + .slider:before { transform: translateX(20px); }
     </style>
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
 <body>
     <div class="settings-container">
@@ -116,8 +118,8 @@
     </div>
 
     <script src="../js/api.js"></script>
-    <script src="../js/common.js"></script>
-    <script src="../js/settings-core.js"></script>
+    <script src="../js/common.js?v=3.1"></script>
+    <script src="../js/settings-core.js?v=3.1"></script>
     <script>
         // Init theme
         const currentTheme = localStorage.getItem('theme') || 'light';

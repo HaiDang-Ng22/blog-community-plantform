@@ -23,6 +23,7 @@
         .user-menu { z-index: 10001 !important; }
         .user-dropdown { z-index: 10002 !important; }
     </style>
+    <link rel="stylesheet" href="css/settings-page.css?v=1.0">
     <style>
         .settings-layout {
             display: flex;
@@ -319,6 +320,8 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
 
 <body class="home-page">
@@ -581,34 +584,34 @@
                     <p class="section-desc" data-i18n="lang_section_desc">Chọn ngôn ngữ hiển thị bạn mong muốn.</p>
 
                     <div class="theme-options">
-                        <div class="theme-card" onclick="window.changeLanguage('vi')">
+                        <div class="theme-card" data-language="vi" onclick="window.changeLanguage('vi')">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <span style="font-size: 2rem;">🇻🇳</span>
                                 <div style="flex:1">
                                     <div style="font-weight: 600;">Tiếng Việt</div>
-                                    <div style="font-size: 0.8rem; color: #64748b;">Mặc định</div>
+                                    <div style="font-size: 0.8rem; color: #64748b;" data-i18n="lang_default">Mặc định</div>
                                 </div>
                             </div>
                             <i class="fa-solid fa-circle-check lang-check" id="lang-check-vi"></i>
                         </div>
                         
-                        <div class="theme-card" onclick="window.changeLanguage('en')">
+                        <div class="theme-card" data-language="en" onclick="window.changeLanguage('en')">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <span style="font-size: 2rem;">🇺🇸</span>
                                 <div style="flex:1">
                                     <div style="font-weight: 600;">English</div>
-                                    <div style="font-size: 0.8rem; color: #64748b;">International</div>
+                                    <div style="font-size: 0.8rem; color: #64748b;" data-i18n="lang_international">Quốc tế</div>
                                 </div>
                             </div>
                             <i class="fa-solid fa-circle-check lang-check hidden" id="lang-check-en"></i>
                         </div>
 
-                        <div class="theme-card" onclick="window.changeLanguage('ja')">
+                        <div class="theme-card" data-language="ja" onclick="window.changeLanguage('ja')">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <span style="font-size: 2rem;">🇯🇵</span>
                                 <div style="flex:1">
                                     <div style="font-weight: 600;">日本語</div>
-                                    <div style="font-size: 0.8rem; color: #64748b;">Japanese</div>
+                                    <div style="font-size: 0.8rem; color: #64748b;" data-i18n="lang_japanese">Tiếng Nhật</div>
                                 </div>
                             </div>
                             <i class="fa-solid fa-circle-check lang-check hidden" id="lang-check-ja"></i>
@@ -627,21 +630,21 @@
                             <div style="font-size: 0.85rem; color: #6b7280;" data-i18n="install_zynk_desc">Sử dụng Zynk như một ứng dụng gốc trên màn hình chính của bạn.</div>
                         </div>
                         <button class="btn primary-btn" id="pwa-install-btn" style="width: auto;">
-                            <i class="fa-solid fa-download" style="margin-right: 8px;"></i> Cài đặt ngay
+                            <i class="fa-solid fa-download" style="margin-right: 8px;"></i> <span data-i18n="install_now">Cài đặt ngay</span>
                         </button>
                     </div>
 
                     <div id="pwa-installed-msg" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 1.5rem; border-radius: 12px; text-align: center; color: #166534;">
                         <i class="fa-solid fa-circle-check" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                        <span style="font-weight: 600;">Bạn đã cài đặt Zynk!</span>
-                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Hãy mở Zynk từ màn hình chính để tận hưởng trải nghiệm mượt mà nhất.</p>
+                        <span style="font-weight: 600;" data-i18n="pwa_installed">Bạn đã cài đặt Zynk!</span>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;" data-i18n="pwa_installed_desc">Hãy mở Zynk từ màn hình chính để tận hưởng trải nghiệm mượt mà nhất.</p>
                     </div>
 
                     <div id="pwa-unavailable-msg" style="background: #fff; border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 12px; margin-top: 1rem;">
-                        <h4 style="margin-bottom: 0.5rem;">Hướng dẫn cài đặt thủ công</h4>
+                        <h4 style="margin-bottom: 0.5rem;" data-i18n="manual_install_title">Hướng dẫn cài đặt thủ công</h4>
                         <div style="font-size: 0.9rem; color: #4b5563;">
-                            <p style="margin-bottom: 0.8rem;"><i class="fa-brands fa-apple" style="margin-right: 8px;"></i> <strong>iOS (iPhone/iPad):</strong> Nhấn nút <strong>Chia sẻ (Share)</strong> trên Safari và chọn <strong>Thêm vào MH chính (Add to Home Screen)</strong>.</p>
-                            <p><i class="fa-brands fa-android" style="margin-right: 8px;"></i> <strong>Android:</strong> Nhấn vào biểu tượng <strong>Ba chấm</strong> trên trình duyệt và chọn <strong>Cài đặt ứng dụng</strong> hoặc <strong>Thêm vào màn hình chính</strong>.</p>
+                            <p style="margin-bottom: 0.8rem;" data-i18n="install_ios_guide" data-i18n-html><i class="fa-brands fa-apple" style="margin-right: 8px;"></i> <strong>iOS (iPhone/iPad):</strong> Nhấn nút <strong>Chia sẻ (Share)</strong> trên Safari và chọn <strong>Thêm vào MH chính (Add to Home Screen)</strong>.</p>
+                            <p data-i18n="install_android_guide" data-i18n-html><i class="fa-brands fa-android" style="margin-right: 8px;"></i> <strong>Android:</strong> Nhấn vào biểu tượng <strong>Ba chấm</strong> trên trình duyệt và chọn <strong>Cài đặt ứng dụng</strong> hoặc <strong>Thêm vào màn hình chính</strong>.</p>
                         </div>
                     </div>
                 </section>
@@ -666,10 +669,21 @@
     </main>
 
     <script src="js/api.js?v=1.1"></script>
-    <script src="js/lang.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/common.js?v=2.5"></script>
-    <script src="js/settings.js?v=2.0"></script>
+    <script src="js/lang.js?v=3.1"></script>
+    <script src="js/i18n.js?v=3.1"></script>
+    <script>
+        // Keep this page usable when an older cached i18n file is returned by the service worker.
+        if (typeof window.t !== 'function') {
+            window.t = (key) => {
+                const language = localStorage.getItem('zynk_lang') || 'vi';
+                return window.zynkTranslations?.[language]?.[key]
+                    || window.zynkTranslations?.vi?.[key]
+                    || key;
+            };
+        }
+    </script>
+    <script src="js/common.js?v=3.1"></script>
+    <script src="js/settings.js?v=3.1"></script>
 </body>
 
 </html>

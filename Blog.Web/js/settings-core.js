@@ -27,6 +27,7 @@ function initSettings() {
 
     // 1. Render Sidebar immediately
     renderSettingsSidebar();
+    enhanceSettingsHeader(currentPage);
     
     // 2. Load Data
     loadSettingsData();
@@ -40,6 +41,13 @@ function renderSettingsSidebar() {
     }
 
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const cachedUser = getCachedSettingsUser();
+    const displayName = cachedUser?.fullName || cachedUser?.username || 'Tài khoản Zynk';
+    const username = cachedUser?.username ? `@${cachedUser.username}` : 'Thành viên Zynk';
+    const initials = getSettingsInitials(displayName);
+    const avatar = cachedUser?.avatarUrl
+        ? `<img src="${escapeSettingsText(cachedUser.avatarUrl)}" alt="">`
+        : escapeSettingsText(initials);
     const menu = [
         { label: 'CÀI ĐẶT CÁ NHÂN', type: 'header' },
         { id: 'profile', name: 'Hồ sơ cá nhân', icon: 'fa-user', url: 'profile.html' },
@@ -54,9 +62,10 @@ function renderSettingsSidebar() {
         { id: 'danger', name: 'Vùng nguy hiểm', icon: 'fa-triangle-exclamation', url: 'danger.html', class: 'danger' }
     ];
 
-    sidebar.innerHTML = menu.map(item => {
+    const menuHtml = menu.map(item => {
         if (item.type === 'header') return `<div class="s-menu-label">${item.label}</div>`;
-        const isActive = currentPage === item.url ? 'active' : '';
+        const isProfileHome = currentPage === 'index.html' && item.id === 'profile';
+        const isActive = currentPage === item.url || isProfileHome ? 'active' : '';
         return `
             <a href="${item.url}" class="s-nav-item ${isActive} ${item.class || ''}">
                 <i class="fa-solid ${item.icon}"></i>
@@ -65,13 +74,93 @@ function renderSettingsSidebar() {
         `;
     }).join('');
 
+    sidebar.innerHTML = `
+        <div class="s-brand">
+            <a href="../index.html" class="s-brand-link" aria-label="Zynk - Trang chủ">
+                <img src="../assets/logo.png" alt="Zynk">
+            </a>
+            <a href="../index.html" class="s-brand-home" title="Quay lại bảng tin" aria-label="Quay lại bảng tin">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+        </div>
+        <div class="s-user-card">
+            <div class="s-user-avatar">${avatar}</div>
+            <div class="s-user-copy">
+                <strong>${escapeSettingsText(displayName)}</strong>
+                <span>${escapeSettingsText(username)}</span>
+            </div>
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        </div>
+        ${menuHtml}
+        <div class="s-sidebar-footer">
+            <strong>Zynk Settings</strong><br>
+            Quyền riêng tư và bảo mật của bạn luôn được ưu tiên.
+        </div>
+    `;
+
     // Update Marketplace status asynchronously
     updateSidebarMarketplaceStatus();
 }
 
+function enhanceSettingsHeader(currentPage) {
+    const header = document.querySelector('.s-header');
+    if (!header || header.querySelector('.s-header-visual')) return;
+
+    const icons = {
+        'index.html': 'fa-user-astronaut',
+        'profile.html': 'fa-user-astronaut',
+        'security.html': 'fa-shield-halved',
+        'privacy.html': 'fa-fingerprint',
+        'verification.html': 'fa-badge-check',
+        'notifications.html': 'fa-bell',
+        'appearance.html': 'fa-wand-magic-sparkles',
+        'danger.html': 'fa-shield-heart'
+    };
+
+    const visual = document.createElement('div');
+    visual.className = 's-header-visual';
+    visual.setAttribute('aria-hidden', 'true');
+    visual.innerHTML = `
+        <div class="s-orbit s-orbit-one"></div>
+        <div class="s-orbit s-orbit-two"></div>
+        <div class="s-hero-orb"><i class="fa-solid ${icons[currentPage] || 'fa-sliders'}"></i></div>
+        <span class="s-float-chip s-chip-one"><i class="fa-solid fa-sparkles"></i></span>
+        <span class="s-float-chip s-chip-two"><i class="fa-solid fa-check"></i></span>
+        <span class="s-float-dot"></span>
+    `;
+    header.appendChild(visual);
+}
+
+function getCachedSettingsUser() {
+    try {
+        return JSON.parse(localStorage.getItem('user_info') || 'null');
+    } catch {
+        return null;
+    }
+}
+
+function getSettingsInitials(name) {
+    return String(name)
+        .trim()
+        .split(/\s+/)
+        .slice(-2)
+        .map(part => part.charAt(0))
+        .join('') || 'Z';
+}
+
+function escapeSettingsText(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
 async function updateSidebarMarketplaceStatus() {
     const marketplaceItem = document.querySelector('a[href="../seller/index.html"]');
-    if (!marketplaceItem || !window.api) return;
+    const authToken = localStorage.getItem('auth_token');
+    if (!marketplaceItem || !window.api || !authToken) return;
 
     try {
         // 1. Check if user is already a seller

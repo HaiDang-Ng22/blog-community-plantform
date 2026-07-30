@@ -1,7 +1,9 @@
 // js/settings.js
 const _t = (key) => {
-    if (typeof window.t === 'function') return window.t(key);
-    return window.zynkTranslations?.vi?.[key] || key;
+    const language = localStorage.getItem('zynk_lang') || 'vi';
+    return window.zynkTranslations?.[language]?.[key]
+        || window.zynkTranslations?.vi?.[key]
+        || key;
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -18,12 +20,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (darkBtn) darkBtn.textContent = _t('dark_mode_off');
     }
 
+    updateSettingsHero('profile');
+
     // Initialize Language UI
     syncLanguageUI();
     window.addEventListener('languageChanged', (e) => {
         syncLanguageUI();
         updateDarkModeButtonUI();
-        if (window.common) window.common.showToast(_t('lang_applied'));
+        const language = e.detail || localStorage.getItem('zynk_lang') || 'vi';
+        const message = window.zynkTranslations?.[language]?.lang_applied || _t('lang_applied');
+        if (window.common) window.common.showToast(message);
     });
 
     await loadCurrentSettings();
@@ -69,6 +75,8 @@ function switchTab(tabName) {
     const targetSec = document.getElementById(`section-${tabName}`);
     if (targetSec) targetSec.classList.add('active');
 
+    updateSettingsHero(tabName);
+
     // Load blocked list when switching to privacy tab
     if (tabName === 'privacy') loadBlockedUsers();
 
@@ -76,10 +84,42 @@ function switchTab(tabName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Lightweight CSS 3D artwork that follows the selected settings category.
+function updateSettingsHero(tabName) {
+    const icons = {
+        profile: 'fa-user-astronaut',
+        account: 'fa-shield-halved',
+        privacy: 'fa-fingerprint',
+        notifications: 'fa-bell',
+        marketplace: 'fa-store',
+        interface: 'fa-wand-magic-sparkles',
+        language: 'fa-globe',
+        'mobile-app': 'fa-mobile-screen-button',
+        danger: 'fa-shield-heart'
+    };
+
+    document.querySelectorAll('.settings-hero-visual').forEach(el => el.remove());
+
+    const section = document.getElementById(`section-${tabName}`);
+    if (!section) return;
+
+    const visual = document.createElement('div');
+    visual.className = 'settings-hero-visual';
+    visual.setAttribute('aria-hidden', 'true');
+    visual.innerHTML = `
+        <div class="settings-hero-ring"></div>
+        <div class="settings-hero-cube"><i class="fa-solid ${icons[tabName] || 'fa-sliders'}"></i></div>
+        <span class="settings-hero-chip one"><i class="fa-solid fa-sparkles"></i></span>
+        <span class="settings-hero-chip two"><i class="fa-solid fa-check"></i></span>
+    `;
+    section.appendChild(visual);
+}
+
 // Dark Mode Toggle
 function toggleDarkMode() {
     const isDark = document.body.classList.toggle('dark-mode');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: isDark ? 'dark' : 'light' } }));
 
     const darkBtn = document.getElementById('dark-mode-btn');
     if (darkBtn) {
@@ -89,7 +129,14 @@ function toggleDarkMode() {
 
 function syncLanguageUI() {
     const currentLang = localStorage.getItem('zynk_lang') || 'vi';
+    const languageDictionary = window.zynkTranslations?.[currentLang] || window.zynkTranslations?.vi || {};
+    document.documentElement.style.setProperty('--settings-kicker', `"${languageDictionary.settings_kicker || 'CÀI ĐẶT TÀI KHOẢN'}"`);
+    document.documentElement.style.setProperty('--settings-center-label', `"${languageDictionary.account_center || 'TRUNG TÂM TÀI KHOẢN'}"`);
     document.querySelectorAll('.lang-check').forEach(check => check.classList.add('hidden'));
+    document.querySelectorAll('[data-language]').forEach(card => {
+        card.classList.toggle('lang-active', card.dataset.language === currentLang);
+        card.setAttribute('aria-pressed', String(card.dataset.language === currentLang));
+    });
     const currentCheck = document.getElementById(`lang-check-${currentLang}`);
     if (currentCheck) currentCheck.classList.remove('hidden');
     updateDarkModeButtonUI();
@@ -186,7 +233,12 @@ async function saveSettings() {
         userInfo.username = data.username;
         localStorage.setItem('user_info', JSON.stringify(userInfo));
 
-        showStatus(_t('profile_updated_success') || 'Cập nhật hồ sơ thành công!', 'success');
+        showStatus(_t('profile_updated_success'), 'success');
+        const profileId = userInfo.id || userInfo.Id || '';
+        const profileUrl = profileId
+            ? `profile.html?id=${encodeURIComponent(profileId)}`
+            : 'profile.html';
+        setTimeout(() => { window.location.href = profileUrl; }, 1400);
     } catch (error) {
         showStatus(error.message || _t('update_failed'), 'error');
     } finally {
@@ -264,9 +316,15 @@ async function handleProfileUpload(input, type) {
 
 function showStatus(text, type) {
     const msg = document.getElementById('settings-msg');
+    if (msg) msg.classList.add('hidden');
+    if (window.common?.showToast) {
+        window.common.showToast(text, type, { duration: type === 'success' ? 2200 : 3200 });
+        return;
+    }
+
     if (!msg) return;
     msg.textContent = text;
-    msg.className = `message-box ${type}`;
+    msg.className = `message-box settings-floating-message ${type}`;
     msg.classList.remove('hidden');
     setTimeout(() => msg.classList.add('hidden'), 3000);
 }

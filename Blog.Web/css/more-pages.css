@@ -1,0 +1,298 @@
+/* Cohesive light UI for pages opened from the "More" navigation menu. */
+:root {
+    --mp-primary: #655cf2;
+    --mp-primary-dark: #4d43d5;
+    --mp-cyan: #23b6d6;
+    --mp-text: #172033;
+    --mp-muted: #6f7c91;
+    --mp-border: #e2e7ef;
+    --mp-surface: rgba(255,255,255,.92);
+    --mp-bg: #f4f6fa;
+    --mp-shadow: 0 22px 60px rgba(38,50,79,.09), 0 2px 8px rgba(38,50,79,.03);
+}
+
+body.saved-page,
+body.orders-page,
+body.vouchers-page {
+    color: var(--mp-text);
+    background:
+        radial-gradient(circle at 83% 9%, rgba(101,92,242,.1), transparent 31rem),
+        radial-gradient(circle at 31% 91%, rgba(35,182,214,.07), transparent 27rem),
+        var(--mp-bg) !important;
+}
+
+body.saved-page::after,
+body.orders-page::after,
+body.vouchers-page::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: .28;
+    background-image: radial-gradient(rgba(77,91,122,.18) .65px, transparent .65px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(90deg,transparent 4%,#000 50%,transparent 96%);
+    pointer-events: none;
+}
+
+/* Saved posts */
+body.saved-page > .main-content {
+    width: auto;
+    max-width: none;
+    margin-left: 78px;
+    padding: 26px clamp(18px,4vw,58px) 60px;
+}
+
+body.saved-page .home-layout {
+    display: block;
+    width: min(100%,1050px);
+    margin: 0 auto;
+}
+
+body.saved-page .feed-col {
+    width: 100%;
+    max-width: none;
+    overflow: hidden;
+    border: 1px solid rgba(218,225,236,.96);
+    border-radius: 26px;
+    background: var(--mp-surface);
+    box-shadow: var(--mp-shadow);
+    backdrop-filter: blur(16px);
+}
+
+body.saved-page .side-col { display:none; }
+
+body.saved-page .saved-header {
+    position: relative;
+    min-height: 220px;
+    margin: 0 0 8px;
+    padding: 46px 260px 32px 42px;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 1px solid #eceefa;
+    background:
+        radial-gradient(circle at 84% 18%,rgba(255,255,255,.95),transparent 18%),
+        linear-gradient(125deg,#fff 0%,#f6f4ff 58%,#eaf7ff 100%);
+}
+
+body.saved-page .saved-header::before {
+    content: "\f02e";
+    position: absolute;
+    top: 47px;
+    right: 96px;
+    display: grid;
+    width: 102px;
+    height: 112px;
+    place-items: center;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.8);
+    border-radius: 31px;
+    background: linear-gradient(145deg,#918aff,#665ce9 50%,#443abb);
+    box-shadow: inset -14px -16px 24px rgba(33,27,111,.22), inset 8px 8px 16px rgba(255,255,255,.2), 0 25px 38px rgba(74,63,191,.27);
+    font-family: "Font Awesome 6 Free";
+    font-size: 37px;
+    font-weight: 900;
+    transform: rotate(-9deg) perspective(600px) rotateY(-10deg);
+    animation: mpFloat 5.5s ease-in-out infinite;
+}
+
+body.saved-page .saved-header::after {
+    content: "BỘ SƯU TẬP CỦA BẠN";
+    position:absolute;
+    top:31px;
+    left:42px;
+    display:inline-flex;
+    margin:0;
+    padding: 6px 10px;
+    color: #5a52d9;
+    border: 1px solid #dedaff;
+    border-radius: 999px;
+    background: rgba(255,255,255,.75);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+body.saved-page .saved-title {
+    margin: 35px 0 8px;
+    color: var(--mp-text);
+    font-size: clamp(30px,4vw,42px);
+    font-weight: 800;
+    letter-spacing: -.045em;
+}
+
+body.saved-page .saved-subtitle { color:var(--mp-muted); font-size:14px; line-height:1.65; }
+body.saved-page .collections-nav { position:relative; z-index:2; gap:8px; margin-top:23px; padding:0; }
+body.saved-page .collection-chip {
+    padding: 9px 16px;
+    color:#657287;
+    border:1px solid #e1e6ef;
+    border-radius:11px;
+    background:#fff;
+    font-size:12px;
+    font-weight:700;
+}
+body.saved-page .collection-chip.active { color:#fff; border-color:transparent; background:linear-gradient(135deg,#746bfa,#554bdd); box-shadow:0 8px 18px rgba(83,72,210,.22); }
+body.saved-page #saved-feed { padding:18px 24px 30px; }
+body.saved-page #saved-feed .post-card { border:1px solid var(--mp-border); border-radius:18px; box-shadow:0 10px 28px rgba(38,50,79,.055); }
+
+/* Buyer orders */
+body.orders-page > main.container {
+    width: auto;
+    max-width: 1120px;
+    margin: 26px auto 60px;
+    padding: 0 24px 0 96px;
+}
+
+body.orders-page .orders-header {
+    position:relative;
+    min-height:190px;
+    padding:40px 260px 35px 38px;
+    overflow:hidden;
+    border:1px solid rgba(218,225,236,.96);
+    border-radius:24px;
+    background:linear-gradient(125deg,#fff,#f6f4ff 60%,#edf7ff);
+    box-shadow:var(--mp-shadow);
+}
+
+body.orders-page .orders-header::before {
+    content:"ĐƠN MUA CỦA BẠN";
+    display:block;
+    width:fit-content;
+    margin-bottom:13px;
+    padding:6px 10px;
+    color:#5a52d9;
+    border:1px solid #dedaff;
+    border-radius:999px;
+    background:#fff;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.12em;
+}
+
+body.orders-page .orders-header::after {
+    content:"\f466";
+    position:absolute;
+    top:40px;
+    right:88px;
+    display:grid;
+    width:102px;
+    height:102px;
+    place-items:center;
+    color:#fff;
+    border:1px solid rgba(255,255,255,.8);
+    border-radius:31px;
+    background:linear-gradient(145deg,#8e87ff,#6359e8 52%,#4137b6);
+    box-shadow:inset -14px -16px 23px rgba(31,25,108,.22),0 24px 38px rgba(72,62,190,.27);
+    font-family:"Font Awesome 6 Free";
+    font-size:35px;
+    font-weight:900;
+    transform:rotate(8deg);
+    animation:mpFloat 5.5s ease-in-out infinite reverse;
+}
+
+body.orders-page .orders-header h2 { margin:0 0 7px; color:var(--mp-text) !important; font-size:clamp(29px,4vw,40px) !important; letter-spacing:-.045em; }
+body.orders-page .orders-header p { color:var(--mp-muted) !important; font-size:14px !important; }
+
+body.orders-page .search-section {
+    padding:12px !important;
+    border:1px solid var(--mp-border) !important;
+    border-radius:17px !important;
+    background:rgba(255,255,255,.92) !important;
+    box-shadow:0 12px 35px rgba(38,50,79,.06);
+}
+body.orders-page #order-search-input { min-height:46px; border-color:#dce2eb !important; border-radius:11px !important; background:#f8fafc; }
+body.orders-page #order-search-input:focus { border-color:#847cf2 !important; background:#fff; box-shadow:0 0 0 4px rgba(101,92,242,.1); }
+body.orders-page .btn-reorder { min-height:44px; border-radius:11px !important; background:linear-gradient(135deg,#7168fa,#554bdd) !important; box-shadow:0 9px 21px rgba(80,69,210,.2); }
+body.orders-page .tabs-container { padding:7px !important; border-color:var(--mp-border) !important; border-radius:16px !important; box-shadow:0 10px 28px rgba(38,50,79,.05); }
+body.orders-page .tabs { gap:5px; }
+body.orders-page .tab-item { margin:0; padding:11px 15px; border:0; border-radius:10px; color:#718096; font-size:12px; }
+body.orders-page .tab-item.active { color:#574ed8; background:#f0eeff; box-shadow:inset 0 0 0 1px #dedaff; }
+body.orders-page .order-card { border:1px solid var(--mp-border); border-radius:18px; background:rgba(255,255,255,.94); box-shadow:0 13px 36px rgba(38,50,79,.07); }
+
+/* Vouchers */
+body.vouchers-page .voucher-hero,
+body.vouchers-page .voucher-container { margin-left:72px; }
+
+body.vouchers-page .voucher-hero {
+    min-height:350px;
+    padding:56px 34px 70px;
+    color:var(--mp-text);
+    background:
+        radial-gradient(circle at 76% 30%,rgba(255,255,255,.9),transparent 15%),
+        linear-gradient(125deg,#fff 0%,#f4f1ff 55%,#e9f8ff 100%);
+    border-bottom:1px solid #e4e3f5;
+}
+
+body.vouchers-page .voucher-hero::after {
+    content:"\f145";
+    position:absolute;
+    top:84px;
+    left:calc(50% + 250px);
+    display:grid;
+    width:126px;
+    height:126px;
+    place-items:center;
+    color:#fff;
+    border:1px solid rgba(255,255,255,.8);
+    border-radius:38px;
+    background:linear-gradient(145deg,#9189ff,#655ae8 52%,#4439b9);
+    box-shadow:inset -17px -18px 28px rgba(32,25,111,.23),inset 9px 9px 19px rgba(255,255,255,.2),0 30px 45px rgba(73,61,190,.3);
+    font-family:"Font Awesome 6 Free";
+    font-size:43px;
+    font-weight:900;
+    transform:rotate(-9deg);
+    animation:mpFloat 5.5s ease-in-out infinite;
+}
+
+body.vouchers-page .back-to-market { color:#6158db; border:1px solid #dedaff; background:rgba(255,255,255,.82); box-shadow:0 8px 24px rgba(62,66,102,.08); }
+body.vouchers-page .hero-content { max-width:1000px; padding-right:260px; text-align:left; }
+body.vouchers-page .hero-badge { color:#5b52d8; background:#fff; border:1px solid #dedaff; }
+body.vouchers-page .voucher-hero h1 { color:var(--mp-text); font-size:clamp(38px,5vw,60px); letter-spacing:-.055em; text-shadow:none; }
+body.vouchers-page .voucher-hero h1 span { background:linear-gradient(90deg,#655cf2,#26b4d3); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+body.vouchers-page .hero-subtitle { color:var(--mp-muted); }
+body.vouchers-page .hero-stats { justify-content:flex-start; }
+body.vouchers-page .hero-stat { color:var(--mp-text); border:1px solid rgba(221,225,238,.9); background:rgba(255,255,255,.72); box-shadow:0 10px 30px rgba(39,51,80,.07); }
+body.vouchers-page .hero-stat-label { color:var(--mp-muted); }
+body.vouchers-page .float-ticket { color:#655cf2; opacity:.08; }
+body.vouchers-page .voucher-container { max-width:1180px; padding:0 28px 60px; }
+body.vouchers-page .voucher-filter-bar { border:1px solid var(--mp-border); border-radius:18px; background:rgba(255,255,255,.94); box-shadow:var(--mp-shadow); }
+body.vouchers-page .filter-tab { border-radius:11px; }
+body.vouchers-page .filter-tab.active { color:#fff; background:linear-gradient(135deg,#7168fa,#554bdd); box-shadow:0 8px 18px rgba(80,69,210,.2); }
+body.vouchers-page .vr-ticket { overflow:hidden; border:1px solid var(--mp-border); border-radius:19px; box-shadow:0 14px 38px rgba(38,50,79,.075); transition:.25s; }
+body.vouchers-page .vr-ticket:hover { transform:translateY(-4px); box-shadow:0 20px 45px rgba(38,50,79,.11); }
+body.vouchers-page .btn-vr-claim.active { border:0; background:linear-gradient(135deg,#7168fa,#554bdd); box-shadow:0 8px 18px rgba(80,69,210,.2); }
+
+@keyframes mpFloat { 0%,100%{translate:0 0} 50%{translate:0 -8px} }
+
+@media (max-width: 768px) {
+    body.saved-page > .main-content { margin-left:0; padding:12px 10px 44px; }
+    body.saved-page .saved-header { min-height:205px; padding:30px 100px 24px 22px; }
+    body.saved-page .saved-header::before { top:57px; right:20px; width:68px; height:76px; border-radius:22px; font-size:26px; }
+    body.saved-page .saved-header::after { top:24px; left:22px; }
+    body.saved-page .saved-title { margin-top:34px; font-size:29px; }
+    body.saved-page #saved-feed { padding:12px; }
+
+    body.orders-page > main.container { margin:12px auto 45px; padding:0 10px; }
+    body.orders-page .orders-header { min-height:178px; padding:28px 105px 25px 22px; border-radius:19px; }
+    body.orders-page .orders-header::after { top:52px; right:20px; width:70px; height:70px; border-radius:22px; font-size:26px; }
+    body.orders-page .search-section { flex-direction:column; }
+    body.orders-page .search-section .btn-reorder { width:100% !important; padding:11px !important; }
+    body.orders-page .tabs { overflow-x:auto; }
+
+    body.vouchers-page .voucher-hero,
+    body.vouchers-page .voucher-container { margin-left:0; }
+    body.vouchers-page .voucher-hero { min-height:420px; padding:75px 20px 50px; }
+    body.vouchers-page .voucher-hero::after { top:87px; right:24px; left:auto; width:74px; height:74px; border-radius:23px; font-size:27px; }
+    body.vouchers-page .hero-content { padding-right:0; text-align:left; }
+    body.vouchers-page .voucher-hero h1 { padding-right:80px; font-size:38px; }
+    body.vouchers-page .hero-subtitle { max-width:280px; }
+    body.vouchers-page .hero-stats { gap:7px; }
+    body.vouchers-page .hero-stat { min-width:92px; padding:11px; }
+    body.vouchers-page .voucher-container { padding:0 10px 45px; }
+    body.vouchers-page .voucher-filter-bar { align-items:flex-start; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+    body.saved-page *,body.orders-page *,body.vouchers-page * { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}

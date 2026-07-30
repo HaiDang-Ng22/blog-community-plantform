@@ -12,9 +12,12 @@
     <link rel="stylesheet" href="css/home.css?v=1.7">
     <link rel="stylesheet" href="css/profile.css?v=2.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/profile-v3.css?v=1.1">
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
 
-<body class="home-page" data-i18n-title="profile">
+<body class="home-page profile-page" data-i18n-title="profile">
 
 
     <main class="main-content" style="padding-top: 40px;">
@@ -28,6 +31,7 @@
                 </div>
                 
                 <div class="ph-info-wrap">
+                    <div class="ph-profile-badge"><i class="fa-solid fa-sparkles"></i> HỒ SƠ CÁ NHÂN</div>
                     <div class="ph-top-row">
                         <h2 id="profile-username" class="ph-username">@loading</h2>
                         <div class="ph-actions">
@@ -176,13 +180,13 @@
 
     <!-- Scripts -->
     <script src="js/api.js?v=2.1"></script>
-    <script src="js/lang.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/common.js?v=2.2"></script>
+    <script src="js/lang.js?v=3.1"></script>
+    <script src="js/i18n.js?v=3.1"></script>
+    <script src="js/common.js?v=3.1"></script>
     <script src="js/post-actions.js?v=1.3"></script>
     <script src="js/notifications.js?v=1.1"></script>
-    <script src="js/stories.js?v=2.2"></script>
-    <script src="js/profile.js?v=2.2"></script>
+    <script src="js/stories.js?v=2.3"></script>
+    <script src="js/profile.js?v=3.0"></script>
 
     <!-- Story Viewer Modal -->
     <div id="story-viewer-modal" class="story-viewer-overlay hidden">
@@ -238,14 +242,29 @@
     </div>
 
     <!-- User List Modal -->
-    <div id="user-list-modal" class="modal-overlay hidden">
-        <div class="modal-container" style="background: var(--bg-color); border-radius: 12px; width: 100%; max-width: 400px; padding: 1.5rem; display: flex; flex-direction: column; max-height: 80vh;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
-                <h3 id="user-list-modal-title" style="margin: 0; font-size: 1.1rem; text-align: center; flex: 1;">Danh sách</h3>
-                <button onclick="document.getElementById('user-list-modal').classList.add('hidden')" style="background: none; border: none; font-size: 1.5rem; color: var(--text-primary); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+    <div id="user-list-modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+        aria-labelledby="user-list-modal-title" onclick="if (event.target === this) closeUserListModal()">
+        <div class="modal-container user-list-dialog">
+            <div class="user-list-orb" aria-hidden="true"><i class="fa-solid fa-user-group"></i></div>
+            <div class="user-list-modal-header">
+                <div class="user-list-heading">
+                    <span class="user-list-kicker">KẾT NỐI CỦA BẠN</span>
+                    <h3 id="user-list-modal-title">Danh sách</h3>
+                    <p id="user-list-modal-subtitle">Khám phá những người trong cộng đồng của bạn.</p>
+                </div>
+                <button type="button" class="user-list-close" onclick="closeUserListModal()" aria-label="Đóng danh sách">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div id="user-list-modal-content" style="overflow-y: auto; flex: 1;">
+            <div class="user-list-tools">
+                <label class="user-list-search" for="user-list-search-input">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="user-list-search-input" type="search" placeholder="Tìm theo tên hoặc tài khoản"
+                        aria-label="Tìm trong danh sách người dùng" autocomplete="off">
+                </label>
+                <span class="user-list-count" id="user-list-count"><strong>0</strong> người</span>
             </div>
+            <div id="user-list-modal-content" class="user-list-modal-content" aria-live="polite"></div>
         </div>
     </div>
 </body>

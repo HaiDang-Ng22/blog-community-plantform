@@ -266,36 +266,45 @@
             .noti-tab { padding: 8px 14px; font-size: 0.85rem; }
         }
     </style>
+    <link rel="stylesheet" href="css/notifications-v2.css?v=1.1">
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
-<body class="main-with-sidebar">
+<body class="main-with-sidebar notifications-page">
     <div class="notifications-container">
         <div class="noti-header">
-            <h1>Thông báo</h1>
+            <div class="noti-title-wrap">
+                <span class="noti-kicker">NOTIFICATION CENTER</span>
+                <h1>Thông báo</h1>
+                <p>Cập nhật những hoạt động và khoảnh khắc quan trọng của bạn.</p>
+            </div>
+            <div class="noti-storage-summary"><i class="fa-solid fa-box-archive"></i> Đang lưu <strong id="noti-total-stored">0</strong>/30</div>
             <div class="noti-tabs">
                 <div class="noti-tab active" data-tab="all">
-                    Tat ca
+                    Tất cả
                 </div>
                 <div class="noti-tab" data-tab="unread">
-                    Chua doc
+                    Chưa đọc
                     <span class="tab-badge" id="badge-unread"></span>
                 </div>
                 <div class="noti-tab" data-tab="social">
-                    Tuong tac
+                    Tương tác
                     <span class="tab-badge" id="badge-social"></span>
                 </div>
                 <div class="noti-tab" data-tab="orders">
-                    Don hang
+                    Đơn hàng
                     <span class="tab-badge" id="badge-orders"></span>
                 </div>
                 <div class="noti-tab" data-tab="system">
-                    He thong
+                    Hệ thống
                     <span class="tab-badge" id="badge-system"></span>
                 </div>
             </div>
         </div>
         
         <div class="noti-actions">
-            <span class="mark-all-read" id="mark-all-read">Đánh dấu đã đọc tất cả</span>
+            <span class="noti-loaded-label" id="noti-loaded-label">Đang hiển thị 0/0 thông báo</span>
+            <span class="mark-all-read" id="mark-all-read"><i class="fa-solid fa-check-double"></i> Đánh dấu đã đọc tất cả</span>
         </div>
 
         <div id="noti-list" class="noti-list">
@@ -304,31 +313,94 @@
                 <p>Đang tải thông báo...</p>
             </div>
         </div>
+        <div class="noti-load-more-wrap">
+            <button type="button" class="noti-load-more-btn hidden" id="noti-load-more">
+                <i class="fa-solid fa-clock-rotate-left"></i> Xem thêm thông báo cũ
+            </button>
+        </div>
     </div>
 
     <script src="js/api.js"></script>
-    <script src="js/common.js"></script>
+    <script src="js/common.js?v=3.1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const notiList = document.getElementById('noti-list');
             const markAllBtn = document.getElementById('mark-all-read');
+            const loadMoreBtn = document.getElementById('noti-load-more');
+            const totalStoredEl = document.getElementById('noti-total-stored');
+            const loadedLabel = document.getElementById('noti-loaded-label');
             const tabs = document.querySelectorAll('.noti-tab');
+            const PAGE_SIZE = 7;
             let currentTab = 'all';
             let allNotifications = [];
+            let legacyNotifications = null;
+            let totalCount = 0;
+            let hasMore = false;
+            let notificationSummary = {
+                unreadCount: 0,
+                unreadSocialCount: 0,
+                unreadOrderCount: 0,
+                unreadSystemCount: 0
+            };
 
-            async function loadNotifications() {
+            async function loadNotifications(reset = true) {
+                if (reset) allNotifications = [];
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải...';
                 try {
-                    allNotifications = await window.api.get('notifications');
+                    const response = (!reset && legacyNotifications)
+                        ? legacyNotifications
+                        : await window.api.get(`notifications?skip=${allNotifications.length}&take=${PAGE_SIZE}`);
+                    if (Array.isArray(response) && reset) legacyNotifications = response.slice(0, 30);
+                    if (!Array.isArray(response)) legacyNotifications = null;
+                    const legacySource = legacyNotifications || [];
+                    const batch = Array.isArray(response)
+                        ? legacySource.slice(allNotifications.length, allNotifications.length + PAGE_SIZE)
+                        : (response.items || []);
+                    const knownIds = new Set(allNotifications.map(notification => notification.id));
+                    allNotifications.push(...batch.filter(notification => !knownIds.has(notification.id)));
+
+                    totalCount = Array.isArray(response) ? legacySource.length : response.totalCount;
+                    hasMore = Array.isArray(response)
+                        ? allNotifications.length < totalCount
+                        : response.hasMore;
+                    if (!Array.isArray(response)) {
+                        notificationSummary = {
+                            unreadCount: response.unreadCount || 0,
+                            unreadSocialCount: response.unreadSocialCount || 0,
+                            unreadOrderCount: response.unreadOrderCount || 0,
+                            unreadSystemCount: response.unreadSystemCount || 0
+                        };
+                    } else {
+                        const unread = legacySource.filter(notification => !notification.isRead);
+                        notificationSummary = {
+                            unreadCount: unread.length,
+                            unreadSocialCount: unread.filter(notification => ['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'].includes(notification.type)).length,
+                            unreadOrderCount: unread.filter(notification => ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'].includes(notification.type)).length,
+                            unreadSystemCount: unread.filter(notification => notification.type === 'System').length
+                        };
+                    }
                     renderNotifications();
+                    updateLoadMoreUI();
                 } catch (err) {
                     console.error(err);
                     notiList.innerHTML = `
                         <div class="noti-empty">
                             <i class="fa-solid fa-triangle-exclamation"></i>
-                            <p>Khong the ket noi den may chu.</p>
+                            <p>Không thể kết nối đến máy chủ.</p>
                         </div>
                     `;
+                } finally {
+                    loadMoreBtn.disabled = false;
                 }
+            }
+
+            function updateLoadMoreUI() {
+                const remaining = Math.max(totalCount - allNotifications.length, 0);
+                totalStoredEl.textContent = totalCount;
+                loadedLabel.textContent = `Đang hiển thị ${allNotifications.length}/${totalCount} thông báo`;
+                loadMoreBtn.classList.toggle('hidden', !hasMore);
+                loadMoreBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> Xem thêm ${Math.min(PAGE_SIZE, remaining)} thông báo cũ`;
             }
 
             function renderNotifications() {
@@ -336,10 +408,10 @@
                 const orderTypes = ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'];
                 const systemTypes = ['System'];
                 
-                const unreadAll    = allNotifications.filter(n => !n.isRead).length;
-                const unreadSocial = allNotifications.filter(n => !n.isRead && socialTypes.includes(n.type)).length;
-                const unreadOrders = allNotifications.filter(n => !n.isRead && orderTypes.includes(n.type)).length;
-                const unreadSystem = allNotifications.filter(n => !n.isRead && systemTypes.includes(n.type)).length;
+                const unreadAll = notificationSummary.unreadCount;
+                const unreadSocial = notificationSummary.unreadSocialCount;
+                const unreadOrders = notificationSummary.unreadOrderCount;
+                const unreadSystem = notificationSummary.unreadSystemCount;
                 
                 const badgeUnread = document.getElementById('badge-unread');
                 if (badgeUnread) badgeUnread.style.display = unreadAll > 0 ? 'block' : 'none';
@@ -358,11 +430,11 @@
 
                 if (filtered.length === 0) {
                     let emptyIcon = 'fa-bell';
-                    let emptyText = 'Khong co thong bao nao.';
-                    if (currentTab === 'unread') { emptyIcon = 'fa-check-circle'; emptyText = 'Da doc het tat ca thong bao!'; }
-                    if (currentTab === 'social') { emptyIcon = 'fa-heart'; emptyText = 'Chua co tuong tac nao moi.'; }
-                    if (currentTab === 'orders') { emptyIcon = 'fa-box-open'; emptyText = 'Chua co thong bao ve don hang.'; }
-                    if (currentTab === 'system') { emptyIcon = 'fa-shield-halved'; emptyText = 'He thong chua co cap nhat gi moi.'; }
+                    let emptyText = 'Không có thông báo nào.';
+                    if (currentTab === 'unread') { emptyIcon = 'fa-check-circle'; emptyText = 'Bạn đã đọc hết tất cả thông báo!'; }
+                    if (currentTab === 'social') { emptyIcon = 'fa-heart'; emptyText = 'Chưa có tương tác nào mới.'; }
+                    if (currentTab === 'orders') { emptyIcon = 'fa-box-open'; emptyText = 'Chưa có thông báo về đơn hàng.'; }
+                    if (currentTab === 'system') { emptyIcon = 'fa-shield-halved'; emptyText = 'Hệ thống chưa có cập nhật mới.'; }
                     
                     notiList.innerHTML = `
                         <div class="noti-empty">
@@ -390,7 +462,7 @@
                         <div class="noti-type-icon ${getIconClass(n.type)}">
                             ${getIconForType(n.type)}
                         </div>
-                        <button class="noti-delete-btn" onclick="deleteNotification('${n.id}')" title="Xoa">
+                        <button class="noti-delete-btn" onclick="deleteNotification('${n.id}')" title="Xóa thông báo">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -430,11 +502,19 @@
                 };
             });
 
+            loadMoreBtn.onclick = () => loadNotifications(false);
+
             window.handleNotiClick = async (id, type, targetId, actorId) => {
                 try {
                     await window.api.post(`notifications/${id}/read`);
                     const noti = allNotifications.find(n => n.id === id);
-                    if (noti) noti.isRead = true;
+                    if (noti && !noti.isRead) {
+                        noti.isRead = true;
+                        notificationSummary.unreadCount = Math.max(0, notificationSummary.unreadCount - 1);
+                        if (['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'].includes(noti.type)) notificationSummary.unreadSocialCount = Math.max(0, notificationSummary.unreadSocialCount - 1);
+                        if (['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'].includes(noti.type)) notificationSummary.unreadOrderCount = Math.max(0, notificationSummary.unreadOrderCount - 1);
+                        if (noti.type === 'System') notificationSummary.unreadSystemCount = Math.max(0, notificationSummary.unreadSystemCount - 1);
+                    }
                     const item = document.getElementById('noti-item-' + id);
                     if (item) item.classList.remove('unread');
                     renderNotifications();
@@ -458,34 +538,46 @@
             window.deleteNotification = async (id) => {
                 try {
                     await window.api.delete(`notifications/${id}`);
+                    const deleted = allNotifications.find(n => n.id === id);
                     allNotifications = allNotifications.filter(n => n.id !== id);
+                    if (legacyNotifications) {
+                        legacyNotifications = legacyNotifications.filter(n => n.id !== id);
+                    }
+                    totalCount = Math.max(0, totalCount - 1);
+                    hasMore = allNotifications.length < totalCount;
+                    if (deleted && !deleted.isRead) {
+                        notificationSummary.unreadCount = Math.max(0, notificationSummary.unreadCount - 1);
+                        if (['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'].includes(deleted.type)) notificationSummary.unreadSocialCount = Math.max(0, notificationSummary.unreadSocialCount - 1);
+                        if (['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'].includes(deleted.type)) notificationSummary.unreadOrderCount = Math.max(0, notificationSummary.unreadOrderCount - 1);
+                        if (deleted.type === 'System') notificationSummary.unreadSystemCount = Math.max(0, notificationSummary.unreadSystemCount - 1);
+                    }
                     const item = document.getElementById('noti-item-' + id);
                     if (item) {
                         item.style.transition = 'opacity 0.3s, transform 0.3s';
                         item.style.opacity = '0';
                         item.style.transform = 'translateX(20px)';
-                        setTimeout(() => { item.remove(); }, 300);
+                        setTimeout(() => {
+                            renderNotifications();
+                            updateLoadMoreUI();
+                        }, 300);
                     }
                 } catch (err) {
-                    // Silently fail if API doesn't support delete
-                    const item = document.getElementById('noti-item-' + id);
-                    if (item) { item.style.opacity = '0'; setTimeout(() => item.remove(), 300); }
-                    allNotifications = allNotifications.filter(n => n.id !== id);
+                    if (window.common?.showToast) window.common.showToast('Không thể xóa thông báo.', 'error');
                 }
             };
 
             markAllBtn.onclick = async () => {
                 try {
                     await window.api.post('notifications/read-all');
-                    loadNotifications();
-                    if (window.common?.showToast) window.common.showToast('Da danh dau tat ca la da doc!', 'success');
+                    loadNotifications(true);
+                    if (window.common?.showToast) window.common.showToast('Đã đánh dấu tất cả là đã đọc!', 'success');
                     if (window.loadNotificationBadge) window.loadNotificationBadge();
                 } catch (err) {
-                    if (window.common?.showToast) window.common.showToast('Loi khi cap nhat thong bao.', 'error');
+                    if (window.common?.showToast) window.common.showToast('Lỗi khi cập nhật thông báo.', 'error');
                 }
             };
 
-            loadNotifications();
+            loadNotifications(true);
         });
     </script>
 </body>

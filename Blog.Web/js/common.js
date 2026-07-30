@@ -322,70 +322,70 @@ function renderSidebar() {
         <div class="sidebar-links">
             <a href="${pathPrefix}index.html" class="sidebar-link">
                 <i class="fa-solid fa-house"></i>
-                <span>Trang chủ</span>
+                <span data-i18n="home">Trang chủ</span>
             </a>
             <a href="${pathPrefix}reels.html" class="sidebar-link">
                 <i class="fa-solid fa-play"></i>
-                <span>Reels</span>
+                <span data-i18n="reels">Reels</span>
             </a>
             <a href="${pathPrefix}search.html" class="sidebar-link" id="sidebar-search-trigger">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <span>Tìm kiếm</span>
+                <span data-i18n="search">Tìm kiếm</span>
             </a>
             <a href="${pathPrefix}marketplace.html" class="sidebar-link">
                 <i class="fa-solid fa-compass"></i>
-                <span>Khám phá</span>
+                <span data-i18n="discover">Khám phá</span>
             </a>
             <a href="${pathPrefix}groups.html" class="sidebar-link">
                 <i class="fa-solid fa-users"></i>
-                <span>Cộng đồng</span>
+                <span data-i18n="communities">Cộng đồng</span>
             </a>
             <div class="sidebar-link mobile-hide" id="sidebar-noti-trigger" style="position:relative;">
                 <i class="fa-regular fa-heart"></i>
-                <span>Thông báo</span>
+                <span data-i18n="notifications">Thông báo</span>
                 <span id="sidebar-noti-badge" class="noti-badge hidden">0</span>
             </div>
             <a href="${pathPrefix}messages.html" class="sidebar-link" id="sidebar-messages-link" style="position:relative;">
                 <i class="fa-regular fa-paper-plane"></i>
-                <span>Tin nhắn</span>
+                <span data-i18n="messages">Tin nhắn</span>
                 <span id="sidebar-msg-badge" class="noti-badge hidden">0</span>
             </a>
             <a href="${pathPrefix}create-post.html" class="sidebar-link">
                 <i class="fa-regular fa-square-plus"></i>
-                <span>Tạo</span>
+                <span data-i18n="post_new">Tạo</span>
             </a>
             <a href="${pathPrefix}profile.html" class="sidebar-link">
                 <img src="${userAvatar}" class="mini-avatar" style="width:24px; height:24px; margin:0; border: 1px solid #dbdbdb;">
-                <span>Trang cá nhân</span>
+                <span data-i18n="profile">Trang cá nhân</span>
             </a>
             <div class="sidebar-link" id="sidebar-more-trigger">
                 <i class="fa-solid fa-bars"></i>
-                <span>Xem thêm</span>
+                <span data-i18n="more">Xem thêm</span>
             </div>
             
             <!-- More Menu Popup -->
             <div id="sidebar-more-menu" class="sidebar-more-menu hidden">
                 <a href="#" onclick="toggleDarkMode(event)">
                     <i class="fa-solid fa-moon"></i> 
-                    <span>Chế độ tối</span>
+                    <span data-i18n="dark_mode">Chế độ tối</span>
                     <div id="dark-mode-toggle-switch" class="theme-toggle-indicator ${localStorage.getItem('theme') === 'dark' ? 'active' : ''}"></div>
                 </a>
-                <a href="${pathPrefix}settings.html"><i class="fa-solid fa-gear"></i> Cài đặt</a>
-                <a href="${pathPrefix}saved.html"><i class="fa-solid fa-bookmark"></i> Đã lưu</a>
+                <a href="${pathPrefix}settings.html"><i class="fa-solid fa-gear"></i> <span data-i18n="settings">Cài đặt</span></a>
+                <a href="${pathPrefix}saved.html"><i class="fa-solid fa-bookmark"></i> <span data-i18n="saved">Đã lưu</span></a>
                 
                 <!-- Giao dịch & Cửa hàng -->
                 <div class="menu-divider"></div>
-                <a href="${pathPrefix}my-orders.html"><i class="fa-solid fa-box-open"></i> Đơn hàng của tôi</a>
-                <a href="${pathPrefix}vouchers.html"><i class="fa-solid fa-ticket"></i> Săn Voucher Zynk</a>
+                <a href="${pathPrefix}my-orders.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="my_orders">Đơn hàng của tôi</span></a>
+                <a href="${pathPrefix}vouchers.html"><i class="fa-solid fa-ticket"></i> <span data-i18n="vouchers">Săn Voucher Zynk</span></a>
                 ${window._userHasShop ? `
-                <a href="${pathPrefix}seller/index.html" style="color: #22c55e; font-weight:600;"><i class="fa-solid fa-store"></i> Kênh người bán</a>
+                <a href="${pathPrefix}seller/index.html" style="color: #22c55e; font-weight:600;"><i class="fa-solid fa-store"></i> <span data-i18n="seller_center">Kênh người bán</span></a>
                 ` : `
-                <a href="${pathPrefix}settings.html" style="color: #3b82f6;"><i class="fa-solid fa-store"></i> Đăng ký bán hàng</a>
+                <a href="${pathPrefix}settings.html" style="color: #3b82f6;"><i class="fa-solid fa-store"></i> <span data-i18n="register_seller">Đăng ký bán hàng</span></a>
                 `}
                 
-                ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<div class="menu-divider"></div><a href="${pathPrefix}admin.html" style="color: #6366f1; font-weight:600;"><i class="fa-solid fa-user-shield"></i> Quản trị</a>` : ''}
+                ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<div class="menu-divider"></div><a href="${pathPrefix}admin.html" style="color: #6366f1; font-weight:600;"><i class="fa-solid fa-user-shield"></i> <span data-i18n="admin_panel">Quản trị</span></a>` : ''}
                 <div class="menu-divider"></div>
-                <a href="#" onclick="logout(event)"><i class="fa-solid fa-sign-out-alt"></i> Đăng xuất</a>
+                <a href="#" onclick="logout(event)"><i class="fa-solid fa-sign-out-alt"></i> <span data-i18n="logout">Đăng xuất</span></a>
             </div>
         </div>
     `;
@@ -1075,48 +1075,40 @@ function formatDate(dateString) {
 }
 
 // Toast Notification System
-function showToast(message, type = 'success') {
+function showToast(message, type = 'success', options = {}) {
+    let stack = document.getElementById('zynk-toast-stack');
+    if (!stack) {
+        stack = document.createElement('div');
+        stack.id = 'zynk-toast-stack';
+        stack.className = 'zynk-toast-stack';
+        stack.setAttribute('aria-live', 'polite');
+        stack.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(stack);
+    }
+
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+    toast.className = `zynk-toast ${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
     
     // Custom Icon based on type
     const iconHtml = type === 'success' 
         ? '<i class="fa-solid fa-circle-check"></i>' 
         : (type === 'error' ? '<i class="fa-solid fa-circle-xmark"></i>' : '<i class="fa-solid fa-circle-info"></i>');
 
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        padding: 12px 24px;
-        border-radius: 12px;
-        background: ${type === 'success' ? '#10b981' : '#ef4444'};
-        color: #ffffff;
-        font-weight: 600;
-        font-family: inherit;
-        z-index: 20002;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transform: translateY(120%);
-        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
-        opacity: 0;
-    `;
-    toast.innerHTML = `${iconHtml} <span>${message}</span>`;
-    document.body.appendChild(toast);
+    toast.innerHTML = `<span class="zynk-toast-icon">${iconHtml}</span><span class="zynk-toast-message">${message}</span><span class="zynk-toast-progress"></span>`;
+    stack.appendChild(toast);
 
     requestAnimationFrame(() => {
-        toast.style.transform = 'translateY(0)';
-        toast.style.opacity = '1';
+        toast.classList.add('show');
     });
 
+    const duration = Number(options.duration) || 3000;
+    toast.style.setProperty('--toast-duration', `${duration}ms`);
     setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        toast.style.transition = '0.3s';
+        toast.classList.remove('show');
+        toast.classList.add('leaving');
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, duration);
 }
 
 const style = document.createElement('style');
@@ -1125,6 +1117,27 @@ style.textContent = `
         from { transform: translateY(100%); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
+    @keyframes zynkToastProgress { from { transform:scaleX(1); } to { transform:scaleX(0); } }
+    .zynk-toast-stack {
+        position:fixed; z-index:30020; top:18px; left:50%; display:flex; width:min(calc(100% - 24px),460px);
+        flex-direction:column; align-items:stretch; gap:9px; transform:translateX(-50%); pointer-events:none;
+    }
+    .zynk-toast {
+        --toast-accent:#29b886; position:relative; display:grid; min-height:60px; grid-template-columns:38px minmax(0,1fr);
+        align-items:center; gap:11px; padding:11px 16px; overflow:hidden; color:#263247; border:1px solid rgba(255,255,255,.9);
+        border-radius:17px; background:rgba(255,255,255,.96); box-shadow:0 18px 45px rgba(23,31,52,.2),inset 0 1px 0 #fff;
+        font:650 12.5px/1.45 Inter,sans-serif; opacity:0; transform:translateY(-18px) scale(.97); transition:.3s cubic-bezier(.2,.8,.2,1);
+        backdrop-filter:blur(18px); pointer-events:auto;
+    }
+    .zynk-toast.error { --toast-accent:#e45b67; }
+    .zynk-toast.info { --toast-accent:#5f67df; }
+    .zynk-toast.show { opacity:1; transform:none; }
+    .zynk-toast.leaving { opacity:0; transform:translateY(-12px) scale(.98); }
+    .zynk-toast-icon { display:grid; width:38px; height:38px; place-items:center; color:#fff; border-radius:12px; background:var(--toast-accent); box-shadow:0 8px 18px color-mix(in srgb,var(--toast-accent) 34%,transparent); font-size:16px; }
+    .zynk-toast-message { min-width:0; }
+    .zynk-toast-progress { position:absolute; right:0; bottom:0; left:0; height:3px; background:var(--toast-accent); transform-origin:left; animation:zynkToastProgress var(--toast-duration,3000ms) linear forwards; }
+    .dark-mode .zynk-toast { color:#eef2f8; border-color:#344056; background:rgba(18,25,39,.96); box-shadow:0 18px 48px rgba(0,0,0,.42); }
+    @media (max-width:600px) { .zynk-toast-stack { top:10px; width:calc(100% - 18px); } .zynk-toast { min-height:56px; border-radius:15px; } }
     .zynk-custom-modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);

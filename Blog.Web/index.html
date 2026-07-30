@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="css/common.css?v=2.6">
     <link rel="stylesheet" href="css/home.css?v=2.6">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/story-creator-v2.css?v=1.0">
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
 
 <body class="home-page" data-i18n-title="app_name">
@@ -135,29 +138,36 @@
     </div>
 
     <script src="js/api.js?v=4.1"></script>
-    <script src="js/lang.js?v=4.1"></script>
-    <script src="js/i18n.js?v=4.1"></script>
-    <script src="js/common.js?v=4.1"></script>
+    <script src="js/lang.js?v=3.1"></script>
+    <script src="js/i18n.js?v=3.1"></script>
+    <script src="js/common.js?v=3.1"></script>
     <script src="js/notifications.js?v=4.1"></script>
     <script src="js/post-actions.js?v=4.1"></script>
     <script src="js/home.js?v=4.1"></script>
-    <script src="js/stories.js?v=4.1"></script>
+    <script src="js/stories.js?v=4.3"></script>
 
     <!-- Create Story Modal -->
-    <div id="create-story-modal" class="modal-overlay hidden">
+    <div id="create-story-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="create-story-title">
         <div class="story-modal-content">
             <div class="modal-header">
-                <h3>Tạo tin mới</h3>
-                <button class="close-btn" onclick="closeCreateStoryModal()">&times;</button>
+                <div class="story-modal-heading">
+                    <span class="story-studio-badge">STORY STUDIO</span>
+                    <h3 id="create-story-title">Tạo tin mới</h3>
+                    <p>Chia sẻ khoảnh khắc theo cách của riêng bạn.</p>
+                </div>
+                <div class="story-modal-actions">
+                    <span class="story-draft-status"><i class="fa-solid fa-shield-heart"></i> Riêng tư theo lựa chọn</span>
+                    <button class="close-btn" type="button" aria-label="Đóng trình tạo tin" onclick="closeCreateStoryModal()">&times;</button>
+                </div>
             </div>
             <div class="modal-body create-story-layout">
                 <div class="create-story-main">
                     <!-- Story Tabs -->
                     <div class="story-tabs">
-                        <button class="story-tab active" onclick="switchStoryType('Media')">
+                        <button class="story-tab active" type="button" data-story-type="Media" onclick="switchStoryType('Media')">
                             <i class="fa-solid fa-image"></i> Ảnh/Video
                         </button>
-                        <button class="story-tab" onclick="switchStoryType('Text')">
+                        <button class="story-tab" type="button" data-story-type="Text" onclick="switchStoryType('Text')">
                             <i class="fa-solid fa-font"></i> Văn bản
                         </button>
                     </div>
@@ -165,17 +175,18 @@
                     <!-- Media Story Area -->
                     <div id="story-media-area">
                         <!-- Source Selector -->
-                        <div id="story-media-source-select" class="story-source-select">
-                            <div class="source-card" onclick="document.getElementById('story-file').click()">
+                        <div id="story-media-source-select" class="story-source-select" ondragover="handleStoryDragOver(event)" ondragleave="handleStoryDragLeave(event)" ondrop="handleStoryDrop(event)">
+                            <button type="button" class="source-card" onclick="document.getElementById('story-file').click()">
                                 <div class="source-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                                 <span class="source-title">Chọn từ thiết bị</span>
                                 <span class="source-desc">Ảnh hoặc Video</span>
-                            </div>
-                            <div class="source-card" onclick="startStoryCamera()">
+                            </button>
+                            <button type="button" class="source-card" onclick="startStoryCamera()">
                                 <div class="source-icon"><i class="fa-solid fa-camera"></i></div>
                                 <span class="source-title">Chụp hình mới</span>
                                 <span class="source-desc">Sử dụng Camera</span>
-                            </div>
+                            </button>
+                            <div class="story-upload-hint"><i class="fa-solid fa-wand-magic-sparkles"></i> Kéo thả ảnh hoặc video vào đây</div>
                         </div>
 
                         <!-- Camera Viewport -->
@@ -205,15 +216,22 @@
                     <!-- Text Story Area -->
                     <div id="story-text-area" class="hidden">
                         <div id="text-story-preview" class="text-story-preview" style="background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">
-                            <textarea id="story-text-input" placeholder="Bắt đầu nhập..." oninput="updateTextStoryPreview()"></textarea>
+                            <textarea id="story-text-input" maxlength="220" placeholder="Bắt đầu nhập..." oninput="updateTextStoryPreview()"></textarea>
                         </div>
+                        <div class="story-text-meta"><span>Gợi ý: viết ngắn gọn và dễ đọc</span><strong><span id="story-text-count">0</span>/220</strong></div>
                     </div>
                 </div>
                 
                 <div class="create-story-sidebar">
+                    <div class="story-side-heading">
+                        <span>TÙY CHỈNH</span>
+                        <h4>Hoàn thiện câu chuyện</h4>
+                        <p>Thêm chữ, màu sắc và chọn người có thể xem tin.</p>
+                    </div>
                     <!-- Editor Tools (Moved to sidebar) -->
                     <div id="story-editor-toolbar" class="editor-toolbar hidden" style="flex-wrap: wrap; gap: 8px;">
                         <button class="toolbar-btn" onclick="addInlineTextOverlay()" title="Thêm chữ"><i class="fa-solid fa-font"></i> Chữ</button>
+                        <button class="toolbar-btn" onclick="toggleStoryEmojiPicker()" title="Thêm biểu tượng"><i class="fa-regular fa-face-smile"></i> Emoji</button>
                         <button class="toolbar-btn" onclick="toggleDrawingMode()" id="drawing-mode-btn" title="Vẽ tay"><i class="fa-solid fa-pen"></i> Vẽ tay</button>
                         <button class="toolbar-btn hidden" id="drawing-undo-btn" onclick="undoDraw()" title="Hoàn tác vẽ"><i class="fa-solid fa-rotate-left"></i> Hoàn tác</button>
                         <button class="toolbar-btn reset-btn" onclick="resetStoryMedia()" title="Xóa tất cả"><i class="fa-solid fa-trash"></i> Làm lại</button>
@@ -228,6 +246,9 @@
                             <div class="draw-color-opt" style="background:#ffffff; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ccc; box-shadow: 0 0 5px rgba(0,0,0,0.5); transition: transform 0.2s;" onclick="setDrawColor(this, '#ffffff')"></div>
                             <div class="draw-color-opt" style="background:#000000; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); transition: transform 0.2s;" onclick="setDrawColor(this, '#000000')"></div>
                         </div>
+                    </div>
+                    <div id="story-emoji-picker" class="story-emoji-picker hidden">
+                        <button type="button" onclick="addStoryEmoji('✨')">✨</button><button type="button" onclick="addStoryEmoji('❤️')">❤️</button><button type="button" onclick="addStoryEmoji('🔥')">🔥</button><button type="button" onclick="addStoryEmoji('😂')">😂</button><button type="button" onclick="addStoryEmoji('🎉')">🎉</button><button type="button" onclick="addStoryEmoji('💯')">💯</button>
                     </div>
 
                     <!-- Photo Filters Selector -->
@@ -295,7 +316,8 @@
                         </div>
                     </div>
                     
-                    <button id="submit-story-btn" class="btn primary-btn" style="width: 100%; margin-top: auto; padding: 12px; font-weight:700; font-size:1rem;" onclick="submitStory()">Đăng tin ngay</button>
+                    <button id="submit-story-btn" class="btn primary-btn" disabled style="width: 100%; margin-top: auto; padding: 12px; font-weight:700; font-size:1rem;" onclick="submitStory()"><i class="fa-solid fa-paper-plane"></i> Đăng tin ngay</button>
+                    <div class="story-submit-note"><i class="fa-solid fa-clock"></i> Tin sẽ tự biến mất sau thời gian bạn chọn</div>
                 </div>
             </div>
         </div>

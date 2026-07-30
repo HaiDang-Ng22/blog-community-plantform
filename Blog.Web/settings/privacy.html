@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/common.css">
-    <link rel="stylesheet" href="../css/settings-v2.css">
+    <link rel="stylesheet" href="../css/settings-v2.css?v=3.1">
     <style>
         .toggle-card {
             display: flex;
@@ -51,6 +51,8 @@
         input:checked + .slider { background-color: var(--s-primary); }
         input:checked + .slider:before { transform: translateX(20px); }
     </style>
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
 <body>
     <div class="settings-container">
@@ -116,8 +118,8 @@
     </div>
 
     <script src="../js/api.js"></script>
-    <script src="../js/common.js"></script>
-    <script src="../js/settings-core.js"></script>
+    <script src="../js/common.js?v=3.1"></script>
+    <script src="../js/settings-core.js?v=3.1"></script>
     <script>
         // Muted Words Logic
         const mutedWordsTags = document.getElementById('muted-words-tags');
@@ -167,7 +169,7 @@
                     row.style = "display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid var(--s-border); border-radius: 10px;";
                     row.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="${user.avatarUrl || '../assets/logo-icon.png'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                            <img src="${user.avatarUrl || '../assets/logo.png'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                             <div>
                                 <div style="font-weight: 600; font-size: 0.95rem;">${user.fullName}</div>
                                 <div style="font-size: 0.8rem; color: var(--s-text-muted);">@${user.username}</div>

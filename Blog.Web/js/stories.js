@@ -28,6 +28,19 @@ document.addEventListener('DOMContentLoaded', () => {
         storyContent.addEventListener('touchend', () => resumeStory());
         storyContent.addEventListener('mouseleave', () => { if (storyPaused) resumeStory(); });
     }
+
+    const createStoryModal = document.getElementById('create-story-modal');
+    if (createStoryModal) {
+        createStoryModal.addEventListener('click', (event) => {
+            if (event.target === createStoryModal) closeCreateStoryModal();
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && createStoryModal && !createStoryModal.classList.contains('hidden')) {
+            closeCreateStoryModal();
+        }
+    });
 });
 
 function getViewedStories() {
@@ -223,6 +236,9 @@ async function loadMyStories() {
 function updateMyStoryUI() {
     const circle = document.getElementById('my-story-circle');
     const indicator = document.getElementById('add-story-indicator');
+    // Some pages can open the story viewer without rendering the home-page story circle.
+    if (!circle) return;
+
     if (myStories && myStories.length > 0) {
         circle.classList.remove('my-story');
         if (isGroupViewed(myStories)) circle.style.background = '#dbdbdb';
@@ -294,22 +310,39 @@ let storyStream = null;
 let cameraFacingMode = 'user';
 let activeImageSrc = null;
 let activeVideoFile = null;
+let activeVideoObjectUrl = null;
 let activeMediaType = 'Image';
 let storyOverlays = [];
 let currentStoryFilter = 'normal';
 let currentOverlayColor = '#ffffff';
 
 window.openCreateStoryModal = function() {
-    document.getElementById('create-story-modal').classList.remove('hidden');
+    const modal = document.getElementById('create-story-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
     switchStoryType('Media');
     resetStoryMedia();
+    const textInput = document.getElementById('story-text-input');
+    if (textInput) textInput.value = '';
+    updateTextStoryPreview();
 };
 
 window.closeCreateStoryModal = function() {
     stopStoryCamera();
-    document.getElementById('create-story-modal').classList.add('hidden');
+    const modal = document.getElementById('create-story-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
     resetStoryMedia();
 };
+
+function syncStorySubmitState() {
+    const submitBtn = document.getElementById('submit-story-btn');
+    if (!submitBtn) return;
+    const hasContent = currentStoryType === 'Media'
+        ? Boolean(activeImageSrc || activeVideoFile)
+        : Boolean(document.getElementById('story-text-input')?.value.trim());
+    submitBtn.disabled = !hasContent;
+}
 
 window.switchStoryType = function(type) {
     currentStoryType = type;
@@ -320,10 +353,7 @@ window.switchStoryType = function(type) {
     const filters = document.getElementById('story-filters-container');
     
     const tabs = document.querySelectorAll('.story-tab');
-    tabs.forEach(tab => {
-        if (tab.innerText.includes(type === 'Media' ? 'Ảnh/Video' : 'Văn bản')) tab.classList.add('active');
-        else tab.classList.remove('active');
-    });
+    tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.storyType === type));
     
     if (type === 'Media') {
         mediaArea.classList.remove('hidden');
@@ -338,6 +368,7 @@ window.switchStoryType = function(type) {
         if (filters) filters.classList.add('hidden');
         stopStoryCamera();
     }
+    syncStorySubmitState();
 };
 
 window.selectStoryBg = function(el) {
@@ -356,6 +387,10 @@ window.resetStoryMedia = function() {
     document.getElementById('story-file').value = '';
     activeImageSrc = null;
     activeVideoFile = null;
+    if (activeVideoObjectUrl) {
+        URL.revokeObjectURL(activeVideoObjectUrl);
+        activeVideoObjectUrl = null;
+    }
     activeMediaType = 'Image';
     storyOverlays = [];
     currentStoryFilter = 'normal';
@@ -391,8 +426,10 @@ window.resetStoryMedia = function() {
     disableDrawing();
     
     const submitBtn = document.getElementById('submit-story-btn');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Đăng tin ngay';
+    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Đăng tin ngay';
+    syncStorySubmitState();
+
+    document.getElementById('story-emoji-picker')?.classList.add('hidden');
 };
 
 window.startStoryCamera = async function() {
@@ -496,13 +533,31 @@ function enterEditorMode() {
         toolbar.classList.add('hidden');
         filters.classList.add('hidden');
     }
+    syncStorySubmitState();
 }
 
-window.handleStoryFileSelect = function(input) {
-    const file = input.files[0];
+function processStoryFile(file) {
     if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? 80 * 1024 * 1024 : 15 * 1024 * 1024;
+
+    if (!isImage && !isVideo) {
+        alert('Vui lòng chọn file hình ảnh hoặc video hợp lệ!');
+        return;
+    }
+    if (file.size > maxSize) {
+        alert(isVideo ? 'Video không được vượt quá 80 MB.' : 'Ảnh không được vượt quá 15 MB.');
+        return;
+    }
     
-    if (file.type.startsWith('image/')) {
+    if (isImage) {
+        activeVideoFile = null;
+        if (activeVideoObjectUrl) {
+            URL.revokeObjectURL(activeVideoObjectUrl);
+            activeVideoObjectUrl = null;
+        }
         activeMediaType = 'Image';
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -510,17 +565,38 @@ window.handleStoryFileSelect = function(input) {
             enterEditorMode();
         };
         reader.readAsDataURL(file);
-    } else if (file.type.startsWith('video/')) {
+    } else {
+        activeImageSrc = null;
         activeMediaType = 'Video';
         activeVideoFile = file;
-        
-        const videoUrl = URL.createObjectURL(file);
+
+        if (activeVideoObjectUrl) URL.revokeObjectURL(activeVideoObjectUrl);
+        activeVideoObjectUrl = URL.createObjectURL(file);
         const videoEl = document.getElementById('story-preview-video');
-        videoEl.src = videoUrl;
+        videoEl.src = activeVideoObjectUrl;
         enterEditorMode();
-    } else {
-        alert('Vui lòng chọn file hình ảnh hoặc video hợp lệ!');
     }
+}
+
+window.handleStoryFileSelect = function(input) {
+    processStoryFile(input.files[0]);
+};
+
+window.handleStoryDragOver = function(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('drag-over');
+};
+
+window.handleStoryDragLeave = function(event) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.classList.remove('drag-over');
+    }
+};
+
+window.handleStoryDrop = function(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('drag-over');
+    processStoryFile(event.dataTransfer?.files?.[0]);
 };
 
 window.applyStoryFilter = function(filterName) {
@@ -816,9 +892,43 @@ function disableDrawing() {
     document.querySelectorAll('.draggable-overlay').forEach(o => o.style.pointerEvents = 'auto');
 }
 
+window.toggleStoryEmojiPicker = function() {
+    document.getElementById('story-emoji-picker')?.classList.toggle('hidden');
+};
+
+window.addStoryEmoji = function(emoji) {
+    const wrapper = document.getElementById('editor-overlays-container');
+    if (!wrapper) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'draggable-overlay story-emoji-overlay selected';
+    overlay.style.left = `${48 + (wrapper.children.length % 3) * 5}%`;
+    overlay.style.top = `${45 + (wrapper.children.length % 2) * 10}%`;
+    overlay.style.transform = 'translate(-50%, -50%)';
+    overlay.style.position = 'absolute';
+    overlay.style.fontSize = '42px';
+    overlay.style.lineHeight = '1';
+    overlay.textContent = emoji;
+
+    const deleteButton = document.createElement('div');
+    deleteButton.className = 'delete-overlay-btn';
+    deleteButton.innerHTML = '&times;';
+    deleteButton.onclick = (event) => {
+        event.stopPropagation();
+        overlay.remove();
+    };
+    overlay.appendChild(deleteButton);
+    wrapper.appendChild(overlay);
+    setupDragEvents(overlay);
+    document.getElementById('story-emoji-picker')?.classList.add('hidden');
+};
+
 window.updateTextStoryPreview = function() {
     const input = document.getElementById('story-text-input');
+    if (!input) return;
     const length = input.value.length;
+    const counter = document.getElementById('story-text-count');
+    if (counter) counter.textContent = length;
     if (length > 100) {
         input.style.fontSize = '1.1rem';
     } else if (length > 50) {
@@ -826,6 +936,7 @@ window.updateTextStoryPreview = function() {
     } else {
         input.style.fontSize = '1.6rem';
     }
+    syncStorySubmitState();
 };
 
 window.submitStory = async function() {
@@ -843,8 +954,8 @@ window.submitStory = async function() {
             if (activeMediaType === 'Image') {
                 if (!activeImageSrc) {
                     alert('Vui lòng chọn hoặc chụp ảnh!');
-                    btn.disabled = false;
-                    btn.textContent = 'Đăng tin ngay';
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Đăng tin ngay';
+                    syncStorySubmitState();
                     return;
                 }
                 
@@ -929,8 +1040,8 @@ window.submitStory = async function() {
             } else {
                 if (!activeVideoFile) {
                     alert('Vui lòng chọn video!');
-                    btn.disabled = false;
-                    btn.textContent = 'Đăng tin ngay';
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Đăng tin ngay';
+                    syncStorySubmitState();
                     return;
                 }
                 
@@ -941,7 +1052,12 @@ window.submitStory = async function() {
             }
         } else {
             const text = document.getElementById('story-text-input').value.trim();
-            if (!text) { alert('Vui lòng nhập văn bản!'); btn.disabled = false; btn.textContent = 'Đăng tin ngay'; return; }
+            if (!text) {
+                alert('Vui lòng nhập văn bản!');
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Đăng tin ngay';
+                syncStorySubmitState();
+                return;
+            }
             data.mediaType = 'Text';
             data.content = text;
             data.background = document.getElementById('text-story-preview').style.background;
@@ -955,8 +1071,8 @@ window.submitStory = async function() {
         loadStories();
     } catch (err) {
         alert('Lỗi khi đăng tin: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Đăng tin ngay';
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Đăng tin ngay';
+        syncStorySubmitState();
     }
 };
 

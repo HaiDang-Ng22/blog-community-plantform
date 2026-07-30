@@ -65,6 +65,73 @@ public class AppDbContext : DbContext
     public DbSet<AiFeedback> AiFeedbacks { get; set; }
     public DbSet<AiRecommendationLog> AiRecommendationLogs { get; set; }
 
+    private const int MaxNotificationsPerUser = 30;
+
+    public override int SaveChanges()
+    {
+        var receiversWithNewNotifications = GetNotificationReceiversToTrim();
+        var affectedRows = base.SaveChanges();
+        TrimNotificationHistory(receiversWithNewNotifications);
+        return affectedRows;
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var receiversWithNewNotifications = GetNotificationReceiversToTrim();
+        var affectedRows = await base.SaveChangesAsync(cancellationToken);
+        await TrimNotificationHistoryAsync(receiversWithNewNotifications, cancellationToken);
+        return affectedRows;
+    }
+
+    private Guid[] GetNotificationReceiversToTrim()
+    {
+        return ChangeTracker.Entries<Notification>()
+            .Where(entry => entry.State == EntityState.Added)
+            .Select(entry => entry.Entity.ReceiverId)
+            .Distinct()
+            .ToArray();
+    }
+
+    private int TrimNotificationHistory(IEnumerable<Guid> receiverIds)
+    {
+        var removedAny = false;
+        foreach (var receiverId in receiverIds)
+        {
+            var overflow = Notifications
+                .Where(notification => notification.ReceiverId == receiverId)
+                .OrderByDescending(notification => notification.CreatedAt)
+                .ThenByDescending(notification => notification.Id)
+                .Skip(MaxNotificationsPerUser)
+                .ToList();
+
+            if (overflow.Count == 0) continue;
+            Notifications.RemoveRange(overflow);
+            removedAny = true;
+        }
+
+        return removedAny ? base.SaveChanges() : 0;
+    }
+
+    private async Task<int> TrimNotificationHistoryAsync(IEnumerable<Guid> receiverIds, CancellationToken cancellationToken)
+    {
+        var removedAny = false;
+        foreach (var receiverId in receiverIds)
+        {
+            var overflow = await Notifications
+                .Where(notification => notification.ReceiverId == receiverId)
+                .OrderByDescending(notification => notification.CreatedAt)
+                .ThenByDescending(notification => notification.Id)
+                .Skip(MaxNotificationsPerUser)
+                .ToListAsync(cancellationToken);
+
+            if (overflow.Count == 0) continue;
+            Notifications.RemoveRange(overflow);
+            removedAny = true;
+        }
+
+        return removedAny ? await base.SaveChangesAsync(cancellationToken) : 0;
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

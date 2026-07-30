@@ -432,8 +432,11 @@
             .vr-ticket { height: auto; min-height: 140px; }
         }
     </style>
+    <link rel="stylesheet" href="css/more-pages.css?v=1.1">
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
-<body>
+<body class="vouchers-page">
     <div class="voucher-hero">
         <a href="marketplace.html" class="back-to-market">
             <i class="fa-solid fa-arrow-left"></i> Quay lại Marketplace
@@ -500,7 +503,7 @@
     </div>
 
     <script src="js/api.js"></script>
-    <script src="js/common.js"></script>
+    <script src="js/common.js?v=3.1"></script>
     <script>
         let _allVouchers = [];
         let _claimedIds = [];
@@ -527,7 +530,19 @@
                 document.getElementById('stat-savings').textContent = maxDiscount > 0 ? maxDiscount + '%' : '—';
 
                 renderVouchers(_allVouchers);
-             function filterVouchers(type, btn) {
+            } catch (error) {
+                console.error('Không thể tải voucher', error);
+                grid.innerHTML = `
+                    <div class="vr-empty">
+                        <i class="fa-solid fa-ticket-simple"></i>
+                        <h3>Chưa thể tải mã giảm giá</h3>
+                        <p>Vui lòng kiểm tra kết nối và thử tải lại trang.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function filterVouchers(type, btn) {
             // Update tab UI
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');

@@ -8,7 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/common.css">
-    <link rel="stylesheet" href="../css/settings-v2.css">
+    <link rel="stylesheet" href="../css/settings-v2.css?v=3.1">
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
 <body>
     <header class="main-header">
@@ -39,7 +41,7 @@
                 <!-- Avatar Upload -->
                 <div class="s-avatar-upload" style="margin-bottom:1.5rem;">
                     <div style="position:relative;flex-shrink:0;">
-                        <img id="avatar-preview" src="../assets/logo-icon.png" class="s-avatar-preview"
+                        <img id="avatar-preview" src="../assets/logo.png" class="s-avatar-preview"
                              onerror="this.src='https://ui-avatars.com/api/?name=U&background=6366f1&color=fff'">
                         <div id="avatar-upload-overlay" style="
                             display:none;position:absolute;inset:0;border-radius:50%;
@@ -131,7 +133,7 @@
 
     <!-- Load api + common first -->
     <script src="../js/api.js"></script>
-    <script src="../js/common.js"></script>
+    <script src="../js/common.js?v=3.1"></script>
 
     <!-- Define onSettingsLoad BEFORE settings-core.js so it's available when called -->
     <script>
@@ -171,7 +173,7 @@
     </script>
 
     <!-- Now load settings-core.js (will call onSettingsLoad which is now defined) -->
-    <script src="../js/settings-core.js"></script>
+    <script src="../js/settings-core.js?v=3.1"></script>
 
     <!-- Rest of page-specific logic -->
     <script>

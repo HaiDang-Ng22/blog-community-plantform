@@ -34,20 +34,30 @@ public class NotificationsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetMyNotifications()
+    public async Task<IActionResult> GetMyNotifications([FromQuery] int? skip = null, [FromQuery] int? take = null)
     {
         var userId = User.GetUserId() ?? Guid.Empty;
         if (userId == Guid.Empty) return Unauthorized();
-        var notifications = await _context.Notifications
+
+        const int maxStoredNotifications = 30;
+        var query = _context.Notifications
             .Include(n => n.Actor)
             .Where(n => n.ReceiverId == userId)
             .OrderByDescending(n => n.CreatedAt)
-            .Take(50)
+            .ThenByDescending(n => n.Id);
+
+        var totalCount = Math.Min(await query.CountAsync(), maxStoredNotifications);
+        var safeSkip = Math.Clamp(skip ?? 0, 0, maxStoredNotifications);
+        var safeTake = take.HasValue ? Math.Clamp(take.Value, 1, 7) : maxStoredNotifications;
+        var notifications = await query
+            .Skip(safeSkip)
+            .Take(Math.Min(safeTake, maxStoredNotifications - safeSkip))
             .ToListAsync();
 
         var result = notifications.Select(n => new
         {
             n.Id,
+            n.ActorId,
             n.Type,
             n.TargetId,
             n.Message,
@@ -55,9 +65,25 @@ public class NotificationsController : ControllerBase
             n.CreatedAt,
             ActorName = n.Actor.FullName,
             ActorAvatarUrl = n.Actor.AvatarUrl
-        });
+        }).ToList();
 
-        return Ok(result);
+        if (!take.HasValue) return Ok(result);
+
+        var unreadQuery = _context.Notifications
+            .Where(notification => notification.ReceiverId == userId && !notification.IsRead);
+        var socialTypes = new[] { "Like", "Comment", "Reply", "Follow", "LikeStory" };
+        var orderTypes = new[] { "NewOrder", "OrderStatusUpdated", "OrderCancelled" };
+
+        return Ok(new
+        {
+            items = result,
+            totalCount,
+            hasMore = safeSkip + result.Count < totalCount,
+            unreadCount = await unreadQuery.CountAsync(),
+            unreadSocialCount = await unreadQuery.CountAsync(notification => socialTypes.Contains(notification.Type)),
+            unreadOrderCount = await unreadQuery.CountAsync(notification => orderTypes.Contains(notification.Type)),
+            unreadSystemCount = await unreadQuery.CountAsync(notification => notification.Type == "System")
+        });
     }
 
     [HttpPost("{id}/read")]

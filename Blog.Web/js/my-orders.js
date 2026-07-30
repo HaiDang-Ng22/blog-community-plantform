@@ -368,7 +368,6 @@ function formatCurrency(val) {
 
 // ========= GLOBAL EXPORTS =========
 window.applyBuyerSearch = applyBuyerSearch;
-window.confirmOrder = confirmOrder;
 window.reorder = reorder;
 window.openReviewForOrder = openReviewForOrder;
 window.setRating = setRating;

@@ -3,158 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07111f">
+    <meta name="description" content="Đăng nhập hoặc tạo tài khoản Zynk để kết nối, chia sẻ và khám phá cộng đồng sáng tạo.">
     <title data-i18n="auth_title">Xác thực - Zynk</title>
     <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=1.7">
-    <link rel="stylesheet" href="css/auth.css?v=1.5">
+    <link rel="stylesheet" href="css/auth.css?v=3.0">
     <meta name="google-signin-client_id" content="202612503485-hd4eopni01gadqphfpb194b6ga93vb7f.apps.googleusercontent.com">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="/css/preferences.css?v=1.1">
+    <script src="/js/preferences.js?v=1.1"></script>
 </head>
 
 <body class="auth-page" data-i18n-title="auth_title">
-    <!-- Animated 3D Light Blobs -->
-    <div class="auth-bg-blob blob-1"></div>
-    <div class="auth-bg-blob blob-2"></div>
-    <div class="auth-bg-blob blob-3"></div>
+    <a class="skip-link" href="#auth-panel">Chuyển đến biểu mẫu</a>
 
-    <div class="auth-wrapper">
-        <div class="auth-left">
-            <div class="auth-brand">
-                <div class="auth-main-logo"></div>
+    <div class="auth-background" aria-hidden="true">
+        <div class="aurora aurora-one"></div>
+        <div class="aurora aurora-two"></div>
+        <div class="aurora aurora-three"></div>
+        <div class="perspective-grid"></div>
+        <div class="noise-layer"></div>
+    </div>
+
+    <main class="auth-shell">
+        <section class="auth-showcase" aria-labelledby="showcase-title">
+            <a href="index.html" class="brand-lockup" aria-label="Zynk - Trang chủ">
+                <img src="assets/logo.png" alt="Zynk" class="brand-mark">
+            </a>
+
+            <div class="showcase-copy">
+                <span class="eyebrow"><i></i> Không gian của những ý tưởng mới</span>
+                <h1 id="showcase-title">Kết nối thật.<br><span>Trải nghiệm khác biệt.</span></h1>
                 <p data-i18n="auth_slogan">Nền tảng mạng xã hội kết nối, chia sẻ kiến thức số 1 dành cho cộng đồng yêu công nghệ và sáng tạo.</p>
+
+                <div class="trust-row" aria-label="Các điểm nổi bật của Zynk">
+                    <div class="trust-item">
+                        <span class="trust-icon">✦</span>
+                        <span><strong>Cộng đồng</strong><small>Cùng nhau phát triển</small></span>
+                    </div>
+                    <div class="trust-item">
+                        <span class="trust-icon">⌁</span>
+                        <span><strong>An toàn</strong><small>Bảo vệ dữ liệu</small></span>
+                    </div>
+                    <div class="trust-item">
+                        <span class="trust-icon">∞</span>
+                        <span><strong>Không giới hạn</strong><small>Tự do sáng tạo</small></span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="auth-right">
-            <div class="auth-box">
-                <div class="auth-box-header">
-                    <a href="index.html">
-                        <div class="auth-box-logo"></div>
-                    </a>
+            <div class="scene" id="auth-scene" aria-hidden="true">
+                <div class="orbital orbital-one"></div>
+                <div class="orbital orbital-two"></div>
+                <div class="core-sphere">
+                    <div class="sphere-glow"></div>
+                    <span class="sphere-letter">Z</span>
+                </div>
+                <div class="floating-card floating-card-one">
+                    <span class="mini-avatar avatar-violet">A</span>
+                    <span><b>Ý tưởng mới</b><small>vừa được chia sẻ</small></span>
+                    <i></i>
+                </div>
+                <div class="floating-card floating-card-two">
+                    <span class="pulse-dot"></span>
+                    <span><b>2.4K</b><small>đang kết nối</small></span>
+                </div>
+                <div class="floating-card floating-card-three">
+                    <span class="mini-avatar avatar-cyan">N</span>
+                    <span class="mini-avatar avatar-pink">H</span>
+                    <span class="mini-avatar avatar-orange">K</span>
+                    <small>+128 hôm nay</small>
+                </div>
+            </div>
+
+            <p class="showcase-footer">© 2026 Zynk · Kết nối theo cách của bạn</p>
+        </section>
+
+        <section class="auth-workspace">
+            <a href="index.html" class="mobile-brand" aria-label="Zynk - Trang chủ">
+                <img src="assets/logo.png" alt="Zynk">
+            </a>
+
+            <div class="auth-card" id="auth-panel">
+                <div class="card-highlight" aria-hidden="true"></div>
+
+                <header class="auth-card-header">
+                    <span class="status-pill"><i></i> Chào bạn đến với Zynk</span>
+                    <h2 id="form-title">Đăng nhập tài khoản</h2>
+                    <p id="form-subtitle">Tiếp tục hành trình kết nối và khám phá của bạn.</p>
+                </header>
+
+                <div class="tabs" role="tablist" aria-label="Chọn hình thức xác thực">
+                    <span class="tab-indicator" aria-hidden="true"></span>
+                    <button id="tab-login" class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="form-login" onclick="switchTab('login')" data-i18n="login">Đăng nhập</button>
+                    <button id="tab-register" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="form-register" onclick="switchTab('register')" data-i18n="register">Đăng ký</button>
                 </div>
 
-                <div class="tabs">
-                    <button id="tab-login" class="tab-btn active" onclick="switchTab('login')" data-i18n="login">Đăng Nhập</button>
-                    <button id="tab-register" class="tab-btn" onclick="switchTab('register')" data-i18n="register">Đăng Ký</button>
-                </div>
+                <div id="message-box" class="message-box hidden" role="status" aria-live="polite"></div>
 
-                <div id="message-box" class="message-box hidden"></div>
+                <form id="form-login" class="auth-form active" novalidate>
+                    <div class="field-group">
+                        <label for="login-email">Địa chỉ email</label>
+                        <div class="field-control">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
+                            <input type="email" id="login-email" name="email" placeholder="tenban@email.com" autocomplete="email" inputmode="email" required>
+                        </div>
+                    </div>
 
-                <form id="form-login" class="auth-form active">
-                    <h2 data-i18n="auth_welcome">Chào mừng trở lại!</h2>
-                    <div class="input-group">
-                        <input type="email" id="login-email" placeholder="Email của bạn" data-i18n="email_placeholder" required>
+                    <div class="field-group">
+                        <div class="field-label-row">
+                            <label for="login-password">Mật khẩu</label>
+                            <button type="button" class="text-button" onclick="switchTab('forgot')">Quên mật khẩu?</button>
+                        </div>
+                        <div class="field-control password-group">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+                            <input type="password" id="login-password" name="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('login-password', this)" aria-label="Hiện mật khẩu" aria-pressed="false">
+                                <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.7"/></svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="input-group password-group">
-                        <input type="password" id="login-password" placeholder="Mật khẩu" data-i18n="password_placeholder" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('login-password', this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                    <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1.5rem;">
-                        <a href="javascript:void(0)" onclick="switchTab('forgot')" class="forgot-link">Quên mật khẩu?</a>
-                    </div>
-                    <button type="submit" class="btn primary-btn" data-i18n="login">Đăng nhập ngay</button>
 
-                    <div class="divider">
-                        <span data-i18n="or_continue_with">Hoặc tiếp tục với</span>
-                    </div>
+                    <label class="remember-row">
+                        <input type="checkbox" id="remember-login">
+                        <span class="custom-checkbox"><svg viewBox="0 0 16 16"><path d="M3 8.3l3 3L13 4.8"/></svg></span>
+                        <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+                    </label>
+
+                    <button type="submit" class="primary-btn">
+                        <span data-button-label>Đăng nhập</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5l5 5-5 5"/></svg>
+                        <span class="button-loader" aria-hidden="true"></span>
+                    </button>
+
+                    <div class="divider"><span>hoặc tiếp tục với</span></div>
 
                     <div class="google-wrapper">
                         <div id="googleButton" class="google-btn"></div>
+                        <p id="google-fallback">Google đang được tải...</p>
                     </div>
 
-                    <a href="index.html" class="back-link" data-i18n="back_to_home">← Quay lại trang chủ</a>
+                    <p class="form-switch-prompt">Chưa có tài khoản? <button type="button" onclick="switchTab('register')">Tạo tài khoản miễn phí</button></p>
                 </form>
 
-                <form id="form-register" class="auth-form hidden">
-                    <h2 data-i18n="create_account">Tạo tài khoản mới</h2>
-                    <div class="input-group">
-                        <input type="text" id="reg-fullname" placeholder="Họ và Tên" data-i18n="fullname_placeholder" required>
+                <form id="form-register" class="auth-form hidden" novalidate>
+                    <div class="form-grid">
+                        <div class="field-group field-full">
+                            <label for="reg-fullname">Họ và tên</label>
+                            <div class="field-control">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+                                <input type="text" id="reg-fullname" name="fullName" placeholder="Nguyễn Văn An" autocomplete="name" minlength="2" required>
+                            </div>
+                        </div>
+
+                        <div class="field-group field-full">
+                            <label for="reg-email">Địa chỉ email</label>
+                            <div class="field-control">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
+                                <input type="email" id="reg-email" name="email" placeholder="tenban@email.com" autocomplete="email" inputmode="email" required>
+                            </div>
+                        </div>
+
+                        <div class="field-group field-full">
+                            <label for="reg-gender">Giới tính</label>
+                            <div class="field-control select-control">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+                                <select id="reg-gender" name="gender" required>
+                                    <option value="" disabled selected>Chọn giới tính</option>
+                                    <option value="Male">Nam</option>
+                                    <option value="Female">Nữ</option>
+                                    <option value="Other">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="field-group field-full">
+                            <label for="reg-password">Mật khẩu</label>
+                            <div class="field-control password-group">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+                                <input type="password" id="reg-password" name="password" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('reg-password', this)" aria-label="Hiện mật khẩu" aria-pressed="false">
+                                    <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.7"/></svg>
+                                </button>
+                            </div>
+                            <div class="password-strength" aria-live="polite">
+                                <span class="strength-bar"><i></i><i></i><i></i><i></i></span>
+                                <small id="strength-label">Dùng chữ hoa, chữ thường và ký tự đặc biệt</small>
+                            </div>
+                        </div>
+
+                        <div class="field-group field-full">
+                            <label for="reg-confirm-password">Xác nhận mật khẩu</label>
+                            <div class="field-control password-group">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+                                <input type="password" id="reg-confirm-password" name="confirmPassword" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('reg-confirm-password', this)" aria-label="Hiện mật khẩu" aria-pressed="false">
+                                    <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.7"/></svg>
+                                </button>
+                            </div>
+                            <small class="match-hint" id="password-match"></small>
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <select id="reg-gender" required>
-                            <option value="" disabled selected data-i18n="select_gender">Chọn giới tính</option>
-                            <option value="Male" data-i18n="gender_male">Nam</option>
-                            <option value="Female" data-i18n="gender_female">Nữ</option>
-                            <option value="Other" data-i18n="gender_other">Khác</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <input type="email" id="reg-email" placeholder="Email của bạn" data-i18n="email_placeholder" required>
-                    </div>
-                    <div class="input-group password-group">
-                        <input type="password" id="reg-password" placeholder="Mật khẩu" data-i18n="password_req_placeholder" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('reg-password', this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="input-group password-group">
-                        <input type="password" id="reg-confirm-password" placeholder="Xác nhận mật khẩu" data-i18n="confirm_password_placeholder" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('reg-confirm-password', this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                    <button type="submit" class="btn primary-btn" data-i18n="create_account_btn">Gửi mã xác thực</button>
-                    <a href="index.html" class="back-link" data-i18n="back_to_home">← Quay lại trang chủ</a>
+
+                    <label class="terms-row">
+                        <input type="checkbox" id="accept-terms" required>
+                        <span class="custom-checkbox"><svg viewBox="0 0 16 16"><path d="M3 8.3l3 3L13 4.8"/></svg></span>
+                        <span>Tôi đồng ý với <a href="terms.html">Điều khoản sử dụng</a> và <a href="privacy.html">Chính sách bảo mật</a>.</span>
+                    </label>
+
+                    <button type="submit" class="primary-btn">
+                        <span data-button-label>Gửi mã xác thực</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5l5 5-5 5"/></svg>
+                        <span class="button-loader" aria-hidden="true"></span>
+                    </button>
+                    <p class="form-switch-prompt">Đã có tài khoản? <button type="button" onclick="switchTab('login')">Đăng nhập ngay</button></p>
                 </form>
 
-                <form id="form-otp" class="auth-form hidden">
-                    <h2 data-i18n="verify_otp">Xác thực Email</h2>
-                    <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Mã OTP 6 số đã được gửi tới email của bạn.</p>
-                    <div class="otp-container">
-                        <input type="text" id="otp-code" placeholder="000000" maxlength="6" class="otp-input" required>
-                    </div>
-                    <button type="submit" class="btn primary-btn">Xác minh & Đăng ký</button>
-                    <button type="button" class="back-link-btn" onclick="switchTab('register')">← Quay lại</button>
+                <form id="form-otp" class="auth-form auth-step hidden" novalidate>
+                    <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></div>
+                    <h3>Xác thực email</h3>
+                    <p>Mã gồm 6 chữ số đã được gửi tới <strong id="otp-email-display">email của bạn</strong>.</p>
+                    <label for="otp-code" class="sr-only">Mã xác thực 6 chữ số</label>
+                    <input type="text" id="otp-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" required>
+                    <button type="submit" class="primary-btn"><span data-button-label>Xác minh tài khoản</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5l5 5-5 5"/></svg><span class="button-loader"></span></button>
+                    <button type="button" class="secondary-btn" onclick="switchTab('register')">← Quay lại đăng ký</button>
                 </form>
 
-                <form id="form-forgot" class="auth-form hidden">
-                    <h2>Quên mật khẩu?</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Nhập email đã đăng ký để nhận mã khôi phục mật khẩu.</p>
-                    <div class="input-group">
-                        <input type="email" id="forgot-email" placeholder="Email của bạn" required>
+                <form id="form-forgot" class="auth-form auth-step hidden" novalidate>
+                    <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v10H5z"/></svg></div>
+                    <h3>Khôi phục mật khẩu</h3>
+                    <p>Nhập email đã đăng ký. Zynk sẽ gửi mã xác thực để bạn đặt mật khẩu mới.</p>
+                    <div class="field-group align-left">
+                        <label for="forgot-email">Địa chỉ email</label>
+                        <div class="field-control"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg><input type="email" id="forgot-email" placeholder="tenban@email.com" autocomplete="email" required></div>
                     </div>
-                    <button type="submit" class="btn primary-btn">Tiếp tục</button>
-                    <button type="button" class="back-link-btn" onclick="switchTab('login')">← Quay lại đăng nhập</button>
+                    <button type="submit" class="primary-btn"><span data-button-label>Gửi mã khôi phục</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5l5 5-5 5"/></svg><span class="button-loader"></span></button>
+                    <button type="button" class="secondary-btn" onclick="switchTab('login')">← Quay lại đăng nhập</button>
                 </form>
 
-                <form id="form-reset" class="auth-form hidden">
-                    <h2>Đặt lại mật khẩu</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Nhập mã OTP từ email và mật khẩu mới của bạn.</p>
-                    <div class="input-group">
-                        <input type="text" id="reset-otp" placeholder="Mã OTP 6 số" maxlength="6" class="otp-small" required>
-                    </div>
-                    <div class="input-group password-group">
-                        <input type="password" id="reset-new-password" placeholder="Mật khẩu mới" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('reset-new-password', this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                    <button type="submit" class="btn primary-btn">Đổi mật khẩu</button>
-                    <button type="button" class="back-link-btn" onclick="switchTab('forgot')">← Quay lại</button>
+                <form id="form-reset" class="auth-form auth-step hidden" novalidate>
+                    <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9M12 7v5l3 2"/><path d="M17 3h4v4"/></svg></div>
+                    <h3>Đặt mật khẩu mới</h3>
+                    <p>Nhập mã OTP trong email và tạo mật khẩu mới an toàn cho tài khoản.</p>
+                    <div class="field-group align-left"><label for="reset-otp">Mã xác thực</label><div class="field-control"><svg viewBox="0 0 24 24"><path d="M8 12h8M12 8v8"/><circle cx="12" cy="12" r="9"/></svg><input type="text" id="reset-otp" placeholder="Mã OTP 6 số" maxlength="6" inputmode="numeric" required></div></div>
+                    <div class="field-group align-left"><label for="reset-new-password">Mật khẩu mới</label><div class="field-control password-group"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg><input type="password" id="reset-new-password" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password" required><button type="button" class="password-toggle" onclick="togglePassword('reset-new-password', this)" aria-label="Hiện mật khẩu"><svg class="eye-icon" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.7"/></svg></button></div></div>
+                    <button type="submit" class="primary-btn"><span data-button-label>Đổi mật khẩu</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5l5 5-5 5"/></svg><span class="button-loader"></span></button>
+                    <button type="button" class="secondary-btn" onclick="switchTab('forgot')">← Quay lại</button>
                 </form>
+
+                <footer class="auth-card-footer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.4 8-8 9-4.6-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+                    Kết nối được mã hóa và bảo vệ an toàn
+                </footer>
             </div>
-        </div>
-    </div>
+
+            <a href="index.html" class="back-home"><span>←</span> Quay lại trang chủ</a>
+        </section>
+    </main>
 
     <script src="js/api.js?v=2.0"></script>
-    <script src="js/lang.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/common.js?v=2.5"></script>
-    <script src="js/auth.js?v=2.1"></script>
+    <script src="js/lang.js?v=3.1"></script>
+    <script src="js/i18n.js?v=3.1"></script>
+    <script src="js/common.js?v=3.1"></script>
+    <script src="js/auth.js?v=3.1"></script>
 </body>
 </html>

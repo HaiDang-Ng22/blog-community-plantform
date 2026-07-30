@@ -1,0 +1,135 @@
+/* Global preference fallback shared by every Zynk page. */
+html.dark-mode-root {
+    --bg-color:#090d18;
+    --bg-gradient:#090d18;
+    --glass-bg:#111827;
+    --text-primary:#f4f7fb;
+    --text-secondary:#aab4c4;
+    --text-light:#778297;
+    --input-bg:#111827;
+    --input-border:#2a3548;
+    --border-color:#273247;
+    --card-bg:#111827;
+    background:#090d18;
+    color-scheme:dark;
+}
+
+html.dark-mode-root body,
+body.dark-mode {
+    color:var(--text-primary,#f4f7fb);
+    background-color:#090d18;
+}
+
+html.dark-mode-root :is(input,textarea,select),
+body.dark-mode :is(input,textarea,select) {
+    color:#eef2f8;
+    border-color:#2a3548;
+    background-color:#111827;
+}
+
+html.dark-mode-root :is(input,textarea)::placeholder,
+body.dark-mode :is(input,textarea)::placeholder { color:#768297; }
+
+html.dark-mode-root :is(.modal-container,.modal-content,.modal-box,.card,.glass-card,.content-card,.form-card,.sidebar-more-menu,.user-dropdown,.noti-dropdown,.dropdown-menu),
+body.dark-mode :is(.modal-container,.modal-content,.modal-box,.card,.glass-card,.content-card,.form-card,.sidebar-more-menu,.user-dropdown,.noti-dropdown,.dropdown-menu) {
+    color:#e9eef7;
+    border-color:#273247;
+    background-color:#111827;
+}
+
+html.dark-mode-root :is(table,th,td),
+body.dark-mode :is(table,th,td) { border-color:#273247; }
+html.dark-mode-root th,body.dark-mode th { color:#c7d0df; background:#151d2c; }
+html.dark-mode-root td,body.dark-mode td { color:#dce3ee; background:#101725; }
+
+html.dark-mode-root a,body.dark-mode a { color:inherit; }
+html.dark-mode-root hr,body.dark-mode hr { border-color:#273247; }
+
+/* The modern settings page previously forced its light palette in dark mode. */
+html.dark-mode-root body.home-page,
+body.home-page.dark-mode {
+    --sp-text:#f2f5fb;
+    --sp-muted:#9da9bc;
+    --sp-line:#2b374a;
+    --sp-bg:#090e1a;
+    --sp-card:rgba(17,24,39,.94);
+    color:var(--sp-text) !important;
+    background:
+        radial-gradient(circle at 81% 12%,rgba(100,91,235,.14),transparent 30rem),
+        radial-gradient(circle at 38% 94%,rgba(35,157,197,.09),transparent 28rem),
+        #090e1a !important;
+}
+
+html.dark-mode-root body.home-page :is(.settings-sidebar,.settings-content),
+body.home-page.dark-mode :is(.settings-sidebar,.settings-content) {
+    color:var(--sp-text) !important;
+    border-color:#2a3548 !important;
+    background:rgba(15,22,35,.94) !important;
+    box-shadow:0 24px 70px rgba(0,0,0,.32) !important;
+}
+
+html.dark-mode-root body.home-page .settings-section.active::before,
+body.home-page.dark-mode .settings-section.active::before {
+    border-color:#303750 !important;
+    background:radial-gradient(circle at 82% 22%,rgba(101,92,242,.13),transparent 24%),linear-gradient(125deg,#151c2b,#15172a 58%,#112432) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 14px 35px rgba(0,0,0,.18) !important;
+}
+
+html.dark-mode-root body.home-page :is(.section-title,.form-group label,.theme-card h4),
+body.home-page.dark-mode :is(.section-title,.form-group label,.theme-card h4) { color:#f2f5fb !important; }
+
+html.dark-mode-root body.home-page :is(.section-desc,.theme-card [style*="color"]),
+body.home-page.dark-mode :is(.section-desc,.theme-card [style*="color"]) { color:#9da9bc !important; }
+
+html.dark-mode-root body.home-page .settings-nav-item,
+body.home-page.dark-mode .settings-nav-item { color:#b4bfd0 !important; }
+html.dark-mode-root body.home-page .settings-nav-item > i,
+body.home-page.dark-mode .settings-nav-item > i { color:#9aa6ba; background:#182132; }
+html.dark-mode-root body.home-page .settings-nav-item:hover,
+body.home-page.dark-mode .settings-nav-item:hover { color:#fff !important; border-color:#303b50; background:#171f30; }
+html.dark-mode-root body.home-page .settings-nav-item.active,
+body.home-page.dark-mode .settings-nav-item.active { color:#c5c0ff !important; border-color:#4d4688; background:linear-gradient(90deg,#242044,#1a2033); }
+
+html.dark-mode-root body.home-page :is(.theme-card,.form-group input,.form-group textarea,.form-group select,#pwa-unavailable-msg),
+body.home-page.dark-mode :is(.theme-card,.form-group input,.form-group textarea,.form-group select,#pwa-unavailable-msg) {
+    color:#edf1f8 !important;
+    border-color:#2b374a !important;
+    background:#111827 !important;
+}
+
+html.dark-mode-root body.home-page .theme-card:hover,
+body.home-page.dark-mode .theme-card:hover { border-color:#514a91 !important; background:#171a30 !important; }
+html.dark-mode-root body.home-page .theme-card.lang-active,
+body.home-page.dark-mode .theme-card.lang-active { border-color:#655cf2 !important; background:#211e3c !important; box-shadow:0 0 0 3px rgba(101,92,242,.14); }
+
+/* Keep the redesigned profile truly dark as well. */
+html.dark-mode-root body.profile-page,
+body.profile-page.dark-mode {
+    --pf-text:#f1f5fb;
+    --pf-muted:#9ba7ba;
+    --pf-line:#293549;
+    --pf-bg:#090e1a;
+    --pf-surface:rgba(17,24,39,.94);
+    background:radial-gradient(circle at 84% 8%,rgba(101,92,242,.14),transparent 31rem),radial-gradient(circle at 32% 92%,rgba(40,183,214,.08),transparent 27rem),#090e1a !important;
+}
+html.dark-mode-root body.profile-page :is(.profile-header-modern,.profile-tabs,.tab-content.active,.shopping-card),
+body.profile-page.dark-mode :is(.profile-header-modern,.profile-tabs,.tab-content.active,.shopping-card) { border-color:#293549 !important; background:#111827 !important; }
+html.dark-mode-root body.profile-page .profile-header-modern::before,
+body.profile-page.dark-mode .profile-header-modern::before { border-color:#303750 !important; background:radial-gradient(circle at 79% 22%,rgba(101,92,242,.17),transparent 20%),radial-gradient(circle at 22% 120%,rgba(40,183,214,.12),transparent 29%),linear-gradient(125deg,#151c2b,#17172c 58%,#102633) !important; }
+html.dark-mode-root body.profile-page :is(.ph-stat,.ph-btn.secondary-btn),
+body.profile-page.dark-mode :is(.ph-stat,.ph-btn.secondary-btn) { color:#dce3ef !important; border-color:#303b50 !important; background:#172131 !important; }
+html.dark-mode-root body.profile-page .ph-avatar-ring,
+body.profile-page.dark-mode .ph-avatar-ring { box-shadow:0 0 0 7px rgba(17,24,39,.96),0 18px 40px rgba(0,0,0,.4) !important; }
+html.dark-mode-root body.profile-page #user-list-modal .user-list-dialog,
+body.profile-page.dark-mode #user-list-modal .user-list-dialog { color:#eef2f8; border-color:#354158; background:linear-gradient(145deg,#151d2c,#101725) !important; }
+html.dark-mode-root body.profile-page :is(.user-list-heading h3,.user-list-info strong,.user-list-empty strong),
+body.profile-page.dark-mode :is(.user-list-heading h3,.user-list-info strong,.user-list-empty strong) { color:#eef2f8; }
+html.dark-mode-root body.profile-page :is(.user-list-search,.user-list-count,.user-list-close),
+body.profile-page.dark-mode :is(.user-list-search,.user-list-count,.user-list-close) { color:#aeb9ca; border-color:#303b50; background:#182131; }
+html.dark-mode-root body.profile-page .user-list-card:hover,
+body.profile-page.dark-mode .user-list-card:hover { border-color:#494381; background:#1c2038; }
+html.dark-mode-root body.profile-page .user-list-action,
+body.profile-page.dark-mode .user-list-action { color:#c4bfff; border-color:#494381; background:#252143; }
+
+html.dark-mode-root { scrollbar-color:#39465c #0c1220; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; } }

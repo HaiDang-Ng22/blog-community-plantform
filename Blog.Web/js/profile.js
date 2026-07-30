@@ -84,42 +84,134 @@ async function loadFriendsList() {
     }
 }
 
+let activeUserList = [];
+
+function getUserInitials(name) {
+    return (name || 'U').trim().split(/\s+/).slice(-2).map(part => part.charAt(0)).join('').toUpperCase();
+}
+
+function userMatchesSearch(user, query) {
+    const name = (user.fullName || '').toLocaleLowerCase('vi');
+    const username = (user.username || '').toLocaleLowerCase('vi');
+    return name.startsWith(query)
+        || name.split(/\s+/).some(part => part.startsWith(query))
+        || username.startsWith(query);
+}
+
+function renderUserList(users, isSearch = false) {
+    const content = document.getElementById('user-list-modal-content');
+    document.getElementById('user-list-count').innerHTML = `<strong>${activeUserList.length}</strong> người`;
+    content.innerHTML = '';
+
+    if (!users.length) {
+        content.innerHTML = `
+            <div class="user-list-empty">
+                <span><i class="fa-solid ${isSearch ? 'fa-user-slash' : 'fa-users'}"></i></span>
+                <strong>${isSearch ? 'Không tìm thấy người dùng' : 'Danh sách đang trống'}</strong>
+                <p>${isSearch ? 'Thử tìm bằng tên hoặc tài khoản khác.' : 'Những kết nối mới sẽ xuất hiện tại đây.'}</p>
+            </div>`;
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    users.forEach(user => {
+        const name = user.fullName || user.username || 'Người dùng Zynk';
+        const username = user.username || 'thanhvien';
+        const profileUrl = `profile.html?id=${encodeURIComponent(user.id)}`;
+        const card = document.createElement('article');
+        card.className = 'user-list-card';
+
+        const avatarLink = document.createElement('a');
+        avatarLink.className = 'user-list-avatar';
+        avatarLink.href = profileUrl;
+        avatarLink.setAttribute('aria-label', `Xem hồ sơ ${name}`);
+        const initials = document.createElement('span');
+        initials.textContent = getUserInitials(name);
+        avatarLink.appendChild(initials);
+        if (user.avatarUrl && user.avatarUrl !== 'null') {
+            const image = document.createElement('img');
+            image.src = user.avatarUrl;
+            image.alt = `Ảnh đại diện của ${name}`;
+            image.loading = 'lazy';
+            image.addEventListener('error', () => image.remove(), { once: true });
+            avatarLink.appendChild(image);
+        }
+
+        const info = document.createElement('a');
+        info.className = 'user-list-info';
+        info.href = profileUrl;
+        const fullName = document.createElement('strong');
+        fullName.textContent = name;
+        const handle = document.createElement('span');
+        handle.textContent = `@${username}`;
+        info.append(fullName, handle);
+
+        const action = document.createElement('a');
+        action.className = 'user-list-action';
+        action.href = profileUrl;
+        action.innerHTML = '<span>Xem hồ sơ</span><i class="fa-solid fa-arrow-right"></i>';
+        action.setAttribute('aria-label', `Xem hồ sơ ${name}`);
+
+        card.append(avatarLink, info, action);
+        fragment.appendChild(card);
+    });
+    content.appendChild(fragment);
+}
+
+window.closeUserListModal = function() {
+    document.getElementById('user-list-modal')?.classList.add('hidden');
+    document.body.classList.remove('user-list-open');
+};
+
 window.openUserListModal = async function(type) {
     const modal = document.getElementById('user-list-modal');
     const content = document.getElementById('user-list-modal-content');
     const title = document.getElementById('user-list-modal-title');
-    
+    const subtitle = document.getElementById('user-list-modal-subtitle');
+    const searchInput = document.getElementById('user-list-search-input');
+
     title.textContent = type === 'followers' ? 'Người theo dõi' : 'Đang theo dõi';
-    content.innerHTML = '<div class="loading-spinner"></div>';
+    subtitle.textContent = type === 'followers'
+        ? 'Những người đang quan tâm đến hành trình của bạn.'
+        : 'Những tài khoản bạn đang kết nối và quan tâm.';
+    activeUserList = [];
+    searchInput.value = '';
+    content.innerHTML = Array.from({ length: 4 }, () => `
+        <div class="user-list-card user-list-skeleton">
+            <span></span><div><b></b><small></small></div><em></em>
+        </div>`).join('');
+    document.getElementById('user-list-count').innerHTML = '<strong>...</strong> người';
     modal.classList.remove('hidden');
-    
+    document.body.classList.add('user-list-open');
+
     try {
         const users = await window.api.get(`users/${currentProfileId}/${type}`);
-        content.innerHTML = '';
-        if (users.length === 0) {
-            content.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-secondary);">Danh sách trống</div>';
-            return;
-        }
-        
-        users.forEach(user => {
-            const card = document.createElement('div');
-            card.style = "display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color);";
-            card.innerHTML = `
-                <div style="display:flex; align-items:center; gap: 12px; cursor: pointer;" onclick="window.location.href='profile.html?id=${user.id}'">
-                    <img src="${user.avatarUrl || 'https://ui-avatars.com/api/?name=' + user.fullName}" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
-                    <div>
-                        <div style="font-weight:600; color:var(--text-primary); font-size:0.95rem;">${user.fullName}</div>
-                        <div style="font-size:0.85rem; color:var(--text-secondary);">@${user.username}</div>
-                    </div>
-                </div>
-                <button class="btn secondary-btn" style="padding: 5px 12px; font-size: 0.85rem;" onclick="window.location.href='profile.html?id=${user.id}'">Xem</button>
-            `;
-            content.appendChild(card);
-        });
+        activeUserList = Array.isArray(users) ? users : [];
+        const query = searchInput.value.trim().toLocaleLowerCase('vi');
+        const filtered = !query ? activeUserList : activeUserList.filter(user => userMatchesSearch(user, query));
+        renderUserList(filtered, Boolean(query));
     } catch(e) {
-        content.innerHTML = '<div class="error">Lỗi tải danh sách.</div>';
+        content.innerHTML = `
+            <div class="user-list-empty user-list-error">
+                <span><i class="fa-solid fa-cloud-arrow-down"></i></span>
+                <strong>Không thể tải danh sách</strong>
+                <p>Vui lòng kiểm tra kết nối và thử lại sau.</p>
+            </div>`;
     }
 }
+
+document.addEventListener('input', event => {
+    if (event.target.id !== 'user-list-search-input') return;
+    const query = event.target.value.trim().toLocaleLowerCase('vi');
+    const filtered = !query ? activeUserList : activeUserList.filter(user => userMatchesSearch(user, query));
+    renderUserList(filtered, Boolean(query));
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !document.getElementById('user-list-modal')?.classList.contains('hidden')) {
+        closeUserListModal();
+    }
+});
 
 async function loadUserProfile(userId) {
     try {
@@ -343,6 +435,12 @@ async function loadUserPosts(userId, isPrivate, isFollowing, isMyProfile) {
                         <span><i class="fa-solid fa-comment"></i> ${post.commentCount || 0}</span>
                     </div>
                 `;
+
+                const thumbnail = square.querySelector('img');
+                thumbnail?.addEventListener('error', () => {
+                    thumbnail.hidden = true;
+                    square.classList.add('image-unavailable');
+                }, { once: true });
                 
                 square.onclick = () => openPostModal(post);
                 galleryGrid.appendChild(square);
