@@ -34,180 +34,202 @@ public class SearchController : ControllerBase
         if (string.IsNullOrWhiteSpace(q))
             return Ok(new SearchResultDto());
 
-        var rawQuery = q.Trim().ToLower();
-        var normQuery = RemoveDiacritics(rawQuery);
+        var normalizedQuery = NormalizeForSearch(q.Trim().TrimStart('#'));
         Guid? searchId = null;
         if (Guid.TryParse(q, out var guid)) searchId = guid;
 
         // 1. Users Search (Accent-insensitive)
         var rawUsers = await _context.Users
-            .Take(100)
-            .Select(u => new UserSearchResult
-            {
-                Id = u.Id,
-                Username = u.Username ?? string.Empty,
-                FullName = u.FullName ?? string.Empty,
-                AvatarUrl = u.AvatarUrl,
-                Bio = u.Bio
-            })
+            .AsNoTracking()
+            .Where(u => u.IsActive)
+            .OrderByDescending(u => u.IsVerified)
+            .ThenByDescending(u => u.Followers.Count)
+            .ThenByDescending(u => u.CreatedAt)
+            .Take(300)
+            .Select(u => new { u.Id, u.Username, u.FullName, u.AvatarUrl, u.Bio, u.IsVerified, FollowerCount = u.Followers.Count })
             .ToListAsync();
 
         var users = rawUsers
-            .Where(u =>
-                (searchId.HasValue && u.Id == searchId.Value) ||
-                (!string.IsNullOrEmpty(u.Username) && u.Username.ToLower().Contains(rawQuery)) ||
-                (!string.IsNullOrEmpty(u.FullName) && (
-                    u.FullName.ToLower().Contains(rawQuery) ||
-                    RemoveDiacritics(u.FullName).ToLower().Contains(normQuery)
-                ))
-            )
-            .Take(10)
+            .Select(u => new
+            {
+                User = u,
+                Score = searchId == u.Id ? 1000 : Math.Max(
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(u.Username)),
+                    Math.Max(CalculateMatchScore(normalizedQuery, NormalizeForSearch(u.FullName)),
+                        CalculateMatchScore(normalizedQuery, NormalizeForSearch(u.Bio ?? string.Empty)) * 0.55))
+                    + (u.IsVerified ? 2.5 : 0)
+                    + PopularityBoost(u.FollowerCount, 4)
+            })
+            .Where(x => x.Score > 10)
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.User.Username.Length)
+            .Take(12)
+            .Select(x => new UserSearchResult
+            {
+                Id = x.User.Id,
+                Username = x.User.Username ?? string.Empty,
+                FullName = x.User.FullName ?? string.Empty,
+                AvatarUrl = x.User.AvatarUrl,
+                Bio = x.User.Bio
+            })
             .ToList();
 
         // 2. Posts Search (Accent-insensitive)
         var rawPosts = await _context.Posts
+            .AsNoTracking()
             .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published)
             .Include(p => p.Author)
             .Include(p => p.Images)
-            .OrderByDescending(p => p.CreatedAt)
-            .Take(100)
+            .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+            .OrderByDescending(p => p.LikeCount)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(350)
             .ToListAsync();
 
-        var posts = rawPosts
-            .Where(p =>
-                (searchId.HasValue && p.Id == searchId.Value) ||
-                (!string.IsNullOrEmpty(p.Title) && (
-                    p.Title.ToLower().Contains(rawQuery) ||
-                    RemoveDiacritics(p.Title).ToLower().Contains(normQuery)
-                )) ||
-                (!string.IsNullOrEmpty(p.Content) && (
-                    p.Content.ToLower().Contains(rawQuery) ||
-                    RemoveDiacritics(p.Content).ToLower().Contains(normQuery)
-                ))
-            )
-            .Take(10)
-            .Select(p => new PostSearchResult
+        var rankedPosts = rawPosts
+            .Select(p => new
             {
-                Id = p.Id,
-                Title = p.Title ?? string.Empty,
-                Summary = p.Summary,
-                Content = p.Content,
-                FeaturedImageUrl = p.FeaturedImageUrl,
-                AuthorName = p.Author != null ? p.Author.FullName : "Người dùng",
-                AuthorAvatarUrl = p.Author != null ? p.Author.AvatarUrl : null,
-                LikeCount = p.LikeCount,
-                CreatedAt = p.CreatedAt
+                Post = p,
+                Score = searchId == p.Id ? 1000 : new[]
+                {
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Title)),
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Summary ?? string.Empty)) * 0.85,
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Content)) * 0.68,
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Author?.FullName ?? string.Empty)) * 0.75,
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Author?.Username ?? string.Empty)) * 0.8,
+                    p.PostTags.Select(pt => CalculateMatchScore(normalizedQuery, NormalizeForSearch(pt.Tag.Name))).DefaultIfEmpty(0).Max() * 0.95
+                }.Max() + PopularityBoost(p.LikeCount + p.ViewCount / 5, 5) + RecencyBoost(p.CreatedAt, 3)
+            })
+            .Where(x => x.Score > 10)
+            .OrderByDescending(x => x.Score)
+            .ThenByDescending(x => x.Post.CreatedAt)
+            .ToList();
+
+        var posts = rankedPosts
+            .Where(x => x.Post.Type != Blog.Domain.Entities.PostType.Reel && string.IsNullOrEmpty(x.Post.VideoUrl))
+            .Take(12)
+            .Select(x => new PostSearchResult
+            {
+                Id = x.Post.Id,
+                Title = x.Post.Title ?? string.Empty,
+                Summary = x.Post.Summary,
+                Content = x.Post.Content,
+                FeaturedImageUrl = x.Post.FeaturedImageUrl,
+                AuthorName = x.Post.Author?.FullName ?? "Người dùng",
+                AuthorAvatarUrl = x.Post.Author?.AvatarUrl,
+                LikeCount = x.Post.LikeCount,
+                CreatedAt = x.Post.CreatedAt
             })
             .ToList();
 
         // 3. Reels Search (Posts with video/reels content)
-        var reels = rawPosts
-            .Where(p => p.Type == Blog.Domain.Entities.PostType.Reel || !string.IsNullOrEmpty(p.VideoUrl))
-            .Where(p =>
-                (!string.IsNullOrEmpty(p.Title) && (p.Title.ToLower().Contains(rawQuery) || RemoveDiacritics(p.Title).ToLower().Contains(normQuery))) ||
-                (!string.IsNullOrEmpty(p.Content) && (p.Content.ToLower().Contains(rawQuery) || RemoveDiacritics(p.Content).ToLower().Contains(normQuery)))
-            )
-            .Take(10)
-            .Select(p => new ReelSearchResult
+        var reels = rankedPosts
+            .Where(x => x.Post.Type == Blog.Domain.Entities.PostType.Reel || !string.IsNullOrEmpty(x.Post.VideoUrl))
+            .Take(12)
+            .Select(x => new ReelSearchResult
             {
-                Id = p.Id,
-                Title = p.Title ?? string.Empty,
-                VideoUrl = p.VideoUrl,
-                FeaturedImageUrl = p.FeaturedImageUrl,
-                ImageUrls = p.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
-                AuthorName = p.Author != null ? p.Author.FullName : "Người dùng",
-                AuthorAvatarUrl = p.Author != null ? p.Author.AvatarUrl : null,
-                LikeCount = p.LikeCount
+                Id = x.Post.Id,
+                Title = x.Post.Title ?? string.Empty,
+                VideoUrl = x.Post.VideoUrl,
+                FeaturedImageUrl = x.Post.FeaturedImageUrl,
+                ImageUrls = x.Post.Images.OrderBy(i => i.OrderIndex).Select(i => i.Url).ToList(),
+                AuthorName = x.Post.Author?.FullName ?? "Người dùng",
+                AuthorAvatarUrl = x.Post.Author?.AvatarUrl,
+                LikeCount = x.Post.LikeCount
             })
             .ToList();
 
         // 4. Hashtags Search
         var rawTags = await _context.Tags
-            .Include(t => t.PostTags)
-            .Take(50)
+            .AsNoTracking()
+            .OrderByDescending(t => t.PostTags.Count)
+            .Take(200)
             .Select(t => new HashtagSearchResult
             {
                 Name = t.Name ?? string.Empty,
-                PostCount = t.PostTags != null ? t.PostTags.Count : 0
+                PostCount = t.PostTags.Count
             })
             .ToListAsync();
 
-        var cleanQueryTag = rawQuery.StartsWith("#") ? rawQuery.Substring(1) : rawQuery;
-        var normQueryTag = RemoveDiacritics(cleanQueryTag);
-
         var hashtags = rawTags
-            .Where(t =>
-                !string.IsNullOrEmpty(t.Name) && (
-                    t.Name.ToLower().Contains(cleanQueryTag) ||
-                    RemoveDiacritics(t.Name).ToLower().Contains(normQueryTag)
-                )
-            )
-            .Take(10)
+            .Select(t => new { Tag = t, Score = CalculateMatchScore(normalizedQuery, NormalizeForSearch(t.Name.TrimStart('#'))) + PopularityBoost(t.PostCount, 5) })
+            .Where(x => x.Score > 10)
+            .OrderByDescending(x => x.Score)
+            .Take(12)
+            .Select(x => x.Tag)
             .ToList();
 
-        if (hashtags.Count == 0 && !string.IsNullOrWhiteSpace(cleanQueryTag))
+        if (hashtags.Count == 0 && !string.IsNullOrWhiteSpace(normalizedQuery))
         {
-            hashtags.Add(new HashtagSearchResult { Name = cleanQueryTag, PostCount = posts.Count });
+            hashtags.Add(new HashtagSearchResult { Name = q.Trim().TrimStart('#'), PostCount = posts.Count + reels.Count });
         }
 
         // 5. Groups Search
         var rawGroups = await _context.Groups
-            .Include(g => g.Members)
-            .Take(50)
+            .AsNoTracking()
+            .OrderByDescending(g => g.Members.Count)
+            .Take(200)
             .Select(g => new GroupSearchResult
             {
                 Id = g.Id,
                 Name = g.Name ?? string.Empty,
                 Description = g.Description,
                 AvatarUrl = g.AvatarImageUrl,
-                MemberCount = g.Members != null ? g.Members.Count : 0,
+                MemberCount = g.Members.Count,
                 IsPublic = !g.IsPrivate
             })
             .ToListAsync();
 
         var groups = rawGroups
-            .Where(g =>
-                !string.IsNullOrEmpty(g.Name) && (
-                    g.Name.ToLower().Contains(rawQuery) ||
-                    RemoveDiacritics(g.Name).ToLower().Contains(normQuery)
-                )
-            )
-            .Take(10)
+            .Select(g => new { Group = g, Score = Math.Max(CalculateMatchScore(normalizedQuery, NormalizeForSearch(g.Name)), CalculateMatchScore(normalizedQuery, NormalizeForSearch(g.Description ?? string.Empty)) * 0.6) + PopularityBoost(g.MemberCount, 4) })
+            .Where(x => x.Score > 10)
+            .OrderByDescending(x => x.Score)
+            .Take(12)
+            .Select(x => x.Group)
             .ToList();
 
         // 6. Products Search
         var rawProducts = await _context.Products
+            .AsNoTracking()
+            .Where(p => p.Status == Blog.Domain.Entities.ProductStatus.Active && !p.Shop.IsSuspended)
             .Include(p => p.Shop)
-            .Take(50)
+            .OrderByDescending(p => p.SalesCount)
+            .ThenByDescending(p => p.Rating)
+            .Take(250)
             .ToListAsync();
 
         var products = rawProducts
-            .Where(p =>
-                (!string.IsNullOrEmpty(p.Name) && (
-                    p.Name.ToLower().Contains(rawQuery) ||
-                    RemoveDiacritics(p.Name).ToLower().Contains(normQuery)
-                )) ||
-                (!string.IsNullOrEmpty(p.Description) && (
-                    p.Description.ToLower().Contains(rawQuery) ||
-                    RemoveDiacritics(p.Description).ToLower().Contains(normQuery)
-                ))
-            )
-            .Take(10)
-            .Select(p => new ProductSearchResult
+            .Select(p => new
             {
-                Id = p.Id,
-                Name = p.Name ?? string.Empty,
-                Description = p.Description,
-                Price = p.Price,
-                FeaturedImageUrl = p.FeaturedImageUrl,
-                ShopName = p.Shop != null ? p.Shop.Name : "Cửa hàng Zynk"
+                Product = p,
+                Score = new[]
+                {
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Name)),
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Description)) * 0.62,
+                    CalculateMatchScore(normalizedQuery, NormalizeForSearch(p.Shop?.Name ?? string.Empty)) * 0.72
+                }.Max() + PopularityBoost(p.SalesCount, 5) + Math.Clamp(p.Rating, 0, 5) * 0.35
+            })
+            .Where(x => x.Score > 10)
+            .OrderByDescending(x => x.Score)
+            .Take(12)
+            .Select(x => new ProductSearchResult
+            {
+                Id = x.Product.Id,
+                Name = x.Product.Name ?? string.Empty,
+                Description = x.Product.Description,
+                Price = x.Product.Price,
+                FeaturedImageUrl = x.Product.FeaturedImageUrl,
+                ShopName = x.Product.Shop?.Name ?? "Cửa hàng Zynk"
             })
             .ToList();
 
         // 7. Shops Search
         var rawShops = await _context.Shops
-            .Include(s => s.Products)
-            .Take(50)
+            .AsNoTracking()
+            .Where(s => !s.IsSuspended)
+            .OrderByDescending(s => s.Rating)
+            .ThenByDescending(s => s.Products.Count)
+            .Take(180)
             .Select(s => new ShopSearchResult
             {
                 Id = s.Id,
@@ -216,19 +238,17 @@ public class SearchController : ControllerBase
                 AvatarUrl = s.LogoUrl,
                 IsVerified = s.User.IsVerified,
                 Rating = s.Rating,
-                FollowerCount = 120,
-                ProductCount = s.Products != null ? s.Products.Count : 0
+                FollowerCount = s.User.Followers.Count,
+                ProductCount = s.Products.Count
             })
             .ToListAsync();
 
         var shops = rawShops
-            .Where(s =>
-                !string.IsNullOrEmpty(s.Name) && (
-                    s.Name.ToLower().Contains(rawQuery) ||
-                    RemoveDiacritics(s.Name).ToLower().Contains(normQuery)
-                )
-            )
-            .Take(10)
+            .Select(s => new { Shop = s, Score = Math.Max(CalculateMatchScore(normalizedQuery, NormalizeForSearch(s.Name)), CalculateMatchScore(normalizedQuery, NormalizeForSearch(s.Description ?? string.Empty)) * 0.6) + PopularityBoost(s.FollowerCount + s.ProductCount, 4) + Math.Clamp(s.Rating, 0, 5) * 0.3 })
+            .Where(x => x.Score > 10)
+            .OrderByDescending(x => x.Score)
+            .Take(12)
+            .Select(x => x.Shop)
             .ToList();
 
         return Ok(new SearchResultDto
@@ -241,6 +261,54 @@ public class SearchController : ControllerBase
             Products = products,
             Shops = shops
         });
+    }
+
+    [HttpGet("trending")]
+    public async Task<ActionResult<List<SearchSuggestionDto>>> Trending()
+    {
+        var tags = await _context.Tags.AsNoTracking()
+            .OrderByDescending(t => t.PostTags.Count)
+            .Take(5)
+            .Select(t => new SearchSuggestionDto
+            {
+                Id = t.Id,
+                Text = "#" + t.Name.TrimStart('#'),
+                Subtitle = t.PostTags.Count + " bài viết",
+                Type = "hashtag",
+                Score = t.PostTags.Count
+            }).ToListAsync();
+
+        var posts = await _context.Posts.AsNoTracking()
+            .Where(p => p.Status == Blog.Domain.Entities.PostStatus.Published)
+            .OrderByDescending(p => p.LikeCount + p.ViewCount)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(3)
+            .Select(p => new SearchSuggestionDto
+            {
+                Id = p.Id,
+                Text = p.Title,
+                Subtitle = p.LikeCount + " lượt thích",
+                Type = p.Type == Blog.Domain.Entities.PostType.Reel || p.VideoUrl != null ? "reel" : "post",
+                ImageUrl = p.FeaturedImageUrl,
+                Score = p.LikeCount + p.ViewCount
+            }).ToListAsync();
+
+        var products = await _context.Products.AsNoTracking()
+            .Where(p => p.Status == Blog.Domain.Entities.ProductStatus.Active && !p.Shop.IsSuspended)
+            .OrderByDescending(p => p.SalesCount)
+            .ThenByDescending(p => p.Rating)
+            .Take(2)
+            .Select(p => new SearchSuggestionDto
+            {
+                Id = p.Id,
+                Text = p.Name,
+                Subtitle = p.SalesCount + " đã bán",
+                Type = "product",
+                ImageUrl = p.FeaturedImageUrl,
+                Score = p.SalesCount
+            }).ToListAsync();
+
+        return Ok(tags.Take(4).Concat(posts.Take(2)).Concat(products.Take(2)).ToList());
     }
 
     [HttpGet("suggestions")]
@@ -369,6 +437,18 @@ public class SearchController : ControllerBase
             ImageUrl = imageUrl,
             Score = score <= 0 ? 0 : score + popularityBoost
         };
+    }
+
+    private static double PopularityBoost(int value, double maximum)
+    {
+        if (value <= 0) return 0;
+        return Math.Min(maximum, Math.Log10(value + 1) * 1.35);
+    }
+
+    private static double RecencyBoost(DateTime createdAt, double maximum)
+    {
+        var ageInDays = Math.Max(0, (DateTime.UtcNow - createdAt.ToUniversalTime()).TotalDays);
+        return maximum * Math.Exp(-ageInDays / 45d);
     }
 
     private static double CalculateMatchScore(string query, string value)

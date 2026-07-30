@@ -3,7 +3,7 @@
 
 // ====== STATE ======
 const HISTORY_KEY = 'zynk_search_history';
-const MAX_HISTORY = 10;
+const MAX_HISTORY = 12;
 let currentTab = 'all';
 let currentQuery = '';
 let debounceTimer = null;
@@ -11,6 +11,8 @@ let abortController = null;
 let suggestionRequestId = 0;
 let suggestionItems = [];
 let activeSuggestionIndex = -1;
+let trendingItems = [];
+let searchSubmitted = false;
 
 // Helper translation wrapper
 function _t(key, fallback) {
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabFromUrl) currentTab = tabFromUrl;
 
     renderRecentSearches();
+    loadTrending();
 
     if (query) {
         if (searchInput) searchInput.value = query;
@@ -133,11 +136,19 @@ document.addEventListener('DOMContentLoaded', () => {
             window.selectSuggestion(query);
         }
     });
+
+    document.getElementById('trending-list')?.addEventListener('click', e => {
+        const target = e.target.closest('[data-trending-index]');
+        if (!target) return;
+        const item = trendingItems[Number(target.dataset.trendingIndex)];
+        if (item) chooseSuggestion(item);
+    });
 });
 
 // ====== INPUT HANDLER WITH DEBOUNCE ======
 function onInput() {
     const q = searchInput.value.trim();
+    searchSubmitted = false;
     if (clearBtn) clearBtn.classList.toggle('hidden', q.length === 0);
 
     if (q.length === 0) {
@@ -157,7 +168,7 @@ function onInput() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         showSuggestions(q);
-    }, 350);
+    }, 180);
 }
 
 // ====== SUGGESTIONS ======
@@ -180,6 +191,7 @@ function showSuggestionsSkeleton() {
 
 async function showSuggestions(q) {
     if (!suggestBox) return;
+    if (searchSubmitted) return;
     const requestId = ++suggestionRequestId;
     let remoteItems = [];
 
@@ -189,7 +201,7 @@ async function showSuggestions(q) {
         console.warn('Không thể tải gợi ý tìm kiếm:', error);
     }
 
-    if (requestId !== suggestionRequestId || searchInput?.value.trim() !== q) return;
+    if (searchSubmitted || requestId !== suggestionRequestId || searchInput?.value.trim() !== q) return;
 
     const historyItems = getHistory()
         .filter(item => normalizeText(item).includes(normalizeText(q)))
@@ -264,7 +276,12 @@ function dedupeSuggestions(items) {
 }
 
 function normalizeText(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .toLowerCase()
+        .trim();
 }
 
 function safeImageUrl(value) {
@@ -288,7 +305,23 @@ function chooseSuggestion(item) {
     if (searchInput) searchInput.value = text;
     if (clearBtn) clearBtn.classList.remove('hidden');
     hideSuggestions();
+    const destination = suggestionDestination(item);
+    if (destination) {
+        saveToHistory(text);
+        window.location.href = destination;
+        return;
+    }
     performSearch(text);
+}
+
+function suggestionDestination(item) {
+    if (!item?.id) return '';
+    const id = encodeURIComponent(item.id);
+    if (item.type === 'user') return `profile.html?id=${id}`;
+    if (item.type === 'group') return `group-detail.html?id=${id}`;
+    if (item.type === 'post') return `index.html?postId=${id}`;
+    if (item.type === 'reel') return 'reels.html';
+    return '';
 }
 
 function hideSuggestions() {
@@ -309,11 +342,50 @@ window.selectSuggestion = function(text) {
     performSearch(text);
 };
 
+async function loadTrending() {
+    const list = document.getElementById('trending-list');
+    if (!list) return;
+
+    try {
+        const result = await window.api.get('search/trending');
+        trendingItems = Array.isArray(result) ? result : [];
+        if (!trendingItems.length) {
+            list.innerHTML = '<div class="trending-loading">Chưa có xu hướng nổi bật.</div>';
+            return;
+        }
+
+        list.innerHTML = trendingItems.map((item, index) => `
+            <button type="button" class="trending-item" data-trending-index="${index}">
+                <span class="trending-rank${index < 3 ? ' top' : ''}">${index + 1}</span>
+                <span class="trending-copy">
+                    <strong>${escHtml(item.text)}</strong>
+                    <small>${escHtml(item.subtitle || suggestionTypeLabel(item.type))}</small>
+                </span>
+                <span class="trending-type"><i class="fa-solid ${trendingIcon(item.type)}"></i></span>
+            </button>
+        `).join('');
+    } catch (error) {
+        console.warn('Không thể tải xu hướng tìm kiếm:', error);
+        list.innerHTML = '<div class="trending-loading">Chưa có xu hướng nổi bật.</div>';
+    }
+}
+
+function trendingIcon(type) {
+    return ({
+        hashtag: 'fa-hashtag',
+        post: 'fa-newspaper',
+        reel: 'fa-circle-play',
+        product: 'fa-bag-shopping'
+    })[type] || 'fa-arrow-trend-up';
+}
+
 // ====== SEARCH EXECUTION ======
 async function performSearch(query) {
     if (!query || query.trim().length === 0) return;
 
     query = query.trim();
+    searchSubmitted = true;
+    hideSuggestions();
     currentQuery = query;
     saveToHistory(query);
 
@@ -337,6 +409,7 @@ async function performSearch(query) {
 
     try {
         const results = await window.api.get(`search?q=${encodeURIComponent(query)}`);
+        hideSuggestions();
         renderAllResults(results || {}, query);
     } catch (error) {
         if (error.name === 'AbortError') return;
@@ -605,11 +678,15 @@ function showDefaultView() {
 
 // ====== SEARCH HISTORY ======
 function getHistory() {
-    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+    try {
+        const value = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+        return Array.isArray(value) ? value.filter(item => typeof item === 'string' && item.trim()).slice(0, MAX_HISTORY) : [];
+    } catch { return []; }
 }
 
 function saveToHistory(query) {
-    let history = getHistory().filter(h => h !== query);
+    const normalized = normalizeText(query);
+    let history = getHistory().filter(h => normalizeText(h) !== normalized);
     history.unshift(query);
     if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
@@ -643,7 +720,7 @@ function renderRecentSearches() {
 }
 
 window.deleteHistoryItem = function(query) {
-    const history = getHistory().filter(h => h !== query);
+    const history = getHistory().filter(h => normalizeText(h) !== normalizeText(query));
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
     renderRecentSearches();
 };
@@ -656,9 +733,16 @@ function escHtml(str) {
 
 function highlight(text, query) {
     if (!query) return escHtml(text);
+    const literal = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
     const escaped = escHtml(text);
-    const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-    return escaped.replace(re, '<strong>$1</strong>');
+    if (literal.test(String(text))) return escaped.replace(literal, '<strong>$1</strong>');
+
+    const queryTokens = normalizeText(query).split(/\s+/).filter(Boolean);
+    return String(text).split(/(\s+)/).map(part => {
+        const normalizedPart = normalizeText(part.replace(/^[#@]/, ''));
+        const matches = normalizedPart && queryTokens.some(token => normalizedPart.includes(token));
+        return matches ? `<strong>${escHtml(part)}</strong>` : escHtml(part);
+    }).join('');
 }
 
 })();
