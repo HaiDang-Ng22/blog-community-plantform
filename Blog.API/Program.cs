@@ -15,6 +15,7 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using PayOS;
 using System.Threading.RateLimiting;
+using System.Text.Json;
 using Npgsql;
 // Clear default inbound claim type mapping to prevent mapping 'role' to long XML schema URIs
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -34,6 +35,10 @@ if (File.Exists(renderLocalSettingsPath))
         reloadOnChange: false);
     Console.WriteLine("[Configuration] Loaded appsettings.Local.json from Render secret files.");
 }
+
+// Environment variables must win over local/Render secret JSON files.
+// ASP.NET Core maps names such as Jwt__Key to Jwt:Key.
+builder.Configuration.AddEnvironmentVariables();
 
 // Increase upload limit
 builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -165,13 +170,59 @@ static string? NormalizePostgresConnectionString(string? rawConnectionString)
     }
 }
 
+static string? ParseLegacyConnectionStringsVariable(string? rawValue)
+{
+    if (string.IsNullOrWhiteSpace(rawValue)) return null;
+
+    var value = rawValue.Trim().TrimEnd(',');
+    if (!value.StartsWith('{') &&
+        !value.StartsWith("\"DefaultConnection\"", StringComparison.OrdinalIgnoreCase))
+    {
+        return value;
+    }
+
+    try
+    {
+        var json = value.StartsWith('{') ? value : $"{{{value}}}";
+        using var document = JsonDocument.Parse(json);
+        if (document.RootElement.TryGetProperty("DefaultConnection", out var connectionString))
+            return connectionString.GetString();
+    }
+    catch (JsonException ex)
+    {
+        Console.WriteLine($"[Database Error] The legacy ConnectionStrings variable is not valid JSON: {ex.Message}");
+    }
+
+    return null;
+}
+
 var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+var connectionStringSource = "DATABASE_URL";
+
 if (string.IsNullOrWhiteSpace(rawConnectionString))
+{
+    rawConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+    connectionStringSource = "ConnectionStrings__DefaultConnection";
+}
+
+if (string.IsNullOrWhiteSpace(rawConnectionString))
+{
+    rawConnectionString = ParseLegacyConnectionStringsVariable(
+        Environment.GetEnvironmentVariable("ConnectionStrings"));
+    connectionStringSource = "legacy ConnectionStrings";
+}
+
+if (string.IsNullOrWhiteSpace(rawConnectionString))
+{
     rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    connectionStringSource = "configuration ConnectionStrings:DefaultConnection";
+}
 
 var connectionString = NormalizePostgresConnectionString(rawConnectionString);
 if (string.IsNullOrWhiteSpace(connectionString))
-    throw new InvalidOperationException("PostgreSQL connection string is missing or invalid. Configure DATABASE_URL or ConnectionStrings:DefaultConnection.");
+    throw new InvalidOperationException("PostgreSQL connection string is missing or invalid. Configure DATABASE_URL or ConnectionStrings__DefaultConnection.");
+
+Console.WriteLine($"[Database] Loaded connection string from {connectionStringSource}.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
