@@ -6,7 +6,7 @@
     <title>Từ khóa cấm - Zynk Admin</title>
     <link rel="icon" href="../assets/favicon.png?v=3" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="admin-common.css?v=3.1">
+    <link rel="stylesheet" href="admin-common.css?v=4.0">
     <style>
         .actions-bar {
             display: flex;
@@ -69,8 +69,8 @@
         </div>
     </main>
 
-    <script src="../js/api.js"></script>
-    <script src="admin-common.js?v=3.1"></script>
+    <script src="../js/api.js?v=2.1"></script>
+    <script src="admin-common.js?v=4.1"></script>
     <script>
         async function loadWords() {
             const list = document.getElementById('words-list');
@@ -142,6 +142,12 @@
                 btn.disabled = false;
             }
         }
+
+        window.addEventListener('adminAiActionCompleted', event => {
+            if (['add_banned_word', 'add_banned_words', 'remove_banned_word'].includes(event.detail?.action?.type)) {
+                loadWords();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', loadWords);
     </script>

@@ -13,8 +13,14 @@ const IS_LOCAL = window.location.hostname === 'localhost' ||
 const PRODUCTION_BACKEND_URL = 'https://zynk-9al4.onrender.com';
 
 // Xác định API_BASE_URL
+// Keep API requests same-origin when Blog.API also serves the frontend.
+// This avoids browser/proxy/CORS failures that surface as "Failed to fetch".
+const LOCAL_API_URL = ['7000', ''].includes(window.location.port)
+    ? `${window.location.origin}/api`
+    : 'http://localhost:7000/api';
+
 const API_BASE_URL = IS_LOCAL
-    ? 'http://localhost:7000/api'
+    ? LOCAL_API_URL
     : (PRODUCTION_BACKEND_URL && PRODUCTION_BACKEND_URL !== 'YOUR_BACKEND_URL'
         ? `${PRODUCTION_BACKEND_URL}/api`
         : `${window.location.origin}/api`); // Mặc định về origin nếu chưa cấu hình

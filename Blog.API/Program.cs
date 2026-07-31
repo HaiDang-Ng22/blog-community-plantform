@@ -22,6 +22,14 @@ JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// The default Windows EventLog provider can throw when the API is launched
+// without administrator privileges. That secondary logging failure aborts the
+// HTTP response and appears in the frontend as "Failed to fetch". Console and
+// debug providers are safe for local development and container deployments.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 // Local-only secrets (gitignored). Overrides appsettings.json for Gemini, etc.
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 var renderSecretsDirectory = "/etc/secrets";

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zynk-cache-v1';
+const CACHE_NAME = 'zynk-cache-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -12,11 +12,33 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(ASSETS_TO_CACHE);
-        })
+        }).then(() => self.skipWaiting())
+    );
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys()
+            .then((keys) => Promise.all(
+                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+            ))
+            .then(() => self.clients.claim())
     );
 });
 
 self.addEventListener('fetch', (event) => {
+    const requestUrl = new URL(event.request.url);
+
+    // API responses are private and change frequently. Never serve or wrap
+    // them through the static asset cache.
+    if (requestUrl.pathname.startsWith('/api/')) {
+        return;
+    }
+
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request).then((response) => {
             return response || fetch(event.request);
