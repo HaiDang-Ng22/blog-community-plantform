@@ -9,5 +9,6 @@ public interface IFirebaseChatService
     Task<List<Message>> GetMessagesAsync(Guid conversationId, int limit = 50, DateTime? before = null);
     Task MarkAsReadAsync(Guid conversationId, Guid userId);
     Task UpdateMessageHeartAsync(Guid conversationId, Guid messageId, bool isHearted);
+    Task<bool> ExpireVanishMessageAsync(Guid conversationId, Guid messageId);
     Task<int> GetUnreadCountAsync(Guid conversationId, Guid userId);
 }

@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Blog.API.Controllers;
 
@@ -8,39 +8,71 @@ namespace Blog.API.Controllers;
 [Route("api/upload")]
 public class UploadController : ControllerBase
 {
-    private readonly IConfiguration _configuration;
-    private readonly Cloudinary _cloudinary;
+    private readonly Cloudinary? _cloudinary;
+    private readonly ILogger<UploadController> _logger;
 
-    public UploadController(IConfiguration configuration)
+    public UploadController(IConfiguration configuration, ILogger<UploadController> logger)
     {
-        _configuration = configuration;
+        _logger = logger;
 
-        var cloudName = _configuration["CloudinarySettings:CloudName"];
-        var apiKey = _configuration["CloudinarySettings:ApiKey"];
-        var apiSecret = _configuration["CloudinarySettings:ApiSecret"];
+        var cloudinarySettings = configuration.GetSection("CloudinarySettings");
+        var cloudName = cloudinarySettings["CloudName"]?.Trim();
+        var apiKey = cloudinarySettings["ApiKey"]?.Trim();
+        var apiSecret = cloudinarySettings["ApiSecret"]?.Trim();
 
-        var account = new Account(cloudName, apiKey, apiSecret);
-        _cloudinary = new Cloudinary(account);
+        // Tolerate accidental whitespace in a JSON property name (for example "ApiSecret ").
+        // The normal, documented key remains "ApiSecret".
+        if (!IsConfiguredValue(apiSecret))
+        {
+            apiSecret = cloudinarySettings
+                .GetChildren()
+                .FirstOrDefault(item =>
+                    !item.Key.Equals("ApiSecret", StringComparison.OrdinalIgnoreCase) &&
+                    item.Key.Trim().Equals("ApiSecret", StringComparison.OrdinalIgnoreCase))
+                ?.Value
+                ?.Trim();
+        }
+
+        if (!IsConfiguredValue(cloudName) ||
+            !IsConfiguredValue(apiKey) ||
+            !IsConfiguredValue(apiSecret))
+        {
+            _logger.LogError(
+                "Cloudinary is not configured. CloudName present: {HasCloudName}; ApiKey present: {HasApiKey}; ApiSecret present: {HasApiSecret}",
+                IsConfiguredValue(cloudName),
+                IsConfiguredValue(apiKey),
+                IsConfiguredValue(apiSecret));
+            return;
+        }
+
+        _cloudinary = new Cloudinary(new Account(cloudName, apiKey, apiSecret));
     }
 
     [HttpPost]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
     {
-        Console.WriteLine($"Upload attempt: {file?.FileName ?? "No file"}");
-        
         if (file == null || file.Length == 0)
             return BadRequest(new { message = "Không có tập tin nào được chọn." });
 
+        if (_cloudinary is null)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                code = "CLOUDINARY_NOT_CONFIGURED",
+                message = "Cloudinary chưa được cấu hình đầy đủ trên máy chủ. Hãy kiểm tra CloudName, ApiKey và ApiSecret rồi khởi động lại API."
+            });
+        }
+
         var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
         var allowedVideoExtensions = new[] { ".mp4", ".mov", ".avi", ".mkv" };
-        var extension = Path.GetExtension(file.FileName).ToLower();
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-        bool isVideo = allowedVideoExtensions.Contains(extension);
-        bool isImage = allowedImageExtensions.Contains(extension);
+        var isVideo = allowedVideoExtensions.Contains(extension);
+        var isImage = allowedImageExtensions.Contains(extension);
 
         if (!isImage && !isVideo)
-            return BadRequest(new { message = "Định dạng tập tin không hỗ trợ." });
+            return BadRequest(new { message = "Định dạng tập tin không được hỗ trợ." });
 
         try
         {
@@ -75,23 +107,44 @@ public class UploadController : ControllerBase
                 else secureUrl = uploadResult.SecureUrl?.ToString();
             }
 
-            if (errorMessage != null)
+            if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                Console.WriteLine($"Cloudinary Error: {errorMessage}");
-                return StatusCode(500, new { message = "Lỗi khi tải tập tin lên Cloudinary: " + errorMessage });
+                _logger.LogError("Cloudinary upload failed: {CloudinaryError}", errorMessage);
+
+                var invalidSignature = errorMessage.Contains("Invalid Signature", StringComparison.OrdinalIgnoreCase);
+                return StatusCode(StatusCodes.Status502BadGateway, new
+                {
+                    code = invalidSignature ? "CLOUDINARY_INVALID_CREDENTIALS" : "CLOUDINARY_UPLOAD_FAILED",
+                    message = invalidSignature
+                        ? "Cấu hình Cloudinary không hợp lệ. Hãy kiểm tra CloudName, ApiKey và ApiSecret có thuộc cùng một Product Environment."
+                        : "Cloudinary không thể xử lý tập tin. Vui lòng thử lại."
+                });
             }
 
-            if (secureUrl == null)
+            if (string.IsNullOrWhiteSpace(secureUrl))
             {
-                return StatusCode(500, new { message = "Không nhận được URL từ máy chủ lưu trữ." });
+                _logger.LogError("Cloudinary upload completed without a secure URL.");
+                return StatusCode(StatusCodes.Status502BadGateway, new
+                {
+                    code = "CLOUDINARY_URL_MISSING",
+                    message = "Không nhận được URL từ máy chủ lưu trữ. Vui lòng thử lại."
+                });
             }
 
             return Ok(new { url = secureUrl });
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Console.WriteLine($"Exception during upload: {ex.Message}");
-            return StatusCode(500, new { message = "Lỗi hệ thống khi tải tập tin." });
+            _logger.LogError(exception, "Unexpected error while uploading {FileName} to Cloudinary.", file.FileName);
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                code = "UPLOAD_FAILED",
+                message = "Lỗi hệ thống khi tải tập tin. Vui lòng thử lại."
+            });
         }
     }
+
+    private static bool IsConfiguredValue(string? value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        !value.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase);
 }

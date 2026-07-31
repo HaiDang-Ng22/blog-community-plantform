@@ -48,6 +48,8 @@ public class FirebaseChatService : IFirebaseChatService
                 { "createdAt", Timestamp.FromDateTime(message.CreatedAt.ToUniversalTime()) },
                 { "replyToMessageId", message.ReplyToMessageId?.ToString() ?? "" },
                 { "isHearted", message.IsHearted },
+                { "isVanishMode", message.IsVanishMode },
+                { "viewedAt", message.ViewedAt.HasValue ? Timestamp.FromDateTime(message.ViewedAt.Value.ToUniversalTime()) : null! },
                 { "sharedPostId", message.SharedPostId?.ToString() ?? "" }
             };
 
@@ -84,6 +86,10 @@ public class FirebaseChatService : IFirebaseChatService
                 IsRead = (bool)data["isRead"],
                 CreatedAt = ((Timestamp)data["createdAt"]).ToDateTime(),
                 IsHearted = data.ContainsKey("isHearted") ? (bool)data["isHearted"] : false,
+                IsVanishMode = data.ContainsKey("isVanishMode") && (bool)data["isVanishMode"],
+                ViewedAt = data.ContainsKey("viewedAt") && data["viewedAt"] is Timestamp viewedAt
+                    ? viewedAt.ToDateTime()
+                    : null,
                 ReplyToMessageId = data.ContainsKey("replyToMessageId") && !string.IsNullOrEmpty(data["replyToMessageId"].ToString()) 
                                    ? Guid.Parse(data["replyToMessageId"].ToString()!) : null,
                 SharedPostId = data.ContainsKey("sharedPostId") && !string.IsNullOrEmpty(data["sharedPostId"].ToString())
@@ -128,6 +134,10 @@ public class FirebaseChatService : IFirebaseChatService
                     IsRead = (bool)data["isRead"],
                     CreatedAt = ((Timestamp)data["createdAt"]).ToDateTime(),
                     IsHearted = data.ContainsKey("isHearted") ? (bool)data["isHearted"] : false,
+                    IsVanishMode = data.ContainsKey("isVanishMode") && (bool)data["isVanishMode"],
+                    ViewedAt = data.ContainsKey("viewedAt") && data["viewedAt"] is Timestamp viewedAt
+                        ? viewedAt.ToDateTime()
+                        : null,
                     ReplyToMessageId = data.ContainsKey("replyToMessageId") && !string.IsNullOrEmpty(data["replyToMessageId"].ToString()) 
                                        ? Guid.Parse(data["replyToMessageId"].ToString()!) : null,
                     SharedPostId = data.ContainsKey("sharedPostId") && !string.IsNullOrEmpty(data["sharedPostId"].ToString())
@@ -186,6 +196,37 @@ public class FirebaseChatService : IFirebaseChatService
         catch (Exception ex)
         {
             Console.WriteLine($"[Firebase Error] UpdateMessageHeartAsync: {ex.Message}");
+        }
+    }
+
+    public async Task<bool> ExpireVanishMessageAsync(Guid conversationId, Guid messageId)
+    {
+        try
+        {
+            var docRef = _db.Collection(CollectionName)
+                            .Document(conversationId.ToString())
+                            .Collection("messages")
+                            .Document(messageId.ToString());
+            var snapshot = await docRef.GetSnapshotAsync();
+            if (!snapshot.Exists) return false;
+
+            var data = snapshot.ToDictionary();
+            var isVanish = data.ContainsKey("isVanishMode") && data["isVanishMode"] is bool value && value;
+            var wasViewed = data.ContainsKey("viewedAt") && data["viewedAt"] is Timestamp;
+            if (!isVanish || wasViewed) return false;
+
+            await docRef.UpdateAsync(new Dictionary<string, object>
+            {
+                { "content", "🔥 Tin nhắn đã tự hủy" },
+                { "imageUrl", "" },
+                { "viewedAt", Timestamp.FromDateTime(DateTime.UtcNow) }
+            });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error expiring vanish message {MessageId}", messageId);
+            return false;
         }
     }
 

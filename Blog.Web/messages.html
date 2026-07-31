@@ -8,7 +8,7 @@
     <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=2.7">
-    <link rel="stylesheet" href="css/chat.css?v=1.0">
+    <link rel="stylesheet" href="css/chat.css?v=2.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/preferences.css?v=1.1">
     <script src="/js/preferences.js?v=1.1"></script>
@@ -21,11 +21,27 @@
     <div class="inbox-panel" id="inbox-panel">
         <div class="inbox-header">
             <div class="inbox-header-top">
-                <span class="inbox-username" id="inbox-my-username">Tin nhắn</span>
+                <div class="inbox-heading">
+                    <span class="inbox-username">Tin nhắn</span>
+                    <span class="inbox-account" id="inbox-my-username">Đang tải tài khoản...</span>
+                </div>
+                <div class="inbox-header-actions">
+                    <span class="chat-connection-pill connecting" id="chat-connection-pill" title="Trạng thái kết nối">
+                        <span class="connection-dot"></span>
+                        <span class="connection-label">Đang kết nối</span>
+                    </span>
                 <button class="inbox-new-chat-btn" id="new-chat-btn" title="Tạo cuộc trò chuyện mới">
                     <i class="fa-regular fa-pen-to-square"></i>
                 </button>
+                </div>
             </div>
+            <label class="conversation-search" for="conversation-search-input">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="conversation-search-input" type="search" placeholder="Tìm cuộc trò chuyện..." autocomplete="off">
+                <button class="conversation-search-clear hidden" id="conversation-search-clear" type="button" aria-label="Xóa tìm kiếm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </label>
             <!-- Tabs: Hộp thư | Đang chờ -->
             <div class="inbox-tabs">
                 <div class="inbox-tab active" id="tab-inbox" onclick="switchInboxTab('inbox')">
@@ -94,7 +110,7 @@
 <script src="js/i18n.js?v=3.1"></script>
 <script src="js/common.js?v=3.1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-<script src="js/chat.js?v=1.0"></script>
+<script src="js/chat.js?v=2.0"></script>
 
 </body>
 </html>

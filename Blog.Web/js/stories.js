@@ -1070,7 +1070,12 @@ window.submitStory = async function() {
         loadMyStories();
         loadStories();
     } catch (err) {
-        alert('Lỗi khi đăng tin: ' + err.message);
+        const message = err?.message || 'Không thể đăng tin. Vui lòng thử lại.';
+        if (window.common?.showToast) {
+            window.common.showToast(message, 'error');
+        } else {
+            alert(message);
+        }
         btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Đăng tin ngay';
         syncStorySubmitState();
     }

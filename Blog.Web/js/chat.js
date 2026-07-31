@@ -17,6 +17,8 @@ let replyingToMsgContent = null;
 let earliestMessageTimestamp = null;
 let hasMoreMessages = true;
 let isLoadingMore = false;
+let conversationSearchQuery = '';
+const pendingOutgoingMessages = new Map();
 
 const API = window.API_BASE_URL || '';
 
@@ -29,7 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Set my username in header
     const usernameEl = document.getElementById('inbox-my-username');
-    if (usernameEl) usernameEl.textContent = myUserInfo.username || myUserInfo.Username || 'Tin nhắn';
+    if (usernameEl) {
+        const username = myUserInfo.username || myUserInfo.Username || 'tài khoản của bạn';
+        usernameEl.textContent = `@${String(username).replace(/^@/, '')}`;
+    }
+
+    setupConversationSearch();
 
     // Check if opening a specific conversation from URL
     const params = new URLSearchParams(window.location.search);
@@ -56,7 +63,7 @@ async function connectSignalR() {
         .configureLogging(signalR.LogLevel.Information)
         .build();
 
-    console.log('[Chat] Connecting to SignalR...');
+    updateConnectionStatus('connecting');
 
     // ReceiveMessage: tin nhắn thông thường (mutual follow)
     connection.on('ReceiveMessage', (msg) => {
@@ -71,19 +78,66 @@ async function connectSignalR() {
         showToast('Bạn có 1 tin nhắn đang chờ', 'info');
     });
 
+    connection.on('TypingStatus', (payload) => {
+        if (payload?.senderId === currentOtherUser?.id) {
+            setTypingIndicator(Boolean(payload.isTyping));
+        }
+    });
+
+    connection.on('ErrorMessage', (message) => {
+        showToast(message || 'Không thể gửi tin nhắn', 'error');
+    });
+
+    connection.on('VanishMessageExpired', (messageId) => {
+        const row = document.querySelector(`.msg-row[data-msg-id="${messageId}"]`);
+        const bubble = row?.querySelector('.msg-bubble');
+        if (bubble) {
+            bubble.innerHTML = '<span class="vanish-expired-text"><i class="fa-solid fa-fire"></i> Tin nhắn đã tự hủy</span>';
+            bubble.classList.add('vanish-expired');
+        }
+    });
+
     connection.onreconnecting(() => {
+        updateConnectionStatus('connecting');
         showToast('Đang kết nối lại...', 'info');
     });
 
     connection.onreconnected(() => {
+        updateConnectionStatus('connected');
         showToast('Đã kết nối lại', 'success');
+    });
+
+    connection.onclose(() => {
+        updateConnectionStatus('offline');
     });
 
     try {
         await connection.start();
-        console.log('[Chat] SignalR connected');
+        updateConnectionStatus('connected');
     } catch (err) {
         console.error('[Chat] SignalR connection failed:', err);
+        updateConnectionStatus('offline');
+    }
+}
+
+function updateConnectionStatus(status) {
+    const pill = document.getElementById('chat-connection-pill');
+    const headerStatus = document.getElementById('chat-header-connection');
+    const labels = {
+        connected: 'Trực tuyến',
+        connecting: 'Đang kết nối',
+        offline: 'Mất kết nối'
+    };
+
+    if (pill) {
+        pill.classList.remove('connected', 'connecting', 'offline');
+        pill.classList.add(status);
+        const label = pill.querySelector('.connection-label');
+        if (label) label.textContent = labels[status] || labels.offline;
+    }
+    if (headerStatus) {
+        headerStatus.className = `chat-header-connection ${status}`;
+        headerStatus.textContent = labels[status] || labels.offline;
     }
 }
 
@@ -107,7 +161,16 @@ async function loadConversations() {
 
 // ── Render Conversation List ──────────────────────────────
 function renderConvList() {
-    const list = allConversations[activeTab === 'inbox' ? 'accepted' : 'pending'] || [];
+    const sourceList = allConversations[activeTab === 'inbox' ? 'accepted' : 'pending'] || [];
+    const list = conversationSearchQuery
+        ? sourceList.filter((conversation) => {
+            const other = conversation.otherUser || {};
+            const lastMessage = conversation.lastMessage || {};
+            return [other.fullName, other.username, lastMessage.content]
+                .filter(Boolean)
+                .some((value) => String(value).toLocaleLowerCase('vi').includes(conversationSearchQuery));
+        })
+        : sourceList;
     const container = document.getElementById('conv-list');
 
     // Update badges
@@ -126,7 +189,9 @@ function renderConvList() {
     }
 
     if (list.length === 0) {
-        const emptyMsg = activeTab === 'inbox'
+        const emptyMsg = conversationSearchQuery
+            ? '<i class="fa-solid fa-user-slash"></i><p>Không tìm thấy cuộc trò chuyện phù hợp.</p>'
+            : activeTab === 'inbox'
             ? '<i class="fa-regular fa-comment-dots"></i><p>Chưa có tin nhắn nào.<br>Hãy bắt đầu trò chuyện!</p>'
             : '<i class="fa-regular fa-clock"></i><p>Không có tin nhắn chờ nào.</p>';
         container.innerHTML = `<div class="inbox-empty">${emptyMsg}</div>`;
@@ -142,6 +207,26 @@ function renderConvList() {
             const conv = findConvById(convId);
             if (conv) openConversation(conv);
         });
+    });
+}
+
+function setupConversationSearch() {
+    const input = document.getElementById('conversation-search-input');
+    const clearButton = document.getElementById('conversation-search-clear');
+    if (!input || !clearButton) return;
+
+    input.addEventListener('input', () => {
+        conversationSearchQuery = input.value.trim().toLocaleLowerCase('vi');
+        clearButton.classList.toggle('hidden', !conversationSearchQuery);
+        renderConvList();
+    });
+
+    clearButton.addEventListener('click', () => {
+        input.value = '';
+        conversationSearchQuery = '';
+        clearButton.classList.add('hidden');
+        input.focus();
+        renderConvList();
     });
 }
 
@@ -176,13 +261,17 @@ function renderConvItem(c) {
 }
 
 function closeChatPanelMobile() {
-    const panel = document.getElementById('chat-panel');
-    if (panel) {
-        panel.classList.remove('mobile-open');
-        // Clear active state in list to allow re-selection
-        document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
-        currentConversationId = null;
+    if (isTyping && connection?.state === 'Connected' && currentOtherUser?.id) {
+        connection.invoke('SetTyping', currentOtherUser.id, false).catch(() => {});
     }
+    isTyping = false;
+    clearTimeout(typingTimer);
+    document.getElementById('chat-panel')?.classList.remove('mobile-open');
+    document.querySelector('.messages-layout')?.classList.remove('chat-open');
+    document.querySelectorAll('.conv-item.active').forEach((item) => item.classList.remove('active'));
+    setTypingIndicator(false);
+    currentConversationId = null;
+    currentOtherUser = null;
 }
 window.closeChatPanelMobile = closeChatPanelMobile;
 
@@ -225,6 +314,7 @@ async function openConversation(conv) {
     const messagesArea = document.getElementById('messages-area');
     if (messagesArea) {
         messagesArea.addEventListener('scroll', handleChatScroll);
+        messagesArea.addEventListener('scroll', updateJumpLatestButton);
     }
 
     // Mobile: slide chat panel in
@@ -298,7 +388,12 @@ function buildChatPanel(conv) {
              onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(other.fullName)}&background=6366f1&color=fff'">
         <div class="chat-header-info">
             <a href="profile.html?id=${other.id}" class="chat-header-name">${escHtml(other.fullName)}</a>
-            <div class="chat-header-status">@${escHtml(other.username || '')}</div>
+            <div class="chat-header-status">
+                <span>@${escHtml(other.username || '')}</span>
+                <span class="chat-header-connection ${connection?.state === 'Connected' ? 'connected' : 'connecting'}" id="chat-header-connection">
+                    ${connection?.state === 'Connected' ? 'Trực tuyến' : 'Đang kết nối'}
+                </span>
+            </div>
         </div>
         <div class="chat-header-actions">
             <button class="chat-icon-btn" title="Trang cá nhân" onclick="window.location.href='profile.html?id=${other.id}'">
@@ -315,6 +410,9 @@ function buildChatPanel(conv) {
             <i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.5rem;opacity:0.4;"></i>
         </div>
     </div>
+    <button class="jump-latest-btn hidden" id="jump-latest-btn" type="button" onclick="jumpToLatestMessage()" title="Tin nhắn mới nhất">
+        <i class="fa-solid fa-arrow-down"></i>
+    </button>
     <div class="chat-reply-banner hidden" id="chat-reply-banner">
         <div class="reply-banner-content">Đang trả lời: <span></span></div>
         <button onclick="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
@@ -358,6 +456,7 @@ function buildChatPanel(conv) {
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
+        <span class="chat-input-hint">Enter để gửi · Shift + Enter để xuống dòng</span>
     </div>
     `;
 
@@ -374,11 +473,6 @@ function buildChatPanel(conv) {
     window._vanishModeActive = false;
     const vanishBtn = document.getElementById('vanish-mode-btn');
     if (vanishBtn) vanishBtn.classList.remove('active');
-}
-
-function closeChatPanelMobile() {
-    document.querySelector('.messages-layout').classList.remove('chat-open');
-    currentConversationId = null;
 }
 
 // ── Load Messages ─────────────────────────────────────────
@@ -522,6 +616,9 @@ function createMessageEl(msg, isConsecutive = false) {
     const row = document.createElement('div');
     row.className = `msg-row ${isSent ? 'sent' : 'received'} ${isConsecutive ? 'consecutive' : ''}`;
     row.dataset.msgId = msg.id;
+    row.dataset.senderId = msg.senderId;
+    if (msg.clientMessageId) row.dataset.clientId = msg.clientMessageId;
+    if (msg.sendState) row.classList.add(`message-${msg.sendState}`);
 
     const time = formatMsgTime(msg.createdAt);
 
@@ -566,6 +663,12 @@ function createMessageEl(msg, isConsecutive = false) {
     const vanishClass = msg.isVanishMode ? 'vanish-msg' : '';
     const vanishLabel = msg.isVanishMode && !msg.viewedAt ? '<span class="vanish-label"><i class="fa-solid fa-fire"></i> Tự hủy</span>' : '';
 
+    const sendStatusHtml = msg.sendState === 'sending'
+        ? '<span class="msg-delivery-status sending"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang gửi</span>'
+        : msg.sendState === 'failed'
+            ? `<button class="msg-delivery-status failed" onclick="retryPendingMessage('${msg.clientMessageId}')"><i class="fa-solid fa-rotate-right"></i> Gửi lại</button>`
+            : '<span class="msg-delivery-status sent"><i class="fa-solid fa-check-double"></i></span>';
+
     if (isSent) {
         row.innerHTML = `
         <div class="msg-bubble-wrap">
@@ -576,7 +679,7 @@ function createMessageEl(msg, isConsecutive = false) {
                 ${msgContent}
                 ${msg.isHearted ? '<div class="msg-heart-indicator"><i class="fa-solid fa-heart"></i></div>' : ''}
             </div>
-            <span class="msg-time">${isConsecutive ? '' : time}</span>
+            <div class="msg-meta-line"><span class="msg-time">${isConsecutive ? '' : time}</span>${sendStatusHtml}</div>
         </div>
         ${actionsHtml}`;
     } else {
@@ -598,7 +701,7 @@ function createMessageEl(msg, isConsecutive = false) {
         // Auto-trigger vanish: sau khi tin hiển thị, nếu là vanish và chưa có viewedAt => báo server
         if (msg.isVanishMode && !msg.viewedAt && connection) {
             setTimeout(() => {
-                connection.invoke('MarkVanishMessageRead', msg.id.toString()).catch(() => {});
+                connection.invoke('MarkVanishMessageRead', currentConversationId, msg.id.toString()).catch(() => {});
             }, 2000); // sau 2 giây hiển thị
         }
     }
@@ -616,8 +719,12 @@ function createDateSeparator(dateStr) {
 async function sendMessage(imageUrl = null, sharedPostId = null) {
     const input = document.getElementById('chat-text-input');
     const content = input?.value?.trim() || "";
-    if (!imageUrl && !content && !sharedPostId && !currentOtherUser) return;
-    if (!connection) return;
+    if ((!imageUrl && !content && !sharedPostId) || !currentOtherUser?.id) return;
+    if (!connection || connection.state !== 'Connected') {
+        updateConnectionStatus('offline');
+        showToast('Đang mất kết nối. Hãy thử lại sau giây lát.', 'error');
+        return;
+    }
 
     if (!imageUrl && !sharedPostId) {
         input.value = '';
@@ -626,17 +733,118 @@ async function sendMessage(imageUrl = null, sharedPostId = null) {
     }
 
     const currentReplyId = replyingToMsgId;
+    const currentReplyContent = replyingToMsgContent;
     cancelReply();
 
+    const clientMessageId = window.crypto?.randomUUID?.() || `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const outgoingMessage = {
+        clientMessageId,
+        recipientId: currentOtherUser.id,
+        content,
+        imageUrl,
+        replyToMessageId: currentReplyId,
+        replyToMessage: currentReplyId ? { id: currentReplyId, content: currentReplyContent || '' } : null,
+        sharedPostId,
+        isVanishMode: window._vanishModeActive || false,
+        createdAt: new Date().toISOString()
+    };
+
+    pendingOutgoingMessages.set(clientMessageId, outgoingMessage);
+    appendOptimisticMessage(outgoingMessage);
+
     try {
-        const isVanish = window._vanishModeActive || false;
-        await connection.invoke('SendMessage', currentOtherUser.id, content, imageUrl, currentReplyId, sharedPostId, isVanish);
+        await invokePendingMessage(outgoingMessage);
     } catch (err) {
         console.error('[Chat] Send error:', err);
-        showToast('Lỗi gửi tin nhắn (hoặc bị chặn)', 'error');
+        markPendingMessageFailed(clientMessageId);
+        showToast('Không thể gửi tin nhắn. Bạn có thể nhấn Gửi lại.', 'error');
     }
 }
 window.sendMessage = sendMessage;
+
+function appendOptimisticMessage(outgoingMessage) {
+    const area = document.getElementById('messages-area');
+    if (!area) return;
+    area.querySelector('.inbox-empty')?.remove();
+
+    const lastRow = area.querySelector('.msg-row:last-of-type');
+    const isConsecutive = lastRow?.dataset?.senderId === myUserId;
+    const element = createMessageEl({
+        id: `pending-${outgoingMessage.clientMessageId}`,
+        clientMessageId: outgoingMessage.clientMessageId,
+        senderId: myUserId,
+        content: outgoingMessage.content,
+        imageUrl: outgoingMessage.imageUrl,
+        replyToMessage: outgoingMessage.replyToMessage,
+        isVanishMode: outgoingMessage.isVanishMode,
+        createdAt: outgoingMessage.createdAt,
+        sendState: 'sending'
+    }, isConsecutive);
+    area.appendChild(element);
+    area.scrollTop = area.scrollHeight;
+
+    const conversation = findConvById(currentConversationId);
+    if (conversation) {
+        conversation.lastMessage = {
+            senderId: myUserId,
+            content: outgoingMessage.content,
+            imageUrl: outgoingMessage.imageUrl,
+            createdAt: outgoingMessage.createdAt
+        };
+        const listName = allConversations.accepted.includes(conversation) ? 'accepted' : 'pending';
+        const list = allConversations[listName];
+        const index = list.indexOf(conversation);
+        if (index > 0) {
+            list.splice(index, 1);
+            list.unshift(conversation);
+        }
+        renderConvList();
+    }
+}
+
+async function invokePendingMessage(message) {
+    if (!connection || connection.state !== 'Connected') throw new Error('Chat disconnected');
+    await connection.invoke(
+        'SendMessage',
+        message.recipientId,
+        message.content,
+        message.imageUrl,
+        message.replyToMessageId,
+        message.sharedPostId,
+        message.isVanishMode,
+        message.clientMessageId
+    );
+}
+
+function markPendingMessageFailed(clientMessageId) {
+    const row = document.querySelector(`.msg-row[data-client-id="${clientMessageId}"]`);
+    if (!row) return;
+    row.classList.remove('message-sending');
+    row.classList.add('message-failed');
+    const status = row.querySelector('.msg-delivery-status');
+    if (status) {
+        status.outerHTML = `<button class="msg-delivery-status failed" onclick="retryPendingMessage('${clientMessageId}')"><i class="fa-solid fa-rotate-right"></i> Gửi lại</button>`;
+    }
+}
+
+async function retryPendingMessage(clientMessageId) {
+    const message = pendingOutgoingMessages.get(clientMessageId);
+    const row = document.querySelector(`.msg-row[data-client-id="${clientMessageId}"]`);
+    if (!message || !row) return;
+
+    row.classList.remove('message-failed');
+    row.classList.add('message-sending');
+    const status = row.querySelector('.msg-delivery-status');
+    if (status) status.outerHTML = '<span class="msg-delivery-status sending"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang gửi</span>';
+
+    try {
+        await invokePendingMessage(message);
+    } catch (error) {
+        console.error('[Chat] Retry send error:', error);
+        markPendingMessageFailed(clientMessageId);
+    }
+}
+window.retryPendingMessage = retryPendingMessage;
 
 function setReplyToMessage(msgId, content) {
     replyingToMsgId = msgId;
@@ -746,6 +954,19 @@ function handleIncomingMessage(msg, isPending) {
         const emptyEl = area.querySelector('.inbox-empty');
         if (emptyEl) emptyEl.remove();
 
+        const optimisticRow = msg.clientMessageId
+            ? area.querySelector(`.msg-row[data-client-id="${msg.clientMessageId}"]`)
+            : null;
+
+        if (optimisticRow) {
+            optimisticRow.dataset.msgId = msg.id;
+            optimisticRow.classList.remove('message-sending', 'message-failed');
+            optimisticRow.classList.add('message-sent');
+            const status = optimisticRow.querySelector('.msg-delivery-status');
+            if (status) status.outerHTML = '<span class="msg-delivery-status sent" title="Đã gửi"><i class="fa-solid fa-check-double"></i></span>';
+            pendingOutgoingMessages.delete(msg.clientMessageId);
+        } else {
+
         // Check consecutive
         const lastRow = area.querySelector('.msg-row:last-child');
         const lastSenderId = lastRow?.dataset?.senderId;
@@ -766,6 +987,7 @@ function handleIncomingMessage(msg, isPending) {
         el.dataset.senderId = msg.senderId;
         area.appendChild(el);
         area.scrollTop = area.scrollHeight;
+        }
 
         // Mark read via hub
         if (msg.senderId !== myUserId && connection) {
@@ -936,14 +1158,56 @@ function autoResizeTextarea(el) {
 window.autoResizeTextarea = autoResizeTextarea;
 
 function handleTyping() {
-    // Could invoke hub typing indicator if desired
+    if (!connection || connection.state !== 'Connected' || !currentOtherUser?.id) return;
+
+    if (!isTyping) {
+        isTyping = true;
+        connection.invoke('SetTyping', currentOtherUser.id, true).catch(() => {});
+    }
+
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        isTyping = false;
+        if (connection?.state === 'Connected' && currentOtherUser?.id) {
+            connection.invoke('SetTyping', currentOtherUser.id, false).catch(() => {});
+        }
+    }, 900);
 }
 window.handleTyping = handleTyping;
 
-function closeChatPanelMobile() {
-    document.getElementById('chat-panel')?.classList.remove('mobile-open');
+function setTypingIndicator(visible) {
+    const area = document.getElementById('messages-area');
+    if (!area) return;
+
+    let indicator = document.getElementById('chat-live-typing');
+    if (!visible) {
+        indicator?.remove();
+        return;
+    }
+
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'chat-live-typing';
+        indicator.className = 'live-typing-row';
+        indicator.innerHTML = '<div class="typing-indicator" aria-label="Đang nhập"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div><span>Đang nhập...</span>';
+        area.appendChild(indicator);
+    }
+    area.scrollTop = area.scrollHeight;
 }
-window.closeChatPanelMobile = closeChatPanelMobile;
+
+function updateJumpLatestButton() {
+    const area = document.getElementById('messages-area');
+    const button = document.getElementById('jump-latest-btn');
+    if (!area || !button) return;
+    const distance = area.scrollHeight - area.scrollTop - area.clientHeight;
+    button.classList.toggle('hidden', distance < 160);
+}
+
+function jumpToLatestMessage() {
+    const area = document.getElementById('messages-area');
+    if (area) area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' });
+}
+window.jumpToLatestMessage = jumpToLatestMessage;
 
 // ── Close modal on overlay click ──────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -1038,17 +1302,3 @@ function toggleVanishMode() {
     }
 }
 window.toggleVanishMode = toggleVanishMode;
-
-// ── Handle VanishMessageExpired (SignalR) ─────────────────
-if (typeof connection !== 'undefined' && connection) {
-    connection.on('VanishMessageExpired', (messageId) => {
-        const row = document.querySelector(`.msg-row[data-msg-id="${messageId}"]`);
-        if (row) {
-            const bubble = row.querySelector('.msg-bubble');
-            if (bubble) {
-                bubble.innerHTML = '<span style="opacity:0.5; font-style:italic;">🔥 Tin nhắn đã tự hủy</span>';
-                bubble.classList.add('vanish-expired');
-            }
-        }
-    });
-}

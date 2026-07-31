@@ -1,4 +1,9 @@
 {
+ "CloudinarySettings": {
+    "CloudName": "dsamboqwp",
+    "ApiKey": "561243951691355",
+    "ApiSecret ": "TLFRtlosB008iQbrbDB5poYzv2c"
+  },
   "Gemini": {
     "ApiKey": "YOUR_GEMINI_API_KEY_HERE"
   }

@@ -53,7 +53,7 @@ public class ChatHub : Hub
     /// <summary>
     /// Client gọi để gửi tin nhắn. Server lưu DB rồi push realtime cho cả hai.
     /// </summary>
-    public async Task SendMessage(string recipientId, string? content, string? imageUrl = null, Guid? replyToMessageId = null, Guid? sharedPostId = null, bool isVanishMode = false)
+    public async Task SendMessage(string recipientId, string? content, string? imageUrl = null, Guid? replyToMessageId = null, Guid? sharedPostId = null, bool isVanishMode = false, string? clientMessageId = null)
     {
         var senderIdStr = Context.User?.GetUserIdStr();
         if (string.IsNullOrEmpty(senderIdStr) || (string.IsNullOrEmpty(content?.Trim()) && string.IsNullOrEmpty(imageUrl) && sharedPostId == null))
@@ -162,6 +162,7 @@ public class ChatHub : Hub
             replyToMessageId = message.ReplyToMessageId,
             replyToMessage = replyToMsg,
             sharedPostId = message.SharedPostId,
+            clientMessageId,
             sharedPost = sharedPost == null ? null : new {
                 id = sharedPost.Id,
                 content = sharedPost.Content,
@@ -186,6 +187,22 @@ public class ChatHub : Hub
     }
 
     /// <summary>
+    /// Chuyển tiếp trạng thái đang nhập trực tiếp đến người nhận, không lưu vào cơ sở dữ liệu.
+    /// </summary>
+    public async Task SetTyping(string recipientId, bool isTyping)
+    {
+        var senderId = Context.User?.GetUserIdStr();
+        if (string.IsNullOrWhiteSpace(senderId) || !Guid.TryParse(recipientId, out var recipientGuid)) return;
+        if (senderId == recipientGuid.ToString()) return;
+
+        await Clients.Group($"user_{recipientId}").SendAsync("TypingStatus", new
+        {
+            senderId,
+            isTyping
+        });
+    }
+
+    /// <summary>
     /// Đánh dấu đã đọc tất cả tin nhắn trong conversation
     /// </summary>
     public async Task MarkRead(string conversationId)
@@ -203,33 +220,24 @@ public class ChatHub : Hub
     /// Secret Chat: Người nhận gọi method này sau khi đọc tin nhắn vanish.
     /// Server sẽ xóa nội dung tin nhắn và thông báo cho cả hai bên.
     /// </summary>
-    public async Task MarkVanishMessageRead(string messageId)
+    public async Task MarkVanishMessageRead(string conversationId, string messageId)
     {
         var userIdStr = Context.User?.GetUserIdStr();
         if (string.IsNullOrEmpty(userIdStr)) return;
 
-        var msgGuid = Guid.Parse(messageId);
+        if (!Guid.TryParse(conversationId, out var convId) || !Guid.TryParse(messageId, out var msgGuid)) return;
         var userId = Guid.Parse(userIdStr);
 
-        var message = await _context.Messages
-            .Include(m => m.Conversation)
-            .FirstOrDefaultAsync(m => m.Id == msgGuid && m.IsVanishMode);
-
-        if (message == null) return;
+        var message = await _firebaseChatService.GetMessageByIdAsync(convId, msgGuid);
+        var conv = await _context.Conversations.FindAsync(convId);
+        if (message == null || conv == null || !message.IsVanishMode) return;
 
         // Chỉ người nhận (không phải người gửi) mới được trigger xóa
-        var conv = message.Conversation;
         var recipientId = conv.User1Id == message.SenderId ? conv.User2Id : conv.User1Id;
         if (recipientId != userId) return;
 
         // Đã xem rồi thì bỏ qua
-        if (message.ViewedAt.HasValue) return;
-
-        message.ViewedAt = DateTime.UtcNow;
-        // Xóa nội dung nhưng giữ lại bản ghi (để hiển thị placeholder)
-        message.Content = "🔥 Tin nhắn đã tự hủy";
-        message.ImageUrl = null;
-        await _context.SaveChangesAsync();
+        if (message.ViewedAt.HasValue || !await _firebaseChatService.ExpireVanishMessageAsync(convId, msgGuid)) return;
 
         // Thông báo cho cả 2 bên: tin nhắn này đã biến mất
         var senderIdStr = message.SenderId.ToString();
