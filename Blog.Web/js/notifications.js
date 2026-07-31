@@ -61,7 +61,7 @@ async function loadNotifications() {
                             <div class="noti-time">${formatTime(r.createdAt)}</div>
                         </div>
                     `;
-                    item.onclick = () => window.location.href = 'admin.html';
+                    item.onclick = () => window.location.href = 'admin/index.html';
                     list.appendChild(item);
                 });
             } catch (e) { console.warn('Failed to load admin reports for notifications'); }
@@ -94,7 +94,7 @@ async function loadNotifications() {
                 } else if (n.type === 'OrderStatusUpdated') {
                     window.location.href = `order-detail.html?id=${n.targetId}`;
                 } else if (n.type === 'Report' || n.type === 'Complaint') {
-                    window.location.href = `admin.html`;
+                    window.location.href = 'admin/index.html';
                 } else if (['GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(n.type)) {
                     window.location.href = `group-detail.html?id=${n.targetId}`;
                 } else if (n.targetId) {

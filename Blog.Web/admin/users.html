@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Người dùng - Zynk Admin</title>
+    <link rel="icon" href="../assets/favicon.png?v=3" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="admin-common.css">
+    <link rel="stylesheet" href="admin-common.css?v=3.1">
     <link rel="stylesheet" href="/css/preferences.css?v=1.1">
     <script src="/js/preferences.js?v=1.1"></script>
 </head>
@@ -48,7 +49,7 @@
     </main>
 
     <script src="../js/api.js"></script>
-    <script src="admin-common.js"></script>
+    <script src="admin-common.js?v=3.1"></script>
     <script>
         let allUsers = [];
 
@@ -73,6 +74,7 @@
 
         function renderUsers(users) {
             const list = document.getElementById('users-list');
+            const escape = window.adminEscapeHtml;
             list.innerHTML = users.map(user => `
                 <tr>
                     <td>
@@ -80,11 +82,11 @@
                             <img src="${resolveImageUrl(user.avatarUrl)}" 
                                  onerror="this.src='https://via.placeholder.com/32'"
                                  style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-                            <div style="font-weight: 600;">${user.fullName}</div>
+                            <div style="font-weight: 600;">${escape(user.fullName)}</div>
                         </div>
                     </td>
-                    <td>${user.email}</td>
-                    <td><span class="badge ${user.role === 'Admin' ? 'badge-danger' : 'badge-success'}">${user.role}</span></td>
+                    <td>${escape(user.email)}</td>
+                    <td><span class="badge ${user.role === 'Admin' ? 'badge-danger' : 'badge-success'}">${escape(user.role)}</span></td>
                     <td>${new Date(user.createdAt).toLocaleDateString('vi-VN')}</td>
                     <td>
                         <div style="display: flex; gap: 8px;">
@@ -107,9 +109,9 @@
         function searchUsers() {
             const query = document.getElementById('user-search').value.toLowerCase().trim();
             const filtered = allUsers.filter(u => 
-                u.fullName.toLowerCase().includes(query) || 
-                u.email.toLowerCase().includes(query) ||
-                u.username.toLowerCase().includes(query)
+                String(u.fullName || '').toLowerCase().includes(query) ||
+                String(u.email || '').toLowerCase().includes(query) ||
+                String(u.username || '').toLowerCase().includes(query)
             );
             renderUsers(filtered);
         }
@@ -120,14 +122,15 @@
         async function viewUser(userId) {
             try {
                 const user = await window.adminApi.get(`admin/users/${userId}`);
+                const escape = window.adminEscapeHtml;
                 window.adminModal.open(`
                     <h2 style="margin-bottom: 1.5rem;">Thông tin chi tiết</h2>
                     <div style="text-align: center; margin-bottom: 2rem;">
                         <img src="${resolveImageUrl(user.avatarUrl).replace('32', '80')}" 
                              onerror="this.src='https://via.placeholder.com/80'"
                              style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px; border: 4px solid var(--admin-bg); object-fit: cover;">
-                        <div style="font-size: 1.25rem; font-weight: 800;">${user.fullName}</div>
-                        <div style="color: var(--admin-text-muted);">@${user.username}</div>
+                        <div style="font-size: 1.25rem; font-weight: 800;">${escape(user.fullName)}</div>
+                        <div style="color: var(--admin-text-muted);">@${escape(user.username)}</div>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                         <div class="card" style="padding: 1rem; text-align: center; background: #f8fafc;">
@@ -141,24 +144,24 @@
                     </div>
                     <div style="margin-bottom: 1.5rem;">
                         <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 5px;">TIỂU SỬ</div>
-                        <p style="font-size: 0.9rem; line-height: 1.6;">${user.bio || 'Chưa có tiểu sử.'}</p>
+                        <p style="font-size: 0.9rem; line-height: 1.6;">${escape(user.bio || 'Chưa có tiểu sử.')}</p>
                     </div>
                     <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
                         <button class="btn btn-secondary" onclick="adminModal.close()">Đóng</button>
                         ${user.role !== 'Admin' ? `<button class="btn btn-danger" onclick="toggleBlock('${user.id}')">Xóa tài khoản</button>` : ''}
                     </div>
                 `);
-            } catch (err) { alert('Lỗi: ' + err.message); }
+            } catch (err) { window.adminToast(err.message || 'Không thể tải thông tin người dùng', 'error'); }
         }
 
         async function toggleBlock(userId) {
             if (!confirm('Bạn có chắc chắn muốn xóa tài khoản này vĩnh viễn? Mọi dữ liệu sẽ bị xóa sạch.')) return;
             try {
                 await window.adminApi.delete(`admin/users/${userId}`);
-                alert('Đã xóa người dùng thành công.');
+                window.adminToast('Đã xóa người dùng thành công.', 'success');
                 loadUsers();
                 adminModal.close();
-            } catch (err) { alert(err.message); }
+            } catch (err) { window.adminToast(err.message || 'Không thể xóa người dùng', 'error'); }
         }
 
         document.addEventListener('DOMContentLoaded', loadUsers);

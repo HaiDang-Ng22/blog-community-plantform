@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Duyệt tích xanh - Admin</title>
+    <link rel="icon" href="../assets/favicon.png?v=3" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="admin-common.css">
+    <link rel="stylesheet" href="admin-common.css?v=3.1">
     <link rel="stylesheet" href="/css/preferences.css?v=1.1">
     <script src="/js/preferences.js?v=1.1"></script>
 </head>
@@ -42,16 +43,16 @@
     </main>
 
     <script src="../js/api.js?v=2"></script>
-    <script src="admin-common.js?v=2"></script>
+    <script src="admin-common.js?v=3.1"></script>
     <script>
+        let pendingVerificationRequests = [];
+
         async function loadData() {
             const list = document.getElementById('v-list');
             try {
-                console.log('Đang gọi API: admin/verifications');
                 const data = await window.adminApi.get('admin/verifications');
-                console.log('Dữ liệu nhận được:', data);
-
                 const pending = data.filter(x => x.status === 'Pending');
+                pendingVerificationRequests = pending;
                 
                 if (pending.length === 0) {
                     list.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">Hiện không có yêu cầu nào mới.</td></tr>';
@@ -60,11 +61,11 @@
 
                 list.innerHTML = pending.map(req => `
                     <tr>
-                        <td><b>@${req.username}</b></td>
-                        <td>${req.fullName}</td>
-                        <td><span class="badge badge-warning">${req.documentType}</span></td>
+                        <td><b>@${window.adminEscapeHtml(req.username)}</b></td>
+                        <td>${window.adminEscapeHtml(req.fullName)}</td>
+                        <td><span class="badge badge-warning">${window.adminEscapeHtml(req.documentType)}</span></td>
                         <td>
-                            <button class="btn btn-secondary" onclick="window.adminModal.open('<img src=\\'${req.documentUrl}\\' style=\\'width:100%\\'>')">Xem ảnh</button>
+                            <button class="btn btn-secondary" onclick="viewDocument('${req.id}')">Xem ảnh</button>
                         </td>
                         <td>
                             <button class="btn btn-primary" onclick="action('${req.id}', 'approve')">Duyệt</button>
@@ -78,13 +79,24 @@
             }
         }
 
+        function viewDocument(id) {
+            const request = pendingVerificationRequests.find(item => item.id === id);
+            if (!request) return;
+            const url = window.adminSafeUrl(request.documentUrl);
+            if (!url) {
+                window.adminToast('Đường dẫn tài liệu không hợp lệ.', 'error');
+                return;
+            }
+            window.adminModal.open(`<img src="${url}" alt="Tài liệu xác minh" style="display:block; width:100%; max-height:72vh; object-fit:contain; border-radius:14px;">`);
+        }
+
         async function action(id, type) {
             try {
                 await window.adminApi.post(`admin/verifications/${id}/${type}`, {});
-                alert('Thành công!');
+                window.adminToast(type === 'approve' ? 'Đã duyệt yêu cầu tích xanh.' : 'Đã từ chối yêu cầu.', 'success');
                 loadData();
             } catch (err) {
-                alert('Lỗi: ' + err.message);
+                window.adminToast(err.message || 'Không thể xử lý yêu cầu', 'error');
             }
         }
 

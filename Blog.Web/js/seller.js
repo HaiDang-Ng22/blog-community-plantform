@@ -14,7 +14,7 @@ async function initializeSellerCenter() {
             <i class="fa fa-user-shield" style="color: #6366f1;"></i>
             <h2>Bạn đang là Admin</h2>
             <p>Tài khoản Quản trị viên không cần đăng ký bán hàng. Vui lòng sử dụng Trang Quản Trị để duyệt yêu cầu.</p>
-            <a href="admin.html" class="btn primary-btn" style="display: inline-block; margin-top: 1.5rem; width: auto;">Đến Trang Quản Trị</a>
+            <a href="admin/index.html" class="btn primary-btn" style="display: inline-block; margin-top: 1.5rem; width: auto;">Đến Trang Quản Trị</a>
         </div>`;
         return;
     }

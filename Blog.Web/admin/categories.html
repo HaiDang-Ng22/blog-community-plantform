@@ -4,27 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Danh mục - Zynk Admin</title>
+    <link rel="icon" href="../assets/favicon.png?v=3" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="admin-common.css">
+    <link rel="stylesheet" href="admin-common.css?v=3.2">
     <style>
-        /* Tree Styles (from previous iteration) */
-        .tree-container { width: 100%; overflow: auto; padding: 40px; background: #fff; border-radius: 16px; min-height: 500px; position: relative; display: flex; justify-content: center; align-items: flex-start; border: 1px solid var(--admin-border); cursor: grab; }
-        .tree-curve { fill: none; stroke: #cbd5e1; stroke-width: 1.5; stroke-linecap: round; transition: all 0.3s; opacity: 0.6; }
-        .tree-node { width: 100px; background: white; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); cursor: pointer; text-align: center; }
-        .tree-node-icon { width: 26px; height: 26px; border-radius: 6px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
-        .tree-node-name { font-weight: 700; font-size: 0.72rem; color: var(--admin-text-main); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .tree-node-meta { font-size: 0.6rem; color: var(--admin-text-muted); }
-        .tree-sub-items { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; position: relative; }
-        .tree-node-group { display: flex; flex-direction: column; align-items: center; gap: 30px; position: relative; }
-        .breadcrumb-container { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--admin-text-muted); background: #f8fafc; padding: 8px 16px; border-radius: 10px; width: fit-content; }
-        .breadcrumb-item { cursor: pointer; font-weight: 500; }
-        .breadcrumb-item:hover { color: var(--admin-primary); }
-        .breadcrumb-item.active { font-weight: 700; color: var(--admin-text-main); }
-        .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; }
-        .cat-card { background: white; border: 1px solid var(--admin-border); border-radius: 12px; padding: 1rem; transition: all 0.2s; }
-        .cat-card:hover { transform: translateY(-2px); border-color: var(--admin-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .cat-card-header { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 12px; }
-        .cat-card-icon { width: 40px; height: 40px; border-radius: 10px; background: #f5f3ff; color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .category-actions-head,.category-filter-row,.view-switch,.card-actions,.modal-actions{display:flex;align-items:center;gap:10px}
+        .category-actions-head{flex-wrap:wrap}
+        .category-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+        .category-stat{position:relative;overflow:hidden;padding:18px;border:1px solid var(--admin-border);border-radius:18px;background:var(--admin-surface);box-shadow:var(--admin-shadow-sm)}
+        .category-stat:after{content:"";position:absolute;width:90px;height:90px;right:-35px;bottom:-50px;border-radius:50%;background:var(--glow,rgba(109,94,252,.12))}
+        .stat-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;color:var(--tone,var(--admin-primary));background:var(--tone-bg,var(--admin-primary-soft))}
+        .stat-label{margin:13px 0 4px;color:var(--admin-text-muted);font-size:.76rem;font-weight:750}
+        .stat-value{color:var(--admin-text-main);font-size:1.55rem;font-weight:850;letter-spacing:-.04em}
+        .category-toolbar{display:grid;grid-template-columns:minmax(230px,1fr) auto auto;align-items:center;gap:12px;padding:14px;margin-bottom:18px;border:1px solid var(--admin-border);border-radius:18px;background:var(--admin-surface);box-shadow:var(--admin-shadow-sm)}
+        .category-search{position:relative}
+        .category-search i{position:absolute;top:50%;left:14px;color:var(--admin-text-muted);transform:translateY(-50%);pointer-events:none}
+        .category-search input{width:100%;min-height:44px;padding:0 42px;border:1px solid var(--admin-border);border-radius:13px;color:var(--admin-text-main);background:var(--admin-surface-soft);outline:none}
+        .category-search input:focus{border-color:var(--admin-primary);background:var(--admin-surface);box-shadow:0 0 0 4px rgba(109,94,252,.1)}
+        .category-search kbd{position:absolute;top:50%;right:12px;padding:2px 6px;border:1px solid var(--admin-border);border-radius:6px;color:var(--admin-text-muted);background:var(--admin-surface);font-size:.65rem;transform:translateY(-50%)}
+        .category-filter-row select{min-height:44px;padding:0 34px 0 12px;border:1px solid var(--admin-border);border-radius:12px;color:var(--admin-text-main);background:var(--admin-surface)}
+        .view-switch{padding:4px;border:1px solid var(--admin-border);border-radius:12px;background:var(--admin-surface-soft)}
+        .view-switch button{width:38px;height:34px;border:0;border-radius:9px;color:var(--admin-text-muted);background:transparent;cursor:pointer}
+        .view-switch button.active{color:#fff;background:var(--admin-primary);box-shadow:0 5px 14px rgba(109,94,252,.28)}
+        .category-workspace{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:560px;overflow:hidden;border:1px solid var(--admin-border);border-radius:22px;background:var(--admin-surface);box-shadow:var(--admin-shadow)}
+        .category-explorer{padding:18px 12px;border-right:1px solid var(--admin-border);background:var(--admin-surface-soft)}
+        .explorer-head{display:flex;align-items:center;justify-content:space-between;padding:0 8px 13px}
+        .explorer-head strong{font-size:.76rem;letter-spacing:.08em;text-transform:uppercase}
+        .tree-list{display:flex;flex-direction:column;gap:3px;max-height:510px;overflow:auto}
+        .tree-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:9px;width:100%;min-height:42px;padding:6px 9px;border:0;border-radius:11px;color:var(--admin-text-secondary);background:transparent;text-align:left;cursor:pointer;transition:.2s}
+        .tree-item:hover{color:var(--admin-text-main);background:var(--admin-surface)}
+        .tree-item.active{color:var(--admin-primary);background:var(--admin-primary-soft);box-shadow:inset 3px 0 var(--admin-primary)}
+        .tree-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;color:var(--admin-primary);background:var(--admin-surface);font-size:.78rem}
+        .tree-name{overflow:hidden;font-size:.81rem;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
+        .tree-count{min-width:23px;padding:3px 6px;border-radius:999px;color:var(--admin-text-muted);background:var(--admin-surface);font-size:.63rem;font-weight:800;text-align:center}
+        .category-content{min-width:0;padding:22px}
+        .content-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--admin-border)}
+        .breadcrumbs{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:8px;color:var(--admin-text-muted);font-size:.74rem}
+        .breadcrumbs button{padding:0;border:0;color:inherit;background:none;cursor:pointer}.breadcrumbs button:hover{color:var(--admin-primary)}
+        .content-title{margin:0;color:var(--admin-text-main);font-size:1.25rem}.content-copy{margin:5px 0 0;color:var(--admin-text-muted);font-size:.81rem}
+        .category-results{padding-top:18px}
+        .category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px}
+        .category-card{display:flex;flex-direction:column;min-width:0;padding:16px;border:1px solid var(--admin-border);border-radius:17px;background:var(--admin-surface);transition:.2s}
+        .category-card:hover{border-color:rgba(109,94,252,.42);box-shadow:0 14px 30px rgba(37,44,78,.1);transform:translateY(-2px)}
+        .category-card-main{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;width:100%;padding:0;border:0;color:inherit;background:none;text-align:left;cursor:pointer}
+        .category-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;color:var(--admin-primary);background:linear-gradient(145deg,var(--admin-primary-soft),var(--admin-surface-soft));font-size:1.05rem}
+        .category-name,.category-path{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.category-name{margin:2px 0 4px;color:var(--admin-text-main);font-size:.93rem;font-weight:800}.category-path{color:var(--admin-text-muted);font-size:.69rem}
+        .category-meta{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:16px}
+        .category-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;color:var(--admin-text-secondary);background:var(--admin-surface-soft);font-size:.66rem;font-weight:700}
+        .card-actions{margin-top:14px;padding-top:12px;border-top:1px solid var(--admin-border)}
+        .card-action{flex:1;min-height:34px;border:1px solid var(--admin-border);border-radius:9px;color:var(--admin-text-secondary);background:var(--admin-surface-soft);cursor:pointer;transition:.18s}
+        .card-action:hover{color:var(--admin-primary);border-color:rgba(109,94,252,.4);background:var(--admin-primary-soft)}.card-action.danger:hover{color:var(--admin-danger);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
+        .category-grid.list{display:flex;flex-direction:column}.category-grid.list .category-card{display:grid;grid-template-columns:minmax(230px,1fr) auto 126px;align-items:center;gap:18px;padding:12px 14px}.category-grid.list .category-meta,.category-grid.list .card-actions{margin:0;padding:0;border:0}
+        .category-empty{display:grid;place-items:center;min-height:300px;padding:36px;color:var(--admin-text-muted);text-align:center}.empty-icon{width:68px;height:68px;display:grid;place-items:center;margin:0 auto 14px;border-radius:22px;color:var(--admin-primary);background:var(--admin-primary-soft);font-size:1.45rem}
+        .category-skeleton{height:144px;border-radius:17px;background:linear-gradient(90deg,var(--admin-surface-soft) 25%,var(--admin-surface) 45%,var(--admin-surface-soft) 65%);background-size:220% 100%;animation:shimmer 1.2s infinite linear}
+        .category-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.category-field{display:flex;flex-direction:column;gap:7px}.category-field.full{grid-column:1/-1}.category-field label{font-size:.76rem;font-weight:800}.category-field input,.category-field select{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--admin-border);border-radius:11px;color:var(--admin-text-main);background:var(--admin-surface);outline:none}.category-field input:focus,.category-field select:focus{border-color:var(--admin-primary);box-shadow:0 0 0 4px rgba(109,94,252,.1)}.category-field small{color:var(--admin-text-muted);font-size:.68rem}
+        .icon-picker{display:flex;flex-wrap:wrap;gap:8px}.icon-choice{width:38px;height:38px;border:1px solid var(--admin-border);border-radius:10px;color:var(--admin-text-secondary);background:var(--admin-surface-soft);cursor:pointer}.icon-choice.active{color:#fff;border-color:var(--admin-primary);background:var(--admin-primary)}
+        .modal-actions{justify-content:flex-end;margin-top:20px}.delete-summary{padding:14px;border:1px solid rgba(239,68,68,.22);border-radius:13px;color:var(--admin-text-secondary);background:rgba(239,68,68,.07);font-size:.81rem;line-height:1.6}
+        @keyframes shimmer{to{background-position:-220% 0}}
+        @media(max-width:1100px){.category-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.category-workspace{grid-template-columns:235px minmax(0,1fr)}.category-toolbar{grid-template-columns:1fr auto}.category-filter-row{grid-column:1/-1}.category-filter-row select{flex:1}}
+        @media(max-width:760px){.category-actions-head,.category-actions-head .btn{width:100%}.category-toolbar{grid-template-columns:1fr auto}.category-filter-row{overflow-x:auto}.category-workspace{display:block;min-height:0}.category-explorer{border-right:0;border-bottom:1px solid var(--admin-border)}.tree-list{flex-direction:row;max-height:none;padding-bottom:3px;overflow-x:auto}.tree-item{min-width:155px}.category-content{padding:16px}.content-head{flex-direction:column}.content-head .btn{width:100%}.category-grid{grid-template-columns:1fr}.category-grid.list .category-card{display:flex;align-items:stretch}.category-grid.list .card-actions{width:100%}}
+        @media(max-width:520px){.category-stats{gap:9px}.category-stat{padding:14px}.stat-value{font-size:1.25rem}.category-toolbar{grid-template-columns:1fr}.view-switch{justify-self:stretch}.view-switch button{flex:1}.category-filter-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);overflow:visible}.category-filter-row select{min-width:0;width:100%}.category-form-grid{grid-template-columns:1fr}.category-field.full{grid-column:auto}}
     </style>
     <link rel="stylesheet" href="/css/preferences.css?v=1.1">
     <script src="/js/preferences.js?v=1.1"></script>
@@ -33,254 +72,293 @@
     <main class="admin-main">
         <header class="page-header">
             <div class="page-title">
+                <span class="page-eyebrow">CATALOG CONTROL</span>
                 <h1>Quản lý Danh mục</h1>
-                <p>Thiết lập hệ thống ngành hàng cho toàn bộ website.</p>
+                <p>Tổ chức ngành hàng rõ ràng để người dùng tìm sản phẩm nhanh hơn.</p>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <div style="position: relative; width: 300px;">
-                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
-                    <input type="text" id="cat-search" oninput="searchCategories()" placeholder="Tìm tên danh mục..." 
-                           style="width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem; border-radius: 10px; border: 1px solid var(--admin-border); font-size: 0.9rem;">
-                </div>
-                <button class="btn btn-primary" onclick="openModal()">
-                    <i class="fa-solid fa-plus"></i> Thêm Danh mục
-                </button>
+            <div class="category-actions-head">
+                <button class="btn btn-secondary" type="button" onclick="loadCategories(true)"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+                <button class="btn btn-primary" type="button" onclick="openCategoryModal()"><i class="fa-solid fa-plus"></i> Thêm danh mục</button>
             </div>
         </header>
-
-        <div id="search-results-view" class="card hidden" style="margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 id="search-results-title">Kết quả tìm kiếm</h3>
-                <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.8rem;" onclick="clearSearch()">Đóng tìm kiếm</button>
+        <section class="category-stats" aria-label="Tổng quan danh mục">
+            <article class="category-stat"><div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div><div class="stat-label">Tổng danh mục</div><div class="stat-value" id="stat-total">—</div></article>
+            <article class="category-stat" style="--tone:#0ea5e9;--tone-bg:rgba(14,165,233,.1);--glow:rgba(14,165,233,.12)"><div class="stat-icon"><i class="fa-solid fa-folder-tree"></i></div><div class="stat-label">Danh mục gốc</div><div class="stat-value" id="stat-roots">—</div></article>
+            <article class="category-stat" style="--tone:#10b981;--tone-bg:rgba(16,185,129,.1);--glow:rgba(16,185,129,.12)"><div class="stat-icon"><i class="fa-solid fa-box-open"></i></div><div class="stat-label">Sản phẩm được gắn</div><div class="stat-value" id="stat-products">—</div></article>
+            <article class="category-stat" style="--tone:#f59e0b;--tone-bg:rgba(245,158,11,.1);--glow:rgba(245,158,11,.12)"><div class="stat-icon"><i class="fa-solid fa-route"></i></div><div class="stat-label">Độ sâu lớn nhất</div><div class="stat-value" id="stat-depth">—</div></article>
+        </section>
+        <section class="category-toolbar" aria-label="Công cụ quản lý">
+            <label class="category-search"><i class="fa-solid fa-magnifying-glass"></i><input id="category-search" type="search" autocomplete="off" placeholder="Tìm tên, đường dẫn hoặc slug..."><kbd>/</kbd></label>
+            <div class="category-filter-row">
+                <select id="category-filter" aria-label="Lọc danh mục"><option value="all">Tất cả danh mục</option><option value="root">Chỉ danh mục gốc</option><option value="branch">Có danh mục con</option><option value="leaf">Danh mục cuối</option><option value="empty">Chưa có sản phẩm</option></select>
+                <select id="category-sort" aria-label="Sắp xếp"><option value="name">Tên A–Z</option><option value="products">Nhiều sản phẩm nhất</option><option value="children">Nhiều mục con nhất</option><option value="newest">Mới tạo gần đây</option></select>
             </div>
-            <div id="search-results-grid" class="cat-grid"></div>
-        </div>
-
-        <div id="folder-view"></div>
-        
-        <div id="tree-view" class="hidden">
-            <div id="tree-breadcrumb"></div>
-            <div class="tree-container">
-                <svg id="tree-svg-layer" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></svg>
-                <div id="tree-content"></div>
+            <div class="view-switch" aria-label="Kiểu hiển thị"><button id="view-grid" type="button" class="active" title="Dạng thẻ" aria-label="Hiển thị dạng thẻ"><i class="fa-solid fa-grip"></i></button><button id="view-list" type="button" title="Dạng danh sách" aria-label="Hiển thị dạng danh sách"><i class="fa-solid fa-list"></i></button></div>
+        </section>
+        <section class="category-workspace">
+            <aside class="category-explorer">
+                <div class="explorer-head"><strong>Cây danh mục</strong><span class="tree-count" id="tree-total">0</span></div>
+                <div id="category-tree" class="tree-list"><div class="category-skeleton"></div></div>
+            </aside>
+            <div class="category-content">
+                <div class="content-head">
+                    <div><nav id="category-breadcrumbs" class="breadcrumbs" aria-label="Đường dẫn"></nav><h2 id="category-content-title" class="content-title">Tất cả danh mục</h2><p id="category-content-copy" class="content-copy">Đang tải dữ liệu...</p></div>
+                    <button id="add-child-button" class="btn btn-secondary" type="button" onclick="openCategoryModal(null,selectedCategoryId)"><i class="fa-solid fa-folder-plus"></i> Thêm mục con</button>
+                </div>
+                <div id="category-results" class="category-results"><div class="category-grid"><div class="category-skeleton"></div><div class="category-skeleton"></div><div class="category-skeleton"></div></div></div>
             </div>
-        </div>
+        </section>
     </main>
-
     <script src="../js/api.js"></script>
-    <script src="admin-common.js"></script>
+    <script src="admin-common.js?v=3.2"></script>
     <script>
-        let allCategories = [];
-        let currentCategory = null;
-        let currentPath = [];
+        let allCategories=[];
+        let selectedCategoryId=null;
+        let categoryView=localStorage.getItem('admin_category_view')==='list'?'list':'grid';
+        let categoryQuery='',categoryFilter='all',categorySort='name';
 
-        async function loadCategories() {
-            try {
-                allCategories = await window.adminApi.get('admin/categories');
-                renderView();
-            } catch (err) { console.error(err); }
+        const byId=id=>allCategories.find(category=>category.id===id);
+        const escapeHtml=value=>window.adminEscapeHtml(value);
+
+        function safeIcon(icon){
+            const value=String(icon||'').trim();
+            return /^fa-[a-z0-9-]+$/i.test(value)?value:'fa-tag';
+        }
+        function normalizeText(value){
+            return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+        }
+        function createSlug(value){
+            return normalizeText(value).replace(/đ/g,'d').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+        }
+        function getChildren(parentId){
+            return allCategories.filter(category=>(category.parentCategoryId||null)===(parentId||null));
+        }
+        function getAncestors(category){
+            const path=[],visited=new Set();
+            let cursor=category;
+            while(cursor?.parentCategoryId&&!visited.has(cursor.parentCategoryId)){
+                visited.add(cursor.parentCategoryId);
+                cursor=byId(cursor.parentCategoryId);
+                if(cursor)path.unshift(cursor);
+            }
+            return path;
+        }
+        function getDescendantIds(id){
+            const ids=new Set(),queue=[id];
+            while(queue.length){
+                const current=queue.shift();
+                getChildren(current).forEach(child=>{
+                    if(!ids.has(child.id)){ids.add(child.id);queue.push(child.id);}
+                });
+            }
+            return ids;
+        }
+        function getDepth(category){return getAncestors(category).length+1;}
+        function getPath(category){return [...getAncestors(category),category].map(item=>item.name).join(' / ');}
+        function childCount(category){return Number.isFinite(category.childrenCount)?category.childrenCount:getChildren(category.id).length;}
+        function setLoading(value){
+            document.querySelectorAll('.category-actions-head button,.category-toolbar input,.category-toolbar select').forEach(element=>element.disabled=value);
         }
 
-        function searchCategories() {
-            const query = document.getElementById('cat-search').value.toLowerCase().trim();
-            const resultsView = document.getElementById('search-results-view');
-            const grid = document.getElementById('search-results-grid');
-            
-            if (!query) {
-                resultsView.classList.add('hidden');
+        async function loadCategories(showNotice=false){
+            setLoading(true);
+            try{
+                const data=await window.adminApi.get('admin/categories');
+                allCategories=Array.isArray(data)?data:[];
+                if(selectedCategoryId&&!byId(selectedCategoryId))selectedCategoryId=null;
+                renderAll();
+                if(showNotice)window.adminToast.success('Đã cập nhật dữ liệu danh mục.');
+            }catch(error){
+                document.getElementById('category-results').innerHTML=renderEmpty('Không thể tải danh mục','Hãy kiểm tra kết nối máy chủ rồi thử lại.','fa-cloud-arrow-down');
+                window.adminToast.error(error.message||'Không thể tải danh mục.');
+            }finally{setLoading(false);}
+        }
+
+        function renderAll(){renderStats();renderTree();renderResults();updateViewButtons();}
+        function renderStats(){
+            const roots=getChildren(null).length;
+            const products=allCategories.reduce((sum,category)=>sum+Number(category.productCount||0),0);
+            const depth=allCategories.length?Math.max(...allCategories.map(getDepth)):0;
+            document.getElementById('stat-total').textContent=allCategories.length.toLocaleString('vi-VN');
+            document.getElementById('stat-roots').textContent=roots.toLocaleString('vi-VN');
+            document.getElementById('stat-products').textContent=products.toLocaleString('vi-VN');
+            document.getElementById('stat-depth').textContent=depth?`${depth} cấp`:'0';
+            document.getElementById('tree-total').textContent=allCategories.length;
+        }
+        function buildTreeRows(parentId=null,depth=0,rows=[]){
+            getChildren(parentId).sort((a,b)=>a.name.localeCompare(b.name,'vi')).forEach(category=>{
+                rows.push({category,depth});
+                buildTreeRows(category.id,depth+1,rows);
+            });
+            return rows;
+        }
+        function renderTree(){
+            const rows=buildTreeRows();
+            document.getElementById('category-tree').innerHTML=`
+                <button class="tree-item ${selectedCategoryId?'':'active'}" type="button" data-select-category="">
+                    <span class="tree-icon"><i class="fa-solid fa-house"></i></span><span class="tree-name">Tất cả danh mục</span><span class="tree-count">${getChildren(null).length}</span>
+                </button>
+                ${rows.map(({category,depth})=>`
+                    <button class="tree-item ${selectedCategoryId===category.id?'active':''}" type="button" data-select-category="${category.id}" style="padding-left:${Math.min(9+depth*14,51)}px">
+                        <span class="tree-icon"><i class="fa-solid ${safeIcon(category.icon)}"></i></span><span class="tree-name">${escapeHtml(category.name)}</span><span class="tree-count">${childCount(category)}</span>
+                    </button>`).join('')}
+            `;
+        }
+        function visibleCategories(){
+            let categories;
+            if(categoryQuery){
+                const query=normalizeText(categoryQuery);
+                categories=allCategories.filter(category=>normalizeText(category.name).includes(query)||normalizeText(category.slug).includes(query)||normalizeText(getPath(category)).includes(query));
+            }else categories=getChildren(selectedCategoryId);
+            categories=categories.filter(category=>{
+                const children=childCount(category);
+                if(categoryFilter==='root')return !category.parentCategoryId;
+                if(categoryFilter==='branch')return children>0;
+                if(categoryFilter==='leaf')return children===0;
+                if(categoryFilter==='empty')return Number(category.productCount||0)===0;
+                return true;
+            });
+            return categories.sort((a,b)=>{
+                if(categorySort==='products')return Number(b.productCount||0)-Number(a.productCount||0);
+                if(categorySort==='children')return childCount(b)-childCount(a);
+                if(categorySort==='newest')return new Date(b.createdAt||0)-new Date(a.createdAt||0);
+                return a.name.localeCompare(b.name,'vi');
+            });
+        }
+        function renderBreadcrumbs(){
+            const selected=selectedCategoryId?byId(selectedCategoryId):null;
+            const path=selected?[...getAncestors(selected),selected]:[];
+            document.getElementById('category-breadcrumbs').innerHTML=`
+                <button type="button" data-select-category="">Danh mục</button>
+                ${path.map(item=>`<i class="fa-solid fa-chevron-right"></i><button type="button" data-select-category="${item.id}">${escapeHtml(item.name)}</button>`).join('')}
+            `;
+        }
+        function renderResults(){
+            const categories=visibleCategories(),selected=selectedCategoryId?byId(selectedCategoryId):null;
+            renderBreadcrumbs();
+            document.getElementById('category-content-title').textContent=categoryQuery?`Kết quả cho “${categoryQuery}”`:(selected?selected.name:'Tất cả danh mục gốc');
+            document.getElementById('category-content-copy').textContent=categoryQuery?`Tìm thấy ${categories.length} danh mục trong toàn bộ hệ thống.`:`${categories.length} danh mục ${selected?'con trực tiếp':'ở cấp cao nhất'}.`;
+            document.getElementById('add-child-button').innerHTML=selected?'<i class="fa-solid fa-folder-plus"></i> Thêm mục con':'<i class="fa-solid fa-plus"></i> Thêm danh mục gốc';
+            const results=document.getElementById('category-results');
+            if(!categories.length){
+                results.innerHTML=renderEmpty(categoryQuery?'Không tìm thấy kết quả':'Chưa có danh mục ở cấp này',categoryQuery?'Thử một từ khóa hoặc bộ lọc khác.':'Tạo danh mục mới để bắt đầu tổ chức sản phẩm.',categoryQuery?'fa-magnifying-glass':'fa-folder-plus');
                 return;
             }
-
-            const results = allCategories.filter(c => c.name.toLowerCase().includes(query));
-            resultsView.classList.remove('hidden');
-            document.getElementById('search-results-title').textContent = `Kết quả tìm kiếm (${results.length})`;
-
-            grid.innerHTML = results.map(cat => {
-                // Find path for context
-                let path = [];
-                let temp = allCategories.find(c => c.id === cat.parentCategoryId);
-                while(temp) { path.unshift(temp.name); temp = allCategories.find(c => c.id === temp.parentCategoryId); }
-                const pathStr = path.length > 0 ? path.join(' > ') : 'Gốc';
-
-                return `
-                <div class="cat-card">
-                    <div class="cat-card-header" onclick="drillDown('${cat.id}'); clearSearch();">
-                        <div class="cat-card-icon"><i class="fa-solid ${cat.icon || 'fa-tag'}"></i></div>
-                        <div>
-                            <div style="font-weight:700; font-size:0.95rem;">${cat.name}</div>
-                            <div style="font-size:0.65rem; color:#94a3b8;">Nằm trong: ${pathStr}</div>
-                        </div>
+            results.innerHTML=`<div class="category-grid ${categoryView==='list'?'list':''}">${categories.map(renderCard).join('')}</div>`;
+        }
+        function renderCard(category){
+            return `
+                <article class="category-card">
+                    <button class="category-card-main" type="button" data-select-category="${category.id}">
+                        <span class="category-icon"><i class="fa-solid ${safeIcon(category.icon)}"></i></span>
+                        <span><span class="category-name">${escapeHtml(category.name)}</span><span class="category-path">${escapeHtml(getPath(category))}</span></span>
+                    </button>
+                    <div class="category-meta">
+                        <span class="category-chip"><i class="fa-solid fa-folder-tree"></i> ${childCount(category)} mục con</span>
+                        <span class="category-chip"><i class="fa-solid fa-box"></i> ${Number(category.productCount||0)} sản phẩm</span>
                     </div>
-                </div>`;
+                    <div class="card-actions">
+                        <button class="card-action" type="button" data-add-child="${category.id}" title="Thêm mục con"><i class="fa-solid fa-plus"></i></button>
+                        <button class="card-action" type="button" data-edit-category="${category.id}" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
+                        <button class="card-action danger" type="button" data-delete-category="${category.id}" title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </article>`;
+        }
+        function renderEmpty(title,copy,icon){
+            return `<div class="category-empty"><div><div class="empty-icon"><i class="fa-solid ${icon}"></i></div><strong style="display:block;color:var(--admin-text-main);margin-bottom:6px">${escapeHtml(title)}</strong><span style="font-size:.81rem">${escapeHtml(copy)}</span></div></div>`;
+        }
+        function selectCategory(id){
+            selectedCategoryId=id||null;categoryQuery='';document.getElementById('category-search').value='';renderTree();renderResults();
+        }
+        function updateViewButtons(){
+            document.getElementById('view-grid').classList.toggle('active',categoryView==='grid');
+            document.getElementById('view-list').classList.toggle('active',categoryView==='list');
+        }
+        function setCategoryView(view){
+            categoryView=view;localStorage.setItem('admin_category_view',view);updateViewButtons();renderResults();
+        }
+        function parentOptions(editingId,selectedParentId){
+            const blocked=editingId?getDescendantIds(editingId):new Set();
+            if(editingId)blocked.add(editingId);
+            return buildTreeRows().map(({category,depth})=>{
+                const disabled=blocked.has(category.id);
+                return `<option value="${category.id}" ${selectedParentId===category.id?'selected':''} ${disabled?'disabled':''}>${'— '.repeat(Math.min(depth,4))}${escapeHtml(category.name)}${disabled?' (không thể chọn)':''}</option>`;
             }).join('');
-
-            if (results.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 1rem;">Không tìm thấy danh mục nào khớp với từ khóa.</p>';
-            }
         }
 
-        function clearSearch() {
-            document.getElementById('cat-search').value = '';
-            document.getElementById('search-results-view').classList.add('hidden');
-        }
-
-        function renderView() {
-            if (!currentCategory) renderGrid();
-            else renderTree();
-        }
-
-        function renderGrid() {
-            const container = document.getElementById('folder-view');
-            document.getElementById('tree-view').classList.add('hidden');
-            container.classList.remove('hidden');
-            
-            const roots = allCategories.filter(c => !c.parentCategoryId);
-            container.innerHTML = `
-                <div class="breadcrumb-container"><span class="breadcrumb-item active">Gốc</span></div>
-                <div class="cat-grid">
-                    ${roots.map(cat => {
-                        const childCount = allCategories.filter(c => c.parentCategoryId === cat.id).length;
-                        return `
-                        <div class="cat-card">
-                            <div class="cat-card-header" onclick="drillDown('${cat.id}')">
-                                <div class="cat-card-icon"><i class="fa-solid ${cat.icon || 'fa-folder'}"></i></div>
-                                <div>
-                                    <div style="font-weight:700; font-size:0.95rem;">${cat.name}</div>
-                                    <div style="font-size:0.75rem; color:#64748b;">${childCount} mục con</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 8px;">
-                                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.7rem;" onclick="openModal('${cat.id}')"><i class="fa-solid fa-pen"></i></button>
-                                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.7rem;" onclick="deleteCategory('${cat.id}')"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>`;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        function drillDown(id) {
-            const cat = allCategories.find(c => c.id === id);
-            currentCategory = cat;
-            currentPath = [];
-            let temp = cat;
-            while(temp) { currentPath.unshift(temp); temp = allCategories.find(c => c.id === temp.parentCategoryId); }
-            renderView();
-        }
-
-        function goToLevel(idx) {
-            if (idx === -1) { currentCategory = null; currentPath = []; }
-            else { currentCategory = currentPath[idx]; currentPath = currentPath.slice(0, idx+1); }
-            renderView();
-        }
-
-        function renderTree() {
-            const container = document.getElementById('tree-view');
-            document.getElementById('folder-view').classList.add('hidden');
-            container.classList.remove('hidden');
-
-            const children = allCategories.filter(c => c.parentCategoryId === currentCategory.id);
-            
-            document.getElementById('tree-breadcrumb').innerHTML = `
-                <div class="breadcrumb-container">
-                    <span class="breadcrumb-item" onclick="goToLevel(-1)">Gốc</span>
-                    ${currentPath.map((p, i) => `
-                        <i class="fa-solid fa-chevron-right" style="font-size:0.7rem; opacity:0.5;"></i>
-                        <span class="breadcrumb-item ${i === currentPath.length-1 ? 'active' : ''}" onclick="goToLevel(${i})">${p.name}</span>
-                    `).join('')}
-                </div>
-            `;
-
-            document.getElementById('tree-content').innerHTML = `
-                <div class="tree-node-group">
-                    <div class="tree-node" style="border-color:#6366f1; border-width:2px; padding-bottom: 35px;">
-                        <div class="tree-node-icon"><i class="fa-solid ${currentCategory.icon || 'fa-folder'}"></i></div>
-                        <div class="tree-node-name" style="color:#6366f1;">${currentCategory.name}</div>
-                        <div style="position: absolute; bottom: 6px; display: flex; gap: 6px;">
-                            <button onclick="openModal('${currentCategory.id}')" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:0.7rem;"><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                    </div>
-                    <div class="tree-sub-items">
-                        ${children.map(child => `
-                            <div class="tree-node" style="padding-bottom: 35px;">
-                                <div onclick="drillDown('${child.id}')">
-                                    <div class="tree-node-icon" style="background:#94a3b8;"><i class="fa-solid ${child.icon || 'fa-tag'}"></i></div>
-                                    <div class="tree-node-name">${child.name}</div>
-                                </div>
-                                <div style="position: absolute; bottom: 6px; display: flex; gap: 6px;">
-                                    <button onclick="openModal('${child.id}')" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:0.7rem;"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="deleteCategory('${child.id}')" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:0.7rem;"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            setTimeout(drawLines, 50);
-        }
-
-        function openModal(id = null) {
-            let cat = id ? allCategories.find(c => c.id === id) : null;
-            const parentId = currentCategory ? currentCategory.id : null;
-            
+        function openCategoryModal(id=null,requestedParentId=undefined){
+            const category=id?byId(id):null;
+            const parentId=requestedParentId!==undefined?requestedParentId:(category?.parentCategoryId||null);
+            const icon=safeIcon(category?.icon||'fa-tag');
+            const iconList=['fa-tag','fa-mobile-screen','fa-laptop','fa-shirt','fa-house','fa-paw','fa-basket-shopping','fa-gamepad','fa-book','fa-car'];
             window.adminModal.open(`
-                <h2 style="margin-bottom: 1.5rem;">${id ? 'Chỉnh sửa' : 'Thêm mới'} Danh mục</h2>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <div>
-                        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px;">TÊN DANH MỤC</label>
-                        <input type="text" id="cat-name" value="${cat ? cat.name : ''}" placeholder="Ví dụ: Đồ gia dụng" 
-                               style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--admin-border);">
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px;">ICON (FontAwesome class)</label>
-                        <input type="text" id="cat-icon" value="${cat ? cat.icon : 'fa-tag'}" placeholder="Ví dụ: fa-laptop" 
-                               style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--admin-border);">
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
-                        <button class="btn btn-secondary" onclick="adminModal.close()">Hủy</button>
-                        <button class="btn btn-primary" onclick="saveCategory('${id}')">Lưu thay đổi</button>
-                    </div>
+                <div style="margin-bottom:18px">
+                    <span class="page-eyebrow">${category?'CHỈNH SỬA CẤU TRÚC':'DANH MỤC MỚI'}</span>
+                    <h2 style="margin:7px 0 4px;color:var(--admin-text-main)">${category?'Cập nhật danh mục':'Tạo danh mục mới'}</h2>
+                    <p style="margin:0;color:var(--admin-text-muted);font-size:.8rem">Tên rõ ràng và cấu trúc gọn giúp khách hàng tìm sản phẩm nhanh hơn.</p>
                 </div>
+                <div class="category-form-grid">
+                    <div class="category-field full"><label for="category-name-input">Tên danh mục</label><input id="category-name-input" maxlength="80" value="${escapeHtml(category?.name||'')}" placeholder="Ví dụ: Điện thoại thông minh"><small id="category-slug-preview">Đường dẫn: /${escapeHtml(category?.slug||'ten-danh-muc')}</small></div>
+                    <div class="category-field"><label for="category-parent-input">Danh mục cha</label><select id="category-parent-input"><option value="">— Danh mục gốc —</option>${parentOptions(id,parentId)}</select><small>Có thể chuyển sang một nhánh khác.</small></div>
+                    <div class="category-field"><label for="category-icon-input">Mã biểu tượng</label><input id="category-icon-input" value="${icon}" placeholder="fa-tag"><small>Dùng tên biểu tượng Font Awesome.</small></div>
+                    <div class="category-field full"><label>Biểu tượng gợi ý</label><div class="icon-picker">${iconList.map(item=>`<button class="icon-choice ${item===icon?'active':''}" type="button" data-icon-choice="${item}" title="${item}"><i class="fa-solid ${item}"></i></button>`).join('')}</div></div>
+                </div>
+                <div class="modal-actions"><button class="btn btn-secondary" type="button" onclick="adminModal.close()">Hủy</button><button class="btn btn-primary" id="save-category-button" type="button" onclick="saveCategory('${id||''}')"><i class="fa-solid fa-check"></i> ${category?'Lưu thay đổi':'Tạo danh mục'}</button></div>
+            `);
+            const nameInput=document.getElementById('category-name-input'),iconInput=document.getElementById('category-icon-input');
+            nameInput.addEventListener('input',()=>document.getElementById('category-slug-preview').textContent=`Đường dẫn: /${createSlug(nameInput.value)||'ten-danh-muc'}`);
+            document.querySelectorAll('[data-icon-choice]').forEach(button=>button.addEventListener('click',()=>{
+                iconInput.value=button.dataset.iconChoice;document.querySelectorAll('[data-icon-choice]').forEach(item=>item.classList.remove('active'));button.classList.add('active');
+            }));
+            setTimeout(()=>nameInput.focus(),50);
+        }
+        async function saveCategory(id){
+            const nameInput=document.getElementById('category-name-input'),iconInput=document.getElementById('category-icon-input'),parentInput=document.getElementById('category-parent-input'),button=document.getElementById('save-category-button');
+            const name=nameInput.value.trim(),icon=safeIcon(iconInput.value);
+            if(!name){nameInput.focus();return window.adminToast.warning('Vui lòng nhập tên danh mục.');}
+            if(icon!==iconInput.value.trim()){iconInput.focus();return window.adminToast.warning('Mã biểu tượng phải có dạng fa-tag.');}
+            button.disabled=true;button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu';
+            try{
+                const dto={name,icon,parentCategoryId:parentInput.value||null};
+                const response=id?await window.adminApi.put(`admin/categories/${id}`,dto):await window.adminApi.post('admin/categories',dto);
+                window.adminModal.close();await loadCategories();window.adminToast.success(response.message||'Đã lưu danh mục.');
+            }catch(error){window.adminToast.error(error.message||'Không thể lưu danh mục.');button.disabled=false;button.innerHTML='<i class="fa-solid fa-check"></i> Thử lại';}
+        }
+        function openDeleteModal(id){
+            const category=byId(id);if(!category)return;
+            const descendants=[...getDescendantIds(id)],affected=[category,...descendants.map(byId).filter(Boolean)];
+            const products=affected.reduce((sum,item)=>sum+Number(item.productCount||0),0);
+            window.adminModal.open(`
+                <div style="text-align:center;margin-bottom:18px"><div class="empty-icon" style="color:var(--admin-danger);background:rgba(239,68,68,.09)"><i class="fa-solid fa-trash-can"></i></div><h2 style="margin:0 0 6px;color:var(--admin-text-main)">Xóa “${escapeHtml(category.name)}”?</h2><p style="margin:0;color:var(--admin-text-muted);font-size:.8rem">Thao tác này không thể hoàn tác.</p></div>
+                <div class="delete-summary"><strong>${descendants.length+1} danh mục</strong> sẽ bị xóa, gồm ${descendants.length} mục con.<br>${products>0?`Có <strong>${products} sản phẩm</strong> đang sử dụng nhánh này nên hệ thống sẽ chặn xóa.`:'Không có sản phẩm nào đang sử dụng nhánh này.'}</div>
+                <div class="modal-actions"><button class="btn btn-secondary" type="button" onclick="adminModal.close()">Hủy</button><button class="btn btn-danger" id="confirm-delete-category" type="button" onclick="deleteCategory('${id}')" ${products>0?'disabled':''}><i class="fa-solid fa-trash"></i> Xóa danh mục</button></div>
             `);
         }
-
-        async function saveCategory(id) {
-            const name = document.getElementById('cat-name').value;
-            const icon = document.getElementById('cat-icon').value;
-            const parentId = currentCategory ? currentCategory.id : null;
-
-            if (!name) return alert('Vui lòng nhập tên danh mục');
-
-            const dto = { name, icon, parentCategoryId: parentId };
-            try {
-                if (id && id !== 'null') {
-                    await window.adminApi.put(`admin/categories/${id}`, dto);
-                } else {
-                    await window.adminApi.post('admin/categories', dto);
-                }
-                alert('Thành công!');
-                adminModal.close();
-                loadCategories();
-            } catch (err) { alert(err.message); }
+        async function deleteCategory(id){
+            const button=document.getElementById('confirm-delete-category');button.disabled=true;button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Đang xóa';
+            try{
+                const response=await window.adminApi.delete(`admin/categories/${id}`);
+                if(selectedCategoryId===id||getDescendantIds(id).has(selectedCategoryId))selectedCategoryId=null;
+                window.adminModal.close();await loadCategories();window.adminToast.success(response.message||'Đã xóa danh mục.');
+            }catch(error){window.adminToast.error(error.message||'Không thể xóa danh mục.');button.disabled=false;button.innerHTML='<i class="fa-solid fa-trash"></i> Thử lại';}
         }
-
-        async function deleteCategory(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa danh mục này và tất cả danh mục con?')) return;
-            try {
-                const res = await window.adminApi.delete(`admin/categories/${id}`);
-                alert(res.message);
-                if (currentCategory && currentCategory.id === id) {
-                    currentCategory = null;
-                }
-                loadCategories();
-            } catch (err) { alert(err.message); }
-        }
-
-        function drawLines() {
-            // ... logic can be added here
-        }
-
-        document.addEventListener('DOMContentLoaded', loadCategories);
+        document.addEventListener('click',event=>{
+            const select=event.target.closest('[data-select-category]');if(select)selectCategory(select.dataset.selectCategory);
+            const add=event.target.closest('[data-add-child]');if(add)openCategoryModal(null,add.dataset.addChild);
+            const edit=event.target.closest('[data-edit-category]');if(edit)openCategoryModal(edit.dataset.editCategory);
+            const remove=event.target.closest('[data-delete-category]');if(remove)openDeleteModal(remove.dataset.deleteCategory);
+        });
+        document.addEventListener('keydown',event=>{
+            if(event.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){event.preventDefault();document.getElementById('category-search').focus();}
+        });
+        document.addEventListener('DOMContentLoaded',()=>{
+            document.getElementById('category-search').addEventListener('input',event=>{categoryQuery=event.target.value.trim();renderResults();});
+            document.getElementById('category-filter').addEventListener('change',event=>{categoryFilter=event.target.value;renderResults();});
+            document.getElementById('category-sort').addEventListener('change',event=>{categorySort=event.target.value;renderResults();});
+            document.getElementById('view-grid').addEventListener('click',()=>setCategoryView('grid'));
+            document.getElementById('view-list').addEventListener('click',()=>setCategoryView('list'));
+            loadCategories();
+        });
     </script>
 </body>
 </html>

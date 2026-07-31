@@ -34,12 +34,6 @@ public class AdminController : ControllerBase
     [HttpGet("ping")]
     public IActionResult Ping() => Ok(new { message = "Admin Controller is active - v4" });
 
-    [HttpGet("cleanup-now")]
-    public async Task<IActionResult> CleanupNow()
-    {
-        return await PerformCleanup();
-    }
-
     private async Task<IActionResult> PerformCleanup()
     {
         var adminId = User.GetUserId();
@@ -73,6 +67,7 @@ public class AdminController : ControllerBase
             
         var pendingReports = await _context.Reports.CountAsync(r => !r.IsResolved);
         var pendingShops = await _context.ShopApplications.CountAsync(s => s.Status == ShopApplicationStatus.Pending);
+        var pendingVerifications = await _context.VerificationRequests.CountAsync(v => v.Status == "Pending");
 
         // Revenue per shop (top 5)
         var topShops = await _context.OrderItems
@@ -124,6 +119,7 @@ public class AdminController : ControllerBase
             dailyOrders,
             pendingReports,
             pendingShops,
+            pendingVerifications,
             topShops,
             dailyStats,
             totalPlatformFee
@@ -591,13 +587,16 @@ public class AdminController : ControllerBase
     {
         var cats = await _context.Categories
             .OrderBy(c => c.Name)
-            .Select(c => new CategoryDto
+            .Select(c => new
             {
                 Id = c.Id,
                 Name = c.Name,
                 Slug = c.Slug,
                 Icon = c.Icon,
-                ParentCategoryId = c.ParentCategoryId
+                ParentCategoryId = c.ParentCategoryId,
+                ChildrenCount = c.SubCategories.Count,
+                ProductCount = c.Products.Count,
+                CreatedAt = c.CreatedAt
             })
             .ToListAsync();
         return Ok(cats);
@@ -606,8 +605,17 @@ public class AdminController : ControllerBase
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory([FromBody] CategoryDto dto)
     {
+        var name = dto.Name?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return BadRequest(new { message = "Tên danh mục không được để trống." });
+
+        if (dto.ParentCategoryId.HasValue &&
+            !await _context.Categories.AnyAsync(c => c.Id == dto.ParentCategoryId.Value))
+            return BadRequest(new { message = "Danh mục cha không tồn tại." });
+
         // Check for unique name
-        var existing = await _context.Categories.AnyAsync(c => c.Name.ToLower() == dto.Name.ToLower().Trim());
+        var normalizedName = name.ToLower();
+        var existing = await _context.Categories.AnyAsync(c => c.Name.ToLower() == normalizedName);
         if (existing)
         {
             return BadRequest(new { message = "Tên danh mục này đã tồn tại. Vui lòng chọn tên khác." });
@@ -616,8 +624,8 @@ public class AdminController : ControllerBase
         var category = new Category
         {
             Id = Guid.NewGuid(),
-            Name = dto.Name,
-            Slug = dto.Name.ToLower().Trim().Replace(" ", "-"),
+            Name = name,
+            Slug = name.ToLower().Replace(" ", "-"),
             Icon = dto.Icon,
             ParentCategoryId = dto.ParentCategoryId,
             CreatedAt = DateTime.UtcNow
@@ -634,15 +642,41 @@ public class AdminController : ControllerBase
         var category = await _context.Categories.FindAsync(id);
         if (category == null) return NotFound();
 
+        var name = dto.Name?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return BadRequest(new { message = "Tên danh mục không được để trống." });
+
+        if (dto.ParentCategoryId == id)
+            return BadRequest(new { message = "Danh mục không thể là danh mục cha của chính nó." });
+
+        if (dto.ParentCategoryId.HasValue)
+        {
+            var parentMap = await _context.Categories
+                .AsNoTracking()
+                .ToDictionaryAsync(c => c.Id, c => c.ParentCategoryId);
+
+            if (!parentMap.ContainsKey(dto.ParentCategoryId.Value))
+                return BadRequest(new { message = "Danh mục cha không tồn tại." });
+
+            var cursor = dto.ParentCategoryId;
+            while (cursor.HasValue)
+            {
+                if (cursor.Value == id)
+                    return BadRequest(new { message = "Không thể chuyển danh mục vào một danh mục con của chính nó." });
+                cursor = parentMap.GetValueOrDefault(cursor.Value);
+            }
+        }
+
         // Check for unique name (excluding self)
-        var existing = await _context.Categories.AnyAsync(c => c.Id != id && c.Name.ToLower() == dto.Name.ToLower().Trim());
+        var normalizedName = name.ToLower();
+        var existing = await _context.Categories.AnyAsync(c => c.Id != id && c.Name.ToLower() == normalizedName);
         if (existing)
         {
             return BadRequest(new { message = "Tên danh mục này đã tồn tại. Vui lòng chọn tên khác." });
         }
 
-        category.Name = dto.Name;
-        category.Slug = dto.Name.ToLower().Trim().Replace(" ", "-");
+        category.Name = name;
+        category.Slug = name.ToLower().Replace(" ", "-");
         category.Icon = dto.Icon;
         category.ParentCategoryId = dto.ParentCategoryId;
 

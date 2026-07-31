@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Từ khóa cấm - Zynk Admin</title>
+    <link rel="icon" href="../assets/favicon.png?v=3" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="admin-common.css">
+    <link rel="stylesheet" href="admin-common.css?v=3.1">
     <style>
         .actions-bar {
             display: flex;
@@ -69,7 +70,7 @@
     </main>
 
     <script src="../js/api.js"></script>
-    <script src="admin-common.js"></script>
+    <script src="admin-common.js?v=3.1"></script>
     <script>
         async function loadWords() {
             const list = document.getElementById('words-list');
@@ -81,7 +82,7 @@
                 }
                 list.innerHTML = words.map(w => `
                     <tr>
-                        <td style="font-weight: bold; color: #ef4444;">${w.word}</td>
+                        <td style="font-weight: bold; color: var(--admin-danger);">${window.adminEscapeHtml(w.word)}</td>
                         <td>${new Date(w.createdAt).toLocaleString('vi-VN')}</td>
                         <td>
                             <button class="btn btn-danger" style="padding: 4px 12px; font-size: 0.75rem;" onclick="deleteWord(${w.id}, '${w.word}')">
@@ -103,11 +104,11 @@
 
             try {
                 const res = await window.adminApi.post('admin/banned-words', { word });
-                alert(res.message);
+                window.adminToast(res.message, 'success');
                 input.value = '';
                 loadWords();
             } catch (err) {
-                alert('Lỗi: ' + err.message);
+                window.adminToast(err.message || 'Không thể thêm từ khóa', 'error');
             }
         }
 
@@ -115,10 +116,10 @@
             if (!confirm(`Bạn có chắc muốn xóa từ khóa "${word}" khỏi danh sách cấm?`)) return;
             try {
                 const res = await window.adminApi.delete(`admin/banned-words/${id}`);
-                alert(res.message);
+                window.adminToast(res.message, 'success');
                 loadWords();
             } catch (err) {
-                alert('Lỗi: ' + err.message);
+                window.adminToast(err.message || 'Không thể xóa từ khóa', 'error');
             }
         }
 
@@ -133,9 +134,9 @@
 
             try {
                 const res = await window.adminApi.post('admin/banned-words/scan', {});
-                alert(res.message);
+                window.adminToast(res.message, 'success');
             } catch (err) {
-                alert('Lỗi khi quét: ' + err.message);
+                window.adminToast(err.message || 'Không thể quét hệ thống', 'error');
             } finally {
                 btn.innerHTML = originalContent;
                 btn.disabled = false;

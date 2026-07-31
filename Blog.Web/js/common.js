@@ -383,7 +383,7 @@ function renderSidebar() {
                 <a href="${pathPrefix}settings.html" style="color: #3b82f6;"><i class="fa-solid fa-store"></i> <span data-i18n="register_seller">Đăng ký bán hàng</span></a>
                 `}
                 
-                ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<div class="menu-divider"></div><a href="${pathPrefix}admin.html" style="color: #6366f1; font-weight:600;"><i class="fa-solid fa-user-shield"></i> <span data-i18n="admin_panel">Quản trị</span></a>` : ''}
+                ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<div class="menu-divider"></div><a href="${pathPrefix}admin/index.html" style="color: #6366f1; font-weight:600;"><i class="fa-solid fa-user-shield"></i> <span data-i18n="admin_panel">Quản trị</span></a>` : ''}
                 <div class="menu-divider"></div>
                 <a href="#" onclick="logout(event)"><i class="fa-solid fa-sign-out-alt"></i> <span data-i18n="logout">Đăng xuất</span></a>
             </div>
@@ -974,7 +974,7 @@ async function updateNav() {
                     <hr>
                     ${(userInfo.role !== 'Admin' && userInfo.Role !== 'Admin') ? `<a href="create-post.html"><i class="fa fa-plus-circle"></i> <span data-i18n="post_new">${window.t('post_new')}</span></a>` : ''}
                     <a href="settings.html"><i class="fa fa-cog"></i> <span data-i18n="settings">${window.t('settings')}</span></a>
-                    ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<a href="admin.html" style="color: #6366f1; font-weight: 600;"><i class="fa fa-user-shield"></i> <span data-i18n="admin_panel">${window.t('admin_panel')}</span></a>` : ''}
+                    ${(userInfo.role === 'Admin' || userInfo.Role === 'Admin') ? `<a href="admin/index.html" style="color: #6366f1; font-weight: 600;"><i class="fa fa-user-shield"></i> <span data-i18n="admin_panel">${window.t('admin_panel')}</span></a>` : ''}
                     <hr>
                     <a href="#" onclick="logout(event)"><i class="fa fa-sign-out-alt"></i> <span data-i18n="logout">${window.t('logout')}</span></a>
                 </div>
