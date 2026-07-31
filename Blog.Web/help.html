@@ -10,7 +10,7 @@
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
-  <link rel="stylesheet" href="css/info-pages.css">
+  <link rel="stylesheet" href="css/info-pages.css?v=3.0">
   <style>
     .search-box {
       width: 100%;
@@ -51,7 +51,7 @@
     <script src="/js/preferences.js?v=1.1"></script>
 </head>
 
-<body>
+<body class="info-page info-page-help">
 
   <nav class="info-nav">
     <div class="info-nav-inner">
@@ -242,22 +242,7 @@
     <p style="margin-top:8px;">© 2026 Zynk Community. All rights reserved.</p>
   </footer>
 
-  <script>
-    document.querySelectorAll('.faq-question').forEach(q => {
-      q.addEventListener('click', () => {
-        q.closest('.faq-item').classList.toggle('open');
-      });
-    });
-
-    // Search functionality
-    document.querySelector('.search-box').addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      document.querySelectorAll('.faq-item').forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(query) ? 'block' : 'none';
-      });
-    });
-  </script>
+  <script src="js/info-pages.js?v=3.0"></script>
 </body>
 
 </html>
