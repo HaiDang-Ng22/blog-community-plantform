@@ -199,6 +199,23 @@ let filterState = {
     sortBy: 'newest'
 };
 
+function safeCategoryIcon(icon) {
+    const value = String(icon || '').trim();
+    if (!value) return 'fa-solid fa-tag';
+    if (value.startsWith('fa-') && !value.includes(' ')) return 'fa-solid ' + value;
+    return value;
+}
+
+function escapeCategoryHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 async function loadCategories() {
     const grid = document.getElementById('category-circle-grid');
     if (!grid) return;
@@ -211,8 +228,8 @@ async function loadCategories() {
         
         grid.innerHTML = roots.map(cat => `
             <div class="category-circle-item" onclick="showSubCategories('${cat.id}', '${cat.name.replace(/'/g, "\\'")}')">
-                <div class="category-icon-wrapper"><i class="${cat.icon || 'fa fa-tag'}"></i></div>
-                <span>${cat.name}</span>
+                <div class="category-icon-wrapper"><i class="${safeCategoryIcon(cat.icon)}"></i></div>
+                <span>${escapeCategoryHtml(cat.name)}</span>
             </div>
         `).join('');
 
@@ -245,14 +262,18 @@ function showSubCategories(parentId, parentName) {
     }
 
     subGrid.innerHTML = `
-        <div class="sub-cat-item" style="background: #eef2ff; border-color: #6366f1; color: #6366f1;" onclick="filterByCategory('${parentId}', '${parentName}', true)">
-            <i class="fa-solid fa-layer-group"></i> <strong>Xem tất cả ${parentName}</strong>
+        <div class="sub-cat-item all-item" onclick="filterByCategory('${parentId}', '${parentName.replace(/'/g, "\\'")}', true)">
+            <div class="sub-cat-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <span class="sub-cat-name">Xem tất cả ${escapeCategoryHtml(parentName)}</span>
         </div>
-    ` + subs.map(sub => `
+    ` + subs.map(sub => {
+        const iconClass = safeCategoryIcon(sub.icon);
+        return `
         <div class="sub-cat-item" onclick="showSubCategories('${sub.id}', '${sub.name.replace(/'/g, "\\'")}')">
-            ${sub.name}
-        </div>
-    `).join('');
+            <div class="sub-cat-icon"><i class="${iconClass}"></i></div>
+            <span class="sub-cat-name">${escapeCategoryHtml(sub.name)}</span>
+        </div>`;
+    }).join('');
 
     panel.classList.remove('hidden');
 }
