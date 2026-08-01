@@ -232,25 +232,31 @@
             </header>
             <div class="admin-ai-safety">
                 <i class="fa-solid fa-shield-halved"></i>
-                <span>AI chỉ dùng các tác vụ được cho phép. Mọi thay đổi dữ liệu đều cần bạn xác nhận.</span>
+                <span>AI tự suy luận trong phạm vi được phép. Tác vụ ghi dữ liệu luôn cần Admin xác nhận.</span>
+            </div>
+            <div class="admin-ai-capabilities" aria-label="Khả năng của Admin AI">
+                <span><i class="fa-solid fa-brain"></i> Hiểu điều kiện</span>
+                <span><i class="fa-solid fa-list-check"></i> Lập kế hoạch</span>
+                <span><i class="fa-solid fa-shield-check"></i> Xác nhận an toàn</span>
             </div>
             <div class="admin-ai-messages" aria-live="polite">
                 <div class="admin-ai-message assistant">
                     <span class="admin-ai-message-avatar"><i class="fa-solid fa-sparkles"></i></span>
                     <div class="admin-ai-bubble">
-                        Xin chào! Mình có thể kiểm tra hệ thống, lọc báo cáo, quản lý danh mục và từ khóa cấm.
+                        Xin chào! Mình có thể phân tích hệ thống, quản lý danh mục, từ khóa cấm và tạo voucher theo điều kiện của bạn.
                     </div>
                 </div>
             </div>
             <div class="admin-ai-suggestions">
                 <button type="button" data-ai-prompt="Tổng hợp tình trạng hệ thống"><i class="fa-solid fa-chart-pie"></i> Tổng hợp hệ thống</button>
+                <button type="button" data-ai-prompt="Gợi ý 4 voucher đa dạng và thực tế cho toàn hệ thống"><i class="fa-solid fa-ticket"></i> Gợi ý voucher</button>
                 <button type="button" data-ai-prompt="Kiểm tra các báo cáo vi phạm chưa xử lý"><i class="fa-solid fa-flag"></i> Kiểm tra báo cáo</button>
                 <button type="button" data-ai-prompt="Liệt kê các danh mục chưa có sản phẩm"><i class="fa-solid fa-folder-open"></i> Danh mục trống</button>
                 <button type="button" data-ai-prompt="Quét các bài viết gần đây theo danh sách từ khóa cấm"><i class="fa-solid fa-shield"></i> Quét nội dung</button>
             </div>
             <div id="admin-ai-cat-chips-bar" class="admin-ai-cat-chips-bar hidden"></div>
             <form class="admin-ai-composer">
-                <textarea id="admin-ai-input" rows="1" maxlength="1200" placeholder="Ví dụ: Tạo danh mục “Phụ kiện máy ảnh” trong “Máy ảnh”..."></textarea>
+                <textarea id="admin-ai-input" rows="1" maxlength="1200" placeholder="Ví dụ: Tạo 5 voucher, mỗi mã giảm 15%, đơn từ 300.000đ, dùng trong 30 ngày..."></textarea>
                 <button type="submit" class="admin-ai-send" aria-label="Gửi yêu cầu"><i class="fa-solid fa-arrow-up"></i></button>
             </form>
             <div class="admin-ai-footer"><span>Gemini</span> hỗ trợ lập kế hoạch · Admin quyết định thực thi</div>
@@ -401,30 +407,40 @@
         actions.forEach(action => adminAiActions.set(action.id, action));
         const actionHtml = actions.length ? `
             <div class="admin-ai-plan">
-                ${actions.map(action => {
-                    const riskClass = action.risk === 'destructive' ? 'danger' : action.risk === 'write' ? 'write' : 'read';
-                    const riskLabel = action.risk === 'destructive' ? 'Rủi ro cao' : action.risk === 'write' ? 'Thay đổi dữ liệu' : 'Chỉ đọc';
-                    return `
-                        <article class="admin-ai-action ${riskClass}">
-                            <div class="admin-ai-action-icon"><i class="fa-solid ${actionIcon(action.type)}"></i></div>
-                            <div class="admin-ai-action-copy">
-                                <div><strong>${escapeHtml(action.title)}</strong><span class="admin-ai-risk">${riskLabel}</span></div>
-                                <p>${escapeHtml(action.description)}</p>
-                            </div>
-                            <button type="button" data-ai-action="${escapeHtml(action.id)}">
-                                ${action.requiresConfirmation ? 'Xem & xác nhận' : 'Thực hiện'}
-                                <i class="fa-solid fa-arrow-right"></i>
-                            </button>
-                        </article>`;
-                }).join('')}
+                ${actions.map(renderAdminAiActionCard).join('')}
             </div>` : '';
         appendAdminAiMessage('assistant', `<p>${escapeHtml(plan.reply || 'Mình đã chuẩn bị kế hoạch.')}</p>${actionHtml}`);
+    }
+
+    function renderAdminAiActionCard(action) {
+        const riskClass = action.risk === 'destructive' ? 'danger' : action.risk === 'write' ? 'write' : 'read';
+        let riskLabel = action.risk === 'destructive' ? 'Rủi ro cao' : action.risk === 'write' ? 'Cần xác nhận' : 'Chỉ đọc';
+        let buttonLabel = action.requiresConfirmation ? 'Xem & xác nhận' : 'Thực hiện';
+        if (action.type === 'suggest_vouchers') {
+            riskLabel = 'Bước 1/2 · Bản nháp';
+            buttonLabel = 'Xác nhận lần 1 & tạo bản nháp';
+        } else if (action.type === 'create_vouchers') {
+            riskLabel = 'Bước 2/2 · Ghi dữ liệu';
+            buttonLabel = 'Xác nhận lần 2 & thêm voucher';
+        }
+        return `
+            <article class="admin-ai-action ${riskClass} ${action.type.includes('voucher') ? 'voucher-flow' : ''}">
+                <div class="admin-ai-action-icon"><i class="fa-solid ${actionIcon(action.type)}"></i></div>
+                <div class="admin-ai-action-copy">
+                    <div><strong>${escapeHtml(action.title)}</strong><span class="admin-ai-risk">${escapeHtml(riskLabel)}</span></div>
+                    <p>${escapeHtml(action.description)}</p>
+                </div>
+                <button type="button" data-ai-action="${escapeHtml(action.id)}">
+                    ${escapeHtml(buttonLabel)} <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </article>`;
     }
 
     function actionIcon(type) {
         if (type.includes('categor')) return 'fa-layer-group';
         if (type.includes('report')) return 'fa-flag';
         if (type.includes('banned') || type.includes('scan')) return 'fa-shield-halved';
+        if (type.includes('voucher')) return 'fa-ticket';
         if (type === 'navigate') return 'fa-arrow-up-right-from-square';
         return 'fa-chart-pie';
     }
@@ -474,6 +490,18 @@
                             </div>`).join('')}
                     </div>`;
             }
+        }
+        const isVoucherAction = action.type && action.type.toLowerCase().includes('voucher');
+        const vouchers = Array.isArray(params.vouchers) ? params.vouchers : [];
+        if (isVoucherAction && vouchers.length) {
+            return `
+                <div class="admin-ai-preview-header voucher">
+                    <i class="fa-solid fa-ticket"></i>
+                    <span>${vouchers.length} voucher · ${action.type === 'create_vouchers' ? 'Xác nhận cuối' : 'Tạo bản nháp'}</span>
+                </div>
+                <div class="admin-ai-voucher-preview-list">
+                    ${vouchers.slice(0, 50).map(renderAdminAiVoucherCard).join('')}
+                </div>`;
         }
         // Fallback: generic key-value preview
         const entries = Object.entries(params).filter(([, v]) => v != null && String(v).length < 120);
@@ -538,7 +566,11 @@
                         <i class="fa-solid fa-xmark"></i> Hủy
                     </button>
                     <button type="button" class="admin-ai-inline-execute ${destructive ? 'danger' : ''}">
-                        <i class="fa-solid fa-check"></i> Xác nhận thực hiện
+                        <i class="fa-solid fa-check"></i> ${action.type === 'suggest_vouchers'
+                            ? 'Xác nhận lần 1 · Tạo bản nháp'
+                            : action.type === 'create_vouchers'
+                                ? 'Xác nhận lần 2 · Thêm voucher'
+                                : 'Xác nhận thực hiện'}
                     </button>
                 </div>
             </div>`);
@@ -567,13 +599,27 @@
             const dataHtml = isCatAction
                 ? renderCategoryResultCards(result.data, action)
                 : renderAdminAiData(result.data);
+            const nextAction = result.nextAction;
+            let nextStepHtml = '';
+            if (nextAction?.id) {
+                adminAiActions.set(nextAction.id, nextAction);
+                nextStepHtml = `
+                    <div class="admin-ai-next-step">
+                        <div class="admin-ai-step-line">
+                            <span class="done"><i class="fa-solid fa-check"></i> Xác nhận lần 1</span>
+                            <i class="fa-solid fa-chevron-right"></i>
+                            <span><i class="fa-solid fa-lock"></i> Chờ xác nhận lần 2</span>
+                        </div>
+                        ${renderAdminAiActionCard(nextAction)}
+                    </div>`;
+            }
             const destination = result.navigateTo;
             const followUp = destination && destination !== currentPage
                 ? `<button class="admin-ai-result-link" type="button" data-ai-navigate="${escapeHtml(destination)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Mở trang liên quan</button>`
                 : '';
             appendAdminAiMessage('assistant', `
                 <div class="admin-ai-success"><i class="fa-solid fa-circle-check"></i><strong>${escapeHtml(result.message || 'Tác vụ đã hoàn tất.')}</strong></div>
-                ${dataHtml}${followUp}`);
+                ${dataHtml}${nextStepHtml}${followUp}`);
             window.adminToast.success(result.message || 'Admin AI đã hoàn tất tác vụ.');
             window.dispatchEvent(new CustomEvent('adminAiActionCompleted', { detail: { action, result } }));
         } catch (error) {
@@ -618,6 +664,9 @@
         if (data == null) return '';
         if (Array.isArray(data)) {
             if (!data.length) return '<div class="admin-ai-empty-result">Không có dữ liệu phù hợp.</div>';
+            if (data[0] && (data[0].code || data[0].Code) && (data[0].discountType || data[0].DiscountType)) {
+                return `<div class="admin-ai-voucher-preview-list result">${data.slice(0, 50).map(renderAdminAiVoucherCard).join('')}</div>`;
+            }
             return `<div class="admin-ai-data-list">${data.slice(0, 20).map(item => renderAdminAiDataItem(item)).join('')}</div>`;
         }
         if (typeof data === 'object') {
@@ -625,6 +674,40 @@
                 <div><span>${escapeHtml(prettyAdminAiKey(key))}</span><strong>${escapeHtml(formatAdminAiValue(value))}</strong></div>`).join('')}</div>`;
         }
         return `<div class="admin-ai-empty-result">${escapeHtml(String(data))}</div>`;
+    }
+
+    function renderAdminAiVoucherCard(voucher) {
+        const code = voucher.code || voucher.Code || 'VOUCHER';
+        const type = voucher.discountType || voucher.DiscountType || 'Percentage';
+        const value = Number(voucher.discountValue ?? voucher.DiscountValue ?? 0);
+        const minOrder = Number(voucher.minOrderValue ?? voucher.MinOrderValue ?? 0);
+        const maxDiscount = Number(voucher.maxDiscountAmount ?? voucher.MaxDiscountAmount ?? 0);
+        const usageLimit = Number(voucher.usageLimit ?? voucher.UsageLimit ?? 0);
+        const duration = Number(voucher.durationDays ?? voucher.DurationDays ?? 0);
+        const description = voucher.description || voucher.Description || '';
+        const benefit = type === 'Percentage'
+            ? `${value}%`
+            : type === 'FreeShipping'
+                ? 'Freeship'
+                : type === 'ShippingDiscount'
+                    ? `Giảm ship ${formatAdminAiMoney(value)}`
+                    : formatAdminAiMoney(value);
+        return `
+            <article class="admin-ai-voucher-card">
+                <div class="admin-ai-voucher-code"><i class="fa-solid fa-ticket"></i>${escapeHtml(code)}</div>
+                <strong>${escapeHtml(benefit)}</strong>
+                <p>${escapeHtml(description)}</p>
+                <div class="admin-ai-voucher-meta">
+                    <span><i class="fa-solid fa-basket-shopping"></i> Đơn từ ${formatAdminAiMoney(minOrder)}</span>
+                    ${maxDiscount ? `<span><i class="fa-solid fa-arrow-down"></i> Tối đa ${formatAdminAiMoney(maxDiscount)}</span>` : ''}
+                    <span><i class="fa-solid fa-users"></i> ${usageLimit.toLocaleString('vi-VN')} lượt</span>
+                    ${duration ? `<span><i class="fa-solid fa-calendar-days"></i> ${duration} ngày</span>` : ''}
+                </div>
+            </article>`;
+    }
+
+    function formatAdminAiMoney(value) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(value || 0));
     }
 
     function renderAdminAiDataItem(item) {

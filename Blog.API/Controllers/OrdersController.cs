@@ -1,4 +1,5 @@
 using Blog.Application.Dtos;
+using Blog.Application.Services;
 using Blog.Domain.Entities;
 using Blog.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -167,35 +168,14 @@ public class OrdersController : ControllerBase
             // Apply Voucher
             if (appliedVoucher != null)
             {
-                if (appliedVoucher.MinOrderValue == null || total >= appliedVoucher.MinOrderValue.Value)
+                var voucherCalculation = VoucherCalculator.Calculate(appliedVoucher, total, order.ShippingFee);
+                if (voucherCalculation.IsEligible)
                 {
-                    if (appliedVoucher.DiscountType == DiscountType.FreeShipping)
-                    {
-                        // Free shipping: set shipping fee to zero
-                        order.ShippingFee = 0;
-                        order.VoucherId = appliedVoucher.Id;
-                        appliedVoucher.UsedCount++;
-                        _context.Vouchers.Update(appliedVoucher);
-                    }
-                    else
-                    {
-                        decimal discount = 0;
-                        if (appliedVoucher.DiscountType == DiscountType.Percentage)
-                        {
-                            discount = total * (appliedVoucher.DiscountValue / 100);
-                            if (appliedVoucher.MaxDiscountAmount.HasValue)
-                                discount = Math.Min(discount, appliedVoucher.MaxDiscountAmount.Value);
-                        }
-                        else
-                        {
-                            discount = appliedVoucher.DiscountValue;
-                        }
-
-                        order.VoucherId = appliedVoucher.Id;
-                        order.DiscountAmount = Math.Min(discount, total); // Cannot discount more than total
-                        appliedVoucher.UsedCount++;
-                        _context.Vouchers.Update(appliedVoucher);
-                    }
+                    order.ShippingFee = voucherCalculation.FinalShippingFee;
+                    order.DiscountAmount = voucherCalculation.ItemDiscount;
+                    order.VoucherId = appliedVoucher.Id;
+                    appliedVoucher.UsedCount++;
+                    _context.Vouchers.Update(appliedVoucher);
                 }
             }
 
@@ -662,32 +642,20 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = $"Đơn hàng từ shop chưa đạt giá trị tối thiểu {voucher.MinOrderValue.Value:N0}đ để áp dụng mã." });
         }
 
-        decimal discountAmount = 0;
+        var calculation = VoucherCalculator.Calculate(voucher, dto.OrderValue, dto.ShippingFee > 0 ? dto.ShippingFee : 25_000m);
+        decimal discountAmount = calculation.ItemDiscount;
+        decimal shippingDiscountAmount = calculation.ShippingDiscount;
         bool isFreeShipping = voucher.DiscountType == DiscountType.FreeShipping;
-
-        if (!isFreeShipping)
-        {
-            if (voucher.DiscountType == DiscountType.Percentage)
-            {
-                discountAmount = dto.OrderValue * (voucher.DiscountValue / 100);
-                if (voucher.MaxDiscountAmount.HasValue)
-                {
-                    discountAmount = Math.Min(discountAmount, voucher.MaxDiscountAmount.Value);
-                }
-            }
-            else
-            {
-                discountAmount = voucher.DiscountValue;
-            }
-            discountAmount = Math.Min(discountAmount, dto.OrderValue);
-        }
+        bool isShippingDiscount = voucher.DiscountType == DiscountType.ShippingDiscount;
 
         return Ok(new { 
             code = voucher.Code,
             discountType = voucher.DiscountType.ToString(),
             discountValue = voucher.DiscountValue,
             discountAmount = discountAmount,
+            shippingDiscountAmount = shippingDiscountAmount,
             isFreeShipping = isFreeShipping,
+            isShippingDiscount = isShippingDiscount,
             shopId = voucher.ShopId,
             shopName = voucher.Shop?.Name ?? "Zynk Platform"
         });
@@ -727,6 +695,7 @@ public class OrdersController : ControllerBase
     {
         public string Code { get; set; } = string.Empty;
         public decimal OrderValue { get; set; }
+        public decimal ShippingFee { get; set; }
         public Guid? ShopId { get; set; }
     }
 

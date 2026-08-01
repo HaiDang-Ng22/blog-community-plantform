@@ -997,13 +997,18 @@ public class AdminController : ControllerBase
     [HttpPost("vouchers")]
     public async Task<IActionResult> CreateAdminVoucher([FromBody] CreateVoucherDto dto)
     {
+        if (!Enum.TryParse<DiscountType>(dto.DiscountType, true, out var discountType))
+            return BadRequest(new { message = "Loại giảm giá không hợp lệ." });
+        if (discountType != DiscountType.FreeShipping && dto.DiscountValue <= 0)
+            return BadRequest(new { message = "Giá trị giảm phải lớn hơn 0." });
+
         var voucher = new Voucher
         {
             Id = Guid.NewGuid(),
             Code = dto.Code.ToUpper(),
             Description = dto.Description,
-            DiscountType = Enum.Parse<DiscountType>(dto.DiscountType),
-            DiscountValue = dto.DiscountValue,
+            DiscountType = discountType,
+            DiscountValue = discountType == DiscountType.FreeShipping ? 0 : dto.DiscountValue,
             MinOrderValue = dto.MinOrderValue,
             MaxDiscountAmount = dto.MaxDiscountAmount,
             StartDate = dto.StartDate.Kind == DateTimeKind.Utc ? dto.StartDate : dto.StartDate.ToUniversalTime(),
@@ -1024,11 +1029,15 @@ public class AdminController : ControllerBase
     {
         var voucher = await _context.Vouchers.FindAsync(id);
         if (voucher == null) return NotFound();
+        if (!Enum.TryParse<DiscountType>(dto.DiscountType, true, out var discountType))
+            return BadRequest(new { message = "Loại giảm giá không hợp lệ." });
+        if (discountType != DiscountType.FreeShipping && dto.DiscountValue <= 0)
+            return BadRequest(new { message = "Giá trị giảm phải lớn hơn 0." });
 
         voucher.Code = dto.Code.ToUpper();
         voucher.Description = dto.Description;
-        voucher.DiscountType = Enum.Parse<DiscountType>(dto.DiscountType);
-        voucher.DiscountValue = dto.DiscountValue;
+        voucher.DiscountType = discountType;
+        voucher.DiscountValue = discountType == DiscountType.FreeShipping ? 0 : dto.DiscountValue;
         voucher.MinOrderValue = dto.MinOrderValue;
         voucher.MaxDiscountAmount = dto.MaxDiscountAmount;
         voucher.StartDate = dto.StartDate.Kind == DateTimeKind.Utc ? dto.StartDate : dto.StartDate.ToUniversalTime();

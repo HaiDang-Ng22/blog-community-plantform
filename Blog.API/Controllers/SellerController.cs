@@ -515,6 +515,10 @@ public class SellerController : ControllerBase
 
         if (await _context.Vouchers.AnyAsync(v => v.ShopId == shop.Id && v.Code == dto.Code))
             return BadRequest(new { message = "Mã giảm giá này đã tồn tại trong shop của bạn." });
+        if (!Enum.TryParse<DiscountType>(dto.DiscountType, true, out var discountType))
+            return BadRequest(new { message = "Loại giảm giá không hợp lệ." });
+        if (discountType != DiscountType.FreeShipping && dto.DiscountValue <= 0)
+            return BadRequest(new { message = "Giá trị giảm phải lớn hơn 0." });
 
         var voucher = new Voucher
         {
@@ -522,8 +526,8 @@ public class SellerController : ControllerBase
             ShopId = shop.Id,
             Code = dto.Code.ToUpper(),
             Description = dto.Description,
-            DiscountType = Enum.Parse<DiscountType>(dto.DiscountType),
-            DiscountValue = dto.DiscountValue,
+            DiscountType = discountType,
+            DiscountValue = discountType == DiscountType.FreeShipping ? 0 : dto.DiscountValue,
             MinOrderValue = dto.MinOrderValue,
             MaxDiscountAmount = dto.MaxDiscountAmount,
             StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc),

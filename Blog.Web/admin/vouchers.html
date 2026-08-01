@@ -7,7 +7,7 @@
     <link rel="icon" href="../assets/favicon.png?v=3" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="admin-common.css?v=4.0">
+    <link rel="stylesheet" href="admin-common.css?v=4.2">
     <style>
         .voucher-grid {
             display: grid;
@@ -235,9 +235,11 @@
                     </div>
                     <div class="form-group">
                         <label>Loại giảm giá</label>
-                        <select id="discountType" class="form-control">
+                        <select id="discountType" class="form-control" onchange="updateVoucherTypeFields()">
                             <option value="Percentage">Phần trăm (%)</option>
                             <option value="FixedAmount">Số tiền cố định (đ)</option>
+                            <option value="ShippingDiscount">Giảm phí vận chuyển (đ)</option>
+                            <option value="FreeShipping">Miễn phí vận chuyển</option>
                         </select>
                     </div>
                 </div>
@@ -249,7 +251,7 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Giá trị giảm</label>
+                        <label id="discountValueLabel">Giá trị giảm</label>
                         <input type="number" id="discountValue" class="form-control" placeholder="10 hoặc 50000" required>
                     </div>
                     <div class="form-group">
@@ -294,7 +296,7 @@
     </div>
 
     <script src="../js/api.js?v=2.1"></script>
-    <script src="admin-common.js?v=4.1"></script>
+    <script src="admin-common.js?v=4.2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             loadVouchers();
@@ -345,7 +347,7 @@
                         <div class="voucher-stats">
                             <div class="stat-item">
                                 <span class="stat-label">Loại giảm</span>
-                                <span class="stat-value">${v.discountType === 'Percentage' ? v.discountValue + '%' : formatCurrency(v.discountValue)}</span>
+                                <span class="stat-value">${formatVoucherBenefit(v)}</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">Đã dùng / Tổng</span>
@@ -375,10 +377,41 @@
             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
         }
 
+        function formatVoucherBenefit(voucher) {
+            if (voucher.discountType === 'Percentage') return `${voucher.discountValue}%`;
+            if (voucher.discountType === 'FreeShipping') return 'Miễn phí vận chuyển';
+            if (voucher.discountType === 'ShippingDiscount') return `Giảm ${formatCurrency(voucher.discountValue)} phí vận chuyển`;
+            return formatCurrency(voucher.discountValue);
+        }
+
+        function updateVoucherTypeFields() {
+            const type = document.getElementById('discountType').value;
+            const valueInput = document.getElementById('discountValue');
+            const valueLabel = document.getElementById('discountValueLabel');
+            const maxInput = document.getElementById('maxDiscountAmount');
+            const isFreeShipping = type === 'FreeShipping';
+
+            valueInput.disabled = isFreeShipping;
+            valueInput.required = !isFreeShipping;
+            if (isFreeShipping) valueInput.value = '0';
+
+            valueLabel.textContent = type === 'Percentage'
+                ? 'Phần trăm giảm (%)'
+                : type === 'ShippingDiscount'
+                    ? 'Số tiền giảm phí vận chuyển (đ)'
+                    : type === 'FreeShipping'
+                        ? 'Miễn toàn bộ phí vận chuyển'
+                        : 'Số tiền giảm đơn hàng (đ)';
+
+            maxInput.disabled = type !== 'Percentage';
+            if (type !== 'Percentage') maxInput.value = '';
+        }
+
         function openModal() {
             document.getElementById('modalTitle').textContent = 'Tạo Voucher Mới';
             document.getElementById('voucherForm').reset();
             document.getElementById('voucherId').value = '';
+            updateVoucherTypeFields();
             document.getElementById('voucherModal').style.display = 'flex';
         }
 
@@ -398,6 +431,7 @@
                 document.getElementById('description').value = v.description;
                 document.getElementById('discountType').value = v.discountType;
                 document.getElementById('discountValue').value = v.discountValue;
+                updateVoucherTypeFields();
                 document.getElementById('minOrderValue').value = v.minOrderValue;
                 document.getElementById('maxDiscountAmount').value = v.maxDiscountAmount;
                 document.getElementById('usageLimit').value = v.usageLimit;
@@ -422,7 +456,9 @@
                 code: document.getElementById('code').value,
                 description: document.getElementById('description').value,
                 discountType: document.getElementById('discountType').value,
-                discountValue: parseFloat(document.getElementById('discountValue').value),
+                discountValue: document.getElementById('discountType').value === 'FreeShipping'
+                    ? 0
+                    : parseFloat(document.getElementById('discountValue').value),
                 minOrderValue: parseFloat(document.getElementById('minOrderValue').value) || 0,
                 maxDiscountAmount: parseFloat(document.getElementById('maxDiscountAmount').value) || null,
                 usageLimit: parseInt(document.getElementById('usageLimit').value),
@@ -452,6 +488,12 @@
                 loadVouchers();
             } catch (e) { console.error(e); }
         }
+
+        window.addEventListener('adminAiActionCompleted', event => {
+            if (event.detail?.action?.type === 'create_vouchers') {
+                loadVouchers();
+            }
+        });
     </script>
 </body>
 </html>

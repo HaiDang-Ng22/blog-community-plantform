@@ -110,6 +110,7 @@
                         <select id="v-type" class="form-input" onchange="toggleDiscountFields()">
                             <option value="FixedAmount">Số tiền cố định (đ)</option>
                             <option value="Percentage">Phần trăm (%)</option>
+                            <option value="ShippingDiscount">Giảm phí vận chuyển (đ)</option>
                             <option value="FreeShipping">Miễn phí vận chuyển (FreeShip)</option>
                         </select>
                     </div>
@@ -180,6 +181,8 @@
                         discountDisplay = v.discountValue + '%';
                     } else if (v.discountType === 'FreeShipping') {
                         discountDisplay = 'FreeShip';
+                    } else if (v.discountType === 'ShippingDiscount') {
+                        discountDisplay = `Giảm ship ${formatCurrency(v.discountValue)}`;
                     } else {
                         discountDisplay = formatCurrency(v.discountValue);
                     }
@@ -216,6 +219,7 @@
             } else {
                 valGroup.style.display = 'block';
                 valInput.required = true;
+                valInput.placeholder = type === 'ShippingDiscount' ? 'Số tiền giảm phí vận chuyển...' : 'Mức giảm...';
             }
         }
 

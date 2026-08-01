@@ -225,7 +225,7 @@ public class VoucherDto
     public Guid? ShopId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string DiscountType { get; set; } = string.Empty; // Percentage, FixedAmount
+    public string DiscountType { get; set; } = string.Empty; // Percentage, FixedAmount, FreeShipping, ShippingDiscount
     public decimal DiscountValue { get; set; }
     public decimal? MinOrderValue { get; set; }
     public decimal? MaxDiscountAmount { get; set; }

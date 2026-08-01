@@ -616,9 +616,16 @@
                 }
 
                 let isFreeShippingApplied = appliedVoucher && appliedVoucher.isFreeShipping;
-                let finalShipping = isFreeShippingApplied ? 0 : shipping;
+                let isShippingDiscountApplied = appliedVoucher && appliedVoucher.isShippingDiscount;
+                let shippingDiscount = isShippingDiscountApplied
+                    ? Math.min(shipping, Number(appliedVoucher.shippingDiscountAmount || 0))
+                    : 0;
+                let finalShipping = isFreeShippingApplied ? 0 : Math.max(0, shipping - shippingDiscount);
 
-                const total = subtotal + finalShipping - (appliedVoucher && !isFreeShippingApplied ? (appliedVoucher.discountAmount || 0) : 0);
+                const itemDiscount = appliedVoucher && !isFreeShippingApplied && !isShippingDiscountApplied
+                    ? (appliedVoucher.discountAmount || 0)
+                    : 0;
+                const total = subtotal + finalShipping - itemDiscount;
 
                 const subEl = document.getElementById('subtotal-price');
                 if (subEl) subEl.textContent = formatVnd(subtotal);
@@ -627,6 +634,8 @@
                 if (shipEl) {
                     if (isFreeShippingApplied) {
                         shipEl.innerHTML = `<span style="text-decoration: line-through; color: #64748b; font-size: 0.95rem;">${formatVnd(shipping)}</span> <span style="color: #10b981; font-weight: bold;">Miễn phí</span>`;
+                    } else if (isShippingDiscountApplied) {
+                        shipEl.innerHTML = `<span style="text-decoration: line-through; color: #64748b; font-size: 0.95rem;">${formatVnd(shipping)}</span> <span style="color: #10b981; font-weight: bold;">${formatVnd(finalShipping)}</span>`;
                     } else {
                         shipEl.textContent = formatVnd(shipping);
                     }
@@ -634,7 +643,11 @@
                 
                 if (appliedVoucher) {
                     const discEl = document.getElementById('voucher-discount-row');
-                    const displayVal = isFreeShippingApplied ? "Miễn phí vận chuyển" : `-${formatVnd(appliedVoucher.discountAmount)}`;
+                    const displayVal = isFreeShippingApplied
+                        ? "Miễn phí vận chuyển"
+                        : isShippingDiscountApplied
+                            ? `-${formatVnd(shippingDiscount)} phí vận chuyển`
+                            : `-${formatVnd(appliedVoucher.discountAmount)}`;
                     if (!discEl) {
                         const row = document.createElement('div');
                         row.className = 'cart-total';
@@ -685,17 +698,22 @@
                 const res = await window.api.post('orders/validate-voucher', { 
                     code, 
                     orderValue: subtotal,
+                    shippingFee: 25000,
                     shopId: shopId 
                 });
                 
                 appliedVoucher = {
                     code: code,
                     discountAmount: res.discountAmount,
-                    isFreeShipping: res.isFreeShipping
+                    shippingDiscountAmount: res.shippingDiscountAmount,
+                    isFreeShipping: res.isFreeShipping,
+                    isShippingDiscount: res.isShippingDiscount
                 };
                 
                 if (res.isFreeShipping) {
                     msg.textContent = `Đã áp dụng mã! Miễn phí vận chuyển`;
+                } else if (res.isShippingDiscount) {
+                    msg.textContent = `Đã áp dụng mã! Giảm ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(res.shippingDiscountAmount)} phí vận chuyển`;
                 } else {
                     msg.textContent = `Đã áp dụng mã! Giảm ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(res.discountAmount)}`;
                 }
@@ -922,6 +940,8 @@
                     discountText = `${v.discountValue}%`;
                 } else if (v.discountType === 'FreeShipping') {
                     discountText = 'Miễn phí Ship';
+                } else if (v.discountType === 'ShippingDiscount') {
+                    discountText = `Giảm ${new Intl.NumberFormat('vi-VN').format(v.discountValue)}đ phí ship`;
                 } else {
                     discountText = `${new Intl.NumberFormat('vi-VN').format(v.discountValue)}đ`;
                 }
@@ -940,11 +960,11 @@
                 }
 
                 let stubHtml = '';
-                if (v.discountType === 'FreeShipping') {
+                if (v.discountType === 'FreeShipping' || v.discountType === 'ShippingDiscount') {
                     stubHtml = `
                         <div class="voucher-left-stub" style="background: linear-gradient(135deg, #10b981, #059669);">
                             <div><i class="fa-solid fa-truck"></i></div>
-                            <div style="font-size:0.6rem; font-weight:normal; margin-top:2px; letter-spacing: 0.5px;">FREE</div>
+                            <div style="font-size:0.6rem; font-weight:normal; margin-top:2px; letter-spacing: 0.5px;">${v.discountType === 'FreeShipping' ? 'FREE' : 'GIẢM'}</div>
                         </div>
                     `;
                 } else {

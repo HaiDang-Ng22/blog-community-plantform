@@ -386,6 +386,42 @@ if (Directory.Exists(webPath))
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapHub<NotificationHub>("/hubs/notification");
+
+// Deployment probes: liveness verifies the process, readiness verifies PostgreSQL.
+app.MapGet("/health/live", () => Results.Ok(new
+{
+    status = "Healthy",
+    service = "Zynk API",
+    timestamp = DateTimeOffset.UtcNow
+})).AllowAnonymous().WithName("Liveness");
+
+app.MapGet("/health/ready", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        if (await dbContext.Database.CanConnectAsync(cancellationToken))
+        {
+            return Results.Ok(new
+            {
+                status = "Ready",
+                database = "Connected",
+                timestamp = DateTimeOffset.UtcNow
+            });
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Readiness probe could not connect to PostgreSQL.");
+    }
+
+    return Results.Json(new
+    {
+        status = "NotReady",
+        database = "Unavailable",
+        timestamp = DateTimeOffset.UtcNow
+    }, statusCode: StatusCodes.Status503ServiceUnavailable);
+}).AllowAnonymous().WithName("Readiness");
+
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

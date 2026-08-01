@@ -1,191 +1,197 @@
-# Zynk - Nền tảng Mạng xã hội & Thương mại Điện tử Hiện đại 🚀
+# Zynk Social Commerce Platform
 
-Zynk là một hệ sinh thái mạng xã hội tích hợp thương mại điện tử (All-in-one), kết hợp tinh hoa từ phong cách thẩm mỹ của **Instagram** và mô hình vận hành của **TikTok Shop**. Dự án được xây dựng trên nền tảng công nghệ mới nhất (**ASP.NET Core 9**), tập trung vào hiệu năng cao, trải nghiệm người dùng cao cấp (Glassmorphism UI) và khả năng tương tác thời gian thực.
+[![Build and Test](https://github.com/HaiDang-Ng22/blog-community-plantform/actions/workflows/ci.yml/badge.svg)](https://github.com/HaiDang-Ng22/blog-community-plantform/actions/workflows/ci.yml)
+![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-336791)
+![Realtime](https://img.shields.io/badge/Realtime-SignalR-F97316)
+![Tests](https://img.shields.io/badge/Automated%20tests-MSTest-16A34A)
 
-![Tech Stack](https://img.shields.io/badge/Backend-.NET%209-blue)
-![Frontend](https://img.shields.io/badge/Frontend-Vanilla%20JS-yellow)
-![Realtime](https://img.shields.io/badge/Realtime-SignalR-orange)
-![UI](https://img.shields.io/badge/UI-Glassmorphism-purple)
-![Stories](https://img.shields.io/badge/Stories-Instagram%20Style-e1306c)
+Zynk là đồ án nền tảng kết hợp **mạng xã hội**, **thương mại điện tử**, **chat thời gian thực** và các tính năng **AI hỗ trợ**. Dự án được xây dựng bằng ASP.NET Core 9, PostgreSQL, Entity Framework Core, SignalR và frontend HTML/CSS/JavaScript thuần.
 
+> Trạng thái: đồ án đang tiếp tục được hoàn thiện. Các tính năng AI và nhận dạng hình ảnh là prototype tích hợp API, không được mô tả như một hệ thống xác minh production.
 
----
+## Liên kết
 
-## ✨ Tính năng Nổi bật
+- Swagger khi chạy Development: `/swagger`
+- Liveness probe: `/health/live`
+- Readiness probe: `/health/ready`
+- Kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- API chính: [docs/API.md](docs/API.md)
 
-### 📸 1. Mạng Xã hội Tương tác (Instagram Style)
-*   **Multimedia Feed**: Chia sẻ bài viết với nhiều hình ảnh (Carousel), hỗ trợ hiển thị linh hoạt theo dạng Blog (chữ) hoặc Social (ảnh).
-*   **Tương tác Thời gian thực**: Like, Comment đa cấp và Follow người dùng.
-*   **Hệ thống Thông báo (Real-time)**: Nhận thông báo tức thì khi có người tim, bình luận hoặc nhắc tên.
-*   **Nhắn tin Trực tiếp (Direct Message)**: Hệ thống Chat 1-1 realtime sử dụng SignalR, hỗ trợ xem trạng thái tin nhắn và danh sách hộp thư thông minh.
-*   **Trang cá nhân Chuyên nghiệp**: Quản lý bài viết, bộ sưu tập và thông tin cá nhân với giao diện hiện đại.
-*   **Chế độ tối (Dark Mode)**: Giao diện tối cao cấp, sang trọng, giúp bảo vệ mắt và tiết kiệm pin.
-*   **Thăm dò ý kiến (Polls)**: Tạo các cuộc khảo sát trực tiếp trong bài viết với kết quả cập nhật thời gian thực.
-*   **Hệ thống "Bộ sưu tập" (Saved Collections)**: Lưu trữ các nội dung yêu thích và phân loại theo từng chủ đề cá nhân.
+Endpoint readiness trả HTTP `503` khi PostgreSQL chưa sẵn sàng.
 
-### 📖 2. Zynk Stories (Instagram Style)
-*   **Trải nghiệm Tạo tin Cao cấp**: Mở rộng không gian làm việc (Canvas lớn) với Layout 2 cột trực quan.
-*   **Công cụ Inline Text**: Nhấn và gõ chữ trực tiếp lên ảnh, kéo thả tự do, hỗ trợ đổi đa dạng màu sắc (Color Palette) và Phông chữ (Font Family) giống hệt Instagram.
-*   **Công cụ Vẽ tay (Doodle)**: Tự do phác họa trực tiếp lên hình ảnh/video bằng chuột hoặc ngón tay với nhiều tùy chọn màu sắc thời thượng và hỗ trợ tính năng Hoàn tác (Undo).
-*   **Live Filters & Compositing**: Hiển thị bộ lọc màu (CSS Filters) thời gian thực và tự động ghép (bake) toàn bộ các lớp (Hình, Chữ, Nét vẽ) thành một bức ảnh nguyên khối ngay trên trình duyệt (Client-side) trước khi tải lên.
-*   **Quyền riêng tư linh hoạt**: Công khai hoặc chỉ bạn bè (Followers) mới xem được.
-*   **Thời gian hiển thị tuỳ chỉnh**: Tin tự động biến mất sau 12h, 18h hoặc 24h.
-*   **Tương tác phong phú**: Thả tim ❤️, gửi trả lời trực tiếp qua tin nhắn riêng tư.
-*   **Zynk Reels (Video Short)**: Trải nghiệm xem video ngắn cuộn dọc sống động, hỗ trợ tải lên video từ thiết bị với quy trình phân loại thông minh.
+## Chức năng đã triển khai
 
-### 🛒 3. Thương mại Điện tử (Zynk Shop)
-*   **Marketplace Hiện đại**: Khám phá sản phẩm với bố cục Full-width cao cấp, loại bỏ sidebar tĩnh để tối ưu không gian hiển thị.
-*   **Danh mục Drill-down Đa cấp**: Hệ thống khám phá ngành hàng thông minh, cho phép đi sâu vào từng cấp độ danh mục (Cha -> Con -> Cháu...) kèm theo lọc sản phẩm tương ứng.
-*   **Banner Slider Động**: Hệ thống quảng cáo chuyên nghiệp hỗ trợ tự động chuyển slide với thời gian tùy chỉnh.
-*   **Kênh Người Bán (Seller Center)**: 
-    *   Quy trình đăng ký Shop và xét duyệt bởi Admin.
-    *   Quản lý sản phẩm, tồn kho và xử lý đơn hàng chuyên nghiệp.
-    *   Dashboard thống kê doanh thu và hiệu quả kinh doanh.
-*   **Thanh toán VietQR Tự động**: Tích hợp tạo mã QR thanh toán ngân hàng tự động cho từng đơn hàng, giúp người mua thanh toán chỉ trong vài giây.
-*   **Đánh giá & Phản hồi**: Hệ thống đánh giá sản phẩm kèm hình ảnh thực tế từ người mua.
+### Mạng xã hội
 
-### 🛡 4. Quản trị & Bảo mật (Admin Center)
-*   **Modern Dashboard**: Hệ thống thống kê chuyên nghiệp sử dụng **Chart.js**, theo dõi doanh thu 7 ngày gần nhất và top cửa hàng kinh doanh hiệu quả.
-*   **Hệ thống Thông báo Thông minh**: Tự động hiển thị chấm đỏ (Badges) thời gian thực trên sidebar cho các mục cần xử lý gấp (Báo cáo vi phạm, Yêu cầu mở Shop).
-*   **Quản lý Danh mục Đa cấp**: Tìm kiếm đệ quy (recursive search) và cấu trúc cây thư mục giúp quản lý hàng nghìn ngành hàng dễ dàng.
-*   **Quản lý Banners Marketplace**: Giao diện quản trị Banner chuyên nghiệp với tính năng kéo thả (Drag & Drop) để sắp xếp thứ tự, xem trước trực tiếp (Live Preview) và cấu hình tốc độ chuyển slide.
-*   **Kiểm duyệt Nội dung Chặt chẽ**: 
-    *   Xem chi tiết bài viết bị báo cáo và đưa ra quyết định Xóa/Bỏ qua ngay lập tức.
-    *   Quản lý danh sách người dùng, hỗ trợ tìm kiếm nhanh và xóa tài khoản vi phạm.
-*   **Đặc quyền Admin**: Toàn quyền xem các bài viết riêng tư khi có báo cáo vi phạm để đảm bảo an toàn cộng đồng.
-*   **Duyệt Tích Xanh (Verification)**: Chức năng xem xét và cấp tích xanh (Blue Tick) cho tài khoản đã xác minh giấy tờ.
-*   **Xác thực & Bảo mật Cao cấp (Auth V2)**: 
-    *   Sử dụng Token JWT bảo mật phân quyền (User/Seller/Admin).
-    *   Đăng ký tài khoản và Khôi phục mật khẩu bảo mật bằng mã OTP gửi qua Email thực (Gmail SMTP).
-    *   Tích hợp Đăng nhập nhanh bằng Google (Google OAuth 2.0).
-*   **Responsive Design**: Tối ưu hóa 100% giao diện cho Mobile, Tablet và Desktop (Trang Admin được khóa trên Mobile để đảm bảo an toàn).
+- Đăng bài văn bản hoặc nhiều hình ảnh, hashtag và bình chọn.
+- Like, bình luận nhiều cấp, theo dõi, lưu bài viết và thông báo.
+- Hồ sơ cá nhân, quyền riêng tư, dark mode và đa ngôn ngữ.
+- Stories, Reels và Groups với quy trình duyệt thành viên nhóm riêng tư.
+- Chat 1-1 và thông báo thời gian thực bằng SignalR.
 
-### 🤖 5. Tích hợp Trí tuệ Nhân tạo (Gemini AI)
-*   **Tìm kiếm thông minh (AI Smart Search)**: Tìm kiếm ngữ nghĩa kết hợp bài viết và sản phẩm, tự động phân tích mức độ liên quan (%) kèm lý do giải thích gợi ý từ AI.
-*   **Trợ lý ảo Zynk AI Chatbot**: Bong bóng chat trợ lý thông minh hỗ trợ tư vấn, trò chuyện thân thiện và tìm kiếm nhanh bài viết/sản phẩm bằng ngôn ngữ tự nhiên.
-*   **Thuật toán gợi ý trang chủ giống TikTok (FYP Feed)**: Hệ thống gợi ý cá nhân hóa cao cấp xếp hạng bài viết theo lượt tương tác, độ mới, sự trùng khớp tag yêu thích của người dùng và yếu tố ngẫu nhiên (TikTok Random Factor).
-*   **Xác thực người bán bằng CCCD & Sinh trắc học (Nâng cấp)**: Quy trình bảo mật cao cấp gồm tải lên ảnh CCCD mặt trước/sau và **bắt buộc chụp Selfie trực tiếp qua Camera WebRTC** (không cho phép tải ảnh tĩnh). AI Gemini thực hiện OCR tự động điền thông tin, **Liveness Detection** (phát hiện ảnh giả mạo: photo-of-photo, ảnh màn hình) và Face Matching với ngưỡng chính xác ≥ 80% để chống gian lận.
+### Social commerce
 
----
+- Marketplace, danh mục nhiều cấp, tìm kiếm và lọc sản phẩm.
+- Seller Center: đăng ký shop, duyệt shop, sản phẩm, tồn kho và đơn hàng.
+- Giỏ hàng, địa chỉ nhận hàng, VietQR/PayOS và lịch sử đơn hàng.
+- Voucher theo phần trăm, số tiền cố định, miễn phí ship và giảm một phần phí ship.
+- Đánh giá sản phẩm, đấu giá và nội dung có gắn sản phẩm.
 
-## 🛠 Công nghệ Sử dụng
+### Admin Center
 
-### Backend
-- **Framework**: ASP.NET Core 9 (Web API)
-- **Database**: PostgreSQL (Npgsql)
-- **ORM**: Entity Framework Core 9
-- **Real-time**: SignalR
-- **Analytics**: Chart.js Integration
-- **Authentication**: JWT Bearer Token
-- **Storage**: Cloudinary Integration (Xử lý hình ảnh)
-- **AI Core**: Google Gemini 1.5 Flash API (Xác thực sinh trắc học, OCR & tìm kiếm thông minh)
+- Dashboard vận hành, người dùng, báo cáo vi phạm và tích xanh.
+- Danh mục nhiều cấp, cửa hàng, banner, đấu giá và voucher.
+- Danh sách từ khóa cấm và kiểm duyệt nội dung.
+- Admin AI Copilot lập kế hoạch tác vụ; thao tác ghi dữ liệu luôn yêu cầu xác nhận.
+- Tạo voucher bằng AI theo quy trình hai lần xác nhận trước khi ghi database.
 
-### Frontend
-- **Core**: Vanilla Javascript (ES6+), HTML5, CSS3
-- **Design System**: Glassmorphism UI Kit (Tự phát triển)
-- **Icons**: FontAwesome 6
-- **Typography**: Inter & Outfit (Google Fonts)
+### AI hỗ trợ
 
----
+- Tìm kiếm và gợi ý nội dung dựa trên truy vấn ngôn ngữ tự nhiên.
+- Trợ lý mua sắm và Admin AI Copilot.
+- Prototype OCR giấy tờ và đối chiếu ảnh qua Gemini API.
+- Feed ranking thử nghiệm dựa trên tương tác, độ mới và sở thích.
 
-## 🚀 Lộ trình Phát triển (Roadmap)
+## Kiến trúc source
 
-### ✅ Đã Hoàn thành
-- [x] Kiến trúc Clean Architecture & Database Core.
-- [x] Hệ thống Marketplace & Giỏ hàng.
-- [x] Thanh toán VietQR.
-- [x] Chức năng Blog, Like, Comment, Follow.
-- [x] **Real-time Chat (SignalR)**.
-- [x] **Hệ thống Thông báo thời gian thực**.
-- [x] **Tối ưu hóa UI Mobile & Tablet**.
-- [x] **Admin Center Hiện đại (V4)**:
-    - Thống kê doanh thu biểu đồ Chart.js.
-    - Tìm kiếm danh mục đa cấp & Quản lý người dùng nâng cao.
-    - Hệ thống thông báo chấm đỏ (Badges) cho báo cáo vi phạm.
-    - Bổ sung Quản lý và duyệt cấp Tích xanh.
-- [x] **Auth V2 & Bảo mật**:
-    - Giao diện Premium Auth (Glassmorphism).
-    - Xác minh Email OTP & Quên mật khẩu qua SMTP.
-    - Đăng nhập bằng tài khoản Google.
-- [x] **Zynk Stories (Instagram Style)**.
-- [x] **Hệ thống Hashtags**: Tự động nhận diện hashtag (#) trong bài viết và bình luận.
-- [x] **Hiện đại hóa các Trang Thông tin Footer (V6)**:
-    - Thiết kế lại 7 trang thông tin: Giới thiệu (`about.html`), Trợ giúp (`help.html`), Báo chí (`press.html`), API (`api.html`), Việc làm (`jobs.html`), Quyền riêng tư (`privacy.html`), Điều khoản (`terms.html`).
-    - Phong cách phẳng, tối giản, sáng sủa và chuyên nghiệp chuẩn Meta/Instagram/TikTok.
-    - Đồng bộ hóa tuyệt đối với chế độ tối (`dark-mode`) và thanh Sidebar của hệ thống Zynk.
-    - FAQ Accordion tương tác kèm lọc tìm kiếm tức thời, bộ lọc phân loại công việc mượt mà và khung tài liệu API RESTful chuẩn chỉnh.
+```text
+Blog.API             ASP.NET Core API, authentication, controllers, SignalR hubs
+Blog.Application     DTO, application services và quy tắc nghiệp vụ dùng chung
+Blog.Domain          Entity, enum và repository contracts
+Blog.Infrastructure  EF Core, PostgreSQL, repository và external services
+Blog.Web             HTML, CSS, JavaScript và PWA assets
+Blog.Tests           Automated tests cho các quy tắc nghiệp vụ quan trọng
+docs                 Tài liệu kiến trúc và API
+```
 
-### 🏗 Sắp tới
+Luồng phụ thuộc chính:
 
-#### 📸 Mạng xã hội Nâng cao (Ưu tiên)
-- [x] **Zynk Reels**: Trải nghiệm video ngắn cuộn dọc sống động.
-- [x] **Hệ thống "Bộ sưu tập" (Collections)**: Cho phép người dùng lưu trữ bài viết theo từng chủ đề.
-- [x] **Thăm dò ý kiến (Polls)**: Tăng tính tương tác thông qua các câu hỏi bình chọn trực tiếp.
-- [x] **Chế độ tối (Dark Mode)**: Giao diện Dark sang trọng phủ rộng toàn hệ thống.
+```text
+Blog.Web → Blog.API → Blog.Application → Blog.Domain
+                 └→ Blog.Infrastructure → PostgreSQL / external APIs
+```
 
-#### 🚀 Nâng cấp & Mở rộng (Roadmap mở rộng)
-- [x] **Mã giảm giá (Vouchers)**: Shop có thể tạo khuyến mãi riêng để thu hút khách hàng.
-- [ ] **Live Stream Bán hàng**: Kênh tương tác trực tiếp giúp người bán giới thiệu sản phẩm thời gian thực.
-- [x] **AI Recommendation & Tagging**: Tự động gợi ý sản phẩm/bài viết cá nhân hóa theo sở thích người dùng bằng thuật toán đề xuất (TikTok Algorithm) và đối sánh dữ liệu.
-- [ ] **Cộng đồng (Groups)**: Tham gia vào các nhóm chuyên biệt theo chủ đề quan tâm.
-- [ ] **Hệ thống Giao dịch Bảo đảm**: Trung gian thanh toán giúp bảo vệ người mua và người bán.
-- [ ] **Phân tích Chuyên sâu cho Creator**: Dashboard số liệu tăng trưởng cho các KOLs/Influencers.
-- [x] **PWA (Progressive Web App)**: Cho phép cài đặt ứng dụng Zynk trực tiếp lên màn hình điện thoại mà không cần App Store.
-- [ ] **Thành viên Premium**: Gói đăng ký trả phí không quảng cáo, nhận tích xanh ưu tiên và các bộ lọc độc quyền.
-- [ ] **Đấu giá trực tuyến (Live Auction)**: Hỗ trợ đấu giá sản phẩm thời gian thực qua SignalR.
-- [ ] **Tiếp thị liên kết (Affiliate Marketing)**: Cho phép Creator gắn thẻ sản phẩm vào bài viết/reels để nhận hoa hồng.
-- [ ] **Shoppable Posts & Reels**: Ghim sản phẩm trực tiếp lên hình ảnh/video để mua sắm nhanh.
-- [ ] **Hệ thống Gamification & Quà tặng ảo (Virtual Gifting)**: Tích lũy Zynk Points, tặng quà qua Livestream/Chat.
-- [ ] **Mua chung (Group Buy)**: Khuyến khích chia sẻ sản phẩm qua DM để nhận giá giảm (Social E-commerce).
-- [ ] **Khám phá theo vị trí (Location-based Discovery)**: Tìm kiếm bạn bè và Shop lân cận qua bản đồ.
-- [ ] **Audio/Video Call**: Tích hợp WebRTC gọi thoại/hình ảnh trực tiếp qua DM.
+## Công nghệ
 
-#### 🏗 Định hướng Kiến trúc Enterprise & Đột phá (Enterprise & Innovation)
-**1. Nâng cấp Hạ tầng Kỹ thuật:**
-- [ ] **Redis Caching**: Triển khai cache cho Newsfeed, Session và Danh mục sản phẩm để tối ưu hiệu năng.
-- [x] **Elasticsearch / Typesense**: Đã nâng cấp tìm kiếm toàn văn bản bằng **AI Smart Search** thông minh và Trợ lý ảo Zynk AI.
-- [ ] **Message Broker (RabbitMQ)**: Tách các tác vụ nền nặng (gửi email, xử lý ảnh/video) chạy bất đồng bộ để tăng tốc API.
-- [ ] **GraphQL Integration**: Áp dụng GraphQL cho các endpoint mạng xã hội phức tạp nhằm tối ưu hóa việc truyền tải dữ liệu.
+- ASP.NET Core 9 Web API
+- PostgreSQL và Entity Framework Core 9
+- JWT Bearer Authentication và phân quyền User/Seller/Admin
+- SignalR cho chat và thông báo
+- Cloudinary cho media
+- PayOS/VietQR cho thanh toán
+- Gemini API cho các tính năng AI hỗ trợ
+- Firebase/Firestore cho tích hợp chat liên quan
+- HTML5, CSS3, Vanilla JavaScript và PWA
+- MSTest và GitHub Actions
 
-**2. Đột phá Mạng xã hội:**
-- [ ] **Zynk Spaces (Audio Rooms)**: Phòng trò chuyện bằng giọng nói trực tiếp (tương tự Twitter Spaces).
-- [x] **Secret Chat (Vanish Mode)**: Chế độ tin nhắn tự hủy sau khi xem trong Direct Message.
-- [x] **Đăng bài Ẩn danh (Anonymous Confessions)**: Tạo không gian an toàn để chia sẻ không lộ danh tính thật.
-- [ ] **Zynk Events (Sự kiện)**: Hệ thống tạo, quản lý và bán vé cho sự kiện online/offline.
+## Chạy dự án
 
-**3. Đột phá Thương mại Điện tử:**
-- [ ] **WebAR Try-On**: Ứng dụng thực tế tăng cường cho phép thử sản phẩm (kính, mũ, nội thất) qua camera trình duyệt.
-- [ ] **Social Gifting**: Tặng quà cho tài khoản khác trên hệ thống mà không cần biết địa chỉ giao hàng trước (người nhận tự điền).
-- [ ] **Subscription Commerce**: Đăng ký mua định kỳ hàng tuần/tháng cho các sản phẩm tiêu dùng thiết yếu.
-- [ ] **Custom Bundle**: Cho phép người mua tự phối ghép các sản phẩm yêu thích vào một combo để nhận chiết khấu linh hoạt.
+### Yêu cầu
 
----
+- .NET SDK 9
+- PostgreSQL
+- Tài khoản Cloudinary cho chức năng tải media
+- Các khóa PayOS, Gemini, SMTP hoặc Firebase chỉ cần khi kiểm tra tính năng tương ứng
 
-## 🛠 Hướng dẫn Cài đặt
+### Cấu hình an toàn
 
-1. **Clone dự án**:
-   ```bash
-   git clone https://github.com/HaiDang-Ng22/blog-community-plantform.git
-   ```
+Không ghi secret thật vào `appsettings.json`. Tạo `Blog.API/appsettings.Local.json` — tệp này đã được `.gitignore`:
 
-2. **Cấu hình**: 
-   Cập nhật thông tin kết nối PostgreSQL và các khóa bí mật (JWT, Cloudinary) trong file `Blog.API/appsettings.json`.
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=zynk;Username=postgres;Password=your_password"
+  },
+  "Jwt": {
+    "Key": "replace-with-a-random-key-at-least-32-characters",
+    "Issuer": "BlogAPI",
+    "Audience": "BlogFrontend"
+  },
+  "CloudinarySettings": {
+    "CloudName": "your_cloud_name",
+    "ApiKey": "your_api_key",
+    "ApiSecret": "your_api_secret"
+  }
+}
+```
 
-3. **Chạy ứng dụng**:
-   ```bash
-   # Di chuyển vào thư mục API
-   cd Blog.API
-   # Chạy dự án (Backend sẽ tự động serve Frontend từ thư mục Blog.Web)
-   dotnet run
-   ```
+Khi triển khai, dùng environment variables theo cú pháp ASP.NET Core, ví dụ:
 
-4. **Truy cập**: 
-   Mở trình duyệt và truy cập `http://localhost:7000`.
+```text
+DATABASE_URL
+Jwt__Key
+Jwt__Issuer
+Jwt__Audience
+CloudinarySettings__CloudName
+CloudinarySettings__ApiKey
+CloudinarySettings__ApiSecret
+Gemini__ApiKey
+```
 
----
----
-*Dự án tâm huyết được phát triển và duy trì bởi **HaiDang**.* 
+### Khởi chạy
 
----
-### 📊 Thống kê lượt xem
-![Lượt xem](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FHaiDang-Ng22%2Fblog-community-plantform&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=L%C6%B0%E1%BB%A3t+gh%C3%A9+th%C4%83m&edge_flat=false) 
+```bash
+dotnet restore BlogSystem.sln
+dotnet run --project Blog.API --urls http://localhost:7000
+```
+
+Mở [http://localhost:7000](http://localhost:7000). API tự phục vụ frontend trong thư mục `Blog.Web`.
+
+## Kiểm thử và chất lượng code
+
+```bash
+dotnet build BlogSystem.sln --configuration Release --no-restore
+dotnet test BlogSystem.sln --configuration Release --no-build
+```
+
+Bộ test hiện tập trung vào quy tắc tài chính của voucher:
+
+- Giảm phần trăm và mức giảm tối đa.
+- Giảm tiền cố định không vượt giá trị đơn.
+- Miễn phí vận chuyển.
+- Giảm một phần phí vận chuyển không tạo phí âm.
+- Điều kiện đơn tối thiểu.
+- Chuẩn hóa dữ liệu âm và kiểm tra hàm không thay đổi entity đầu vào.
+
+GitHub Actions tự động chạy `Restore → Build → Test → JavaScript syntax check → Publish` trên push và pull request.
+
+## Theo dõi triển khai
+
+```text
+GET /health/live   Kiểm tra tiến trình API đang hoạt động
+GET /health/ready  Kiểm tra API kết nối được PostgreSQL
+```
+
+Ví dụ phản hồi readiness thành công:
+
+```json
+{
+  "status": "Ready",
+  "database": "Connected",
+  "timestamp": "2026-08-01T00:00:00+00:00"
+}
+```
+
+## Phạm vi và giới hạn hiện tại
+
+- Đây là đồ án học tập đang phát triển, chưa tuyên bố đạt chuẩn production.
+- Chưa có benchmark tải lớn hoặc SLA công khai.
+- Đối chiếu ảnh/OCR phụ thuộc kết quả từ dịch vụ AI bên ngoài.
+- Tính năng thanh toán cần webhook và khóa PayOS hợp lệ để kiểm tra đầy đủ.
+- Bộ test sẽ tiếp tục mở rộng sang Auth, Order concurrency, quyền Admin, Follow và Comment.
+
+## Roadmap ưu tiên
+
+- [x] Automated tests cho quy tắc voucher.
+- [x] GitHub Actions build/test/publish.
+- [x] Health probes cho deployment.
+- [ ] Integration tests cho Auth và phân quyền Admin.
+- [ ] Integration tests cho đặt hàng, tồn kho và webhook idempotency.
+- [ ] Test SignalR cho chat và thông báo.
+- [ ] Báo cáo coverage và kiểm thử tải.
+- [ ] Video demo dự phòng 2–3 phút.
+
+## Tác giả
+
+Phát triển bởi **Nguyễn Hải Đăng** — [.NET Backend / Full-stack portfolio](https://github.com/HaiDang-Ng22).

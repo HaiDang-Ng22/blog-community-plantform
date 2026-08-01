@@ -4,6 +4,10 @@
 .vs/
 bin/
 obj/
+TestResults/
+artifacts/
+coverage/
+coverage.*
 *.user
 *.suo
 *.sln.docstates
@@ -37,6 +41,12 @@ logs/
 
 # Scratch / temporary files
 scratch/
+.tmp-build-api/
+.codex-runtime/
+commit.txt
+test_*.json
+Blog.API/debug_*.js
+Blog.API/*api_response.json
 *.tmp
 *.bak
 *.swp

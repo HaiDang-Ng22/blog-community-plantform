@@ -6,7 +6,8 @@ public enum DiscountType
 {
     Percentage, // Phần trăm (ví dụ 10%)
     FixedAmount, // Số tiền cố định (ví dụ 20.000đ)
-    FreeShipping // Miễn phí vận chuyển
+    FreeShipping, // Miễn phí vận chuyển
+    ShippingDiscount // Giảm một phần phí vận chuyển
 }
 
 public class Voucher

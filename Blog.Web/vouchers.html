@@ -487,6 +487,9 @@
                 <button class="filter-tab" data-filter="freeshipping" onclick="filterVouchers('freeshipping', this)">
                     <i class="fa-solid fa-truck-fast"></i> Miễn ship
                 </button>
+                <button class="filter-tab" data-filter="shippingdiscount" onclick="filterVouchers('shippingdiscount', this)">
+                    <i class="fa-solid fa-truck-arrow-right"></i> Giảm phí ship
+                </button>
                 <button class="filter-tab" data-filter="hot" onclick="filterVouchers('hot', this)">
                     <i class="fa-solid fa-bolt"></i> Sắp hết
                 </button>
@@ -558,6 +561,9 @@
                 case 'freeshipping':
                     filtered = _allVouchers.filter(v => v.discountType === 'FreeShipping');
                     break;
+                case 'shippingdiscount':
+                    filtered = _allVouchers.filter(v => v.discountType === 'ShippingDiscount');
+                    break;
                 case 'hot':
                     filtered = _allVouchers.filter(v => {
                         const usagePct = v.usageLimit > 0 ? (v.usedCount / v.usageLimit) * 100 : 0;
@@ -595,6 +601,8 @@
                     discountDisplay = `<span class="vr-discount-val">${v.discountValue}%</span><span class="vr-discount-label">Giảm</span>`;
                 } else if (v.discountType === 'FreeShipping') {
                     discountDisplay = `<span class="vr-discount-val" style="font-size: 1.4rem;">FREE</span><span class="vr-discount-label">SHIP</span>`;
+                } else if (v.discountType === 'ShippingDiscount') {
+                    discountDisplay = `<span class="vr-discount-val">${fmtShort(v.discountValue)}</span><span class="vr-discount-label">PHÍ SHIP</span>`;
                 } else {
                     discountDisplay = `<span class="vr-discount-val">${fmtShort(v.discountValue)}</span><span class="vr-discount-label">Giảm</span>`;
                 }
@@ -603,6 +611,8 @@
                 if (!desc) {
                     if (v.discountType === 'FreeShipping') {
                         desc = `Miễn phí vận chuyển cho đơn từ ${fmtShort(v.minOrderValue || 0)}`;
+                    } else if (v.discountType === 'ShippingDiscount') {
+                        desc = `Giảm ${fmtShort(v.discountValue)} phí vận chuyển cho đơn từ ${fmtShort(v.minOrderValue || 0)}`;
                     } else {
                         desc = `Giảm ${v.discountValue}${v.discountType === 'Percentage' ? '%' : 'đ'} cho đơn từ ${fmtShort(v.minOrderValue || 0)}`;
                     }
