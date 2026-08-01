@@ -90,13 +90,32 @@ function renderOrderDetails(order) {
     document.getElementById('sum-subtotal').textContent = formatCurrency(subtotal);
     document.getElementById('sum-shipping').textContent = formatCurrency(order.shippingFee || 0);
     document.getElementById('sum-total').textContent = formatCurrency(order.totalAmount);
+    const paymentStatusLabels = {
+        unpaid: 'Chờ thanh toán',
+        pendingpayment: 'Chờ thanh toán',
+        awaitingbankverification: 'Đã chuyển tiền · Chờ Shop xác nhận',
+        paid: 'Đã thanh toán',
+        awaitingshipment: 'Đã thanh toán',
+        awaitingcollection: 'Đã thanh toán',
+        intransit: 'Đã thanh toán',
+        delivered: 'Đã thanh toán',
+        completed: 'Đã thanh toán'
+    };
+    const paymentStatusEl = document.getElementById('order-payment-status');
+    if (paymentStatusEl) {
+        paymentStatusEl.textContent = paymentStatusLabels[s] || order.status;
+        paymentStatusEl.style.color = s === 'awaitingbankverification'
+            ? '#6d28d9'
+            : (['paid', 'awaitingshipment', 'awaitingcollection', 'intransit', 'delivered', 'completed'].includes(s) ? '#059669' : '#d97706');
+    }
     document.getElementById('order-id-full').textContent = order.id.toUpperCase();
     document.getElementById('order-time').textContent = new Date(order.createdAt).toLocaleString('vi-VN');
     document.getElementById('order-payment-method').textContent = order.paymentMethod;
 
     // 5. Handle Payment QR
     const qrCard = document.getElementById('payment-qr-card');
-    if (order.paymentMethod === 'BANK_TRANSFER' && (order.status === 'Unpaid' || order.status === 'PendingPayment') && order.bankAccountNumber) {
+    const isAwaitingBankVerification = s === 'awaitingbankverification';
+    if (order.paymentMethod === 'BANK_TRANSFER' && (s === 'unpaid' || s === 'pendingpayment' || isAwaitingBankVerification) && order.bankAccountNumber) {
         qrCard.classList.remove('hidden');
         const bankId = order.bankName || 'MB'; // Default to MB if not set
         const accountNo = order.bankAccountNumber;
@@ -112,12 +131,40 @@ function renderOrderDetails(order) {
             <strong>STK:</strong> ${accountNo}<br>
             <strong>Chủ TK:</strong> ${order.bankAccountName || '-'}
         `;
+        document.getElementById('bank-payment-content')?.classList.toggle('hidden', isAwaitingBankVerification);
+        document.getElementById('bank-verification-status')?.classList.toggle('hidden', !isAwaitingBankVerification);
+        const verifyButton = document.getElementById('btn-request-bank-verification');
+        if (verifyButton) {
+            verifyButton.disabled = false;
+            verifyButton.innerHTML = isAwaitingBankVerification
+                ? '<i class="fa-solid fa-bell"></i> Gửi lại thông báo cho Shop'
+                : '<i class="fa-solid fa-paper-plane"></i> Tôi đã chuyển khoản · Gửi xác minh';
+        }
     } else {
         qrCard.classList.add('hidden');
     }
 
     // Cache order data for modal
     window._currentOrder = order;
+}
+
+async function requestBankVerification() {
+    const order = window._currentOrder;
+    const button = document.getElementById('btn-request-bank-verification');
+    if (!order || !button) return;
+
+    const originalHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác minh...';
+    try {
+        const result = await window.api.post(`orders/${order.id}/request-bank-verification`, {});
+        window.common?.showToast(result.message || 'Đã gửi thông báo chuyển khoản tới Shop.', 'success');
+        await loadOrderDetails(order.id);
+    } catch (error) {
+        window.common?.showToast(error?.message || 'Không thể gửi yêu cầu xác minh.', 'error');
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+    }
 }
 
 function updateStepper(status) {
@@ -127,6 +174,7 @@ function updateStepper(status) {
     // Status mapping to indices
     const statusOrder = ['unpaid', 'paid', 'awaitingshipment', 'awaitingcollection', 'intransit', 'completed'];
     let currentIndex = statusOrder.indexOf(s);
+    if (s === 'awaitingbankverification') currentIndex = 0;
     
     // If status is Delivered, we map it to Completed for the stepper as both show "Đã giao hàng"
     if (s === 'delivered') currentIndex = 5;

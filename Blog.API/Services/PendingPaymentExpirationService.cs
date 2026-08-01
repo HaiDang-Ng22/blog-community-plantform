@@ -76,7 +76,7 @@ public sealed class PendingPaymentExpirationService : BackgroundService
             var previousStatus = order.Status;
             order.Status = OrderStatus.PaymentExpired;
             order.UpdatedAt = now;
-            order.StatusHistory.Add(new OrderStatusHistory
+            context.OrderStatusHistories.Add(new OrderStatusHistory
             {
                 Id = Guid.NewGuid(),
                 OrderId = order.Id,

@@ -448,6 +448,7 @@
                             <div class="summary-row"><span data-i18n="shipping_fee">Phí vận chuyển</span> <span
                                     id="sum-shipping">0đ</span></div>
                             <div class="summary-row"><span data-i18n="discount">Giảm giá</span> <span>-0đ</span></div>
+                            <div class="summary-row"><span>Trạng thái thanh toán</span> <strong id="order-payment-status" style="color:#d97706;">-</strong></div>
                             <div class="summary-row total"><span data-i18n="total_payment">Tổng thanh toán</span> <span
                                     id="sum-total">0đ</span></div>
                         </div>
@@ -456,13 +457,21 @@
                     <!-- Payment QR Section (Visible only if BANK payment) -->
                     <div id="payment-qr-card" class="card hidden" style="border: 2px solid #3b82f6; background: #f0f9ff;">
                         <h3 class="card-title"><i class="fa-solid fa-qrcode" style="color: #3b82f6;"></i> <span data-i18n="pay_via_qr">Thanh toán qua mã QR</span></h3>
-                        <div style="text-align: center;">
+                        <div id="bank-verification-status" class="hidden" style="margin-bottom:1rem;padding:12px;border-radius:12px;background:#f5f3ff;color:#6d28d9;font-weight:700;text-align:center;line-height:1.5;">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Đã báo chuyển tiền<br>
+                            <small style="font-weight:500;">Shop đang kiểm tra giao dịch trong tài khoản.</small>
+                        </div>
+                        <div id="bank-payment-content" style="text-align: center;">
                             <img id="vietqr-img" src="" style="max-width: 100%; border-radius: 12px; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                             <div style="font-size: 0.85rem; color: #1e40af; background: #dbeafe; padding: 10px; border-radius: 8px; line-height: 1.5;">
                                 <div id="bank-info-text"></div>
                                 <div style="font-weight: 800; margin-top: 5px;" data-i18n="qr_scan_note">Vui lòng quét mã QR để thanh toán đơn hàng.</div>
                             </div>
                         </div>
+                        <button id="btn-request-bank-verification" class="btn primary-btn" onclick="requestBankVerification()"
+                            style="width:100%;margin-top:1rem;background:linear-gradient(135deg,#6d5dfc,#8b5cf6);border:0;">
+                            <i class="fa-solid fa-paper-plane"></i> Tôi đã chuyển khoản · Gửi xác minh
+                        </button>
                     </div>
 
                     <div class="card">

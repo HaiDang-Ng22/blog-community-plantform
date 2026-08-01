@@ -340,6 +340,34 @@ else
 
 var app = builder.Build();
 
+// Never expose framework stack traces to the browser. Concurrency conflicts are
+// recoverable and should be presented as a short retry message.
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        var exception = feature?.Error;
+        var isConcurrencyConflict = exception is DbUpdateConcurrencyException;
+
+        var logger = context.RequestServices
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("GlobalExceptionHandler");
+        if (exception != null) logger.LogError(exception, "Unhandled API error");
+
+        context.Response.StatusCode = isConcurrencyConflict
+            ? StatusCodes.Status409Conflict
+            : StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = isConcurrencyConflict
+                ? "Dữ liệu vừa được cập nhật ở một yêu cầu khác. Vui lòng thử lại."
+                : "Máy chủ đang gặp sự cố tạm thời. Vui lòng thử lại sau."
+        });
+    });
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -439,6 +467,93 @@ using (var scope = app.Services.CreateScope())
             dbContext.Database.Migrate();
             // Seed initial data
             await DbInitializer.InitializeAsync(dbContext);
+
+            // Backfill direct-transfer requests created before the dedicated
+            // AwaitingBankVerification status existed. The notification is durable
+            // evidence that the buyer already submitted a verification request.
+            var legacyVerificationOrderIds = await dbContext.Notifications
+                .AsNoTracking()
+                .Where(notification =>
+                    notification.Type == "PaymentVerificationRequested" &&
+                    notification.TargetId.HasValue)
+                .Select(notification => notification.TargetId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            if (legacyVerificationOrderIds.Count > 0)
+            {
+                var legacyVerificationOrders = await dbContext.Orders
+                    .Where(order =>
+                        legacyVerificationOrderIds.Contains(order.Id) &&
+                        order.PaymentMethod.ToUpper() == "BANK_TRANSFER" &&
+                        (order.Status == OrderStatus.Unpaid || order.Status == OrderStatus.PendingPayment))
+                    .ToListAsync();
+
+                foreach (var order in legacyVerificationOrders)
+                {
+                    var previousStatus = order.Status;
+                    order.Status = OrderStatus.AwaitingBankVerification;
+                    order.UpdatedAt = DateTime.UtcNow;
+                    dbContext.OrderStatusHistories.Add(new OrderStatusHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = order.Id,
+                        FromStatus = previousStatus,
+                        ToStatus = OrderStatus.AwaitingBankVerification,
+                        ChangedByUserId = order.BuyerId,
+                        Note = "Đồng bộ yêu cầu xác minh chuyển khoản đã tạo trước phiên bản trạng thái mới."
+                    });
+                }
+
+                if (legacyVerificationOrders.Count > 0)
+                {
+                    await dbContext.SaveChangesAsync();
+                    app.Logger.LogInformation(
+                        "Backfilled {Count} legacy bank-transfer verification orders.",
+                        legacyVerificationOrders.Count);
+                }
+            }
+
+            var syncedOrdersNeedingNotification = await dbContext.Orders
+                .Include(order => order.Items)
+                    .ThenInclude(item => item.Product)
+                        .ThenInclude(product => product.Shop)
+                .Where(order =>
+                    order.Status == OrderStatus.AwaitingBankVerification &&
+                    order.UpdatedAt.HasValue &&
+                    order.StatusHistory.Any(history =>
+                        history.Note == "Đồng bộ yêu cầu xác minh chuyển khoản đã tạo trước phiên bản trạng thái mới.") &&
+                    !dbContext.Notifications.Any(notification =>
+                        notification.Type == "PaymentVerificationRequested" &&
+                        notification.TargetId == order.Id &&
+                        notification.CreatedAt >= order.UpdatedAt.Value))
+                .ToListAsync();
+
+            foreach (var order in syncedOrdersNeedingNotification)
+            {
+                var shopUserId = order.Items.FirstOrDefault()?.Product?.Shop?.UserId;
+                if (!shopUserId.HasValue) continue;
+
+                dbContext.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    ReceiverId = shopUserId.Value,
+                    ActorId = order.BuyerId,
+                    Type = "PaymentVerificationRequested",
+                    TargetId = order.Id,
+                    Message = "đã báo chuyển khoản thành công. Vui lòng kiểm tra tài khoản và xác nhận giao dịch.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false
+                });
+            }
+
+            if (syncedOrdersNeedingNotification.Count > 0)
+            {
+                await dbContext.SaveChangesAsync();
+                app.Logger.LogInformation(
+                    "Created {Count} missing notifications for synchronized bank transfers.",
+                    syncedOrdersNeedingNotification.Count);
+            }
         }
         catch (Exception ex)
         {

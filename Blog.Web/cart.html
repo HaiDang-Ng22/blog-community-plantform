@@ -1504,25 +1504,40 @@
         async function confirmVietQR() {
             const button = document.getElementById('vietqr-verify-btn');
             const originalHtml = button?.innerHTML;
+            let verificationSubmitted = false;
             if (button) {
                 button.disabled = true;
                 button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi yêu cầu...';
             }
 
             try {
-                await Promise.all(_currentPendingOrderIds.map(id => window.api.post(`orders/${id}/request-bank-verification`, {})));
-                const confirmed = await checkDirectVietQRStatus(false);
-                if (!confirmed) {
-                    const statusBox = document.getElementById('vietqr-live-status');
-                    statusBox?.classList.remove('success');
-                    if (statusBox) statusBox.innerHTML = '<span class="vietqr-status-pulse"></span><div><b>Đã gửi yêu cầu tới Shop</b><small>Shop đang kiểm tra giao dịch trong tài khoản ngân hàng</small></div>';
-                    window.common?.showToast('Đã thông báo cho Shop kiểm tra giao dịch.', 'success');
-                    startVietQRStatusPolling();
+                // Send sequentially so multi-Shop carts cannot race while notifications are trimmed.
+                for (const id of _currentPendingOrderIds) {
+                    await window.api.post(`orders/${id}/request-bank-verification`, {});
                 }
+
+                verificationSubmitted = true;
+                finalizePendingBankCart();
+                if (_vietQrStatusTimer) clearInterval(_vietQrStatusTimer);
+                _vietQrStatusTimer = null;
+
+                const statusBox = document.getElementById('vietqr-live-status');
+                statusBox?.classList.add('success');
+                if (statusBox) statusBox.innerHTML = '<span class="vietqr-status-pulse"></span><div><b>Đã ghi nhận chuyển khoản</b><small>Đơn hàng đang chờ Shop xác nhận tiền</small></div>';
+                if (button) button.innerHTML = '<i class="fa-solid fa-circle-check"></i> Đã gửi xác minh';
+                window.common?.showToast('Đã ghi nhận chuyển khoản và gửi thông báo tới Shop.', 'success');
+
+                const destination = _currentPendingOrderIds.length === 1
+                    ? `order-detail.html?id=${encodeURIComponent(_currentPendingOrderIds[0])}`
+                    : 'my-orders.html';
+                setTimeout(() => {
+                    closeVietQRModal();
+                    window.location.href = destination;
+                }, 1400);
             } catch (error) {
                 window.common?.showToast(error?.message || 'Không thể gửi yêu cầu xác minh.', 'error');
             } finally {
-                if (button) {
+                if (button && !verificationSubmitted) {
                     button.disabled = false;
                     button.innerHTML = originalHtml;
                 }

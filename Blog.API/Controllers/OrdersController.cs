@@ -752,7 +752,7 @@ public class OrdersController : ControllerBase
         order.Status = OrderStatus.Paid;
         order.PaidAt = DateTime.UtcNow;
         order.UpdatedAt = DateTime.UtcNow;
-        order.StatusHistory.Add(new OrderStatusHistory
+        _context.OrderStatusHistories.Add(new OrderStatusHistory
         {
             Id = Guid.NewGuid(),
             OrderId = order.Id,
@@ -782,23 +782,48 @@ public class OrdersController : ControllerBase
         if (order.BuyerId != userId) return Forbid();
         if (!string.Equals(order.PaymentMethod, "BANK_TRANSFER", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "Đây không phải giao dịch chuyển khoản trực tiếp." });
-        if (order.Status == OrderStatus.AwaitingBankVerification)
-            return Ok(new
-            {
-                verificationRequested = true,
-                status = order.Status.ToString(),
-                message = "Bạn đã báo chuyển tiền. Shop đang kiểm tra giao dịch."
-            });
-        if (order.Status != OrderStatus.Unpaid && order.Status != OrderStatus.PendingPayment)
-            return Ok(new { alreadyConfirmed = order.PaidAt.HasValue || order.Status == OrderStatus.Paid, message = "Giao dịch đã được xử lý." });
 
         var shop = order.Items.FirstOrDefault()?.Product?.Shop;
         if (shop == null) return BadRequest(new { message = "Không tìm thấy Shop nhận thanh toán." });
 
+        if (order.Status == OrderStatus.AwaitingBankVerification)
+        {
+            var recentlyNotified = await _context.Notifications
+                .AsNoTracking()
+                .AnyAsync(notification =>
+                    notification.ReceiverId == shop.UserId &&
+                    notification.Type == "PaymentVerificationRequested" &&
+                    notification.TargetId == order.Id &&
+                    notification.CreatedAt >= DateTime.UtcNow.AddMinutes(-1));
+
+            if (!recentlyNotified)
+            {
+                await _notiService.SendNotificationAsync(
+                    shop.UserId,
+                    userId,
+                    "PaymentVerificationRequested",
+                    order.Id,
+                    "đã gửi lại yêu cầu xác minh chuyển khoản. Vui lòng kiểm tra tài khoản và xác nhận giao dịch.",
+                    allowSelfNotification: true);
+            }
+
+            return Ok(new
+            {
+                verificationRequested = true,
+                status = order.Status.ToString(),
+                notificationSent = !recentlyNotified,
+                message = recentlyNotified
+                    ? "Bạn đã báo chuyển tiền. Shop đang kiểm tra giao dịch."
+                    : "Đã gửi lại thông báo chuyển khoản tới Shop."
+            });
+        }
+        if (order.Status != OrderStatus.Unpaid && order.Status != OrderStatus.PendingPayment)
+            return Ok(new { alreadyConfirmed = order.PaidAt.HasValue || order.Status == OrderStatus.Paid, message = "Giao dịch đã được xử lý." });
+
         var previousStatus = order.Status;
         order.Status = OrderStatus.AwaitingBankVerification;
         order.UpdatedAt = DateTime.UtcNow;
-        order.StatusHistory.Add(new OrderStatusHistory
+        _context.OrderStatusHistories.Add(new OrderStatusHistory
         {
             Id = Guid.NewGuid(),
             OrderId = order.Id,
@@ -808,7 +833,6 @@ public class OrdersController : ControllerBase
             Note = "Người mua báo đã chuyển tiền, chờ Shop xác minh giao dịch."
         });
         await _orderRepository.UpdateAsync(order);
-        await _context.SaveChangesAsync();
         await _notiService.SendNotificationAsync(
             shop.UserId,
             userId,
@@ -875,7 +899,7 @@ public class OrdersController : ControllerBase
             var previousStatus = order.Status;
             order.Status = OrderStatus.PaymentExpired;
             order.UpdatedAt = DateTime.UtcNow;
-            order.StatusHistory.Add(new OrderStatusHistory
+            _context.OrderStatusHistories.Add(new OrderStatusHistory
             {
                 Id = Guid.NewGuid(),
                 OrderId = order.Id,
@@ -962,7 +986,7 @@ public class OrdersController : ControllerBase
                     order.PaidAt = paidAt;
                     order.UpdatedAt = paidAt;
                     order.ProviderTransactionId = transactionId;
-                    order.StatusHistory.Add(new OrderStatusHistory
+                    _context.OrderStatusHistories.Add(new OrderStatusHistory
                     {
                         Id = Guid.NewGuid(),
                         OrderId = order.Id,

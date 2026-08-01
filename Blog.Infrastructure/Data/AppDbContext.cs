@@ -94,42 +94,52 @@ public class AppDbContext : DbContext
 
     private int TrimNotificationHistory(IEnumerable<Guid> receiverIds)
     {
-        var removedAny = false;
+        var removedCount = 0;
         foreach (var receiverId in receiverIds)
         {
-            var overflow = Notifications
+            var overflowIds = Notifications
+                .AsNoTracking()
                 .Where(notification => notification.ReceiverId == receiverId)
                 .OrderByDescending(notification => notification.CreatedAt)
                 .ThenByDescending(notification => notification.Id)
                 .Skip(MaxNotificationsPerUser)
+                .Select(notification => notification.Id)
                 .ToList();
 
-            if (overflow.Count == 0) continue;
-            Notifications.RemoveRange(overflow);
-            removedAny = true;
+            if (overflowIds.Count == 0) continue;
+
+            // ExecuteDelete is atomic and does not track rows. Concurrent requests may
+            // trim the same old notifications without throwing optimistic concurrency errors.
+            removedCount += Notifications
+                .Where(notification => overflowIds.Contains(notification.Id))
+                .ExecuteDelete();
         }
 
-        return removedAny ? base.SaveChanges() : 0;
+        return removedCount;
     }
 
     private async Task<int> TrimNotificationHistoryAsync(IEnumerable<Guid> receiverIds, CancellationToken cancellationToken)
     {
-        var removedAny = false;
+        var removedCount = 0;
         foreach (var receiverId in receiverIds)
         {
-            var overflow = await Notifications
+            var overflowIds = await Notifications
+                .AsNoTracking()
                 .Where(notification => notification.ReceiverId == receiverId)
                 .OrderByDescending(notification => notification.CreatedAt)
                 .ThenByDescending(notification => notification.Id)
                 .Skip(MaxNotificationsPerUser)
+                .Select(notification => notification.Id)
                 .ToListAsync(cancellationToken);
 
-            if (overflow.Count == 0) continue;
-            Notifications.RemoveRange(overflow);
-            removedAny = true;
+            if (overflowIds.Count == 0) continue;
+
+            removedCount += await Notifications
+                .Where(notification => overflowIds.Contains(notification.Id))
+                .ExecuteDeleteAsync(cancellationToken);
         }
 
-        return removedAny ? await base.SaveChangesAsync(cancellationToken) : 0;
+        return removedCount;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
