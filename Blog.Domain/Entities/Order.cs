@@ -27,7 +27,8 @@ public enum OrderStatus
     Unpaid = 100,           // → PendingPayment
     AwaitingShipment = 101, // → Confirmed/Packing
     AwaitingCollection = 102, // → Packing
-    InTransit = 103         // → Shipping
+    InTransit = 103,        // → Shipping
+    AwaitingBankVerification = 104 // Buyer reported transfer; waiting for Shop verification
 }
 
 public class Order

@@ -13,6 +13,7 @@ using PayOS;
 using PayOS.Models;
 using PayOS.Models.V2.PaymentRequests;
 using PayOS.Models.Webhooks;
+using System.Data;
 
 namespace Blog.API.Controllers;
 
@@ -29,6 +30,7 @@ public class OrdersController : ControllerBase
     private readonly Blog.Infrastructure.Data.AppDbContext _context;
     private readonly INotificationService _notiService;
     private readonly PayOSClient? _payOS;
+    private readonly ILogger<OrdersController> _logger;
 
     public OrdersController(
         IOrderRepository orderRepository,
@@ -38,6 +40,7 @@ public class OrdersController : ControllerBase
         IShopRepository shopRepository,
         Blog.Infrastructure.Data.AppDbContext context,
         INotificationService notiService,
+        ILogger<OrdersController> logger,
         PayOSClient? payOS = null)
     {
         _orderRepository = orderRepository;
@@ -47,6 +50,7 @@ public class OrdersController : ControllerBase
         _shopRepository = shopRepository;
         _context = context;
         _notiService = notiService;
+        _logger = logger;
         _payOS = payOS;
     }
 
@@ -186,9 +190,10 @@ public class OrdersController : ControllerBase
             await _orderRepository.AddAsync(order);
             createdOrderIds.Add(order.Id);
 
-            // Notification
+            // Only confirmed COD orders are sent to the Shop immediately.
+            // Online/direct-transfer orders remain payment requests until money is verified.
             var shop = await _shopRepository.GetByIdAsync(shopId);
-            if (shop != null)
+            if (shop != null && order.Status == OrderStatus.AwaitingShipment)
             {
                 await _notiService.SendNotificationAsync(shop.UserId, userId, "NewOrder", order.Id, "đã đặt một đơn hàng mới từ shop của bạn.");
             }
@@ -221,8 +226,9 @@ public class OrdersController : ControllerBase
                     OrderCode = orderCode,
                     Amount = totalAmount,
                     Description = "Thanh toán Zynk Shop",
-                    CancelUrl = $"{baseUrl}/index.html",
-                    ReturnUrl = $"{baseUrl}/index.html?payment=success"
+                    CancelUrl = $"{baseUrl}/cart.html?payment=cancelled",
+                    ReturnUrl = $"{baseUrl}/cart.html?payment=return",
+                    ExpiredAt = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds()
                 };
 
                 try
@@ -289,7 +295,9 @@ public class OrdersController : ControllerBase
         if (userId == Guid.Empty) return Unauthorized();
         var orders = await _orderRepository.GetOrdersByBuyerIdAsync(userId);
         
-        var dtos = orders.Select(o => new OrderDto
+        var dtos = orders
+            .Where(o => o.Status != OrderStatus.PaymentExpired)
+            .Select(o => new OrderDto
         {
             Id = o.Id,
             TotalAmount = o.TotalAmount,
@@ -348,7 +356,10 @@ public class OrdersController : ControllerBase
                 if (newStatus != OrderStatus.Cancelled)
                     return BadRequest(new { message = "Người mua chỉ có thể yêu cầu hủy đơn hàng." });
                 
-                if (order.Status != OrderStatus.Unpaid && order.Status != OrderStatus.AwaitingShipment)
+                if (order.Status != OrderStatus.Unpaid &&
+                    order.Status != OrderStatus.PendingPayment &&
+                    order.Status != OrderStatus.AwaitingBankVerification &&
+                    order.Status != OrderStatus.AwaitingShipment)
                     return BadRequest(new { message = "Không thể hủy đơn hàng sau khi đã bắt đầu vận chuyển." });
             }
 
@@ -404,6 +415,9 @@ public class OrdersController : ControllerBase
         return status switch
         {
             OrderStatus.Unpaid => "Chờ thanh toán",
+            OrderStatus.PendingPayment => "Chờ thanh toán",
+            OrderStatus.AwaitingBankVerification => "Đã chuyển tiền - chờ Shop xác nhận",
+            OrderStatus.Paid => "Đã thanh toán - chờ xác nhận",
             OrderStatus.AwaitingShipment => "Chờ vận chuyển",
             OrderStatus.AwaitingCollection => "Chờ lấy hàng",
             OrderStatus.InTransit => "Đang giao",
@@ -482,7 +496,10 @@ public class OrdersController : ControllerBase
         if (order.BuyerId != userId) return Forbid();
         
         // TikTok Shop logic: Can only change address IF not packed yet
-        if (order.Status != OrderStatus.Unpaid && order.Status != OrderStatus.AwaitingShipment)
+        if (order.Status != OrderStatus.Unpaid &&
+            order.Status != OrderStatus.PendingPayment &&
+            order.Status != OrderStatus.AwaitingBankVerification &&
+            order.Status != OrderStatus.AwaitingShipment)
         {
             return BadRequest(new { message = "Không thể thay đổi địa chỉ sau khi đơn hàng đã được chuẩn bị hoặc gửi đi." });
         }
@@ -726,61 +743,280 @@ public class OrdersController : ControllerBase
         if (order.PaymentMethod?.ToUpper() != "BANK_TRANSFER")
             return BadRequest(new { message = "Đơn hàng này không phải thanh toán chuyển khoản." });
 
-        if (order.Status != OrderStatus.Unpaid)
+        if (order.Status != OrderStatus.Unpaid &&
+            order.Status != OrderStatus.PendingPayment &&
+            order.Status != OrderStatus.AwaitingBankVerification)
             return BadRequest(new { message = $"Đơn hàng không ở trạng thái chờ thanh toán (trạng thái hiện tại: {order.Status})." });
 
-        order.Status = OrderStatus.AwaitingShipment;
+        var previousStatus = order.Status;
+        order.Status = OrderStatus.Paid;
+        order.PaidAt = DateTime.UtcNow;
         order.UpdatedAt = DateTime.UtcNow;
+        order.StatusHistory.Add(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            FromStatus = previousStatus,
+            ToStatus = OrderStatus.Paid,
+            ChangedByUserId = userId,
+            Note = "Shop xác nhận đã nhận tiền chuyển khoản trực tiếp."
+        });
         await _orderRepository.UpdateAsync(order);
 
         // Notify the buyer
-        await _notiService.SendNotificationAsync(order.BuyerId, userId, "OrderStatusUpdated", order.Id, "đã xác nhận thanh toán chuyển khoản. Đơn hàng của bạn đang được chuẩn bị.");
+        await _notiService.SendNotificationAsync(order.BuyerId, userId, "PaymentConfirmed", order.Id, "đã xác nhận nhận được tiền. Đơn hàng đang chờ Shop xác nhận xử lý.", allowSelfNotification: true);
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Đã xác nhận thanh toán thành công. Đơn hàng chuyển sang Chờ vận chuyển." });
+        return Ok(new { message = "Đã xác nhận thanh toán thành công. Đơn hàng đang chờ Shop xác nhận." });
+    }
+
+    [HttpPost("{id}/request-bank-verification")]
+    public async Task<IActionResult> RequestBankTransferVerification(Guid id)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var order = await _orderRepository.GetOrderDetailAsync(id);
+        if (order == null) return NotFound(new { message = "Không tìm thấy yêu cầu thanh toán." });
+        if (order.BuyerId != userId) return Forbid();
+        if (!string.Equals(order.PaymentMethod, "BANK_TRANSFER", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Đây không phải giao dịch chuyển khoản trực tiếp." });
+        if (order.Status == OrderStatus.AwaitingBankVerification)
+            return Ok(new
+            {
+                verificationRequested = true,
+                status = order.Status.ToString(),
+                message = "Bạn đã báo chuyển tiền. Shop đang kiểm tra giao dịch."
+            });
+        if (order.Status != OrderStatus.Unpaid && order.Status != OrderStatus.PendingPayment)
+            return Ok(new { alreadyConfirmed = order.PaidAt.HasValue || order.Status == OrderStatus.Paid, message = "Giao dịch đã được xử lý." });
+
+        var shop = order.Items.FirstOrDefault()?.Product?.Shop;
+        if (shop == null) return BadRequest(new { message = "Không tìm thấy Shop nhận thanh toán." });
+
+        var previousStatus = order.Status;
+        order.Status = OrderStatus.AwaitingBankVerification;
+        order.UpdatedAt = DateTime.UtcNow;
+        order.StatusHistory.Add(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            FromStatus = previousStatus,
+            ToStatus = OrderStatus.AwaitingBankVerification,
+            ChangedByUserId = userId,
+            Note = "Người mua báo đã chuyển tiền, chờ Shop xác minh giao dịch."
+        });
+        await _orderRepository.UpdateAsync(order);
+        await _context.SaveChangesAsync();
+        await _notiService.SendNotificationAsync(
+            shop.UserId,
+            userId,
+            "PaymentVerificationRequested",
+            order.Id,
+            "đã báo chuyển khoản thành công. Vui lòng kiểm tra tài khoản và xác nhận giao dịch.",
+            allowSelfNotification: true);
+
+        return Ok(new
+        {
+            verificationRequested = true,
+            status = order.Status.ToString(),
+            message = "Đơn hàng đã chuyển sang trạng thái ‘Đã chuyển tiền – chờ Shop xác nhận’."
+        });
+    }
+
+    [HttpGet("payment-status/{orderCode:long}")]
+    public async Task<IActionResult> GetPaymentStatus(long orderCode)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var orders = await _context.Orders
+            .AsNoTracking()
+            .Where(o => o.BuyerId == userId && o.OrderCode == orderCode)
+            .Select(o => new { o.Id, o.Status, o.PaidAt })
+            .ToListAsync();
+
+        if (orders.Count == 0)
+            return NotFound(new { message = "Không tìm thấy giao dịch thanh toán." });
+
+        var isPaid = orders.All(o => o.PaidAt.HasValue && o.Status != OrderStatus.Unpaid && o.Status != OrderStatus.PendingPayment);
+        return Ok(new
+        {
+            orderCode,
+            isPaid,
+            status = isPaid
+                ? "Paid"
+                : orders.Any(o => o.Status == OrderStatus.AwaitingBankVerification)
+                    ? "AwaitingBankVerification"
+                    : "PendingPayment",
+            orderIds = orders.Select(o => o.Id)
+        });
+    }
+
+    [HttpPost("payment-cancel/{orderCode:long}")]
+    public async Task<IActionResult> CancelPendingPayment(long orderCode)
+    {
+        var userId = User.GetUserId() ?? Guid.Empty;
+        if (userId == Guid.Empty) return Unauthorized();
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        var orders = await _context.Orders
+            .Include(o => o.Items)
+            .Include(o => o.Voucher)
+            .Where(o => o.BuyerId == userId && o.OrderCode == orderCode && o.PaymentMethod.ToUpper() == "PAYOS")
+            .ToListAsync();
+
+        if (orders.Count == 0)
+            return NotFound(new { message = "Không tìm thấy phiên thanh toán." });
+
+        foreach (var order in orders.Where(o => o.Status == OrderStatus.Unpaid || o.Status == OrderStatus.PendingPayment))
+        {
+            var previousStatus = order.Status;
+            order.Status = OrderStatus.PaymentExpired;
+            order.UpdatedAt = DateTime.UtcNow;
+            order.StatusHistory.Add(new OrderStatusHistory
+            {
+                Id = Guid.NewGuid(),
+                OrderId = order.Id,
+                FromStatus = previousStatus,
+                ToStatus = OrderStatus.PaymentExpired,
+                ChangedByUserId = userId,
+                Note = "Người mua hủy phiên thanh toán PayOS."
+            });
+
+            foreach (var item in order.Items)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                if (product == null) continue;
+                product.Stock += item.Quantity;
+                product.SalesCount = Math.Max(0, product.SalesCount - item.Quantity);
+            }
+
+            if (order.Voucher != null && order.Voucher.UsedCount > 0)
+                order.Voucher.UsedCount--;
+        }
+
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return Ok(new { message = "Đã hủy phiên thanh toán. Không có đơn hàng nào được gửi tới Shop." });
     }
 
     [AllowAnonymous]
     [HttpPost("payos-webhook")]
     public async Task<IActionResult> PayOSWebhook([FromBody] Webhook request)
     {
-        if (_payOS == null) return BadRequest();
+        if (_payOS == null)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "PayOS chưa được cấu hình." });
 
         try
         {
-            // Verify webhook signature
             var verifiedData = await _payOS.Webhooks.VerifyAsync(request);
 
             if (verifiedData.Description == "Ma giao dich thu nghiem")
             {
-                // This is a test transaction
+                return Ok(new { success = true });
             }
 
-            // Find orders with this OrderCode
+            // Only a signed, successful PayOS transaction may change order state.
+            if (!request.Success || request.Code != "00" || verifiedData.Code != "00")
+                return Ok(new { success = true });
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             long orderCodeToFind = verifiedData.OrderCode;
             var orders = await _context.Orders
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                        .ThenInclude(p => p.Shop)
                 .Where(o => o.OrderCode == orderCodeToFind)
                 .ToListAsync();
 
-            if (orders.Any())
+            if (orders.Count == 0)
+                return Ok(new { success = true });
+
+            var expectedAmount = (long)orders.Sum(o => o.TotalAmount);
+            if (verifiedData.Amount != expectedAmount)
             {
-                foreach (var order in orders)
+                _logger.LogWarning(
+                    "PayOS amount mismatch for order code {OrderCode}. Expected {ExpectedAmount}, received {ReceivedAmount}",
+                    orderCodeToFind, expectedAmount, verifiedData.Amount);
+                return BadRequest(new { message = "Số tiền thanh toán không khớp." });
+            }
+
+            var paidAt = DateTime.UtcNow;
+            var transactionId = string.IsNullOrWhiteSpace(verifiedData.Reference)
+                ? verifiedData.PaymentLinkId
+                : verifiedData.Reference;
+            var newlyPaidOrders = new List<Order>();
+
+            foreach (var order in orders)
+            {
+                // PayOS can retry the same webhook. PaidAt/transaction ID make this idempotent.
+                if (order.PaidAt.HasValue || order.Status == OrderStatus.Paid)
+                    continue;
+
+                if (order.Status == OrderStatus.Unpaid || order.Status == OrderStatus.PendingPayment)
                 {
-                    if (order.Status == OrderStatus.Unpaid)
+                    var previousStatus = order.Status;
+                    order.Status = OrderStatus.Paid;
+                    order.PaidAt = paidAt;
+                    order.UpdatedAt = paidAt;
+                    order.ProviderTransactionId = transactionId;
+                    order.StatusHistory.Add(new OrderStatusHistory
                     {
-                        order.Status = OrderStatus.AwaitingShipment;
-                        order.UpdatedAt = DateTime.UtcNow;
+                        Id = Guid.NewGuid(),
+                        OrderId = order.Id,
+                        FromStatus = previousStatus,
+                        ToStatus = OrderStatus.Paid,
+                        ChangedByUserId = null,
+                        Note = $"PayOS xác nhận thanh toán. Mã giao dịch: {transactionId}"
+                    });
+                    newlyPaidOrders.Add(order);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            foreach (var order in newlyPaidOrders)
+            {
+                var sellerUserId = order.Items.FirstOrDefault()?.Product?.Shop?.UserId;
+                if (sellerUserId.HasValue)
+                {
+                    if (sellerUserId.Value == order.BuyerId)
+                    {
+                        await _notiService.SendNotificationAsync(
+                            order.BuyerId,
+                            order.BuyerId,
+                            "PaymentConfirmed",
+                            order.Id,
+                            "Thanh toán VietQR thành công. Đơn hàng đang chờ Shop xác nhận.",
+                            allowSelfNotification: true);
+                    }
+                    else
+                    {
+                        await _notiService.SendNotificationAsync(
+                            order.BuyerId,
+                            sellerUserId.Value,
+                            "PaymentConfirmed",
+                            order.Id,
+                            "Thanh toán VietQR thành công. Đơn hàng đang chờ Shop xác nhận.");
+                        await _notiService.SendNotificationAsync(
+                            sellerUserId.Value,
+                            order.BuyerId,
+                            "OrderPaid",
+                            order.Id,
+                            "đã thanh toán đơn hàng qua VietQR. Vui lòng xác nhận và chuẩn bị hàng.");
                     }
                 }
-                await _context.SaveChangesAsync();
             }
 
             return Ok(new { success = true });
         }
         catch (Exception ex)
         {
-            return BadRequest(new { message = ex.Message });
+            _logger.LogWarning(ex, "Rejected invalid PayOS webhook");
+            return BadRequest(new { message = "Webhook PayOS không hợp lệ." });
         }
     }
 }

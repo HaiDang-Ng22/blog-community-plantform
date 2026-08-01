@@ -47,7 +47,7 @@ function renderOrderDetails(order) {
 
     // TikTok Shop logic: allow editing address if Unpaid or AwaitingShipment
     const s = order.status.toLowerCase();
-    const canEdit = (s === 'unpaid' || s === 'awaitingshipment');
+    const canEdit = (s === 'unpaid' || s === 'pendingpayment' || s === 'awaitingbankverification' || s === 'paid' || s === 'awaitingshipment');
     if (canEdit) {
         document.getElementById('btn-show-edit-address').classList.remove('hidden');
         document.getElementById('btn-cancel-order').classList.remove('hidden');
@@ -96,7 +96,7 @@ function renderOrderDetails(order) {
 
     // 5. Handle Payment QR
     const qrCard = document.getElementById('payment-qr-card');
-    if (order.paymentMethod === 'BANK' && order.status === 'Unpaid' && order.bankAccountNumber) {
+    if (order.paymentMethod === 'BANK_TRANSFER' && (order.status === 'Unpaid' || order.status === 'PendingPayment') && order.bankAccountNumber) {
         qrCard.classList.remove('hidden');
         const bankId = order.bankName || 'MB'; // Default to MB if not set
         const accountNo = order.bankAccountNumber;
@@ -125,11 +125,11 @@ function updateStepper(status) {
     const steps = document.querySelectorAll('.step');
     
     // Status mapping to indices
-    const statusOrder = ['unpaid', 'awaitingshipment', 'awaitingcollection', 'intransit', 'completed'];
+    const statusOrder = ['unpaid', 'paid', 'awaitingshipment', 'awaitingcollection', 'intransit', 'completed'];
     let currentIndex = statusOrder.indexOf(s);
     
     // If status is Delivered, we map it to Completed for the stepper as both show "Đã giao hàng"
-    if (s === 'delivered') currentIndex = 4;
+    if (s === 'delivered') currentIndex = 5;
     if (s === 'cancelled' || s === 'returned') {
         // Handle cancelled/returned visually if needed
         document.getElementById('order-stepper').innerHTML = `

@@ -496,14 +496,15 @@ function initOrderTabListeners() {
 }
 
 function getStatusText(s) {
-    const map = { 'Unpaid': 'Chờ nhận', 'AwaitingShipment': 'Chờ giao', 'InTransit': 'Đang giao', 'Delivered': 'Đã giao', 'Completed': 'Hoàn thành', 'Cancelled': 'Đã hủy' };
+    const map = { 'Unpaid': 'Chờ thanh toán', 'PendingPayment': 'Chờ thanh toán', 'AwaitingBankVerification': 'Đã chuyển tiền · Chờ xác nhận', 'Paid': 'Đã thanh toán · Chờ xác nhận', 'AwaitingShipment': 'Chờ giao', 'InTransit': 'Đang giao', 'Delivered': 'Đã giao', 'Completed': 'Hoàn thành', 'Cancelled': 'Đã hủy' };
     return map[s] || s;
 }
 
 function getActionButtons(id, status, paymentMethod) {
     const s = status.toLowerCase();
     let buttons = '';
-    if (s === 'unpaid') buttons += `<button class="btn-premium confirm" onclick="updateOrderStatus('${id}', 'AwaitingShipment')">Xác nhận</button>`;
+    if (s === 'awaitingbankverification') buttons += `<button class="btn-premium confirm" onclick="window.location.href='seller-order-detail.html?id=${id}'">Kiểm tra tiền</button>`;
+    else if (s === 'paid') buttons += `<button class="btn-premium confirm" onclick="updateOrderStatus('${id}', 'AwaitingShipment')">Xác nhận đơn</button>`;
     else if (s === 'awaitingshipment') buttons += `<button class="btn-premium confirm" onclick="updateOrderStatus('${id}', 'InTransit')">Giao hàng</button>`;
     else if (s === 'intransit') buttons += `<button class="btn-premium confirm" onclick="updateOrderStatus('${id}', 'Delivered')">Đã giao</button>`;
     

@@ -783,6 +783,24 @@ body.dark-mode .main-footer {
     border: 1px solid #ffedd5;
 }
 
+.status-badge.pendingpayment {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #ffedd5;
+}
+
+.status-badge.awaitingbankverification {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+}
+
+.status-badge.paid {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
 .status-badge.delivered {
     background: #f0fdf4;
     color: #15803d;

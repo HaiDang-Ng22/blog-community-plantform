@@ -8,7 +8,7 @@ namespace Blog.API.Services;
 
 public interface INotificationService
 {
-    Task SendNotificationAsync(Guid receiverId, Guid actorId, string type, Guid? targetId, string message);
+    Task SendNotificationAsync(Guid receiverId, Guid actorId, string type, Guid? targetId, string message, bool allowSelfNotification = false);
     Task<int> GetUnreadCountAsync(Guid userId);
 }
 
@@ -25,9 +25,9 @@ public class NotificationService : INotificationService
         _pushService = pushService;
     }
 
-    public async Task SendNotificationAsync(Guid receiverId, Guid actorId, string type, Guid? targetId, string message)
+    public async Task SendNotificationAsync(Guid receiverId, Guid actorId, string type, Guid? targetId, string message, bool allowSelfNotification = false)
     {
-        if (receiverId == actorId) return; // Don't notify yourself
+        if (receiverId == actorId && !allowSelfNotification) return; // Avoid self-noise except explicit payment events.
 
         var notification = new Notification
         {

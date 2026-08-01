@@ -1767,7 +1767,13 @@ function showNotificationToast(noti) {
     toast.addEventListener('click', (e) => {
         console.log("[Notification] Toast clicked");
         clearTimeout(timer);
-        window.location.href = 'notifications.html';
+        if (noti.type === 'PaymentVerificationRequested' && noti.targetId) {
+            window.location.href = `seller-order-detail.html?id=${noti.targetId}`;
+        } else if (['PaymentConfirmed', 'OrderPaid', 'OrderStatusUpdated'].includes(noti.type) && noti.targetId) {
+            window.location.href = `order-detail.html?id=${noti.targetId}`;
+        } else {
+            window.location.href = 'notifications.html';
+        }
     });
 
     // Auto remove

@@ -1469,6 +1469,7 @@ QUY TẮC BẢO MẬT QUAN TRỌNG:
         return status switch
         {
             OrderStatus.Unpaid => "Chờ thanh toán",
+            OrderStatus.AwaitingBankVerification => "Đã chuyển tiền - chờ Shop xác nhận",
             OrderStatus.AwaitingShipment => "Chờ vận chuyển",
             OrderStatus.AwaitingCollection => "Chờ lấy hàng",
             OrderStatus.InTransit => "Đang giao hàng",

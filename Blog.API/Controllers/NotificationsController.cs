@@ -72,7 +72,7 @@ public class NotificationsController : ControllerBase
         var unreadQuery = _context.Notifications
             .Where(notification => notification.ReceiverId == userId && !notification.IsRead);
         var socialTypes = new[] { "Like", "Comment", "Reply", "Follow", "LikeStory" };
-        var orderTypes = new[] { "NewOrder", "OrderStatusUpdated", "OrderCancelled" };
+        var orderTypes = new[] { "NewOrder", "OrderStatusUpdated", "OrderCancelled", "PaymentVerificationRequested", "PaymentConfirmed", "OrderPaid" };
 
         return Ok(new
         {

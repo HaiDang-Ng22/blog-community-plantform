@@ -417,6 +417,12 @@ public class SellerController : ControllerBase
         if (shop == null) return Forbid();
 
         var orders = await _orderRepository.SearchOrdersAsync(shop.Id, status, keyword);
+        // An unpaid PayOS record is only a checkout session, not an order sent to the Shop.
+        // Direct bank-transfer requests remain visible so the Shop can verify actual money received.
+        orders = orders
+            .Where(o => !(o.PaymentMethod.ToUpper() == "PAYOS" &&
+                (o.Status == OrderStatus.Unpaid || o.Status == OrderStatus.PendingPayment || o.Status == OrderStatus.PaymentExpired)))
+            .ToList();
         
         var dtos = orders.Select(o => new OrderDto
         {
@@ -469,6 +475,11 @@ public class SellerController : ControllerBase
         if (shop == null) return NotFound();
 
         var orders = await _orderRepository.FindAsync(o => o.Items.Any(i => i.Product.ShopId == shop.Id));
+        orders = orders
+            .Where(o => o.Status != OrderStatus.Unpaid &&
+                o.Status != OrderStatus.PendingPayment &&
+                o.Status != OrderStatus.PaymentExpired)
+            .ToList();
         var products = await _productRepository.GetProductsByShopIdAsync(shop.Id);
 
         var completedOrders = orders.Where(o => o.Status == OrderStatus.Completed || o.Status == OrderStatus.Delivered).ToList();
@@ -477,7 +488,8 @@ public class SellerController : ControllerBase
         {
             TotalRevenue = completedOrders.Sum(o => o.TotalAmount - o.ShippingFee),
             TotalOrders = orders.Count(),
-            PendingOrders = orders.Count(o => o.Status == OrderStatus.AwaitingShipment || o.Status == OrderStatus.Unpaid),
+            PendingOrders = orders.Count(o => o.Status == OrderStatus.AwaitingBankVerification ||
+                o.Status == OrderStatus.Paid || o.Status == OrderStatus.AwaitingShipment),
             TotalProducts = products.Count(),
             RevenueChart = completedOrders
                 .GroupBy(o => o.CreatedAt.Date)

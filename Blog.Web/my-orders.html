@@ -100,6 +100,11 @@
             color: #d97706;
         }
 
+        .status-badge.paid {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
         .status-badge.awaitingshipment {
             background: #e0f2fe;
             color: #0369a1;
@@ -272,7 +277,8 @@
             style="background: #fff; border-radius: 1rem; padding: 4px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
             <div class="tabs" style="border-bottom: none; margin-bottom: 0;">
                 <div class="tab-item active" data-status="ALL" data-i18n="status_all">Tất cả</div>
-                <div class="tab-item" data-status="Unpaid" data-i18n="status_pending">Chờ xác nhận</div>
+                <div class="tab-item" data-status="Unpaid">Chờ thanh toán</div>
+                <div class="tab-item" data-status="Paid">Đã thanh toán</div>
                 <div class="tab-item" data-status="AwaitingShipment" data-i18n="status_awaiting">Chờ giao</div>
                 <div class="tab-item" data-status="InTransit" data-i18n="status_delivering">Đang giao</div>
                 <div class="tab-item" data-status="Delivered" data-i18n="status_delivered">Đã giao hàng</div>

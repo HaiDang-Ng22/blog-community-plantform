@@ -71,11 +71,11 @@ function renderSellerOrder(order) {
 
 function updateSellerStepper(status) {
     const steps = document.querySelectorAll('.step');
-    const statusOrder = ['awaitingshipment', 'awaitingcollection', 'intransit', 'completed'];
+    const statusOrder = ['paid', 'awaitingshipment', 'awaitingcollection', 'intransit', 'completed'];
     let currentIndex = statusOrder.indexOf(status);
 
     if (status === 'unpaid') currentIndex = -1;
-    if (status === 'delivered') currentIndex = 3; // Map delivered to Completed for stepper
+    if (status === 'delivered') currentIndex = 4; // Map delivered to Completed for stepper
     
     if (status === 'cancelled' || status === 'returned') {
         document.getElementById('order-stepper').innerHTML = `
@@ -99,7 +99,18 @@ function renderSellerActions(orderId, status, paymentMethod) {
     const container = document.getElementById('seller-actions-container');
     container.innerHTML = '';
 
-    if (status === 'awaitingshipment') {
+    if (status === 'paid') {
+        container.innerHTML = `
+            <p style="color:#15803d;font-size:.88rem;text-align:center;margin-bottom:.75rem;font-weight:700;">
+                <i class="fa fa-circle-check"></i> Đã nhận thanh toán — chờ Shop xác nhận đơn.
+            </p>
+            <button class="btn-action btn-confirm" onclick="updateStatus('${orderId}', 'AwaitingShipment')">
+                <i class="fa fa-check"></i> Xác nhận đơn hàng
+            </button>
+            <button class="btn-action btn-reject" onclick="rejectOrder('${orderId}')">
+                <i class="fa fa-times"></i> Từ chối đơn hàng
+            </button>`;
+    } else if (status === 'awaitingshipment') {
         container.innerHTML = `
             <button class="btn-action btn-confirm" onclick="openPrintModal('${orderId}')">
                 <i class="fa fa-check"></i> Xác nhận & Chuẩn bị hàng
@@ -120,7 +131,18 @@ function renderSellerActions(orderId, status, paymentMethod) {
         container.innerHTML = `<p style="color: #10b981; font-size: 0.85rem; text-align: center; font-weight: bold;"><i class="fa fa-check-circle"></i> Đơn hàng đã hoàn thành.</p>`;
     } else if (status === 'cancelled') {
         container.innerHTML = `<p style="color: #ef4444; font-size: 0.85rem; text-align: center; font-weight: bold;">Đơn hàng đã bị hủy.</p>`;
-    } else if (status === 'unpaid') {
+    } else if (status === 'awaitingbankverification') {
+        container.innerHTML = `
+            <p style="color:#7c3aed;font-size:.88rem;text-align:center;margin-bottom:.75rem;font-weight:700;">
+                <i class="fa fa-money-bill-transfer"></i> Người mua đã chuyển tiền — vui lòng kiểm tra tài khoản.
+            </p>
+            <button class="btn-action btn-confirm" onclick="confirmBankPayment('${orderId}')" style="background:#10b981;">
+                <i class="fa fa-check-circle"></i> Xác nhận đã nhận tiền
+            </button>
+            <button class="btn-action btn-reject" onclick="rejectOrder('${orderId}')">
+                <i class="fa fa-times"></i> Từ chối đơn hàng
+            </button>`;
+    } else if (status === 'unpaid' || status === 'pendingpayment') {
         const isBankTransfer = paymentMethod && paymentMethod.toUpperCase() === 'BANK_TRANSFER';
         if (isBankTransfer) {
             container.innerHTML = `
@@ -151,7 +173,7 @@ async function updateStatus(orderId, newStatus) {
 }
 
 async function confirmBankPayment(orderId) {
-    if (!confirm('Xác nhận bạn đã nhận được tiền chuyển khoản từ khách hàng? Đơn hàng sẽ được chuyển sang trạng thái Chờ vận chuyển.')) return;
+    if (!confirm('Xác nhận tiền đã thực sự vào tài khoản? Đơn hàng sẽ chuyển sang “Đã thanh toán – chờ xác nhận”.')) return;
     try {
         await window.api.post(`orders/${orderId}/confirm-bank-payment`, {});
         window.common?.showToast('Đã xác nhận thanh toán thành công!', 'success');
@@ -175,7 +197,10 @@ async function rejectOrder(orderId) {
 
 function getStatusLabel(status) {
     const labels = {
-        'unpaid': 'Chờ xác nhận',
+        'unpaid': 'Chờ thanh toán',
+        'pendingpayment': 'Chờ thanh toán',
+        'awaitingbankverification': 'Đã chuyển tiền · Chờ Shop xác nhận',
+        'paid': 'Đã thanh toán · Chờ xác nhận',
         'awaitingshipment': 'Chờ vận chuyển',
         'awaitingcollection': 'Đang chuẩn bị hàng',
         'intransit': 'Đang giao hàng',

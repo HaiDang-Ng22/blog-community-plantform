@@ -103,6 +103,9 @@
             text-transform: uppercase;
         }
         .status-badge.unpaid { background-color: #fef3c7; color: #d97706; }
+        .status-badge.pendingpayment { background-color: #fef3c7; color: #d97706; }
+        .status-badge.awaitingbankverification { background-color: #f5f3ff; color: #6d28d9; }
+        .status-badge.paid { background-color: #dcfce7; color: #15803d; }
         .status-badge.awaitingshipment { background-color: #e0f2fe; color: #0284c7; }
         .status-badge.intransit { background-color: #e0e7ff; color: #4f46e5; }
         .status-badge.delivered { background-color: #ecfdf5; color: #059669; }
@@ -180,7 +183,8 @@
         <div class="order-tabs-wrapper">
             <nav class="order-status-tabs" id="order-status-tabs">
                 <div class="order-tab active" data-status="All">Tất cả</div>
-                <div class="order-tab" data-status="Unpaid">Chờ xác nhận</div>
+                <div class="order-tab" data-status="Unpaid">Chờ thanh toán</div>
+                <div class="order-tab" data-status="Paid">Đã thanh toán</div>
                 <div class="order-tab" data-status="AwaitingShipment">Chờ giao hàng</div>
                 <div class="order-tab" data-status="InTransit">Đang giao</div>
                 <div class="order-tab" data-status="Delivered">Đã giao</div>
@@ -298,7 +302,9 @@
 
         function getStatusText(s) {
             const map = { 
-                'Unpaid': 'Chờ xác nhận', 
+                'Unpaid': 'Chờ thanh toán',
+                'PendingPayment': 'Chờ thanh toán',
+                'Paid': 'Đã thanh toán · Chờ xác nhận',
                 'AwaitingShipment': 'Chờ giao hàng', 
                 'InTransit': 'Đang vận chuyển', 
                 'Delivered': 'Đã giao hàng', 
@@ -312,8 +318,8 @@
             const s = status.toLowerCase();
             let buttons = '';
             
-            if (s === 'unpaid') {
-                buttons += `<button class="confirm" onclick="updateOrderStatus('${id}', 'AwaitingShipment')">Xác nhận</button>`;
+            if (s === 'paid') {
+                buttons += `<button class="confirm" onclick="updateOrderStatus('${id}', 'AwaitingShipment')">Xác nhận đơn</button>`;
             } else if (s === 'awaitingshipment') {
                 buttons += `<button class="confirm" onclick="updateOrderStatus('${id}', 'InTransit')" style="background-color: #3b82f6;">Giao hàng</button>`;
             } else if (s === 'intransit') {

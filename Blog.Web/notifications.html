@@ -376,7 +376,7 @@
                         notificationSummary = {
                             unreadCount: unread.length,
                             unreadSocialCount: unread.filter(notification => ['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'].includes(notification.type)).length,
-                            unreadOrderCount: unread.filter(notification => ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'].includes(notification.type)).length,
+                            unreadOrderCount: unread.filter(notification => ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled', 'PaymentVerificationRequested', 'PaymentConfirmed', 'OrderPaid'].includes(notification.type)).length,
                             unreadSystemCount: unread.filter(notification => ['System', 'SystemAlert', 'GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(notification.type)).length
                         };
                     }
@@ -405,7 +405,7 @@
 
             function renderNotifications() {
                 const socialTypes = ['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'];
-                const orderTypes = ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'];
+                const orderTypes = ['NewOrder', 'OrderStatusUpdated', 'OrderCancelled', 'PaymentVerificationRequested', 'PaymentConfirmed', 'OrderPaid'];
                 const systemTypes = ['System'];
                 
                 const unreadAll = notificationSummary.unreadCount;
@@ -448,11 +448,12 @@
 
                 notiList.style.border = '1px solid var(--input-border)';
                 notiList.innerHTML = filtered.map(n => `
-                    <div class="noti-item ${n.isRead ? '' : 'unread'}" id="noti-item-${n.id}">
-                        <div class="noti-avatar-wrap" onclick="handleNotiClick('${n.id}', '${n.type}', '${n.targetId}', '${n.actorId}')" style="cursor:pointer;">
+                    <div class="noti-item ${n.isRead ? '' : 'unread'}" id="noti-item-${n.id}"
+                         onclick="handleNotiClick('${n.id}', '${n.type}', '${n.targetId}', '${n.actorId}')" style="cursor:pointer;">
+                        <div class="noti-avatar-wrap">
                             <img src="${n.actorAvatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n.actorName)}" class="noti-avatar">
                         </div>
-                        <div class="noti-info" onclick="handleNotiClick('${n.id}', '${n.type}', '${n.targetId}', '${n.actorId}')" style="cursor:pointer;">
+                        <div class="noti-info">
                             <div class="noti-text">
                                 <span class="noti-user">${n.actorName}</span>
                                 <span class="noti-msg"> ${n.message}</span>
@@ -462,7 +463,7 @@
                         <div class="noti-type-icon ${getIconClass(n.type)}">
                             ${getIconForType(n.type)}
                         </div>
-                        <button class="noti-delete-btn" onclick="deleteNotification('${n.id}')" title="Xóa thông báo">
+                        <button class="noti-delete-btn" onclick="event.stopPropagation(); deleteNotification('${n.id}')" title="Xóa thông báo">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -473,7 +474,7 @@
                 if (['Like', 'LikeStory'].includes(type)) return 'icon-like';
                 if (['Comment', 'Reply'].includes(type)) return 'icon-comment';
                 if (type === 'Follow') return 'icon-follow';
-                if (type.includes('Order')) return 'icon-order';
+                if (type.includes('Order') || type.includes('Payment')) return 'icon-order';
                 if (type === 'System') return 'icon-system';
                 return '';
             }
@@ -488,6 +489,9 @@
                     case 'NewOrder': return '<i class="fa-solid fa-bag-shopping"></i>';
                     case 'OrderStatusUpdated': return '<i class="fa-solid fa-truck-fast"></i>';
                     case 'OrderCancelled': return '<i class="fa-solid fa-ban"></i>';
+                    case 'PaymentVerificationRequested': return '<i class="fa-solid fa-money-bill-transfer"></i>';
+                    case 'PaymentConfirmed': return '<i class="fa-solid fa-circle-check"></i>';
+                    case 'OrderPaid': return '<i class="fa-solid fa-credit-card"></i>';
                     case 'System': return '<i class="fa-solid fa-shield-halved"></i>';
                     default: return '<i class="fa-solid fa-bell"></i>';
                 }
@@ -512,7 +516,7 @@
                         noti.isRead = true;
                         notificationSummary.unreadCount = Math.max(0, notificationSummary.unreadCount - 1);
                         if (['Like', 'Comment', 'Reply', 'Follow', 'LikeStory'].includes(noti.type)) notificationSummary.unreadSocialCount = Math.max(0, notificationSummary.unreadSocialCount - 1);
-                        if (['NewOrder', 'OrderStatusUpdated', 'OrderCancelled'].includes(noti.type)) notificationSummary.unreadOrderCount = Math.max(0, notificationSummary.unreadOrderCount - 1);
+                        if (['NewOrder', 'OrderStatusUpdated', 'OrderCancelled', 'PaymentVerificationRequested', 'PaymentConfirmed', 'OrderPaid'].includes(noti.type)) notificationSummary.unreadOrderCount = Math.max(0, notificationSummary.unreadOrderCount - 1);
                         if (['System', 'SystemAlert', 'GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(noti.type)) notificationSummary.unreadSystemCount = Math.max(0, notificationSummary.unreadSystemCount - 1);
                     }
                     const item = document.getElementById('noti-item-' + id);
@@ -524,9 +528,9 @@
                         window.location.href = `index.html?postId=${targetId}`;
                     } else if (type === 'LikeStory' || type === 'Follow') {
                         window.location.href = `profile.html?id=${actorId}`;
-                    } else if (type === 'NewOrder' || type === 'OrderCancelled') {
+                    } else if (type === 'NewOrder' || type === 'OrderCancelled' || type === 'PaymentVerificationRequested') {
                         window.location.href = `seller-order-detail.html?id=${targetId}`;
-                    } else if (type === 'OrderStatusUpdated') {
+                    } else if (type === 'OrderStatusUpdated' || type === 'PaymentConfirmed' || type === 'OrderPaid') {
                         window.location.href = `order-detail.html?id=${targetId}`;
                     } else if (['GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(type)) {
                         window.location.href = `group-detail.html?id=${targetId}`;

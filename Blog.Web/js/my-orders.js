@@ -158,7 +158,10 @@ function renderOrderCard(o) {
 // ========= STATUS LABELS =========
 function getStatusLabel(s) {
     const labels = {
-        'unpaid': 'Chờ xác nhận',
+        'unpaid': 'Chờ thanh toán',
+        'pendingpayment': 'Chờ thanh toán',
+        'awaitingbankverification': 'Đã chuyển tiền · Chờ Shop xác nhận',
+        'paid': 'Đã thanh toán · Chờ Shop xác nhận',
         'awaitingshipment': 'Chờ lấy hàng',
         'awaitingcollection': 'Đang chuẩn bị',
         'intransit': 'Đang giao hàng',

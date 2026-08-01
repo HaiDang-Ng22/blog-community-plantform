@@ -351,12 +351,12 @@
                 <label class="payment-label">
                     <input type="radio" name="payment_method" value="PAYOS">
                     <i class="fa-solid fa-qrcode" style="color: #000; font-size: 1.2rem;"></i>
-                    <span data-i18n="payment_payos">Thanh toán PayOS (Tự động)</span>
+                    <span data-i18n="payment_payos">VietQR tự động qua PayOS</span>
                 </label>
                 <label class="payment-label">
                     <input type="radio" name="payment_method" value="BANK_TRANSFER">
                     <i class="fa-solid fa-building-columns" style="color: #6366f1; font-size: 1.2rem;"></i>
-                    <span style="font-weight: 600;">Chuyển khoản VietQR (Trực tiếp Shop)</span>
+                    <span style="font-weight: 600;" data-i18n="payment_bank_transfer">Chuyển khoản trực tiếp cho Shop (Shop xác nhận)</span>
                 </label>
             </div>
 
@@ -374,18 +374,36 @@
     </main>
     
     <!-- Modal Thanh toán VietQR -->
-    <div id="vietqr-modal" class="modal-overlay hidden">
-        <div class="modal-content glassmorphism" style="max-width: 500px; width: 95%; text-align: center;">
-            <div class="modal-header">
-                <h3>Thanh toán VietQR</h3>
-                <button onclick="closeVietQRModal()"><i class="fa fa-times"></i></button>
+    <div id="vietqr-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="vietqr-title">
+        <div class="vietqr-shell">
+            <div class="vietqr-modal-header">
+                <div class="vietqr-title-wrap">
+                    <span class="vietqr-brand-icon"><i class="fa-solid fa-qrcode"></i></span>
+                    <div>
+                        <span class="vietqr-eyebrow"><i class="fa-solid fa-shield-halved"></i> Thanh toán bảo mật</span>
+                        <h3 id="vietqr-title">Thanh toán VietQR</h3>
+                    </div>
+                </div>
+                <button class="vietqr-close" onclick="closeVietQRModal()" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="modal-body" style="padding: 1.5rem;" id="vietqr-container">
-                <!-- QR codes will be injected here -->
+            <div class="vietqr-intro">
+                <div class="vietqr-step active"><b>1</b><span>Quét mã QR</span></div>
+                <i class="fa-solid fa-chevron-right"></i>
+                <div class="vietqr-step"><b>2</b><span>Chuyển đúng nội dung</span></div>
+                <i class="fa-solid fa-chevron-right"></i>
+                <div class="vietqr-step"><b>3</b><span>Shop xác nhận tiền</span></div>
             </div>
-            <div style="padding: 1rem; border-top: 1px solid #e2e8f0;">
-                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Sau khi chuyển khoản thành công, vui lòng nhấn nút bên dưới.</p>
-                <button class="btn primary-btn" onclick="confirmVietQR()" style="width: 100%;">Tôi đã chuyển khoản xong</button>
+            <div class="vietqr-scroll" id="vietqr-container"></div>
+            <div class="vietqr-modal-footer">
+                <div class="vietqr-live-status" id="vietqr-live-status">
+                    <span class="vietqr-status-pulse"></span>
+                    <div><b>Đang chờ giao dịch</b><small>Hệ thống tự kiểm tra trạng thái mỗi vài giây</small></div>
+                </div>
+                <div class="vietqr-actions">
+                    <button class="vietqr-check-btn" id="vietqr-verify-btn" onclick="confirmVietQR()"><i class="fa-solid fa-paper-plane"></i> Tôi đã chuyển khoản · Gửi xác minh</button>
+                    <button class="vietqr-orders-btn" onclick="window.location.href='my-orders.html'"><i class="fa-solid fa-receipt"></i> Xem yêu cầu thanh toán</button>
+                </div>
+                <p class="vietqr-note"><i class="fa-solid fa-circle-info"></i> Chỉ khi tiền được xác nhận thật, đơn hàng mới chuyển sang “Đã thanh toán – chờ Shop xác nhận”. Yêu cầu chưa thanh toán sẽ tự hết hạn sau 24 giờ.</p>
             </div>
         </div>
     </div>
@@ -587,6 +605,95 @@
 
             try { if (typeof fetchProvinces === 'function') await fetchProvinces(); } catch(e) {}
             try { if (typeof loadSavedAddresses === 'function') await loadSavedAddresses(); } catch(e) {}
+            await handlePayOSReturn();
+        }
+
+        function showPaymentResult(type, title, message) {
+            let modal = document.getElementById('payment-result-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'payment-result-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content glassmorphism payment-result-card" style="max-width:460px;width:92%;text-align:center;padding:2rem;border-radius:24px;">
+                        <span class="payment-result-badge">ZYNK SECURE PAYMENT</span>
+                        <div id="payment-result-icon" style="width:72px;height:72px;margin:0 auto 1rem;border-radius:22px;display:grid;place-items:center;font-size:2rem;"></div>
+                        <h3 id="payment-result-title" style="font-size:1.35rem;margin-bottom:.55rem;color:#172033;"></h3>
+                        <p id="payment-result-message" style="color:#64748b;line-height:1.6;margin-bottom:1.4rem;"></p>
+                        <button class="btn primary-btn" onclick="window.location.href='my-orders.html'" style="width:100%;">Xem đơn hàng</button>
+                    </div>`;
+                document.body.appendChild(modal);
+            }
+
+            const icon = modal.querySelector('#payment-result-icon');
+            modal.querySelector('.payment-result-card')?.classList.toggle('is-success', type === 'success');
+            const colors = type === 'success'
+                ? ['#dcfce7', '#16a34a', 'fa-circle-check']
+                : type === 'error'
+                    ? ['#fee2e2', '#dc2626', 'fa-circle-xmark']
+                    : ['#eef2ff', '#6366f1', 'fa-spinner fa-spin'];
+            icon.style.background = colors[0];
+            icon.style.color = colors[1];
+            icon.innerHTML = `<i class="fa-solid ${colors[2]}"></i>`;
+            modal.querySelector('#payment-result-title').textContent = title;
+            modal.querySelector('#payment-result-message').textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        async function handlePayOSReturn() {
+            const params = new URLSearchParams(window.location.search);
+            const paymentReturn = params.get('payment');
+            if (!paymentReturn) return;
+
+            const orderCode = params.get('orderCode');
+            const providerStatus = (params.get('status') || '').toUpperCase();
+            const isCancelled = paymentReturn === 'cancelled' || params.get('cancel') === 'true' || providerStatus === 'CANCELLED';
+
+            if (isCancelled) {
+                if (orderCode && /^\d+$/.test(orderCode)) {
+                    try { await window.api.post(`orders/payment-cancel/${encodeURIComponent(orderCode)}`, {}); } catch (_) {}
+                }
+                sessionStorage.removeItem('zynk_pending_payos_cart');
+                showPaymentResult('error', 'Thanh toán chưa hoàn tất', 'Giao dịch đã bị hủy. Không có đơn hàng nào được gửi tới Shop và sản phẩm vẫn còn trong giỏ.');
+                return;
+            }
+
+            if (!orderCode || !/^\d+$/.test(orderCode)) {
+                showPaymentResult('error', 'Không thể kiểm tra giao dịch', 'Thiếu mã thanh toán. Vui lòng mở mục Đơn hàng để kiểm tra trạng thái.');
+                return;
+            }
+
+            showPaymentResult('pending', 'Đang xác minh thanh toán', 'Hệ thống đang chờ xác nhận giao dịch thật từ PayOS...');
+
+            for (let attempt = 0; attempt < 30; attempt++) {
+                try {
+                    const result = await window.api.get(`orders/payment-status/${encodeURIComponent(orderCode)}`);
+                    if (result.isPaid) {
+                        finalizePendingPayOSCart();
+                        showPaymentResult('success', 'Chúc mừng! Đơn hàng đã được đặt', 'Thanh toán thành công và đã được xác nhận. Đơn hàng đang chờ Shop xác nhận để chuẩn bị hàng.');
+                        if (window.common?.showToast) window.common.showToast('Thanh toán thành công — đơn hàng đã được đặt!', 'success');
+                        return;
+                    }
+                } catch (error) {
+                    if (error?.status === 401 || error?.status === 404) break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+
+            showPaymentResult('pending', 'Thanh toán đang được xử lý', 'Chưa nhận được xác nhận từ PayOS. Bạn có thể xem lại trạng thái trong mục Đơn hàng sau ít phút.');
+        }
+
+        function finalizePendingPayOSCart() {
+            try {
+                const pending = JSON.parse(sessionStorage.getItem('zynk_pending_payos_cart') || '{}');
+                const indices = Array.isArray(pending.indices) ? pending.indices : [];
+                if (indices.length > 0) {
+                    const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+                    localStorage.setItem('zynk_cart', JSON.stringify(cart.filter((_, index) => !indices.includes(index))));
+                    renderCart();
+                }
+            } catch (_) {}
+            sessionStorage.removeItem('zynk_pending_payos_cart');
         }
 
         if (document.readyState === 'loading') {
@@ -1253,10 +1360,8 @@
                         // Handle PayOS Redirect
                         if (response.checkoutUrl) {
                             if (window.common?.showToast) window.common.showToast('Đang chuyển hướng đến trang thanh toán...', 'info');
-                            
-                            // Clear cart items that were bought
-                            const newCart = cart.filter((_, idx) => !indicesToRemove.includes(idx));
-                            localStorage.setItem('zynk_cart', JSON.stringify(newCart));
+                            // Keep items in the cart until the server confirms real payment.
+                            sessionStorage.setItem('zynk_pending_payos_cart', JSON.stringify({ indices: indicesToRemove }));
                             
                             setTimeout(() => {
                                 window.location.href = response.checkoutUrl;
@@ -1267,10 +1372,8 @@
                         // Handle Bank Transfer (VietQR)
                         if (response.paymentDetails && response.paymentDetails.length > 0) {
                             renderVietQRModal(response.paymentDetails, response.orderIds);
-                            
-                            // Clear cart items that were bought
-                            const newCart = cart.filter((_, idx) => !indicesToRemove.includes(idx));
-                            localStorage.setItem('zynk_cart', JSON.stringify(newCart));
+                            // Direct-transfer items stay in the cart until the Shop verifies real money.
+                            sessionStorage.setItem('zynk_pending_bank_cart', JSON.stringify({ indices: indicesToRemove }));
                             return;
                         }
 
@@ -1298,53 +1401,131 @@
             }
         }
         let _currentPendingOrderIds = [];
+        let _vietQrStatusTimer = null;
+
         function renderVietQRModal(details, orderIds) {
             _currentPendingOrderIds = orderIds;
             const container = document.getElementById('vietqr-container');
-            container.innerHTML = details.map(d => `
-                <div style="margin-bottom: 2rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 1.5rem;">
-                    <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Shop: ${d.shopName}</h4>
-                    <p style="font-size: 0.9rem; margin-bottom: 1rem;">Số tiền: <strong style="color: #2563eb;">${formatCurrency(d.amount)}</strong></p>
-                    
-                    <div style="background: white; padding: 1rem; border-radius: 12px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                        <img src="https://img.vietqr.io/image/${d.bankName}-${d.accountNumber}-compact.png?amount=${d.amount}&addInfo=${encodeURIComponent(d.description)}&accountName=${encodeURIComponent(d.accountName)}" 
-                             style="width: 100%; max-width: 280px; display: block;" 
-                             alt="VietQR for ${d.shopName}">
+            container.innerHTML = details.map(d => {
+                const shopName = _escapeHtmlCart(d.shopName || 'Zynk Shop');
+                const bankName = _escapeHtmlCart(d.bankName || 'Ngân hàng');
+                const accountNumber = _escapeHtmlCart(d.accountNumber || 'Chưa cấu hình');
+                const accountName = _escapeHtmlCart(d.accountName || 'Chưa cấu hình');
+                const description = _escapeHtmlCart(d.description || '');
+                const qrUrl = `https://img.vietqr.io/image/${encodeURIComponent(d.bankName || '')}-${encodeURIComponent(d.accountNumber || '')}-compact2.png?amount=${encodeURIComponent(d.amount)}&addInfo=${encodeURIComponent(d.description || '')}&accountName=${encodeURIComponent(d.accountName || '')}`;
+                return `
+                <article class="vietqr-payment-card">
+                    <div class="vietqr-shop-row">
+                        <div class="vietqr-shop"><span class="vietqr-shop-logo"><i class="fa-solid fa-store"></i></span><div><small>Thanh toán cho Shop</small><b>${shopName}</b></div></div>
+                        <div class="vietqr-amount"><small>Số tiền cần chuyển</small><strong>${formatCurrency(d.amount)}</strong></div>
                     </div>
-                    
-                    <div style="margin-top: 1rem; font-size: 0.85rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; text-align: left;">
-                        <div><strong>Ngân hàng:</strong> ${d.bankName}</div>
-                        <div><strong>STK:</strong> ${d.accountNumber}</div>
-                        <div><strong>Chủ TK:</strong> ${d.accountName}</div>
-                        <div><strong>Nội dung:</strong> <span style="color: #ef4444; font-weight: 700;">${d.description}</span></div>
+                    <div class="vietqr-content-grid">
+                        <div class="vietqr-qr-frame"><img src="${qrUrl}" alt="Mã VietQR thanh toán cho ${shopName}"></div>
+                        <div class="vietqr-bank-details">
+                            <div class="vietqr-detail-row"><div><span>Ngân hàng</span><b>${bankName}</b></div></div>
+                            <div class="vietqr-detail-row"><div><span>Số tài khoản</span><b>${accountNumber}</b></div><button class="vietqr-copy" data-copy="${accountNumber}" onclick="copyPaymentValue(this.dataset.copy, 'số tài khoản')" aria-label="Sao chép số tài khoản"><i class="fa-regular fa-copy"></i></button></div>
+                            <div class="vietqr-detail-row"><div><span>Chủ tài khoản</span><b>${accountName}</b></div></div>
+                            <div class="vietqr-detail-row emphasis"><div><span>Nội dung chuyển khoản</span><b>${description}</b></div><button class="vietqr-copy" data-copy="${description}" onclick="copyPaymentValue(this.dataset.copy, 'nội dung chuyển khoản')" aria-label="Sao chép nội dung"><i class="fa-regular fa-copy"></i></button></div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                </article>`;
+            }).join('');
             
             document.getElementById('vietqr-modal').classList.remove('hidden');
+            startVietQRStatusPolling();
         }
 
         function closeVietQRModal() {
             document.getElementById('vietqr-modal').classList.add('hidden');
+            if (_vietQrStatusTimer) clearInterval(_vietQrStatusTimer);
+            _vietQrStatusTimer = null;
+        }
+
+        async function copyPaymentValue(value, label) {
+            try {
+                await navigator.clipboard.writeText(value);
+                window.common?.showToast(`Đã sao chép ${label}.`, 'success');
+            } catch (_) {
+                window.common?.showToast(`Không thể sao chép ${label}.`, 'error');
+            }
+        }
+
+        function startVietQRStatusPolling() {
+            if (_vietQrStatusTimer) clearInterval(_vietQrStatusTimer);
+            _vietQrStatusTimer = setInterval(() => checkDirectVietQRStatus(false), 4000);
+        }
+
+        async function checkDirectVietQRStatus(showPendingMessage = false) {
+            if (_currentPendingOrderIds.length === 0) return false;
+            const statusBox = document.getElementById('vietqr-live-status');
+            try {
+                const orders = await Promise.all(_currentPendingOrderIds.map(id => window.api.get(`orders/${id}`)));
+                const paidStatuses = new Set(['paid', 'awaitingshipment', 'awaitingcollection', 'intransit', 'delivered', 'completed']);
+                const allPaid = orders.length > 0 && orders.every(order => paidStatuses.has(String(order.status || '').toLowerCase()));
+
+                if (allPaid) {
+                    finalizePendingBankCart();
+                    if (_vietQrStatusTimer) clearInterval(_vietQrStatusTimer);
+                    _vietQrStatusTimer = null;
+                    statusBox?.classList.add('success');
+                    if (statusBox) statusBox.innerHTML = '<span class="vietqr-status-pulse"></span><div><b>Giao dịch đã được xác nhận</b><small>Đơn hàng đã được đặt thành công</small></div>';
+                    setTimeout(() => {
+                        closeVietQRModal();
+                        showPaymentResult('success', 'Chúc mừng! Đặt hàng thành công', 'Thanh toán đã được xác nhận. Đơn hàng của bạn đang chờ Shop xác nhận và chuẩn bị hàng.');
+                        window.common?.showToast('Thanh toán thành công — đơn hàng đã được đặt!', 'success');
+                    }, 650);
+                    return true;
+                }
+
+                if (showPendingMessage) {
+                    statusBox?.classList.remove('success');
+                    if (statusBox) statusBox.innerHTML = '<span class="vietqr-status-pulse"></span><div><b>Chưa nhận được xác nhận</b><small>Vui lòng kiểm tra số tiền và nội dung chuyển khoản</small></div>';
+                    window.common?.showToast('Chưa xác nhận được giao dịch. Hệ thống sẽ tiếp tục kiểm tra.', 'info');
+                }
+            } catch (_) {
+                if (showPendingMessage) window.common?.showToast('Chưa thể kiểm tra trạng thái. Vui lòng thử lại.', 'error');
+            }
+            return false;
+        }
+
+        function finalizePendingBankCart() {
+            try {
+                const pending = JSON.parse(sessionStorage.getItem('zynk_pending_bank_cart') || '{}');
+                const indices = Array.isArray(pending.indices) ? pending.indices : [];
+                if (indices.length > 0) {
+                    const cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
+                    localStorage.setItem('zynk_cart', JSON.stringify(cart.filter((_, index) => !indices.includes(index))));
+                    renderCart();
+                }
+            } catch (_) {}
+            sessionStorage.removeItem('zynk_pending_bank_cart');
         }
 
         async function confirmVietQR() {
-            if (window.common?.showToast) window.common.showToast('Đang xác nhận thanh toán...', 'info');
-            
+            const button = document.getElementById('vietqr-verify-btn');
+            const originalHtml = button?.innerHTML;
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi yêu cầu...';
+            }
+
             try {
-                // For VietQR, we simulate the automated check by letting user confirm
-                // In a real production app, this would be handled by a bank monitoring service
-                for (const id of _currentPendingOrderIds) {
-                    await window.api.patch(`orders/${id}/status`, { status: 'AwaitingShipment' });
+                await Promise.all(_currentPendingOrderIds.map(id => window.api.post(`orders/${id}/request-bank-verification`, {})));
+                const confirmed = await checkDirectVietQRStatus(false);
+                if (!confirmed) {
+                    const statusBox = document.getElementById('vietqr-live-status');
+                    statusBox?.classList.remove('success');
+                    if (statusBox) statusBox.innerHTML = '<span class="vietqr-status-pulse"></span><div><b>Đã gửi yêu cầu tới Shop</b><small>Shop đang kiểm tra giao dịch trong tài khoản ngân hàng</small></div>';
+                    window.common?.showToast('Đã thông báo cho Shop kiểm tra giao dịch.', 'success');
+                    startVietQRStatusPolling();
                 }
-                
-                if (window.common?.showToast) window.common.showToast('Thanh toán thành công! Đơn hàng đã được chuyển sang Chờ giao hàng.', 'success');
-                setTimeout(() => {
-                    window.location.href = 'my-orders.html';
-                }, 1500);
-            } catch (e) {
-                console.error('Error confirming VietQR', e);
-                window.location.href = 'my-orders.html';
+            } catch (error) {
+                window.common?.showToast(error?.message || 'Không thể gửi yêu cầu xác minh.', 'error');
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                }
             }
         }
 
