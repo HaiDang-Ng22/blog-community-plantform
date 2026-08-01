@@ -211,30 +211,55 @@
             color: #b91c1c;
         }
     </style>
+    <link rel="stylesheet" href="css/cart-v2.css?v=1.0">
     <link rel="stylesheet" href="/css/preferences.css?v=1.1">
     <script src="/js/preferences.js?v=1.1"></script>
 </head>
-<body class="home-page" data-i18n-title="cart_title">
-    <header class="main-header">
+<body class="home-page cart-page" data-i18n-title="cart_title">
+    <header class="main-header cart-header-bar">
         <nav class="nav-container container-wide">
             <div class="logo">
                 <a href="index.html">
                     <div class="zynk-logo-clean logo-header"></div>
+                    <span class="cart-brand-copy"><strong>Zynk</strong><small>Secure checkout</small></span>
                 </a>
             </div>
+            <a href="marketplace.html" class="cart-continue-link"><i class="fa-solid fa-arrow-left"></i> Tiếp tục mua sắm</a>
+            <div class="cart-secure-label"><i class="fa-solid fa-shield-halved"></i><span><b>Thanh toán an toàn</b><small>Dữ liệu của bạn được bảo vệ</small></span></div>
             <div class="nav-actions" id="nav-actions"></div>
         </nav>
     </header>
 
-    <main class="container-wide cart-layout">
+    <main class="container-wide cart-page-main">
+        <section class="cart-hero" aria-labelledby="cart-page-title">
+            <div class="cart-hero-copy">
+                <span class="cart-eyebrow"><i class="fa-solid fa-bag-shopping"></i> ZYNK CHECKOUT</span>
+                <h1 id="cart-page-title">Giỏ hàng của bạn</h1>
+                <p>Kiểm tra sản phẩm, chọn ưu đãi và hoàn tất đơn hàng chỉ trong vài bước.</p>
+            </div>
+            <ol class="checkout-steps" aria-label="Tiến trình thanh toán">
+                <li class="active"><span><i class="fa-solid fa-cart-shopping"></i></span><div><b>Giỏ hàng</b><small>Kiểm tra sản phẩm</small></div></li>
+                <li><span><i class="fa-solid fa-location-dot"></i></span><div><b>Giao hàng</b><small>Thông tin nhận hàng</small></div></li>
+                <li><span><i class="fa-solid fa-credit-card"></i></span><div><b>Thanh toán</b><small>Hoàn tất đơn hàng</small></div></li>
+            </ol>
+        </section>
+
+        <div class="cart-layout">
         <div class="cart-card">
-            <h2 style="margin-bottom: 1.5rem; display:flex; align-items:center; gap:12px; font-weight:800; color:#1e293b;"><i class="fa-solid fa-cart-shopping" style="color:#6366f1;"></i> <span data-i18n="cart_title">Giỏ hàng của bạn</span></h2>
+            <div class="cart-card-heading">
+                <div><span class="cart-card-icon"><i class="fa-solid fa-bag-shopping"></i></span><div><h2 data-i18n="cart_title">Sản phẩm đã chọn</h2><p>Kiểm tra lại trước khi thanh toán</p></div></div>
+                <span class="cart-item-count" id="cart-item-count">0 sản phẩm</span>
+            </div>
             <div id="cart-list">
                 <!-- Data from JS -->
             </div>
         </div>
 
         <div class="checkout-box" id="checkout-section" style="display:none;">
+            <div class="checkout-box-heading">
+                <span><i class="fa-solid fa-receipt"></i></span>
+                <div><h2>Tóm tắt đơn hàng</h2><p>Chi tiết thanh toán của bạn</p></div>
+            </div>
             <div class="cart-total" style="font-size: 1.1rem; color: #64748b; margin-bottom: 0.5rem; border: none;">
                 <span data-i18n="subtotal">Tạm tính:</span>
                 <span id="subtotal-price">0đ</span>
@@ -252,7 +277,7 @@
             <div class="voucher-section-container" style="margin-top: 1.5rem; background: #f8fafc; border: 1px solid #cbd5e1; padding: 1.25rem; border-radius: 1rem;">
                 <label style="font-weight: 700; color: #1e293b; font-size: 0.95rem; margin-bottom: 0.5rem; display: block;"><i class="fa-solid fa-ticket-simple" style="color: #3b82f6; margin-right: 5px;"></i> Mã giảm giá</label>
                 <div class="voucher-input-group" style="display: flex; gap: 8px;">
-                    <input type="text" id="voucher-code" placeholder="Mã giảm giá (nếu có)" style="flex: 1; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; outline: none; background: white;">
+                    <input type="text" id="voucher-code" placeholder="Nhập mã giảm giá" aria-label="Nhập mã giảm giá" style="flex: 1; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; outline: none; background: white;">
                     <button class="btn" style="background: #3b82f6; color: #fff; padding: 0 1.5rem; border-radius: 0.75rem; font-weight: 600;" onclick="applyVoucher()">Áp dụng</button>
                 </div>
                 <div id="voucher-msg" style="font-size: 0.85rem; margin-top: 5px; font-weight: 600;"></div>
@@ -268,7 +293,7 @@
 
             <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
             
-            <h3 style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="checkout-section-title" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <span data-i18n="shipping_info_title">Thông tin nhận hàng</span>
                 <span id="btn-show-saved" class="btn-toggle-saved hidden" onclick="openAddressModal()"><i class="fa-solid fa-address-book"></i> <span data-i18n="saved_addresses">Chọn từ địa chỉ đã lưu</span></span>
             </h3>
@@ -315,7 +340,7 @@
                 <textarea id="ship-note" rows="2" placeholder="Giao giờ hành chính, gọi trước khi giao..." data-i18n-placeholder="order_note_placeholder"></textarea>
             </div>
 
-            <h3 style="margin: 2rem 0 1rem;" data-i18n="payment_method_title">Phương thức thanh toán</h3>
+            <h3 class="checkout-section-title" style="margin: 2rem 0 1rem;" data-i18n="payment_method_title">Phương thức thanh toán</h3>
             <div class="payment-methods">
                 <label class="payment-label">
                     <input type="radio" name="payment_method" value="COD" checked>
@@ -335,10 +360,17 @@
                 </label>
             </div>
 
-            <button class="btn primary-btn" style="width: 100%; margin-top: 2rem; padding: 1rem; font-size: 1.1rem; border-radius: 1rem;" onclick="checkout()" data-i18n="order_now">
-                Đặt hàng ngay
+            <button class="btn primary-btn cart-checkout-btn" style="width: 100%; margin-top: 2rem; padding: 1rem; font-size: 1.1rem; border-radius: 1rem;" onclick="checkout()" data-i18n="order_now">
+                <span>Đặt hàng ngay</span><i class="fa-solid fa-arrow-right"></i>
             </button>
         </div>
+        </div>
+
+        <section class="cart-assurance" aria-label="Cam kết mua sắm">
+            <div><span><i class="fa-solid fa-shield-halved"></i></span><p><b>Bảo mật thanh toán</b><small>Thông tin luôn được mã hóa</small></p></div>
+            <div><span><i class="fa-solid fa-truck-fast"></i></span><p><b>Giao hàng tin cậy</b><small>Theo dõi trạng thái đơn hàng</small></p></div>
+            <div><span><i class="fa-solid fa-headset"></i></span><p><b>Hỗ trợ tận tâm</b><small>Đồng hành khi bạn cần</small></p></div>
+        </section>
     </main>
     
     <!-- Modal Thanh toán VietQR -->
@@ -436,20 +468,28 @@
                 cart = cart.filter(item => item && typeof item === 'object');
 
                 if (cart.length === 0) {
+                    document.querySelector('.cart-layout')?.classList.add('is-empty');
+                    const countEl = document.getElementById('cart-item-count');
+                    if (countEl) countEl.textContent = '0 sản phẩm';
                     list.innerHTML = `
-                        <div style="text-align:center; padding: 3rem 1rem; color: #64748b;">
-                            <i class="fa-solid fa-cart-shopping" style="font-size:3.5rem; display:block; margin-bottom:1rem; opacity:0.35; color:#6366f1;"></i>
-                            <h3 style="font-weight:700; color:#334155; margin-bottom:0.5rem;">Giỏ hàng của bạn đang trống</h3>
-                            <p style="font-size:0.9rem; color:#94a3b8; margin-bottom:1.5rem;">Hãy khám phá các sản phẩm chất lượng trên Zynk Marketplace!</p>
-                            <a href="marketplace.html" class="btn primary-btn" style="display:inline-block; padding:0.75rem 1.75rem; border-radius:12px; font-weight:700; text-decoration:none;">
-                                <i class="fa-solid fa-store"></i> Khám phá sản phẩm ngay
+                        <div class="cart-empty-state">
+                            <div class="cart-empty-visual"><span class="empty-orbit"></span><i class="fa-solid fa-basket-shopping"></i><em>0</em></div>
+                            <span class="cart-empty-badge">Giỏ hàng đang chờ bạn</span>
+                            <h3>Chưa có sản phẩm nào</h3>
+                            <p>Khám phá Marketplace và lưu lại những sản phẩm phù hợp với bạn.</p>
+                            <a href="marketplace.html" class="btn primary-btn cart-empty-action">
+                                Khám phá sản phẩm <i class="fa-solid fa-arrow-right"></i>
                             </a>
+                            <div class="cart-empty-hints"><span><i class="fa-solid fa-ticket"></i> Nhiều voucher</span><span><i class="fa-solid fa-truck-fast"></i> Giao hàng nhanh</span></div>
                         </div>`;
                     if (checkoutSection) checkoutSection.style.display = 'none';
                     return;
                 }
 
                 if (checkoutSection) checkoutSection.style.display = 'block';
+                document.querySelector('.cart-layout')?.classList.remove('is-empty');
+                const countEl = document.getElementById('cart-item-count');
+                if (countEl) countEl.textContent = `${cart.length} sản phẩm`;
 
                 // Group by shopName
                 const grouped = {};

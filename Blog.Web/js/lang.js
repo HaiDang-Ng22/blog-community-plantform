@@ -441,6 +441,8 @@ window.zynkTranslations = {
         specific_address_label: "Địa chỉ cụ thể",
 
         // Cart
+        full_name: "Họ và tên",
+        full_name_placeholder: "Ví dụ: Nguyễn Văn A",
         total_label: "Tổng cộng:",
         shipping_info_title: "Thông tin nhận hàng",
         saved_addresses: "Địa chỉ đã lưu",
@@ -927,6 +929,8 @@ window.zynkTranslations = {
         specific_address_label: "Specific Address",
 
         // Cart
+        full_name: "Full name",
+        full_name_placeholder: "Example: Nguyen Van A",
         total_label: "Total:",
         shipping_info_title: "Shipping Information",
         saved_addresses: "Saved Addresses",
@@ -1268,6 +1272,8 @@ window.zynkTranslations = {
         specific_address_label: "詳細な住所",
 
         // Cart
+        full_name: "氏名",
+        full_name_placeholder: "例：グエン・ヴァン・アイン",
         total_label: "合計:",
         shipping_info_title: "配送情報",
         saved_addresses: "保存された住所",
