@@ -8,7 +8,6 @@ Zynk là một hệ sinh thái mạng xã hội tích hợp thương mại đi�
 ![UI](https://img.shields.io/badge/UI-Glassmorphism-purple)
 ![Stories](https://img.shields.io/badge/Stories-Instagram%20Style-e1306c)
 
-🌍 **[Xem Live Demo tại đây](https://zynk-9al4.onrender.com/)**
 
 ---
 
