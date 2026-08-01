@@ -10,17 +10,19 @@
     <link rel="stylesheet" href="css/common.css?v=1.7">
     <link rel="stylesheet" href="css/marketplace.css?v=2.3">
     <link rel="stylesheet" href="css/marketplace-premium.css?v=3.0">
+    <link rel="stylesheet" href="css/marketplace-v2.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/preferences.css?v=1.1">
     <script src="/js/preferences.js?v=1.1"></script>
 </head>
 
-<body class="home-page" data-i18n-title="marketplace">
+<body class="home-page marketplace-page" data-i18n-title="marketplace">
     <header class="main-header market-header-bar">
         <nav class="nav-container container-wide market-nav">
             <div class="logo">
                 <a href="index.html">
                     <div class="zynk-logo-clean logo-header"></div>
+                    <span class="market-brand-copy"><strong>Zynk</strong><small>Marketplace</small></span>
                 </a>
             </div>
             <!-- Search Bar -->
@@ -44,7 +46,41 @@
         </nav>
     </header>
 
-    <main class="container-wide" style="overflow-x:hidden; padding-bottom: 2rem;">
+    <main class="container-wide marketplace-main">
+        <section class="market-hero" aria-labelledby="market-hero-title">
+            <div class="market-hero-copy">
+                <span class="market-hero-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Mua sắm theo cách của bạn</span>
+                <h1 id="market-hero-title">Khám phá món đồ<br><span>đúng gu của bạn.</span></h1>
+                <p>Sản phẩm từ cộng đồng sáng tạo, cửa hàng uy tín và những ưu đãi được chọn lọc mỗi ngày.</p>
+                <div class="market-hero-actions">
+                    <a href="#market-title" class="market-primary-action">Khám phá ngay <i class="fa-solid fa-arrow-right"></i></a>
+                    <button type="button" class="market-ai-action" onclick="toggleAiShopChat()"><i class="fa-solid fa-wand-magic-sparkles"></i> Hỏi Zynk AI</button>
+                </div>
+                <div class="market-trust-row" aria-label="Quyền lợi mua sắm">
+                    <span><i class="fa-solid fa-shield-halved"></i><b>Thanh toán</b> an toàn</span>
+                    <span><i class="fa-solid fa-rotate-left"></i><b>Đổi trả</b> dễ dàng</span>
+                    <span><i class="fa-solid fa-headset"></i><b>Hỗ trợ</b> tận tâm</span>
+                </div>
+            </div>
+            <div class="market-hero-visual" aria-hidden="true">
+                <div class="market-orbit orbit-one"></div>
+                <div class="market-orbit orbit-two"></div>
+                <div class="market-3d-core"><span>Z</span></div>
+                <div class="market-float-card float-card-top"><i class="fa-solid fa-bag-shopping"></i><span><b>12K+</b>Sản phẩm</span></div>
+                <div class="market-float-card float-card-bottom"><i class="fa-solid fa-truck-fast"></i><span><b>Giao nhanh</b>Toàn quốc</span></div>
+                <span class="market-spark spark-one"></span>
+                <span class="market-spark spark-two"></span>
+            </div>
+        </section>
+
+        <nav class="market-shortcuts" aria-label="Truy cập nhanh Marketplace">
+            <a href="#promo-events-zone"><span class="shortcut-icon shortcut-sale"><i class="fa-solid fa-bolt"></i></span><span><b>Săn ưu đãi</b><small>Deal mới mỗi ngày</small></span></a>
+            <a href="#market-categories"><span class="shortcut-icon shortcut-category"><i class="fa-solid fa-border-all"></i></span><span><b>Danh mục</b><small>Tìm đúng sản phẩm</small></span></a>
+            <a href="vouchers.html"><span class="shortcut-icon shortcut-voucher"><i class="fa-solid fa-ticket"></i></span><span><b>Kho voucher</b><small>Lưu mã giảm giá</small></span></a>
+            <a href="auctions.html"><span class="shortcut-icon shortcut-auction"><i class="fa-solid fa-gavel"></i></span><span><b>Đấu giá</b><small>Phiên đang diễn ra</small></span></a>
+            <a href="cart.html"><span class="shortcut-icon shortcut-cart"><i class="fa-solid fa-cart-shopping"></i></span><span><b>Giỏ hàng</b><small>Kiểm tra đơn hàng</small></span></a>
+        </nav>
+
         <div class="marketplace-layout">
             <!-- Sidebar Removed as per request -->
 
@@ -154,7 +190,7 @@
                 </section>
 
                 <!-- Premium Categories (Integrated with Sub-categories) -->
-                <div class="premium-categories-container">
+                <div class="premium-categories-container" id="market-categories">
                     <div class="premium-categories">
                         <h3 data-i18n="categories_title">Khám phá danh mục</h3>
                         <div class="category-circle-grid" id="category-circle-grid">
@@ -172,14 +208,22 @@
                     </div>
                 </div>
 
+                <section class="market-products-section" aria-labelledby="market-title">
                 <div class="market-header">
-                    <h2 id="market-title" data-i18n="market_suggestions">Gợi ý hôm nay</h2>
+                    <div class="market-heading-group">
+                        <span class="market-section-kicker">KHÁM PHÁ SẢN PHẨM</span>
+                        <div class="market-title-line">
+                            <h2 id="market-title" data-i18n="market_suggestions">Gợi ý hôm nay</h2>
+                            <span id="market-result-count" class="market-result-count">Đang cập nhật</span>
+                        </div>
+                    </div>
                     <div class="market-filters">
                         <div class="price-range-filter">
-                            <input type="number" id="min-price" placeholder="Tối thiểu" class="glass-input-small">
+                            <i class="fa-solid fa-coins price-filter-icon"></i>
+                            <input type="number" id="min-price" placeholder="Từ" class="glass-input-small" aria-label="Giá tối thiểu">
                             <span>-</span>
-                            <input type="number" id="max-price" placeholder="Tối đa" class="glass-input-small">
-                            <button class="btn-filter-price" onclick="applyFilters()"><i
+                            <input type="number" id="max-price" placeholder="Đến" class="glass-input-small" aria-label="Giá tối đa">
+                            <button class="btn-filter-price" onclick="applyFilters()" aria-label="Áp dụng khoảng giá"><i
                                     class="fa fa-filter"></i></button>
                         </div>
 
@@ -207,8 +251,8 @@
                     <div class="skeleton" style="height: 300px;"></div>
                     <div class="skeleton" style="height: 300px;"></div>
                 </div>
+                </section>
             </div>
-        </div>
     </main>
 
     <div class="cart-float" id="cart-float" onclick="location.href='cart.html'">

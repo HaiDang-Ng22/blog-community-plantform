@@ -344,7 +344,15 @@ async function loadProducts() {
         renderProducts(currentProducts);
     } catch (e) {
         console.error('Failed to load products', e);
-        if (grid) grid.innerHTML = '<div class="no-posts">Lỗi khi tải sản phẩm. Vui lòng thử lại.</div>';
+        const countEl = document.getElementById('market-result-count');
+        if (countEl) countEl.textContent = 'Chưa thể cập nhật';
+        if (grid) grid.innerHTML = `
+            <div class="no-posts" style="grid-column:1/-1">
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+                <strong>Chưa thể tải sản phẩm</strong>
+                <p>Vui lòng kiểm tra kết nối và thử lại.</p>
+                <button type="button" class="market-retry-btn" onclick="loadProducts()"><i class="fa-solid fa-rotate-right"></i> Thử lại</button>
+            </div>`;
     }
 }
 
@@ -352,6 +360,8 @@ function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
     grid.innerHTML = '';
+    const countEl = document.getElementById('market-result-count');
+    if (countEl) countEl.textContent = `${products?.length || 0} sản phẩm`;
 
     if (!products || products.length === 0) {
         grid.innerHTML = '<div class="no-posts" style="grid-column: 1/-1;"><i class="fa fa-box-open"></i><p>Chưa có sản phẩm nào trong mục này.</p></div>';
