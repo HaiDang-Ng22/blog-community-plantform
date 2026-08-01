@@ -31,12 +31,18 @@
         .explorer-head{display:flex;align-items:center;justify-content:space-between;padding:0 8px 13px}
         .explorer-head strong{font-size:.76rem;letter-spacing:.08em;text-transform:uppercase}
         .tree-list{display:flex;flex-direction:column;gap:3px;max-height:510px;overflow:auto}
-        .tree-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:9px;width:100%;min-height:42px;padding:6px 9px;border:0;border-radius:11px;color:var(--admin-text-secondary);background:transparent;text-align:left;cursor:pointer;transition:.2s}
+        .tree-item{display:grid;grid-template-columns:16px 28px minmax(0,1fr) auto;align-items:center;gap:7px;width:100%;min-height:42px;padding:6px 9px;border:0;border-radius:11px;color:var(--admin-text-secondary);background:transparent;text-align:left;cursor:pointer;transition:.2s}
         .tree-item:hover{color:var(--admin-text-main);background:var(--admin-surface)}
         .tree-item.active{color:var(--admin-primary);background:var(--admin-primary-soft);box-shadow:inset 3px 0 var(--admin-primary)}
+        .tree-item.root-item{grid-template-columns:28px minmax(0,1fr) auto}
+        .tree-toggle{display:grid;place-items:center;width:16px;height:16px;border:0;border-radius:4px;color:var(--admin-text-muted);background:transparent;cursor:pointer;transition:transform .18s,color .18s;flex-shrink:0;font-size:.6rem;padding:0}
+        .tree-toggle:hover{color:var(--admin-primary);background:var(--admin-primary-soft)}
+        .tree-toggle.expanded{transform:rotate(90deg);color:var(--admin-primary)}
+        .tree-toggle-placeholder{width:16px;flex-shrink:0}
         .tree-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;color:var(--admin-primary);background:var(--admin-surface);font-size:.78rem}
         .tree-name{overflow:hidden;font-size:.81rem;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
         .tree-count{min-width:23px;padding:3px 6px;border-radius:999px;color:var(--admin-text-muted);background:var(--admin-surface);font-size:.63rem;font-weight:800;text-align:center}
+        .tree-children-hidden{display:none}
         .category-content{min-width:0;padding:22px}
         .content-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--admin-border)}
         .breadcrumbs{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:8px;color:var(--admin-text-muted);font-size:.74rem}
@@ -106,6 +112,27 @@
                     <button id="add-child-button" class="btn btn-secondary" type="button" onclick="openCategoryModal(null,selectedCategoryId)"><i class="fa-solid fa-folder-plus"></i> Thêm mục con</button>
                 </div>
                 <div id="category-results" class="category-results"><div class="category-grid"><div class="category-skeleton"></div><div class="category-skeleton"></div><div class="category-skeleton"></div></div></div>
+                <!-- AI Preview Overlay: shown when AI suggests categories -->
+                <div id="ai-preview-overlay" class="ai-preview-overlay hidden" role="region" aria-label="Xem trước danh mục AI gợi ý">
+                    <div class="ai-preview-toolbar">
+                        <div class="ai-preview-toolbar-left">
+                            <span class="ai-preview-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Gợi ý</span>
+                            <span id="ai-preview-count-label">0 mục được chọn</span>
+                        </div>
+                        <div class="ai-preview-toolbar-right">
+                            <button type="button" id="ai-preview-select-all" class="btn-ai-preview-ghost">
+                                <i class="fa-solid fa-check-double"></i> Chọn tất cả
+                            </button>
+                            <button type="button" id="ai-preview-dismiss" class="btn-ai-preview-ghost danger">
+                                <i class="fa-solid fa-xmark"></i> Bỏ qua
+                            </button>
+                            <button type="button" id="ai-preview-confirm" class="btn-ai-preview-confirm" disabled>
+                                <i class="fa-solid fa-circle-check"></i> Xác nhận tạo
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ai-preview-cards" class="ai-preview-cards"></div>
+                </div>
             </div>
         </section>
     </main>
@@ -116,6 +143,8 @@
         let selectedCategoryId=null;
         let categoryView=localStorage.getItem('admin_category_view')==='list'?'list':'grid';
         let categoryQuery='',categoryFilter='all',categorySort='name';
+        // Track which parent nodes are expanded (collapsed by default)
+        let expandedNodes=new Set(JSON.parse(localStorage.getItem('admin_cat_expanded')||'[]'));
 
         const byId=id=>allCategories.find(category=>category.id===id);
         const escapeHtml=value=>window.adminEscapeHtml(value);
@@ -167,11 +196,19 @@
                 allCategories=Array.isArray(data)?data:[];
                 if(selectedCategoryId&&!byId(selectedCategoryId))selectedCategoryId=null;
                 renderAll();
+                refreshAiChips();
                 if(showNotice)window.adminToast.success('Đã cập nhật dữ liệu danh mục.');
             }catch(error){
                 document.getElementById('category-results').innerHTML=renderEmpty('Không thể tải danh mục','Hãy kiểm tra kết nối máy chủ rồi thử lại.','fa-cloud-arrow-down');
                 window.adminToast.error(error.message||'Không thể tải danh mục.');
             }finally{setLoading(false);}
+        }
+        function refreshAiChips(){
+            if(typeof window.updateAdminAiCategoryChips!=='function')return;
+            const candidates=selectedCategoryId
+                ?getChildren(selectedCategoryId)
+                :getChildren(null);
+            window.updateAdminAiCategoryChips(candidates);
         }
 
         function renderAll(){renderStats();renderTree();renderResults();updateViewButtons();}
@@ -185,23 +222,47 @@
             document.getElementById('stat-depth').textContent=depth?`${depth} cấp`:'0';
             document.getElementById('tree-total').textContent=allCategories.length;
         }
-        function buildTreeRows(parentId=null,depth=0,rows=[]){
-            getChildren(parentId).sort((a,b)=>a.name.localeCompare(b.name,'vi')).forEach(category=>{
-                rows.push({category,depth});
-                buildTreeRows(category.id,depth+1,rows);
-            });
-            return rows;
+        function saveExpandedNodes(){
+            localStorage.setItem('admin_cat_expanded',JSON.stringify([...expandedNodes]));
+        }
+        function toggleNode(id,event){
+            event.stopPropagation();
+            if(expandedNodes.has(id))expandedNodes.delete(id);
+            else expandedNodes.add(id);
+            saveExpandedNodes();
+            renderTree();
+        }
+        function buildTreeHtml(parentId=null,depth=0){
+            const children=getChildren(parentId).sort((a,b)=>a.name.localeCompare(b.name,'vi'));
+            if(!children.length)return '';
+            return children.map(category=>{
+                const hasChildren=childCount(category)>0;
+                const isExpanded=expandedNodes.has(category.id);
+                const indent=Math.min(9+depth*14,51);
+                const toggleBtn=hasChildren
+                    ?`<button class="tree-toggle ${isExpanded?'expanded':''}" type="button" data-toggle-node="${category.id}" title="${isExpanded?'Thu gọn':'Mở rộng'}"><i class="fa-solid fa-chevron-right"></i></button>`
+                    :`<span class="tree-toggle-placeholder"></span>`;
+                const childrenHtml=hasChildren
+                    ?`<div class="tree-children ${isExpanded?'':'tree-children-hidden'}">${buildTreeHtml(category.id,depth+1)}</div>`
+                    :'';
+                return `
+                    <div class="tree-node">
+                        <button class="tree-item ${selectedCategoryId===category.id?'active':''}" type="button" data-select-category="${category.id}" style="padding-left:${indent}px">
+                            ${toggleBtn}
+                            <span class="tree-icon"><i class="fa-solid ${safeIcon(category.icon)}"></i></span>
+                            <span class="tree-name">${escapeHtml(category.name)}</span>
+                            <span class="tree-count">${childCount(category)}</span>
+                        </button>
+                        ${childrenHtml}
+                    </div>`;
+            }).join('');
         }
         function renderTree(){
-            const rows=buildTreeRows();
             document.getElementById('category-tree').innerHTML=`
-                <button class="tree-item ${selectedCategoryId?'':'active'}" type="button" data-select-category="">
+                <button class="tree-item root-item ${selectedCategoryId?'':'active'}" type="button" data-select-category="">
                     <span class="tree-icon"><i class="fa-solid fa-house"></i></span><span class="tree-name">Tất cả danh mục</span><span class="tree-count">${getChildren(null).length}</span>
                 </button>
-                ${rows.map(({category,depth})=>`
-                    <button class="tree-item ${selectedCategoryId===category.id?'active':''}" type="button" data-select-category="${category.id}" style="padding-left:${Math.min(9+depth*14,51)}px">
-                        <span class="tree-icon"><i class="fa-solid ${safeIcon(category.icon)}"></i></span><span class="tree-name">${escapeHtml(category.name)}</span><span class="tree-count">${childCount(category)}</span>
-                    </button>`).join('')}
+                ${buildTreeHtml()}
             `;
         }
         function visibleCategories(){
@@ -268,7 +329,16 @@
             return `<div class="category-empty"><div><div class="empty-icon"><i class="fa-solid ${icon}"></i></div><strong style="display:block;color:var(--admin-text-main);margin-bottom:6px">${escapeHtml(title)}</strong><span style="font-size:.81rem">${escapeHtml(copy)}</span></div></div>`;
         }
         function selectCategory(id){
-            selectedCategoryId=id||null;categoryQuery='';document.getElementById('category-search').value='';renderTree();renderResults();
+            selectedCategoryId=id||null;
+            // Auto-expand ancestors of the selected category
+            if(selectedCategoryId){
+                const cat=byId(selectedCategoryId);
+                if(cat)getAncestors(cat).forEach(anc=>expandedNodes.add(anc.id));
+                expandedNodes.add(selectedCategoryId);
+                saveExpandedNodes();
+            }
+            categoryQuery='';document.getElementById('category-search').value='';renderTree();renderResults();
+            refreshAiChips();
         }
         function updateViewButtons(){
             document.getElementById('view-grid').classList.toggle('active',categoryView==='grid');
@@ -342,13 +412,107 @@
                 window.adminModal.close();await loadCategories();window.adminToast.success(response.message||'Đã xóa danh mục.');
             }catch(error){window.adminToast.error(error.message||'Không thể xóa danh mục.');button.disabled=false;button.innerHTML='<i class="fa-solid fa-trash"></i> Thử lại';}
         }
+        // ── AI Category Preview ─────────────────────────────────────────────────
+        let _aiPreviewAction = null; // current action being previewed
+
+        function showAiCategoryPreview(action) {
+            _aiPreviewAction = action;
+            const params = action.parameters || {};
+            const cats = Array.isArray(params.categories) ? params.categories
+                : Array.isArray(params.items) ? params.items : [];
+            if (!cats.length) return;
+
+            const parentLabel = params.parentName || '';
+
+            // Auto-navigate to the target parent category on page so preview displays directly in context!
+            if (parentLabel && Array.isArray(allCategories) && allCategories.length) {
+                const targetParent = allCategories.find(c =>
+                    normalizeText(c.name) === normalizeText(parentLabel) ||
+                    normalizeText(c.name).includes(normalizeText(parentLabel)) ||
+                    normalizeText(parentLabel).includes(normalizeText(c.name))
+                );
+                if (targetParent && selectedCategoryId !== targetParent.id) {
+                    selectCategory(targetParent.id);
+                }
+            }
+
+            const overlay = document.getElementById('ai-preview-overlay');
+            const cardsEl = document.getElementById('ai-preview-cards');
+
+            cardsEl.innerHTML = cats.map((cat, index) => `
+                <label class="ai-preview-card" for="ai-preview-cb-${index}">
+                    <input type="checkbox" id="ai-preview-cb-${index}" class="ai-preview-checkbox" value="${index}" checked>
+                    <span class="ai-preview-card-icon"><i class="fa-solid ${safeIcon(cat.icon || 'fa-tag')}"></i></span>
+                    <div class="ai-preview-card-body">
+                        <strong>${escapeHtml(cat.name || '—')}</strong>
+                        <span>${parentLabel ? '→ Tạo mới vào danh mục: ' + escapeHtml(parentLabel) : 'Danh mục gốc'}</span>
+                    </div>
+                    <span class="ai-preview-badge-new"><i class="fa-solid fa-wand-magic-sparkles"></i> Đề xuất mới</span>
+                    <span class="ai-preview-card-check"><i class="fa-solid fa-circle-check"></i></span>
+                </label>
+            `).join('');
+
+            overlay.classList.remove('hidden');
+            // scroll overlay into view
+            setTimeout(() => overlay.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+            updateAiPreviewCount();
+
+            // wire up checkboxes
+            cardsEl.querySelectorAll('.ai-preview-checkbox').forEach(cb =>
+                cb.addEventListener('change', updateAiPreviewCount)
+            );
+        }
+
+        function updateAiPreviewCount() {
+            const checkboxes = document.querySelectorAll('.ai-preview-checkbox');
+            const selected = [...checkboxes].filter(cb => cb.checked).length;
+            document.getElementById('ai-preview-count-label').textContent = `${selected} mục được chọn`;
+            document.getElementById('ai-preview-confirm').disabled = selected === 0;
+            // update select-all button text
+            const allChecked = selected === checkboxes.length;
+            document.getElementById('ai-preview-select-all').innerHTML = allChecked
+                ? '<i class="fa-solid fa-square-minus"></i> Bỏ chọn tất cả'
+                : '<i class="fa-solid fa-check-double"></i> Chọn tất cả';
+        }
+
+        function hideAiCategoryPreview() {
+            document.getElementById('ai-preview-overlay').classList.add('hidden');
+            document.getElementById('ai-preview-cards').innerHTML = '';
+            _aiPreviewAction = null;
+        }
+
+        async function confirmAiCategorySelection() {
+            if (!_aiPreviewAction) return;
+            const checkboxes = document.querySelectorAll('.ai-preview-checkbox');
+            const checkedIndexes = new Set([...checkboxes].filter(cb => cb.checked).map(cb => Number(cb.value)));
+            const action = _aiPreviewAction;
+            const params = action.parameters || {};
+            const allCats = Array.isArray(params.categories) ? params.categories
+                : Array.isArray(params.items) ? params.items : [];
+            const selectedCats = allCats.filter((_, i) => checkedIndexes.has(i));
+
+            hideAiCategoryPreview();
+
+            // Build a modified action with only selected items
+            const filteredAction = {
+                ...action,
+                parameters: { ...params, categories: selectedCats, items: selectedCats }
+            };
+            // Execute via Admin AI (will fire adminAiActionCompleted → loadCategories)
+            if (typeof window.executeAdminAiActionPublic === 'function') {
+                window.executeAdminAiActionPublic(filteredAction);
+            }
+        }
+
         document.addEventListener('click',event=>{
+            const toggle=event.target.closest('[data-toggle-node]');if(toggle){toggleNode(toggle.dataset.toggleNode,event);return;}
             const select=event.target.closest('[data-select-category]');if(select)selectCategory(select.dataset.selectCategory);
             const add=event.target.closest('[data-add-child]');if(add)openCategoryModal(null,add.dataset.addChild);
             const edit=event.target.closest('[data-edit-category]');if(edit)openCategoryModal(edit.dataset.editCategory);
             const remove=event.target.closest('[data-delete-category]');if(remove)openDeleteModal(remove.dataset.deleteCategory);
         });
         document.addEventListener('keydown',event=>{
+            if(event.key==='Escape'){if(!document.getElementById('ai-preview-overlay').classList.contains('hidden')){hideAiCategoryPreview();return;}}
             if(event.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){event.preventDefault();document.getElementById('category-search').focus();}
         });
         document.addEventListener('DOMContentLoaded',()=>{
@@ -357,6 +521,30 @@
             document.getElementById('category-sort').addEventListener('change',event=>{categorySort=event.target.value;renderResults();});
             document.getElementById('view-grid').addEventListener('click',()=>setCategoryView('grid'));
             document.getElementById('view-list').addEventListener('click',()=>setCategoryView('list'));
+
+            // AI Preview toolbar buttons
+            document.getElementById('ai-preview-select-all').addEventListener('click',()=>{
+                const checkboxes=document.querySelectorAll('.ai-preview-checkbox');
+                const allChecked=[...checkboxes].every(cb=>cb.checked);
+                checkboxes.forEach(cb=>{cb.checked=!allChecked;});
+                updateAiPreviewCount();
+            });
+            document.getElementById('ai-preview-dismiss').addEventListener('click', hideAiCategoryPreview);
+            document.getElementById('ai-preview-confirm').addEventListener('click', confirmAiCategorySelection);
+
+            // Listen for AI preview trigger (from admin-common.js)
+            window.addEventListener('adminAiCategoryPreview', event => {
+                const action = event.detail?.action;
+                if (action) showAiCategoryPreview(action);
+            });
+
+            // Listen for Admin AI actions and refresh data instantly (no page reload)
+            window.addEventListener('adminAiActionCompleted', async event => {
+                const action = event.detail?.action;
+                if (action?.type && action.type.toLowerCase().includes('categor')) {
+                    await loadCategories();
+                }
+            });
             loadCategories();
         });
     </script>

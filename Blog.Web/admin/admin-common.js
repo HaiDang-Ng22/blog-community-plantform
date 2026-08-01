@@ -225,6 +225,7 @@
                     <span><strong>Admin AI Copilot</strong><small>Trợ lý vận hành an toàn</small></span>
                 </div>
                 <div class="admin-ai-header-actions">
+                    <button type="button" class="admin-ai-icon-button" data-ai-minimize title="Thu gọn AI Copilot" aria-label="Thu gọn AI Copilot"><i class="fa-solid fa-window-minimize"></i></button>
                     <button type="button" class="admin-ai-icon-button" data-ai-clear title="Xóa cuộc trò chuyện" aria-label="Xóa cuộc trò chuyện"><i class="fa-solid fa-broom"></i></button>
                     <button type="button" class="admin-ai-icon-button" data-ai-close aria-label="Đóng Admin AI"><i class="fa-solid fa-xmark"></i></button>
                 </div>
@@ -247,6 +248,7 @@
                 <button type="button" data-ai-prompt="Liệt kê các danh mục chưa có sản phẩm"><i class="fa-solid fa-folder-open"></i> Danh mục trống</button>
                 <button type="button" data-ai-prompt="Quét các bài viết gần đây theo danh sách từ khóa cấm"><i class="fa-solid fa-shield"></i> Quét nội dung</button>
             </div>
+            <div id="admin-ai-cat-chips-bar" class="admin-ai-cat-chips-bar hidden"></div>
             <form class="admin-ai-composer">
                 <textarea id="admin-ai-input" rows="1" maxlength="1200" placeholder="Ví dụ: Tạo danh mục “Phụ kiện máy ảnh” trong “Máy ảnh”..."></textarea>
                 <button type="submit" class="admin-ai-send" aria-label="Gửi yêu cầu"><i class="fa-solid fa-arrow-up"></i></button>
@@ -256,6 +258,7 @@
         document.body.appendChild(panel);
 
         panel.querySelector('[data-ai-close]').addEventListener('click', () => toggleAdminAi(false));
+        panel.querySelector('[data-ai-minimize]')?.addEventListener('click', () => toggleAdminAiMinimize());
         panel.querySelector('[data-ai-clear]').addEventListener('click', clearAdminAi);
         panel.querySelector('.admin-ai-composer').addEventListener('submit', event => {
             event.preventDefault();
@@ -280,14 +283,57 @@
         return panel;
     }
 
+    window.updateAdminAiCategoryChips = function (categories) {
+        createAdminAiPanel();
+        const bar = document.getElementById('admin-ai-cat-chips-bar');
+        if (!bar) return;
+        if (!Array.isArray(categories) || !categories.length) {
+            bar.classList.add('hidden');
+            return;
+        }
+        const items = categories.slice(0, 10);
+        bar.innerHTML = `
+            <span><i class="fa-solid fa-wand-magic-sparkles"></i> Gợi ý mục con cho:</span>
+            ${items.map(cat => `
+                <button type="button" class="admin-ai-cat-chip" data-ai-cat-suggest="${escapeHtml(cat.name)}">
+                    <i class="fa-solid ${safeAiIcon(cat.icon)}"></i> ${escapeHtml(cat.name)}
+                </button>`).join('')}
+        `;
+        bar.classList.remove('hidden');
+        bar.querySelectorAll('[data-ai-cat-suggest]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const name = btn.dataset.aiCatSuggest;
+                const input = document.getElementById('admin-ai-input');
+                if (input) {
+                    input.value = `Gợi ý các danh mục con cho "${name}"`;
+                    submitAdminAi();
+                }
+            });
+        });
+    };
+
     function toggleAdminAi(force) {
         const panel = createAdminAiPanel();
         const shouldOpen = typeof force === 'boolean' ? force : !document.body.classList.contains('admin-ai-open');
         document.body.classList.toggle('admin-ai-open', shouldOpen);
         panel.setAttribute('aria-hidden', String(!shouldOpen));
         document.querySelector('.admin-ai-topbar-trigger')?.classList.toggle('active', shouldOpen);
-        if (shouldOpen) setTimeout(() => document.getElementById('admin-ai-input')?.focus(), 180);
+        if (!shouldOpen) toggleAdminAiMinimize(false);
+        if (shouldOpen && !panel.classList.contains('minimized')) setTimeout(() => document.getElementById('admin-ai-input')?.focus(), 180);
     }
+
+    function toggleAdminAiMinimize(force) {
+        const panel = createAdminAiPanel();
+        const isMinimized = typeof force === 'boolean' ? force : !panel.classList.contains('minimized');
+        panel.classList.toggle('minimized', isMinimized);
+        document.body.classList.toggle('admin-ai-minimized', isMinimized);
+        const minIcon = panel.querySelector('[data-ai-minimize] i');
+        if (minIcon) {
+            minIcon.className = `fa-solid ${isMinimized ? 'fa-expand' : 'fa-window-minimize'}`;
+        }
+    }
+
+    window.toggleAdminAiMinimize = toggleAdminAiMinimize;
 
     function clearAdminAi() {
         adminAiActions.clear();
@@ -388,7 +434,7 @@
         if (actionButton) {
             const action = adminAiActions.get(actionButton.dataset.aiAction);
             if (!action) return;
-            if (action.requiresConfirmation) confirmAdminAiAction(action);
+            if (action.requiresConfirmation) confirmAdminAiAction(action, actionButton);
             else executeAdminAiAction(action, false, actionButton);
         }
         const navButton = event.target.closest('[data-ai-navigate]');
@@ -397,36 +443,119 @@
         if (refreshButton) window.location.reload();
     }
 
-    function confirmAdminAiAction(action) {
-        const destructive = action.risk === 'destructive';
-        window.adminModal.open(`
-            <div class="admin-ai-confirm">
-                <div class="admin-ai-confirm-icon ${destructive ? 'danger' : ''}"><i class="fa-solid ${destructive ? 'fa-triangle-exclamation' : 'fa-shield-check'}"></i></div>
-                <span class="page-eyebrow">ADMIN CONFIRMATION</span>
-                <h2>${escapeHtml(action.title)}</h2>
-                <p>${escapeHtml(action.description)}</p>
-                <div class="admin-ai-confirm-note">
-                    <i class="fa-solid fa-lock"></i>
-                    ${destructive ? 'Tác vụ này có thể xóa dữ liệu và không thể hoàn tác.' : 'AI chỉ thực hiện đúng tác vụ được hiển thị ở trên.'}
+    function safeAiIcon(icon) {
+        const v = String(icon || '').trim();
+        return /^fa-[a-z0-9-]+$/i.test(v) ? v : 'fa-tag';
+    }
+
+    function renderActionPreview(action) {
+        const params = action.parameters || {};
+        const isCategoryAction = action.type && action.type.toLowerCase().includes('categor');
+        if (isCategoryAction) {
+            const cats = Array.isArray(params.categories) ? params.categories
+                : Array.isArray(params.items) ? params.items : [];
+            if (cats.length) {
+                return `
+                    <div class="admin-ai-preview-header">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>${cats.length} danh mục sẽ được tạo</span>
+                    </div>
+                    <div class="admin-ai-preview-list">
+                        ${cats.map(cat => `
+                            <div class="admin-ai-preview-item">
+                                <span class="admin-ai-preview-item-icon">
+                                    <i class="fa-solid ${safeAiIcon(cat.icon)}"></i>
+                                </span>
+                                <div class="admin-ai-preview-item-info">
+                                    <strong>${escapeHtml(cat.name || '—')}</strong>
+                                    <span>${cat.parentName ? '→ ' + escapeHtml(cat.parentName) : 'Danh mục gốc'}</span>
+                                </div>
+                                <span class="admin-ai-preview-badge">Mới</span>
+                            </div>`).join('')}
+                    </div>`;
+            }
+        }
+        // Fallback: generic key-value preview
+        const entries = Object.entries(params).filter(([, v]) => v != null && String(v).length < 120);
+        if (!entries.length) return '';
+        return `<div class="admin-ai-preview-kv">${entries.slice(0, 6).map(([k, v]) =>
+            `<div><span>${escapeHtml(prettyAdminAiKey(k))}</span><strong>${escapeHtml(String(v))}</strong></div>`).join('')}</div>`;
+    }
+
+    function confirmAdminAiAction(action, triggerButton) {
+        const isCatAction = action.type && action.type.toLowerCase().includes('categor');
+        const params = action.parameters || {};
+        const hasCats = Array.isArray(params.categories) && params.categories.length
+            || Array.isArray(params.items) && params.items.length;
+
+        // For category-add actions: dispatch to page overlay instead of inline confirm
+        if (isCatAction && hasCats && (action.type.includes('add') || action.type.includes('create') || action.type.includes('suggest'))) {
+            if (triggerButton) triggerButton.disabled = true;
+            const count = (params.categories || params.items || []).length;
+            const parentLabel = params.parentName ? `" cho "${params.parentName}"` : '';
+            appendAdminAiMessage('assistant', `
+                <div class="admin-ai-success" style="margin-bottom:6px">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <strong>Mình đã chuẩn bị ${count} mục con${parentLabel}.</strong>
                 </div>
-                <div class="admin-ai-confirm-actions">
-                    <button type="button" class="btn btn-secondary" data-ai-cancel-confirm>Hủy</button>
-                    <button type="button" class="btn ${destructive ? 'btn-danger' : 'btn-primary'}" data-ai-confirm-action>
+                <p style="font-size:0.8rem;color:var(--admin-text-muted);margin:0">
+                    <i class="fa-solid fa-arrow-down"></i>
+                    Hãy xem, chọn và xác nhận trực tiếp trong khu vực danh mục bên dưới ↓
+                </p>`);
+            // Dispatch event for categories.html overlay
+            window.dispatchEvent(new CustomEvent('adminAiCategoryPreview', { detail: { action } }));
+            // Auto-minimize AI chat drawer so page workspace is 100% visible
+            setTimeout(() => toggleAdminAiMinimize(true), 250);
+            return;
+        }
+
+        // Default: inline confirm in chat
+        const destructive = action.risk === 'destructive';
+        const previewHtml = renderActionPreview(action);
+        const confirmUid = `aic-${Date.now()}`;
+
+        // Disable the trigger so admin can't double-click
+        if (triggerButton) triggerButton.disabled = true;
+
+        const wrapper = appendAdminAiMessage('assistant', `
+            <div class="admin-ai-inline-confirm" id="${confirmUid}">
+                <div class="admin-ai-inline-confirm-head">
+                    <span class="admin-ai-inline-confirm-icon ${destructive ? 'danger' : ''}">
+                        <i class="fa-solid ${destructive ? 'fa-triangle-exclamation' : 'fa-shield-check'}"></i>
+                    </span>
+                    <div>
+                        <strong>${escapeHtml(action.title)}</strong>
+                        <p>${escapeHtml(action.description)}</p>
+                    </div>
+                </div>
+                ${previewHtml}
+                <div class="admin-ai-inline-confirm-note">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>${destructive ? 'Tác vụ này có thể xóa dữ liệu và không thể hoàn tác.' : 'AI chỉ thực hiện đúng các tác vụ được hiển thị ở trên.'}</span>
+                </div>
+                <div class="admin-ai-inline-confirm-actions">
+                    <button type="button" class="admin-ai-inline-cancel">
+                        <i class="fa-solid fa-xmark"></i> Hủy
+                    </button>
+                    <button type="button" class="admin-ai-inline-execute ${destructive ? 'danger' : ''}">
                         <i class="fa-solid fa-check"></i> Xác nhận thực hiện
                     </button>
                 </div>
-            </div>`, { className: 'admin-ai-confirm-modal' });
-        document.querySelector('[data-ai-cancel-confirm]')?.addEventListener('click', () => window.adminModal.close());
-        document.querySelector('[data-ai-confirm-action]')?.addEventListener('click', event => {
-            window.adminModal.close();
-            toggleAdminAi(true);
-            executeAdminAiAction(action, true, event.currentTarget);
+            </div>`);
+
+        wrapper?.querySelector('.admin-ai-inline-cancel')?.addEventListener('click', () => {
+            wrapper.remove();
+            if (triggerButton) triggerButton.disabled = false;
+        });
+        wrapper?.querySelector('.admin-ai-inline-execute')?.addEventListener('click', () => {
+            wrapper.remove();
+            executeAdminAiAction(action, true, null);
         });
     }
 
     async function executeAdminAiAction(action, confirmed, trigger) {
         if (trigger) trigger.disabled = true;
-        const progress = appendAdminAiMessage('assistant', `<span class="admin-ai-thinking"><i></i><i></i><i></i> Đang thực hiện “${escapeHtml(action.title)}”...</span>`);
+        const progress = appendAdminAiMessage('assistant', `<span class="admin-ai-thinking"><i></i><i></i><i></i> Đang thực hiện "${escapeHtml(action.title)}"...</span>`);
         try {
             const result = await window.adminApi.post('admin/ai/execute', {
                 type: action.type,
@@ -434,12 +563,13 @@
                 confirmed
             });
             progress?.remove();
-            const dataHtml = renderAdminAiData(result.data);
+            const isCatAction = action.type && action.type.toLowerCase().includes('categor');
+            const dataHtml = isCatAction
+                ? renderCategoryResultCards(result.data, action)
+                : renderAdminAiData(result.data);
             const destination = result.navigateTo;
-            const followUp = destination
-                ? (destination === currentPage
-                    ? `<button class="admin-ai-result-link" type="button" data-ai-refresh><i class="fa-solid fa-rotate"></i> Làm mới trang</button>`
-                    : `<button class="admin-ai-result-link" type="button" data-ai-navigate="${escapeHtml(destination)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Mở trang liên quan</button>`)
+            const followUp = destination && destination !== currentPage
+                ? `<button class="admin-ai-result-link" type="button" data-ai-navigate="${escapeHtml(destination)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Mở trang liên quan</button>`
                 : '';
             appendAdminAiMessage('assistant', `
                 <div class="admin-ai-success"><i class="fa-solid fa-circle-check"></i><strong>${escapeHtml(result.message || 'Tác vụ đã hoàn tất.')}</strong></div>
@@ -451,6 +581,37 @@
             appendAdminAiMessage('assistant', `<span class="admin-ai-error"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(error.message || 'Không thể thực hiện tác vụ.')}</span>`);
             if (trigger) trigger.disabled = false;
         }
+    }
+
+    // Expose so categories.html can trigger execution after checkbox selection
+    window.executeAdminAiActionPublic = (action) => executeAdminAiAction(action, true, null);
+
+    function renderCategoryResultCards(data, action) {
+        if (!data) return '';
+        const parentDefault = action?.parameters?.parentName || '';
+        const cats = Array.isArray(data) ? data
+            : Array.isArray(data?.added) ? data.added
+            : Array.isArray(data?.categories) ? data.categories
+            : typeof data === 'object' && (data.name || data.Name) ? [data]
+            : [];
+        if (!cats.length) return renderAdminAiData(data);
+        return `
+            <div class="admin-ai-cat-result-list">
+                ${cats.map(cat => {
+                    const name = cat.name || cat.Name || '—';
+                    const icon = safeAiIcon(cat.icon || cat.Icon || 'fa-tag');
+                    const parent = cat.parentName || cat.ParentName || data?.parentName || parentDefault;
+                    return `
+                    <div class="admin-ai-cat-result-item">
+                        <span class="admin-ai-cat-result-icon"><i class="fa-solid ${icon}"></i></span>
+                        <div>
+                            <strong>${escapeHtml(name)}</strong>
+                            <span>${parent ? '→ ' + escapeHtml(parent) : 'Danh mục gốc'}</span>
+                        </div>
+                        <span class="admin-ai-cat-result-check"><i class="fa-solid fa-circle-check"></i></span>
+                    </div>`;
+                }).join('')}
+            </div>`;
     }
 
     function renderAdminAiData(data) {
@@ -468,7 +629,18 @@
 
     function renderAdminAiDataItem(item) {
         if (typeof item !== 'object' || item == null) return `<div class="admin-ai-data-item">${escapeHtml(String(item))}</div>`;
-        const entries = Object.entries(item).filter(([, value]) => value != null && value !== '').slice(0, 6);
+        // Pretty-print category-like objects
+        const name = item.name || item.Name || item.title || item.Title;
+        const icon = item.icon || item.Icon;
+        const parent = item.parentName || item.ParentName || item.parentCategoryId || item.ParentCategoryId;
+        if (name) {
+            return `<div class="admin-ai-data-item">
+                ${icon ? `<span style="margin-right:5px"><i class="fa-solid ${safeAiIcon(icon)}"></i></span>` : ''}
+                <strong>${escapeHtml(String(name))}</strong>
+                ${parent ? `<span><b>Mục cha:</b> ${escapeHtml(String(parent))}</span>` : ''}
+            </div>`;
+        }
+        const entries = Object.entries(item).filter(([, value]) => value != null && value !== '' && typeof value !== 'object').slice(0, 6);
         return `<div class="admin-ai-data-item">${entries.map(([key, value], index) => index === 0
             ? `<strong>${escapeHtml(formatAdminAiValue(value))}</strong>`
             : `<span><b>${escapeHtml(prettyAdminAiKey(key))}:</b> ${escapeHtml(formatAdminAiValue(value))}</span>`).join('')}</div>`;
@@ -605,6 +777,10 @@
         setTimeout(close, timeout);
         return toast;
     };
+    window.adminToast.success = (msg, timeout) => window.adminToast(msg, 'success', timeout);
+    window.adminToast.error = (msg, timeout) => window.adminToast(msg, 'error', timeout);
+    window.adminToast.warning = (msg, timeout) => window.adminToast(msg, 'warning', timeout);
+    window.adminToast.info = (msg, timeout) => window.adminToast(msg, 'info', timeout);
 
     function installFriendlyAlerts() {
         window.alert = message => {
