@@ -240,6 +240,9 @@ public class SellerController : ControllerBase
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
 
+        var validationError = ValidateProductInput(dto.Name, dto.Price, dto.Stock, dto.Variants);
+        if (validationError != null) return BadRequest(new { message = validationError });
+
         var slug = dto.Name.ToLower().Replace(" ", "-") + "-" + Guid.NewGuid().ToString().Substring(0, 8);
         
         var product = new Product
@@ -297,6 +300,9 @@ public class SellerController : ControllerBase
         if (userId == Guid.Empty) return Unauthorized();
         var shop = await _shopRepository.GetByUserIdAsync(userId);
         if (shop == null) return Forbid();
+
+        var validationError = ValidateProductInput(dto.Name, dto.Price, dto.Stock, dto.Variants);
+        if (validationError != null) return BadRequest(new { message = validationError });
 
         Console.WriteLine($"[DEBUG] Updating Product ID: {id}");
         var product = await _productRepository.GetByIdAsync(id);
@@ -406,6 +412,25 @@ public class SellerController : ControllerBase
 
         await _productRepository.DeleteAsync(product);
         return Ok(new { message = "Đã xóa sản phẩm thành công." });
+    }
+
+    private static string? ValidateProductInput(
+        string? name,
+        decimal price,
+        int stock,
+        IEnumerable<CreateProductVariantDto>? variants)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "Tên sản phẩm không được để trống.";
+        if (price <= 0) return "Giá sản phẩm phải lớn hơn 0.";
+        if (stock < 0) return "Tồn kho không được là số âm.";
+
+        foreach (var variant in variants ?? Enumerable.Empty<CreateProductVariantDto>())
+        {
+            if (variant.Stock < 0) return $"Tồn kho phân loại '{variant.Name}' không được là số âm.";
+            if (variant.PriceOverride < 0) return $"Giá phân loại '{variant.Name}' không được là số âm.";
+        }
+
+        return null;
     }
 
     [HttpGet("incoming-orders")]

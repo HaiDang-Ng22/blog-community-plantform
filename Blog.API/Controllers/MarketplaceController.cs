@@ -94,6 +94,7 @@ public class MarketplaceController : ControllerBase
             Id = p.Id,
             Name = p.Name,
             Price = p.Price,
+            Stock = Math.Max(0, p.Stock),
             FeaturedImageUrl = p.FeaturedImageUrl,
             ShopName = p.Shop?.Name ?? "N/A",
             ShopId = p.ShopId,
@@ -145,7 +146,7 @@ public class MarketplaceController : ControllerBase
             Id = p.Id,
             Name = p.Name,
             Price = p.Price,
-            Stock = p.Stock,
+            Stock = Math.Max(0, p.Stock),
             Description = p.Description,
             FeaturedImageUrl = p.FeaturedImageUrl,
             ShopId = p.ShopId,
@@ -165,7 +166,7 @@ public class MarketplaceController : ControllerBase
                 Size = v.Size,
                 ImageUrl = v.ImageUrl,
                 PriceOverride = v.PriceOverride,
-                Stock = v.Stock
+                Stock = Math.Max(0, v.Stock)
             }).ToList()
         };
 
@@ -188,6 +189,51 @@ public class MarketplaceController : ControllerBase
             }).ToListAsync();
 
         return Ok(dto);
+    }
+
+    [HttpGet("products/{id}/related")]
+    public async Task<IActionResult> GetRelatedProducts(Guid id, [FromQuery] int limit = 8)
+    {
+        limit = Math.Clamp(limit, 1, 12);
+
+        var current = await _context.Products
+            .Where(product => product.Id == id)
+            .Select(product => new { product.CategoryId, product.ShopId })
+            .FirstOrDefaultAsync();
+
+        if (current == null) return NotFound();
+
+        var products = await _context.Products
+            .AsNoTracking()
+            .Include(product => product.Shop)
+            .Include(product => product.Category)
+            .Where(product => product.Id != id &&
+                              product.Status == ProductStatus.Active &&
+                              !product.Shop.IsSuspended &&
+                              (product.CategoryId == current.CategoryId || product.ShopId == current.ShopId))
+            .OrderByDescending(product => product.CategoryId == current.CategoryId)
+            .ThenByDescending(product => product.Stock > 0)
+            .ThenByDescending(product => product.Rating)
+            .ThenByDescending(product => product.SalesCount)
+            .ThenByDescending(product => product.CreatedAt)
+            .Take(limit)
+            .Select(product => new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = product.Price,
+                Stock = product.Stock < 0 ? 0 : product.Stock,
+                FeaturedImageUrl = product.FeaturedImageUrl,
+                ShopName = product.Shop.Name,
+                ShopId = product.ShopId,
+                ShopOwnerId = product.Shop.UserId,
+                CategoryName = product.Category.Name,
+                Rating = product.Rating,
+                SalesCount = product.SalesCount
+            })
+            .ToListAsync();
+
+        return Ok(products);
     }
 
     [HttpGet("products/{id}/reviews")]

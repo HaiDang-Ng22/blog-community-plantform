@@ -59,6 +59,10 @@ public class OrdersController : ControllerBase
     {
         var userId = User.GetUserId() ?? Guid.Empty;
         if (userId == Guid.Empty) return Unauthorized();
+        if (dto.Items == null || dto.Items.Count == 0)
+            return BadRequest(new { message = "Giỏ hàng không có sản phẩm." });
+        if (dto.Items.Any(item => item.Quantity <= 0))
+            return BadRequest(new { message = "Số lượng sản phẩm phải lớn hơn 0." });
         
         // Handle SaveAddress
         if (dto.SaveAddress)
@@ -83,6 +87,40 @@ public class OrdersController : ControllerBase
         // Pre-load all products to group by ShopId
         var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
         var products = await _context.Products.Include(p => p.Shop).Where(p => productIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
+
+        var missingProduct = productIds.FirstOrDefault(id => !products.ContainsKey(id));
+        if (missingProduct != Guid.Empty)
+            return BadRequest(new { message = "Một sản phẩm trong giỏ không còn tồn tại." });
+
+        foreach (var requestedProduct in dto.Items.GroupBy(item => item.ProductId))
+        {
+            var product = products[requestedProduct.Key];
+            var requestedQuantity = requestedProduct.Sum(item => item.Quantity);
+            if (product.Status != ProductStatus.Active)
+                return Conflict(new { message = $"Sản phẩm '{product.Name}' hiện không còn được bán." });
+            if (product.Stock < requestedQuantity)
+                return Conflict(new { message = $"Sản phẩm '{product.Name}' chỉ còn {Math.Max(0, product.Stock)} sản phẩm." });
+        }
+
+        var requestedVariantIds = dto.Items
+            .Where(item => item.VariantId.HasValue)
+            .Select(item => item.VariantId!.Value)
+            .Distinct()
+            .ToList();
+        var variants = await _context.ProductVariants
+            .Where(variant => requestedVariantIds.Contains(variant.Id))
+            .ToDictionaryAsync(variant => variant.Id);
+
+        foreach (var requestedVariant in dto.Items.Where(item => item.VariantId.HasValue).GroupBy(item => item.VariantId!.Value))
+        {
+            if (!variants.TryGetValue(requestedVariant.Key, out var variant) ||
+                requestedVariant.Any(item => item.ProductId != variant.ProductId))
+                return BadRequest(new { message = "Phân loại sản phẩm không hợp lệ." });
+
+            var requestedQuantity = requestedVariant.Sum(item => item.Quantity);
+            if (variant.Stock < requestedQuantity)
+                return Conflict(new { message = $"Phân loại '{variant.Name}' chỉ còn {Math.Max(0, variant.Stock)} sản phẩm." });
+        }
 
         var shopGroups = dto.Items.GroupBy(i => 
         {
@@ -143,11 +181,12 @@ public class OrdersController : ControllerBase
                 decimal unitPrice = product.Price;
                 if (itemDto.VariantId.HasValue)
                 {
-                    var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId.Value);
-                    if (variant != null && variant.PriceOverride > 0)
+                    var variant = variants[itemDto.VariantId.Value];
+                    if (variant.PriceOverride > 0)
                     {
                         unitPrice = variant.PriceOverride;
                     }
+                    variant.Stock -= itemDto.Quantity;
                 }
 
                 var orderItem = new OrderItem

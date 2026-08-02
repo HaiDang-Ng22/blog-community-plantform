@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFlashSaleInline();
     startFlashSaleCountdown2();
     loadUpcomingAuctions();
+
+    const sharedProductId = new URLSearchParams(window.location.search).get('product');
+    if (sharedProductId && /^[0-9a-f-]{36}$/i.test(sharedProductId)) {
+        setTimeout(() => openProductModal(sharedProductId), 150);
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !document.getElementById('product-modal')?.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
 });
 
 let _bannerIndex = 0;
@@ -402,6 +413,34 @@ function formatCurrency(val) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 }
 
+function escapeProductText(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function safeProductImageUrl(value) {
+    const fallback = 'https://placehold.co/800x800/f4f5ff/6d5dfc?text=Zynk';
+    if (!value) return fallback;
+    try {
+        const parsed = new URL(value, window.location.href);
+        return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function getProductAvailableStock(product = window._currentProduct) {
+    if (!product) return 0;
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+        return product.variants.reduce((total, variant) => total + Math.max(0, Number(variant.stock) || 0), 0);
+    }
+    return Math.max(0, Number(product.stock) || 0);
+}
+
 async function openProductModal(productId) {
     const modal = document.getElementById('product-modal');
     const content = document.getElementById('product-modal-content');
@@ -414,8 +453,17 @@ async function openProductModal(productId) {
     try {
         const p = await window.api.get(`marketplace/products/${productId}`);
         window._currentProduct = p; // Store globally for logic
+        selAttr1 = null;
+        selAttr2 = null;
+        selectedVariantId = null;
         
-        const hasVariants = p.variants && p.variants.length > 0;
+        p.variants = Array.isArray(p.variants) ? p.variants : [];
+        p.imageUrls = Array.isArray(p.imageUrls) ? p.imageUrls : [];
+        p.stock = Math.max(0, Number(p.stock) || 0);
+        p.rating = Math.max(0, Math.min(5, Number(p.rating) || 0));
+        p.salesCount = Math.max(0, Number(p.salesCount) || 0);
+
+        const hasVariants = p.variants.length > 0;
         
         // Define variant groups
         const group1 = p.variantGroupName1;
@@ -424,45 +472,88 @@ async function openProductModal(productId) {
         // Extract unique options for each group
         const options1 = [...new Set(p.variants.map(v => v.color).filter(v => !!v))];
         const options2 = [...new Set(p.variants.map(v => v.size).filter(v => !!v))];
+        const galleryImages = [p.featuredImageUrl, ...p.imageUrls, ...p.variants.map(v => v.imageUrl)]
+            .filter(Boolean)
+            .filter((url, index, list) => list.indexOf(url) === index)
+            .map(safeProductImageUrl);
+        if (galleryImages.length === 0) galleryImages.push(safeProductImageUrl(null));
+
+        const safeName = escapeProductText(p.name || 'Sản phẩm Zynk');
+        const safeShopName = escapeProductText(p.shopName || 'Zynk Shop');
+        const safeCategory = escapeProductText(p.categoryName || 'Sản phẩm');
+        const totalStock = getProductAvailableStock(p);
+        const stockLabel = totalStock <= 0 ? 'Tạm hết hàng' : (totalStock <= 5 ? `Chỉ còn ${totalStock}` : `Còn ${totalStock} sản phẩm`);
+        const stockClass = totalStock <= 0 ? 'out' : (totalStock <= 5 ? 'low' : 'ready');
+        const description = p.description
+            ? window.common.autoLink(escapeProductText(p.description))
+            : 'Shop chưa bổ sung mô tả chi tiết cho sản phẩm này.';
 
         content.innerHTML = `
             <div class="modal-product-layout">
                 <div class="modal-product-images">
-                    <div class="product-main-view">
-                        <img src="${p.featuredImageUrl || 'https://via.placeholder.com/400'}" id="main-product-img">
+                    <div class="product-gallery-topline">
+                        <span class="product-category-pill"><i class="fa-solid fa-layer-group"></i> ${safeCategory}</span>
+                        <button class="product-icon-btn" type="button" onclick="shareCurrentProduct()" title="Chia sẻ sản phẩm" aria-label="Chia sẻ sản phẩm">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                        </button>
+                    </div>
+                    <div class="product-main-view" onclick="toggleProductImageZoom(this)" title="Nhấn để phóng to">
+                        <img src="${galleryImages[0]}" id="main-product-img" alt="${safeName}">
+                        <span class="product-zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</span>
+                        <span class="product-gallery-count"><i class="fa-regular fa-images"></i> ${galleryImages.length}</span>
                     </div>
                     <div class="thumb-list">
-                        <img src="${p.featuredImageUrl}" class="active" onclick="selectThumb(this)">
-                        ${p.imageUrls.filter(u => u !== p.featuredImageUrl).map(url => `
-                            <img src="${url}" onclick="selectThumb(this)">
+                        ${galleryImages.map((url, index) => `
+                            <button class="product-thumb ${index === 0 ? 'active' : ''}" type="button" onclick="selectThumb(this)" aria-label="Xem ảnh ${index + 1}">
+                                <img src="${url}" alt="Ảnh ${index + 1} của ${safeName}">
+                            </button>
                         `).join('')}
+                    </div>
+                    <div class="product-gallery-note">
+                        <i class="fa-solid fa-shield-heart"></i>
+                        <div><strong>Mua sắm an tâm</strong><span>Thanh toán bảo mật và theo dõi đơn hàng trên Zynk.</span></div>
                     </div>
                 </div>
                 <div class="modal-product-info">
-                    <span class="close-modal" onclick="closeModal()"><i class="fa fa-times"></i></span>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <a href="profile.html?id=${p.shopOwnerId}" class="modal-shop-name" style="margin-bottom: 0;"><i class="fa fa-shop"></i> ${p.shopName}</a>
+                    <button class="close-modal" type="button" onclick="closeModal()" aria-label="Đóng chi tiết sản phẩm"><i class="fa fa-times"></i></button>
+                    <div class="product-breadcrumb"><span>Marketplace</span><i class="fa-solid fa-chevron-right"></i><span>${safeCategory}</span></div>
+                    <div class="product-shop-row">
+                        <a href="profile.html?id=${p.shopOwnerId}" class="modal-shop-name"><span class="shop-avatar-mark"><i class="fa fa-shop"></i></span><span><small>Được bán bởi</small>${safeShopName}</span></a>
                         <button id="shop-follow-btn" class="btn-shop-follow" onclick="toggleShopFollow('${p.shopOwnerId}')">
                             <i class="fa fa-plus"></i> Theo dõi
                         </button>
                     </div>
-                    <h2 class="modal-title">${p.name}</h2>
-                    <div class="modal-rating">
-                        <span style="color: #fbbf24; font-weight: 700;">${p.rating.toFixed(1)}</span>
-                        <div class="avg-stars" style="display: inline-block; font-size: 0.85rem;">${renderStars(p.rating)}</div>
-                        <span style="color: #94a3b8; margin-left: 10px;">| ${p.salesCount} đã bán</span>
+                    <h2 class="modal-title">${safeName}</h2>
+                    <div class="modal-rating" onclick="scrollToProductReviews()" role="button" tabindex="0">
+                        <span class="rating-value">${p.rating.toFixed(1)}</span>
+                        <div class="avg-stars">${renderStars(p.rating)}</div>
+                        <span class="rating-divider"></span>
+                        <span><strong>${p.salesCount}</strong> đã bán</span>
+                        <span class="rating-review-link">Xem đánh giá <i class="fa-solid fa-chevron-down"></i></span>
                     </div>
-                    <div class="modal-price" id="display-price">${window.common.formatCurrency(p.price)}</div>
+                    <div class="product-price-panel">
+                        <div><span class="price-eyebrow">Giá sản phẩm</span><div class="modal-price" id="display-price">${window.common.formatCurrency(p.price)}</div></div>
+                        <span class="stock-status ${stockClass}" id="display-stock"><i class="fa-solid ${totalStock > 0 ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> ${stockLabel}</span>
+                    </div>
                     
                     <div class="modal-scroll-area">
-                        <p class="modal-desc" style="white-space: pre-wrap; margin-bottom: 2rem; word-break: break-word;">${window.common.autoLink(p.description)}</p>
+                        <div class="product-benefit-grid">
+                            <div><i class="fa-solid fa-truck-fast"></i><span><strong>Giao hàng toàn quốc</strong><small>Theo dõi trạng thái trực tuyến</small></span></div>
+                            <div><i class="fa-solid fa-rotate-left"></i><span><strong>Đổi trả theo chính sách</strong><small>Hỗ trợ ngay trong đơn hàng</small></span></div>
+                            <div><i class="fa-solid fa-lock"></i><span><strong>Thanh toán an toàn</strong><small>Chỉ xác nhận khi giao dịch hợp lệ</small></span></div>
+                        </div>
+
+                        <div class="product-description-card">
+                            <div class="section-heading"><span><i class="fa-regular fa-file-lines"></i> Mô tả sản phẩm</span></div>
+                            <p class="modal-desc">${description}</p>
+                        </div>
                         
                         ${group1 && options1.length > 0 ? `
                             <div class="variant-section">
-                                <label>${group1}</label>
+                                <label>${escapeProductText(group1)} <span id="variant-selection-1"></span></label>
                                 <div class="variant-options" id="variant-group-1">
                                     ${options1.map(val => `
-                                        <button class="variant-btn" onclick="selectAttr(1, '${val}', this)">${val}</button>
+                                        <button class="variant-btn" data-value="${escapeProductText(val)}" onclick="selectAttr(1, this.dataset.value, this)">${escapeProductText(val)}</button>
                                     `).join('')}
                                 </div>
                             </div>
@@ -470,45 +561,53 @@ async function openProductModal(productId) {
 
                         ${group2 && options2.length > 0 ? `
                             <div class="variant-section">
-                                <label>${group2}</label>
+                                <label>${escapeProductText(group2)} <span id="variant-selection-2"></span></label>
                                 <div class="variant-options" id="variant-group-2">
                                     ${options2.map(val => `
-                                        <button class="variant-btn" onclick="selectAttr(2, '${val}', this)">${val}</button>
+                                        <button class="variant-btn" data-value="${escapeProductText(val)}" onclick="selectAttr(2, this.dataset.value, this)">${escapeProductText(val)}</button>
                                     `).join('')}
                                 </div>
                             </div>
                         ` : ''}
 
                         <div class="modal-action-row">
-                            <label style="font-weight: 700; color: #64748b; font-size: 0.85rem; text-transform: uppercase;">Số lượng</label>
+                            <div><label>Số lượng</label><span class="selection-help" id="purchase-selection-help">${hasVariants ? 'Chọn phân loại để tiếp tục' : 'Sẵn sàng đặt hàng'}</span></div>
                             <div class="qty-control">
-                                <button onclick="changeQty(-1)">-</button>
-                                <input type="number" id="buy-qty" value="1" min="1" max="${p.stock}">
-                                <button onclick="changeQty(1)">+</button>
+                                <button type="button" onclick="changeQty(-1)" aria-label="Giảm số lượng"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="buy-qty" value="1" min="1" max="${totalStock}" inputmode="numeric" onchange="normalizePurchaseQuantity()" oninput="updateProductSubtotal()">
+                                <button type="button" onclick="changeQty(1)" aria-label="Tăng số lượng"><i class="fa-solid fa-plus"></i></button>
                             </div>
-                            <span class="stock-info" id="display-stock" style="color: #94a3b8; font-size: 0.9rem;">Còn ${p.stock} sản phẩm</span>
                         </div>
                     </div>
 
                     <!-- Shop Vouchers -->
-                    <div id="shop-vouchers-container" style="margin-bottom: 1.5rem;"></div>
+                    <div id="shop-vouchers-container" class="product-voucher-zone"></div>
 
-                    <div class="modal-btns">
-                        <button class="btn secondary-btn" id="btn-add-cart" onclick="addToCart('${p.id}', '${p.name.replace(/'/g, "\\'")}')">
-                            <i class="fa fa-cart-plus"></i> Thêm vào giỏ
-                        </button>
-                        <button class="btn primary-btn" id="btn-buy-now" onclick="buyNow('${p.id}')">Mua ngay</button>
+                    <div class="modal-purchase-footer">
+                        <div class="purchase-total"><span>Tạm tính</span><strong id="display-subtotal">${window.common.formatCurrency(p.price)}</strong></div>
+                        <div class="modal-btns">
+                            <button class="btn secondary-btn" id="btn-add-cart" onclick="addCurrentProductToCart()" ${hasVariants || totalStock <= 0 ? 'disabled' : ''}>
+                                <i class="fa fa-cart-plus"></i> <span>Thêm vào giỏ</span>
+                            </button>
+                            <button class="btn primary-btn" id="btn-buy-now" onclick="buyNow('${p.id}')" ${hasVariants || totalStock <= 0 ? 'disabled' : ''}><span>Mua ngay</span><i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
                     </div>
-                    
-                    <div style="margin-top: 1rem;">
-                        <button class="btn" style="background: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; width: 100%; border-radius: 12px; font-weight: 600;" onclick="openShopChat('${p.shopId}', '${p.shopName.replace(/'/g, "\\'")}')">
-                            <i class="fa-regular fa-comment-dots"></i> Nhắn tin cho Shop
-                        </button>
-                    </div>
+
+                    <button class="product-chat-btn" type="button" onclick="openCurrentShopChat()"><i class="fa-regular fa-comment-dots"></i><span><strong>Nhắn tin cho Shop</strong><small>Hỏi thêm về sản phẩm hoặc phân loại</small></span><i class="fa-solid fa-chevron-right"></i></button>
+
+                    <section class="related-products-section" aria-labelledby="related-products-title">
+                        <div class="section-heading">
+                            <span id="related-products-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Có thể bạn cũng thích</span>
+                            <small>Cùng danh mục, ưu tiên sản phẩm nổi bật</small>
+                        </div>
+                        <div id="related-products-list" class="related-product-track" aria-live="polite">
+                            ${[1, 2, 3].map(() => '<div class="related-product-card related-skeleton"></div>').join('')}
+                        </div>
+                    </section>
 
                     <!-- Reviews Section -->
-                    <div class="reviews-section">
-                        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1.5rem;">ĐÁNH GIÁ SẢN PHẨM</h3>
+                    <div class="reviews-section" id="product-reviews-section">
+                        <div class="section-heading"><span><i class="fa-solid fa-star"></i> Đánh giá từ người mua</span><small>Chỉ người đã nhận hàng mới được đánh giá</small></div>
                         <div id="review-stats-container"></div>
                         <div id="review-form-container"></div>
                         <div id="review-list"></div>
@@ -527,12 +626,17 @@ async function openProductModal(productId) {
             if (btn) selectAttr(2, options2[0], btn);
         }
 
+        refreshVariantOptionAvailability();
+        if (!hasVariants) updateProductPurchaseState(totalStock, p.price);
+        else updateVariantSelection();
+
         // Load extra data
         loadReviewStats(productId);
         loadReviews(productId);
         checkReviewEligibility(productId);
         checkShopFollowStatus(p.shopOwnerId);
         loadShopVouchers(p.shopOwnerId);
+        loadRelatedProducts(productId);
 
     } catch (e) {
         console.error('Failed to load product details', e);
@@ -561,20 +665,127 @@ function handleModalOverlayClick(e) {
 
 function changeQty(n) {
     const input = document.getElementById('buy-qty');
-    let val = parseInt(input.value) + n;
+    if (!input) return;
+    let val = (parseInt(input.value, 10) || 1) + n;
     if (val < 1) val = 1;
-    if (val > parseInt(input.max)) val = parseInt(input.max);
+    const max = Math.max(0, parseInt(input.max, 10) || 0);
+    if (max === 0) val = 1;
+    else if (val > max) val = max;
     input.value = val;
+    updateProductSubtotal();
 }
 
-function selectThumb(img) {
+function normalizePurchaseQuantity() {
+    const input = document.getElementById('buy-qty');
+    if (!input) return 1;
+    const max = Math.max(0, parseInt(input.max, 10) || 0);
+    let value = Math.max(1, parseInt(input.value, 10) || 1);
+    if (max > 0) value = Math.min(max, value);
+    input.value = value;
+    updateProductSubtotal();
+    return value;
+}
+
+function selectThumb(button) {
     const main = document.getElementById('main-product-img');
-    if (main) main.src = img.src;
-    document.querySelectorAll('.thumb-list img').forEach(i => i.classList.remove('active'));
-    img.classList.add('active');
+    const image = button?.querySelector('img') || button;
+    if (main && image?.src) main.src = image.src;
+    document.querySelectorAll('.product-thumb').forEach(item => item.classList.remove('active'));
+    button?.classList.add('active');
+    document.querySelector('.product-main-view')?.classList.remove('zoomed');
+}
+
+function toggleProductImageZoom(container) {
+    container?.classList.toggle('zoomed');
+}
+
+async function shareCurrentProduct() {
+    const product = window._currentProduct;
+    if (!product) return;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+    try {
+        if (navigator.share) {
+            await navigator.share({ title: product.name, text: `Xem ${product.name} trên Zynk Marketplace`, url: shareUrl });
+        } else {
+            await navigator.clipboard.writeText(shareUrl);
+            window.common.showToast('Đã sao chép liên kết sản phẩm.', 'success');
+        }
+    } catch (error) {
+        if (error?.name !== 'AbortError') window.common.showToast('Không thể chia sẻ sản phẩm lúc này.', 'error');
+    }
+}
+
+function scrollToProductReviews() {
+    document.getElementById('product-reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openCurrentShopChat() {
+    const product = window._currentProduct;
+    if (product) openShopChat(product.shopId, product.shopName);
+}
+
+async function loadRelatedProducts(productId) {
+    const container = document.getElementById('related-products-list');
+    if (!container) return;
+
+    try {
+        const products = await window.api.get(`marketplace/products/${productId}/related?limit=8`);
+        renderRelatedProducts(products, container);
+    } catch (error) {
+        console.warn('Related endpoint unavailable, using marketplace fallback', error);
+        try {
+            const current = window._currentProduct;
+            const allProducts = await window.api.get('marketplace/products');
+            const products = (Array.isArray(allProducts) ? allProducts : [])
+                .filter(product => product.id !== productId)
+                .sort((left, right) => {
+                    const leftMatch = left.categoryName === current?.categoryName || left.shopId === current?.shopId ? 1 : 0;
+                    const rightMatch = right.categoryName === current?.categoryName || right.shopId === current?.shopId ? 1 : 0;
+                    return rightMatch - leftMatch || Number(right.rating || 0) - Number(left.rating || 0) || Number(right.salesCount || 0) - Number(left.salesCount || 0);
+                })
+                .slice(0, 8);
+            renderRelatedProducts(products, container);
+        } catch (fallbackError) {
+            console.error('Failed to load related products', fallbackError);
+            container.innerHTML = '<div class="related-products-empty"><span>Không thể tải gợi ý lúc này.</span></div>';
+        }
+    }
+}
+
+function renderRelatedProducts(products, container) {
+    if (!Array.isArray(products) || products.length === 0) {
+        container.innerHTML = `
+            <div class="related-products-empty">
+                <i class="fa-regular fa-compass"></i>
+                <span>Chưa có sản phẩm tương tự phù hợp.</span>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = products.map(product => {
+            const safeName = escapeProductText(product.name || 'Sản phẩm Zynk');
+            const safeShop = escapeProductText(product.shopName || 'Zynk Shop');
+            const hasStockInfo = product.stock !== undefined && product.stock !== null;
+            const stock = Math.max(0, Number(product.stock) || 0);
+            const rating = Math.max(0, Math.min(5, Number(product.rating) || 0));
+            return `
+                <button class="related-product-card" type="button" onclick="openProductModal('${product.id}')" aria-label="Xem ${safeName}">
+                    <span class="related-product-image">
+                        <img src="${safeProductImageUrl(product.featuredImageUrl)}" alt="${safeName}" loading="lazy">
+                        ${hasStockInfo && stock <= 0 ? '<span class="related-stock-badge">Hết hàng</span>' : ''}
+                    </span>
+                    <span class="related-product-content">
+                        <small><i class="fa-solid fa-shop"></i> ${safeShop}</small>
+                        <strong>${safeName}</strong>
+                        <span class="related-product-meta"><span><i class="fa-solid fa-star"></i> ${rating.toFixed(1)}</span><span>${Math.max(0, Number(product.salesCount) || 0)} đã bán</span></span>
+                        <b>${window.common.formatCurrency(product.price)}</b>
+                    </span>
+                </button>`;
+    }).join('');
 }
 
 function selectAttr(group, val, btn) {
+    if (btn.disabled) return;
     const parent = btn.parentElement;
     parent.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -582,12 +793,86 @@ function selectAttr(group, val, btn) {
     if (group === 1) selAttr1 = val;
     else selAttr2 = val;
 
+    const selection = document.getElementById(`variant-selection-${group}`);
+    if (selection) selection.textContent = `· ${val}`;
+
     updateVariantSelection();
+}
+
+function refreshVariantOptionAvailability() {
+    const product = window._currentProduct;
+    if (!product?.variants?.length) return;
+
+    document.querySelectorAll('#variant-group-1 .variant-btn').forEach(button => {
+        const value = button.dataset.value;
+        const available = product.variants.some(variant =>
+            variant.color === value && (!selAttr2 || variant.size === selAttr2) && Number(variant.stock) > 0
+        );
+        button.disabled = !available;
+        button.title = available ? '' : 'Phân loại này hiện đã hết hàng';
+    });
+
+    document.querySelectorAll('#variant-group-2 .variant-btn').forEach(button => {
+        const value = button.dataset.value;
+        const available = product.variants.some(variant =>
+            variant.size === value && (!selAttr1 || variant.color === selAttr1) && Number(variant.stock) > 0
+        );
+        button.disabled = !available;
+        button.title = available ? '' : 'Phân loại này hiện đã hết hàng';
+    });
+}
+
+function updateProductPurchaseState(stock, unitPrice, message = '') {
+    const safeStock = Math.max(0, Number(stock) || 0);
+    const input = document.getElementById('buy-qty');
+    const stockEl = document.getElementById('display-stock');
+    const helpEl = document.getElementById('purchase-selection-help');
+    const addButton = document.getElementById('btn-add-cart');
+    const buyButton = document.getElementById('btn-buy-now');
+
+    if (input) {
+        input.max = safeStock;
+        input.disabled = safeStock <= 0;
+        if (safeStock > 0 && Number(input.value) > safeStock) input.value = safeStock;
+    }
+
+    if (stockEl) {
+        const lowStock = safeStock > 0 && safeStock <= 5;
+        stockEl.className = `stock-status ${safeStock <= 0 ? 'out' : (lowStock ? 'low' : 'ready')}`;
+        stockEl.innerHTML = `<i class="fa-solid ${safeStock > 0 ? 'fa-circle-check' : 'fa-circle-xmark'}"></i> ${safeStock <= 0 ? 'Tạm hết hàng' : (lowStock ? `Chỉ còn ${safeStock}` : `Còn ${safeStock} sản phẩm`)}`;
+    }
+
+    if (helpEl) helpEl.textContent = message || (safeStock > 0 ? 'Sẵn sàng đặt hàng' : 'Sản phẩm hiện đã hết hàng');
+    if (addButton) addButton.disabled = safeStock <= 0 || Boolean(message);
+    if (buyButton) buyButton.disabled = safeStock <= 0 || Boolean(message);
+
+    window._currentUnitPrice = Math.max(0, Number(unitPrice) || 0);
+    updateProductSubtotal();
+}
+
+function updateProductSubtotal() {
+    const target = document.getElementById('display-subtotal');
+    const quantity = Math.max(1, parseInt(document.getElementById('buy-qty')?.value, 10) || 1);
+    if (target) target.textContent = window.common.formatCurrency((window._currentUnitPrice || 0) * quantity);
 }
 
 function updateVariantSelection() {
     const p = window._currentProduct;
     if (!p) return;
+
+    refreshVariantOptionAvailability();
+
+    const missingSelections = [];
+    if (document.getElementById('variant-group-1') && !selAttr1) missingSelections.push(p.variantGroupName1);
+    if (document.getElementById('variant-group-2') && !selAttr2) missingSelections.push(p.variantGroupName2);
+
+    if (missingSelections.length > 0) {
+        selectedVariantId = null;
+        const totalStock = getProductAvailableStock(p);
+        document.getElementById('display-price').textContent = window.common.formatCurrency(p.price);
+        updateProductPurchaseState(totalStock, p.price, `Vui lòng chọn ${missingSelections.join(' và ')}`);
+        return;
+    }
 
     // Find the matching variant
     const variant = p.variants.find(v => {
@@ -604,18 +889,15 @@ function updateVariantSelection() {
         document.getElementById('display-price').textContent = window.common.formatCurrency(price);
         
         // Update Stock
-        document.getElementById('display-stock').textContent = `Còn ${variant.stock} sản phẩm`;
-        document.getElementById('buy-qty').max = variant.stock;
-        
-        // Disable buttons if out of stock
-        const noStock = variant.stock <= 0;
-        document.getElementById('btn-add-cart').disabled = noStock;
-        document.getElementById('btn-buy-now').disabled = noStock;
+        updateProductPurchaseState(variant.stock, price);
         
         // Update Image if variant has one
         if (variant.imageUrl) {
-            document.getElementById('main-product-img').src = variant.imageUrl;
+            document.getElementById('main-product-img').src = safeProductImageUrl(variant.imageUrl);
         }
+    } else {
+        selectedVariantId = null;
+        updateProductPurchaseState(0, p.price, 'Phân loại này hiện không khả dụng');
     }
 }
 
@@ -796,21 +1078,51 @@ function updateCartBadge() {
     if (badge) badge.textContent = count;
 }
 
-function addToCart(id, name) {
-    const qty = parseInt(document.getElementById('buy-qty').value);
-    const priceText = document.getElementById('display-price').textContent;
-    // Extract number from currency text (simple way)
-    const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+function addCurrentProductToCart(options = {}) {
+    const product = window._currentProduct;
+    if (!product) return false;
+    return addToCart(product.id, product.name, options);
+}
+
+function addToCart(id, name, options = {}) {
+    const product = window._currentProduct;
+    const hasVariants = Boolean(product?.variants?.length);
+    if (hasVariants && !selectedVariantId) {
+        window.common.showToast('Vui lòng chọn đầy đủ phân loại sản phẩm.', 'info');
+        document.querySelector('.variant-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+    }
+
+    const qty = normalizePurchaseQuantity();
+    const maxStock = Math.max(0, parseInt(document.getElementById('buy-qty')?.max, 10) || 0);
+    if (maxStock <= 0) {
+        window.common.showToast('Sản phẩm hoặc phân loại này đã hết hàng.', 'error');
+        return false;
+    }
+
+    const price = Math.max(0, Number(window._currentUnitPrice) || 0);
     const img = document.getElementById('main-product-img').src;
 
     let cart = JSON.parse(localStorage.getItem('zynk_cart') || '[]');
     const cartItemId = selectedVariantId ? `${id}-${selectedVariantId}` : id;
-    const variantName = selectedVariantId ? document.querySelector('.variant-btn.active').textContent.trim() : null;
-    const shopName = window._currentProduct ? window._currentProduct.shopName : 'Shop Zynk';
+    const variantName = selectedVariantId
+        ? [...document.querySelectorAll('.variant-btn.active')].map(button => button.textContent.trim()).join(' · ')
+        : null;
+    const shopName = product ? product.shopName : 'Shop Zynk';
 
     const existing = cart.find(i => i.cartItemId === cartItemId);
     if (existing) {
-        existing.qty += qty;
+        const nextQuantity = existing.qty + qty;
+        if (nextQuantity > maxStock) {
+            existing.qty = maxStock;
+            window.common.showToast(`Giỏ hàng đã được điều chỉnh theo tồn kho còn lại (${maxStock}).`, 'info');
+        } else {
+            existing.qty = nextQuantity;
+        }
+        existing.maxStock = maxStock;
+        existing.price = price;
+        existing.img = img;
+        existing.image = img;
     } else {
         cart.push({ 
             id, 
@@ -822,20 +1134,25 @@ function addToCart(id, name) {
             price: typeof price === 'number' ? price : parseInt(String(price).replace(/[^0-9]/g, '')) || 0,
             img, 
             image: img,  // alias for compatibility with AI chat and other modules
-            qty 
+            qty,
+            maxStock
         });
     }
 
     localStorage.setItem('zynk_cart', JSON.stringify(cart));
     updateCartBadge();
-    alert(`Đã thêm ${qty} sản phẩm vào giỏ hàng!`);
-    closeModal();
+    document.getElementById('cart-float')?.classList.add('cart-bump');
+    setTimeout(() => document.getElementById('cart-float')?.classList.remove('cart-bump'), 500);
+    window.common.showToast(`Đã thêm ${qty} ${escapeProductText(name)} vào giỏ hàng.`, 'success');
+    if (options.closeModal) closeModal();
+    return true;
 }
 
 function buyNow(id) {
-    // Add to cart and redirect
-    addToCart(id, document.querySelector('.modal-title').textContent);
-    location.href = 'cart.html';
+    const product = window._currentProduct;
+    if (addToCart(id, product?.name || 'Sản phẩm')) {
+        location.href = 'cart.html';
+    }
 }
 
 // --- Search & Sort Logic ---
