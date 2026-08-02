@@ -145,7 +145,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isLoginPage = window.location.pathname.includes('auth.html');
     const isAdminPage = window.location.pathname.includes('/admin/');
 
-    if (userInfo && userInfo.role === 'Admin' && !isAdminPage && !isLoginPage) {
+    const isAdminCommunicationPage = ['messages.html', 'notifications.html'].some(page => window.location.pathname.endsWith('/' + page));
+    if (userInfo && userInfo.role === 'Admin' && !isAdminPage && !isLoginPage && !isAdminCommunicationPage) {
         window.location.href = 'admin/index.html';
         return;
     }
@@ -1771,6 +1772,12 @@ function showNotificationToast(noti) {
             window.location.href = `seller-order-detail.html?id=${noti.targetId}`;
         } else if (['PaymentConfirmed', 'OrderPaid', 'OrderStatusUpdated'].includes(noti.type) && noti.targetId) {
             window.location.href = `order-detail.html?id=${noti.targetId}`;
+        } else if (noti.type === 'ShopChatMessage' && noti.targetId) {
+            window.location.href = `shop-messages.html?conversationId=${noti.targetId}`;
+        } else if (noti.type === 'DirectMessage' && noti.targetId) {
+            window.location.href = `messages.html?userId=${noti.targetId}`;
+        } else if (noti.type === 'SellerComplaint') {
+            window.location.href = 'admin/reports.html';
         } else {
             window.location.href = 'notifications.html';
         }

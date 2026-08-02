@@ -62,10 +62,12 @@
                         <td style="font-weight:600;">${escape(r.reporterName)}</td>
                         <td>
                             <div style="font-size: 0.85rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--admin-primary); cursor:pointer;" onclick="viewReport('${r.id}')">
-                                ${escape(r.postContent || 'Bài viết: ' + r.postId.substring(0,8))}
+                                ${r.targetType === 'Seller'
+                                    ? `<i class="fa-solid fa-store" style="margin-right:6px"></i>Khiếu nại Seller · Đơn #${escape(String(r.sellerOrderId || '').slice(0,8).toUpperCase())}`
+                                    : escape(r.postContent || r.groupName || ('Nội dung: ' + String(r.postId || r.groupId || '').substring(0,8)))}
                             </div>
                         </td>
-                        <td><span style="color: var(--admin-text-muted); font-size: 0.85rem;">${escape(r.reason)}</span></td>
+                        <td><span style="color: var(--admin-text-muted); font-size: 0.85rem;">${escape(r.sellerComplaintReason || r.reason)}</span></td>
                         <td>${new Date(r.createdAt).toLocaleString('vi-VN')}</td>
                         <td>
                             <span class="badge ${!r.isResolved ? 'badge-warning' : 'badge-success'}">
@@ -83,6 +85,29 @@
         async function viewReport(reportId) {
             const r = allReports.find(x => x.id === reportId);
             if (!r) return;
+            if (r.targetType === 'Seller') {
+                const escape = window.adminEscapeHtml;
+                window.adminModal.open(`
+                    <h2 style="margin-bottom:1rem;"><i class="fa-solid fa-shield-halved" style="color:var(--admin-primary);margin-right:8px"></i>Khiếu nại Seller</h2>
+                    <div style="padding:1rem;border:1px solid #fde4b5;border-radius:12px;background:#fffaf0;margin-bottom:1rem;line-height:1.6">
+                        <strong>Người khiếu nại:</strong> ${escape(r.reporterName)}<br>
+                        <strong>Đơn hàng:</strong> #${escape(String(r.sellerOrderId || '').slice(0,8).toUpperCase())}<br>
+                        <strong>Shop ID:</strong> ${escape(r.sellerShopId || '')}<br>
+                        <strong>Thời gian:</strong> ${new Date(r.createdAt).toLocaleString('vi-VN')}
+                    </div>
+                    <div style="padding:1rem;border:1px solid var(--admin-border);border-radius:12px;line-height:1.7">
+                        <div style="font-size:.75rem;font-weight:800;color:var(--admin-text-muted);text-transform:uppercase;margin-bottom:6px">Nội dung khách hàng cung cấp</div>
+                        ${escape(r.sellerComplaintReason || r.reason)}
+                    </div>
+                    <div style="display:flex;justify-content:space-between;gap:10px;margin-top:1.5rem;flex-wrap:wrap">
+                        <button class="btn btn-secondary" onclick="adminModal.close()">Đóng</button>
+                        <div style="display:flex;gap:10px">
+                            ${!r.isResolved ? `<button class="btn btn-secondary" onclick="markAsResolved('${r.id}')"><i class="fa-solid fa-check"></i> Đánh dấu đã xử lý</button>` : ''}
+                            ${!r.isResolved && r.sellerShopId ? `<button class="btn btn-danger" onclick="suspendSellerFromReport('${r.sellerShopId}','${r.id}')"><i class="fa-solid fa-store-slash"></i> Đình chỉ Shop</button>` : ''}
+                        </div>
+                    </div>`);
+                return;
+            }
             try {
                 const post = await window.adminApi.get(`admin/posts/${r.postId}`);
                 const escape = window.adminEscapeHtml;
@@ -156,6 +181,17 @@
             } catch (err) { 
                 window.adminToast(err.message || 'Không thể xử lý bài viết', 'error');
             }
+        }
+
+        async function suspendSellerFromReport(shopId, reportId) {
+            if (!confirm('Đình chỉ Shop này và đóng khiếu nại? Hãy chắc chắn bạn đã kiểm tra bằng chứng và đơn hàng liên quan.')) return;
+            try {
+                await window.adminApi.post(`admin/shops/${shopId}/suspend`, {});
+                await window.adminApi.post(`admin/reports/${reportId}/resolve`, {});
+                window.adminToast('Đã đình chỉ Shop và hoàn tất khiếu nại.', 'success');
+                adminModal.close();
+                loadReports();
+            } catch (err) { window.adminToast(err.message || 'Không thể xử lý Shop', 'error'); }
         }
 
         document.addEventListener('DOMContentLoaded', loadReports);

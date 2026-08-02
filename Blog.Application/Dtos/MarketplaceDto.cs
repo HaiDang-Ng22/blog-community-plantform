@@ -156,6 +156,8 @@ public class UpdateProductDto
 public class OrderDto
 {
     public Guid Id { get; set; }
+    public Guid? ShopId { get; set; }
+    public string? ShopName { get; set; }
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public string PaymentMethod { get; set; } = string.Empty;
@@ -289,6 +291,29 @@ public class ShopMessageDto
     public Guid SenderId { get; set; }
     public string Content { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public string Kind { get; set; } = "text";
+    public ShopChatProductDto? Product { get; set; }
+    public ShopChatOrderDto? Order { get; set; }
+    public Guid? ComplaintId { get; set; }
     public bool IsMe { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class ShopChatProductDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public decimal Price { get; set; }
+    public int Stock { get; set; }
+    public double Rating { get; set; }
+}
+
+public class ShopChatOrderDto
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }

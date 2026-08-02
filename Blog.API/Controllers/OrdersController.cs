@@ -494,6 +494,8 @@ public class OrdersController : ControllerBase
         var dto = new OrderDto
         {
             Id = order.Id,
+            ShopId = order.Items.FirstOrDefault()?.Product?.ShopId,
+            ShopName = order.Items.FirstOrDefault()?.Product?.Shop?.Name,
             TotalAmount = order.TotalAmount,
             Status = order.Status.ToString(),
             PaymentMethod = order.PaymentMethod,

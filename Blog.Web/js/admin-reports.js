@@ -39,7 +39,12 @@ async function loadAdminReports() {
             let targetHtml = '';
             let actionHtml = '';
 
-            if (report.targetType === 'Group' || report.groupId) {
+            if (report.targetType === 'Seller') {
+                targetHtml = `
+                    <div style="display:flex;align-items:center;gap:6px;font-weight:700"><i class="fa-solid fa-store" style="color:#7c5cff"></i> Khiếu nại Seller</div>
+                    <div style="font-size:.8rem;color:#64748b;margin-top:3px">Đơn #${String(report.sellerOrderId || '').slice(0,8).toUpperCase()}</div>`;
+                actionHtml = `<button class="btn-action" style="color:#10b981" title="Đánh dấu đã xử lý" onclick="resolveReport('${report.id}')"><i class="fa-solid fa-check"></i></button>`;
+            } else if (report.targetType === 'Group' || report.groupId) {
                 targetHtml = `
                     <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
                         <span style="font-weight:600;"><i class="fa-solid fa-users"></i> ${report.groupName || 'Nhóm đã bị xóa'}</span>
@@ -69,7 +74,7 @@ async function loadAdminReports() {
             row.innerHTML = `
                 <td>${report.reporterName}</td>
                 <td>${targetHtml}</td>
-                <td style="color:#ef4444; font-weight:500;">${report.reason}</td>
+                <td style="color:#ef4444; font-weight:500;">${report.sellerComplaintReason || report.reason}</td>
                 <td style="color:#64748b; font-size:0.85rem;">${new Date(report.createdAt).toLocaleString('vi-VN')}</td>
                 <td><span class="badge ${report.isResolved ? 'badge-resolved' : 'badge-pending'}">${report.isResolved ? 'Đã xử lý' : 'Chờ xử lý'}</span></td>
                 <td>

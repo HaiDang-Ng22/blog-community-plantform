@@ -3,7 +3,8 @@ namespace Blog.Domain.Entities;
 public enum ReportTargetType
 {
     Post,
-    Group
+    Group,
+    Seller
 }
 
 public class Report

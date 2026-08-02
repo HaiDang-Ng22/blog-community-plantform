@@ -8,7 +8,7 @@
     <link rel="icon" href="assets/favicon.png?v=2" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/common.css?v=2.7">
-    <link rel="stylesheet" href="css/chat.css?v=2.0">
+    <link rel="stylesheet" href="css/chat.css?v=2.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/preferences.css?v=1.1">
     <script src="/js/preferences.js?v=1.1"></script>
@@ -51,6 +51,10 @@
                 <div class="inbox-tab" id="tab-pending" onclick="switchInboxTab('pending')">
                     Đang chờ
                     <span class="tab-badge hidden" id="pending-badge"></span>
+                </div>
+                <div class="inbox-tab inbox-tab-shop" id="tab-shop" onclick="switchInboxTab('shop')">
+                    <i class="fa-solid fa-store" aria-hidden="true"></i> Cửa hàng
+                    <span class="tab-badge hidden" id="shop-badge"></span>
                 </div>
             </div>
         </div>
@@ -110,7 +114,7 @@
 <script src="js/i18n.js?v=3.1"></script>
 <script src="js/common.js?v=3.1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-<script src="js/chat.js?v=2.0"></script>
+<script src="js/chat.js?v=2.1"></script>
 
 </body>
 </html>

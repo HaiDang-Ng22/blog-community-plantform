@@ -8,7 +8,9 @@ let currentOtherUser = null;
 let myUserId = null;
 let myUserInfo = null;
 let allConversations = { accepted: [], pending: [] };
-let activeTab = 'inbox'; // 'inbox' | 'pending'
+let shopConversations = [];
+let shopConversationsLoaded = false;
+let activeTab = 'inbox'; // 'inbox' | 'pending' | 'shop'
 let searchTimer = null;
 let typingTimer = null;
 let isTyping = false;
@@ -41,11 +43,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if opening a specific conversation from URL
     const params = new URLSearchParams(window.location.search);
     const targetUserId = params.get('with');
+    const targetShopConversationId = params.get('shopConversationId');
 
-    await loadConversations();
+    await Promise.all([loadConversations(), loadShopConversations()]);
     await connectSignalR();
 
-    if (targetUserId) {
+    if (targetShopConversationId && shopConversations.some((conversation) => conversation.id === targetShopConversationId)) {
+        switchInboxTab('shop');
+        openShopConversation(targetShopConversationId);
+    } else if (targetUserId) {
         await openOrCreateConversation(targetUserId);
     }
 });
@@ -160,7 +166,45 @@ async function loadConversations() {
 }
 
 // ── Render Conversation List ──────────────────────────────
+async function loadShopConversations() {
+    const token = localStorage.getItem('auth_token');
+    try {
+        const res = await fetch(`${API}/shopchat/conversations`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        shopConversations = (Array.isArray(data) ? data : []).filter((conversation) =>
+            !myUserId || String(conversation.buyerId).toLowerCase() === String(myUserId).toLowerCase());
+    } catch (err) {
+        console.error('[Chat] Load shop conversations error:', err);
+        shopConversations = [];
+    } finally {
+        shopConversationsLoaded = true;
+        updateConversationBadges();
+        if (activeTab === 'shop') renderConvList();
+    }
+}
+
+function updateConversationBadges() {
+    const badges = [
+        [document.getElementById('inbox-badge'), (allConversations.accepted || []).reduce((sum, conversation) => sum + (conversation.unreadCount || 0), 0)],
+        [document.getElementById('pending-badge'), (allConversations.pending || []).length],
+        [document.getElementById('shop-badge'), shopConversations.reduce((sum, conversation) => sum + (conversation.unreadCount || 0), 0)]
+    ];
+    badges.forEach(([badge, count]) => {
+        if (!badge) return;
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.toggle('hidden', count === 0);
+    });
+}
+
 function renderConvList() {
+    updateConversationBadges();
+    if (activeTab === 'shop') {
+        renderShopConversationList();
+        return;
+    }
     const sourceList = allConversations[activeTab === 'inbox' ? 'accepted' : 'pending'] || [];
     const list = conversationSearchQuery
         ? sourceList.filter((conversation) => {
@@ -208,6 +252,69 @@ function renderConvList() {
             if (conv) openConversation(conv);
         });
     });
+}
+
+function renderShopConversationList() {
+    const container = document.getElementById('conv-list');
+    if (!shopConversationsLoaded) {
+        container.innerHTML = '<div class="inbox-empty"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Đang tải tin nhắn cửa hàng...</p></div>';
+        return;
+    }
+
+    const list = conversationSearchQuery
+        ? shopConversations.filter((conversation) => [conversation.shopName, conversation.lastMessage]
+            .filter(Boolean)
+            .some((value) => String(value).toLocaleLowerCase('vi').includes(conversationSearchQuery)))
+        : shopConversations;
+
+    if (!list.length) {
+        const message = conversationSearchQuery
+            ? 'Không tìm thấy cuộc trò chuyện với cửa hàng.'
+            : 'Bạn chưa nhắn tin với cửa hàng nào.';
+        container.innerHTML = `<div class="inbox-empty"><i class="fa-solid fa-store"></i><p>${message}</p><a class="start-chat-btn" href="marketplace.html">Khám phá Marketplace</a></div>`;
+        return;
+    }
+
+    container.innerHTML = list.map(renderShopConvItem).join('');
+    container.querySelectorAll('.conv-item[data-shop-conv-id]').forEach((item) => {
+        item.addEventListener('click', () => openShopConversation(item.dataset.shopConvId));
+    });
+}
+
+function renderShopConvItem(conversation) {
+    const name = conversation.shopName || 'Cửa hàng Zynk';
+    const avatar = conversation.shopLogo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6d5dfc&color=fff`;
+    const preview = conversation.lastMessage || 'Bắt đầu trò chuyện với Shop';
+    const unread = Number(conversation.unreadCount || 0);
+    return `
+    <div class="conv-item" data-shop-conv-id="${conversation.id}">
+        <div class="conv-avatar-wrap">
+            <img class="conv-avatar" src="${escHtml(avatar)}" alt="${escHtml(name)}">
+            <span class="conv-shop-badge"><i class="fa-solid fa-store"></i></span>
+        </div>
+        <div class="conv-info">
+            <div class="conv-name">${escHtml(name)}</div>
+            <div class="conv-last-msg ${unread ? 'unread' : ''}">${escHtml(String(preview).substring(0, 70))}</div>
+        </div>
+        <div class="conv-meta">
+            <span class="conv-time">${formatRelativeTime(conversation.lastMessageAt)}</span>
+            ${unread ? `<span class="conv-unread-badge">${Math.min(unread, 99)}</span>` : ''}
+        </div>
+    </div>`;
+}
+
+function openShopConversation(conversationId) {
+    const panel = document.getElementById('chat-panel');
+    document.querySelectorAll('.conv-item').forEach((item) => {
+        item.classList.toggle('active', item.dataset.shopConvId === conversationId);
+    });
+    currentConversationId = null;
+    currentOtherUser = null;
+    panel.className = 'chat-panel shop-chat-host';
+    panel.innerHTML = `<iframe class="shop-chat-iframe" title="Trò chuyện với người bán" src="shop-messages.html?embedded=1&conversationId=${encodeURIComponent(conversationId)}"></iframe>`;
+    panel.classList.add('mobile-open');
+    document.querySelector('.messages-layout')?.classList.add('chat-open');
+    panel.querySelector('iframe')?.addEventListener('load', () => window.setTimeout(loadShopConversations, 700));
 }
 
 function setupConversationSearch() {
@@ -285,6 +392,7 @@ function switchInboxTab(tab) {
     activeTab = tab;
     document.getElementById('tab-inbox').classList.toggle('active', tab === 'inbox');
     document.getElementById('tab-pending').classList.toggle('active', tab === 'pending');
+    document.getElementById('tab-shop').classList.toggle('active', tab === 'shop');
     renderConvList();
 }
 window.switchInboxTab = switchInboxTab;

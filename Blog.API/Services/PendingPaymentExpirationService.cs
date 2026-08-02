@@ -41,7 +41,16 @@ public sealed class PendingPaymentExpirationService : BackgroundService
                 _logger.LogError(ex, "Could not expire abandoned payment sessions");
             }
 
-            if (!await timer.WaitForNextTickAsync(stoppingToken)) break;
+            try
+            {
+                if (!await timer.WaitForNextTickAsync(stoppingToken)) break;
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // A normal application shutdown cancels the timer. Treat that as a
+                // clean stop instead of letting BackgroundService stop the host.
+                break;
+            }
         }
     }
 

@@ -148,6 +148,15 @@ function renderOrderDetails(order) {
     window._currentOrder = order;
 }
 
+function contactShopAboutOrder() {
+    const order = window._currentOrder;
+    if (!order?.shopId) {
+        window.common?.showToast('Không tìm thấy thông tin Shop của đơn hàng.', 'error');
+        return;
+    }
+    window.location.href = `shop-messages.html?shopId=${order.shopId}&shopName=${encodeURIComponent(order.shopName || 'Cửa hàng')}`;
+}
+
 async function requestBankVerification() {
     const order = window._currentOrder;
     const button = document.getElementById('btn-request-bank-verification');

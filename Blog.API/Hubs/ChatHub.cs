@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Blog.API.Extensions;
 using Blog.Domain.Interfaces;
+using Blog.API.Services;
 
 namespace Blog.API.Hubs;
 
@@ -13,13 +14,15 @@ public class ChatHub : Hub
 {
     private readonly AppDbContext _context;
     private readonly IFirebaseChatService _firebaseChatService;
+    private readonly INotificationService _notificationService;
     // Map userId -> connectionId (in-memory, single server; replace with IUserIdProvider for production)
     private static readonly Dictionary<string, string> _connections = new();
 
-    public ChatHub(AppDbContext context, IFirebaseChatService firebaseChatService)
+    public ChatHub(AppDbContext context, IFirebaseChatService firebaseChatService, INotificationService notificationService)
     {
         _context = context;
         _firebaseChatService = firebaseChatService;
+        _notificationService = notificationService;
     }
 
     public override async Task OnConnectedAsync()
@@ -184,6 +187,13 @@ public class ChatHub : Hub
         {
             await Clients.Group($"user_{recipientId}").SendAsync("ReceiveMessage", payload);
         }
+
+        await _notificationService.SendNotificationAsync(
+            recipientGuid,
+            senderId,
+            "DirectMessage",
+            senderId,
+            string.IsNullOrWhiteSpace(imageUrl) ? "đã gửi cho bạn một tin nhắn mới." : "đã gửi cho bạn một hình ảnh.");
     }
 
     /// <summary>

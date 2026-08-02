@@ -180,10 +180,28 @@ public class AdminController : ControllerBase
             PostAuthorId = r.Post != null ? r.Post.AuthorId : (Guid?)null,
             PostAuthorIsPrivate = r.Post != null && r.Post.Author.IsPrivate,
             GroupName = r.Group != null ? r.Group.Name : null,
-            GroupDescription = r.Group != null ? r.Group.Description : null
+            GroupDescription = r.Group != null ? r.Group.Description : null,
+            SellerShopId = r.TargetType == ReportTargetType.Seller ? ExtractComplaintGuid(r.Reason, "shop") : null,
+            SellerOrderId = r.TargetType == ReportTargetType.Seller ? ExtractComplaintGuid(r.Reason, "order") : null,
+            SellerConversationId = r.TargetType == ReportTargetType.Seller ? ExtractComplaintGuid(r.Reason, "conversation") : null,
+            SellerComplaintReason = r.TargetType == ReportTargetType.Seller ? ExtractComplaintReason(r.Reason) : null
         });
 
         return Ok(result);
+    }
+
+    private static Guid? ExtractComplaintGuid(string value, string key)
+    {
+        var item = value.Split('|', StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault(part => part.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase));
+        return item != null && Guid.TryParse(item[(item.IndexOf('=') + 1)..], out var id) ? id : null;
+    }
+
+    private static string? ExtractComplaintReason(string value)
+    {
+        const string marker = "|reason=";
+        var index = value.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        return index >= 0 ? value[(index + marker.Length)..] : value;
     }
 
     // Admin-only: get any post bypassing privacy restrictions
@@ -466,6 +484,7 @@ public class AdminController : ControllerBase
             .Select(s => new
             {
                 s.Id,
+                s.UserId,
                 s.Name,
                 s.Description,
                 s.IsSuspended,

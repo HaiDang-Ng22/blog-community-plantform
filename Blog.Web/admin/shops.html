@@ -126,10 +126,13 @@
                             </span>
                         </td>
                         <td>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <button class="btn btn-secondary" onclick="messageSeller('${shop.userId}')"><i class="fa-regular fa-comments"></i> Nhắn Seller</button>
                             ${shop.isSuspended 
                                 ? `<button class="btn btn-secondary" onclick="toggleShopStatus('${shop.id}', false)">Kích hoạt lại</button>`
                                 : `<button class="btn btn-danger" onclick="toggleShopStatus('${shop.id}', true)">Đình chỉ</button>`
                             }
+                            </div>
                         </td>
                     </tr>
                 `).join('');
@@ -215,6 +218,10 @@
                 window.adminToast(`Đã ${action} thành công.`, 'success');
                 loadShops();
             } catch (err) { window.adminToast(err.message || `Không thể ${action} cửa hàng`, 'error'); }
+        }
+
+        function messageSeller(userId) {
+            window.location.href = `../messages.html?userId=${encodeURIComponent(userId)}&from=admin`;
         }
 
         document.addEventListener('DOMContentLoaded', loadApplications);

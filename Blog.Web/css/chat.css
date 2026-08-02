@@ -102,6 +102,9 @@
     padding: 0 4px;
 }
 
+.inbox-tab-shop { white-space: nowrap; }
+.inbox-tab-shop i { margin-right: 4px; font-size: .78rem; }
+
 /* ── Conversation List ───────────────────────────────── */
 .conv-list {
     flex: 1;
@@ -210,6 +213,24 @@
     justify-content: center;
     padding: 0 4px;
 }
+
+.conv-shop-badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border: 2px solid var(--bg-primary, #fff);
+    border-radius: 7px;
+    color: #fff;
+    background: linear-gradient(145deg, #6d5dfc, #53c7ee);
+    font-size: 9px;
+}
+
+.shop-chat-host { min-width: 0; overflow: hidden; }
+.shop-chat-iframe { width: 100%; height: 100%; border: 0; background: var(--bg-primary, #fff); }
 
 /* ── Empty States ────────────────────────────────────── */
 .inbox-empty {

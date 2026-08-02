@@ -95,6 +95,16 @@ async function loadNotifications() {
                     window.location.href = `order-detail.html?id=${n.targetId}`;
                 } else if (n.type === 'Report' || n.type === 'Complaint') {
                     window.location.href = 'admin/index.html';
+                } else if (n.type === 'SellerComplaint') {
+                    window.location.href = 'admin/reports.html';
+                } else if (n.type === 'ShopChatMessage' && n.targetId) {
+                    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+                    const isSeller = Boolean(localStorage.getItem('seller_shop_info')) && userInfo.role !== 'Admin' && userInfo.Role !== 'Admin';
+                    window.location.href = isSeller
+                        ? `seller/messages.html?conversationId=${n.targetId}`
+                        : `shop-messages.html?conversationId=${n.targetId}`;
+                } else if (n.type === 'DirectMessage' && n.targetId) {
+                    window.location.href = `messages.html?userId=${n.targetId}`;
                 } else if (['GroupJoinRequest', 'GroupJoinRequestApproved', 'GroupJoinRequestRejected'].includes(n.type)) {
                     window.location.href = `group-detail.html?id=${n.targetId}`;
                 } else if (n.targetId) {
