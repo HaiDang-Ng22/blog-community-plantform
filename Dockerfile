@@ -9,8 +9,9 @@ COPY ["Blog.Application/Blog.Application.csproj", "Blog.Application/"]
 COPY ["Blog.Domain/Blog.Domain.csproj", "Blog.Domain/"]
 COPY ["Blog.Infrastructure/Blog.Infrastructure.csproj", "Blog.Infrastructure/"]
 
-# Restore dependencies
-RUN dotnet restore "BlogSystem.sln"
+# Restore only the production API dependency graph. The test project is part of
+# the solution but is intentionally not copied into the Docker build cache.
+RUN dotnet restore "Blog.API/Blog.API.csproj"
 
 # Copy the rest of the source code
 COPY . .
