@@ -19,10 +19,13 @@ public class AdminController : ControllerBase
     private readonly AppDbContext _context;
     private readonly INotificationService _notificationService;
 
-    public AdminController(AppDbContext context, INotificationService notificationService)
+    private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
+
+    public AdminController(AppDbContext context, INotificationService notificationService, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
     {
         _context = context;
         _notificationService = notificationService;
+        _cache = cache;
     }
 
     [HttpPost("cleanup-social-data")]
@@ -145,6 +148,51 @@ public class AdminController : ControllerBase
             .OrderByDescending(u => u.CreatedAt)
             .ToListAsync();
         return Ok(users);
+    }
+
+    [HttpGet("admins")]
+    public async Task<IActionResult> GetAdmins()
+    {
+        var admins = await _context.Users
+            .Where(u => u.Role == "Admin")
+            .Select(u => new
+            {
+                u.Id,
+                u.Username,
+                u.Email,
+                u.FullName,
+                u.Role,
+                u.AvatarUrl,
+                u.CreatedAt,
+                u.IsActive,
+                PostCount = u.Posts.Count
+            })
+            .OrderBy(u => u.CreatedAt)
+            .ToListAsync();
+        return Ok(admins);
+    }
+
+    [HttpPost("revoke-admin/{id}")]
+    public async Task<IActionResult> RevokeAdmin(Guid id)
+    {
+        var currentAdminId = User.GetUserId();
+        if (currentAdminId == null) return Unauthorized();
+
+        if (currentAdminId.Value == id)
+            return BadRequest(new { message = "Bạn không thể tự hạ quyền Admin của chính mình." });
+
+        var targetUser = await _context.Users.FindAsync(id);
+        if (targetUser == null) return NotFound(new { message = "Người dùng không tồn tại." });
+
+        if (targetUser.Role != "Admin")
+            return BadRequest(new { message = "Tài khoản này hiện không phải là Admin." });
+
+        targetUser.Role = "User";
+        await _context.SaveChangesAsync();
+
+        _cache.Remove($"REAL_ADMIN_CHECK_{id}");
+
+        return Ok(new { message = $"Đã hạ quyền Quản trị viên của tài khoản {targetUser.Email} thành User thành công." });
     }
 
     [HttpGet("reports")]

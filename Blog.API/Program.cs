@@ -1,4 +1,4 @@
-using Blog.Infrastructure.Data;
+﻿using Blog.Infrastructure.Data;
 using Blog.Infrastructure.Repositories;
 using Blog.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +31,16 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 // Local-only secrets (gitignored). Overrides appsettings.json for Gemini, etc.
-builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+var contentRootLocalSettings = Path.Combine(builder.Environment.ContentRootPath, "appsettings.Local.json");
+if (File.Exists(contentRootLocalSettings))
+{
+    builder.Configuration.AddJsonFile(contentRootLocalSettings, optional: true, reloadOnChange: true);
+    Console.WriteLine("[Configuration] Loaded appsettings.Local.json from ContentRootPath.");
+}
+else
+{
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+}
 var renderSecretsDirectory = "/etc/secrets";
 var renderLocalSettingsPath = Path.Combine(renderSecretsDirectory, "appsettings.Local.json");
 if (File.Exists(renderLocalSettingsPath))
@@ -129,6 +138,54 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+static string ParsePostgresUri(string value)
+{
+    var prefix = value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ? "postgresql://" : "postgres://";
+    var remaining = value.Substring(prefix.Length);
+    var lastAtIndex = remaining.LastIndexOf('@');
+    if (lastAtIndex > 0)
+    {
+        var userInfoPart = remaining.Substring(0, lastAtIndex);
+        var hostAndPathPart = remaining.Substring(lastAtIndex + 1);
+
+        var userPass = userInfoPart.Split(':', 2);
+        var username = userPass.Length > 0 ? Uri.UnescapeDataString(userPass[0]) : string.Empty;
+        var password = userPass.Length > 1 ? Uri.UnescapeDataString(userPass[1]) : string.Empty;
+
+        var slashIndex = hostAndPathPart.IndexOf('/');
+        var hostPort = slashIndex >= 0 ? hostAndPathPart.Substring(0, slashIndex) : hostAndPathPart;
+        var dbName = slashIndex >= 0 ? hostAndPathPart.Substring(slashIndex + 1).Split('?')[0] : "postgres";
+
+        var colonIndex = hostPort.LastIndexOf(':');
+        var host = colonIndex >= 0 ? hostPort.Substring(0, colonIndex) : hostPort;
+        var port = colonIndex >= 0 && int.TryParse(hostPort.Substring(colonIndex + 1), out var p) ? p : 5432;
+
+        return new NpgsqlConnectionStringBuilder
+        {
+            Host = host,
+            Port = port,
+            Database = Uri.UnescapeDataString(dbName),
+            Username = username,
+            Password = password,
+            SslMode = SslMode.Require,
+            IncludeErrorDetail = true
+        }.ConnectionString;
+    }
+
+    var uri = new Uri(value);
+    var uInfo = uri.UserInfo.Split(':', 2);
+    return new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/')),
+        Username = uInfo.Length > 0 ? Uri.UnescapeDataString(uInfo[0]) : string.Empty,
+        Password = uInfo.Length > 1 ? Uri.UnescapeDataString(uInfo[1]) : string.Empty,
+        SslMode = SslMode.Require,
+        IncludeErrorDetail = true
+    }.ConnectionString;
+}
+
 static string? NormalizePostgresConnectionString(string? rawConnectionString)
 {
     if (string.IsNullOrWhiteSpace(rawConnectionString)) return null;
@@ -139,19 +196,7 @@ static string? NormalizePostgresConnectionString(string? rawConnectionString)
         if (value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
             value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
         {
-            var uri = new Uri(value);
-            var userInfo = uri.UserInfo.Split(':', 2);
-            var builderFromUri = new NpgsqlConnectionStringBuilder
-            {
-                Host = uri.Host,
-                Port = uri.Port > 0 ? uri.Port : 5432,
-                Database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/')),
-                Username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : string.Empty,
-                Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty,
-                SslMode = SslMode.Require,
-                IncludeErrorDetail = true
-            };
-            return builderFromUri.ConnectionString;
+            return ParsePostgresUri(value);
         }
 
         var builder = new NpgsqlConnectionStringBuilder(value);
@@ -251,6 +296,7 @@ builder.Services.AddHttpClient<IGeminiService, GeminiService>(client =>
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<Blog.Application.Services.IAiShoppingAssistantService, Blog.Infrastructure.Services.AiShoppingAssistantService>();
 builder.Services.AddMemoryCache();
+builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, Blog.API.Security.RealAdminClaimsTransformation>();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -260,9 +306,20 @@ builder.Services.AddRateLimiter(options =>
         await context.HttpContext.Response.WriteAsJsonAsync(new
         {
             code = "AI_RATE_LIMITED",
-            message = "Bạn đã gửi quá nhiều yêu cầu tới Zynk AI. Vui lòng thử lại sau."
+            message = "Báº¡n Ä‘Ã£ gá»­i quÃ¡ nhiá»u yÃªu cáº§u tá»›i Zynk AI. Vui lÃ²ng thá»­ láº¡i sau."
         }, cancellationToken);
     };
+    options.AddPolicy("AuthPolicy", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
+        return RateLimitPartition.GetFixedWindowLimiter($"auth:{ip}", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 15,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
     options.AddPolicy("AiChatPolicy", httpContext =>
     {
         var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -362,8 +419,8 @@ app.UseExceptionHandler(errorApp =>
         await context.Response.WriteAsJsonAsync(new
         {
             message = isConcurrencyConflict
-                ? "Dữ liệu vừa được cập nhật ở một yêu cầu khác. Vui lòng thử lại."
-                : "Máy chủ đang gặp sự cố tạm thời. Vui lòng thử lại sau."
+                ? "Dá»¯ liá»‡u vá»«a Ä‘Æ°á»£c cáº­p nháº­t á»Ÿ má»™t yÃªu cáº§u khÃ¡c. Vui lÃ²ng thá»­ láº¡i."
+                : "MÃ¡y chá»§ Ä‘ang gáº·p sá»± cá»‘ táº¡m thá»i. Vui lÃ²ng thá»­ láº¡i sau."
         });
     });
 });
@@ -377,10 +434,12 @@ if (app.Environment.IsDevelopment())
 }
 // app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseMiddleware<Blog.API.Security.SecurityHeadersMiddleware>();
 app.UseResponseCompression();
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();
+app.UseMiddleware<Blog.API.Security.AdminSecurityMiddleware>();
 
 // Serve static files from Blog.Web
 var webPath = Path.Combine(app.Environment.ContentRootPath, "..", "Blog.Web");
@@ -501,7 +560,7 @@ using (var scope = app.Services.CreateScope())
                         FromStatus = previousStatus,
                         ToStatus = OrderStatus.AwaitingBankVerification,
                         ChangedByUserId = order.BuyerId,
-                        Note = "Đồng bộ yêu cầu xác minh chuyển khoản đã tạo trước phiên bản trạng thái mới."
+                        Note = "Äá»“ng bá»™ yÃªu cáº§u xÃ¡c minh chuyá»ƒn khoáº£n Ä‘Ã£ táº¡o trÆ°á»›c phiÃªn báº£n tráº¡ng thÃ¡i má»›i."
                     });
                 }
 
@@ -522,7 +581,7 @@ using (var scope = app.Services.CreateScope())
                     order.Status == OrderStatus.AwaitingBankVerification &&
                     order.UpdatedAt.HasValue &&
                     order.StatusHistory.Any(history =>
-                        history.Note == "Đồng bộ yêu cầu xác minh chuyển khoản đã tạo trước phiên bản trạng thái mới.") &&
+                        history.Note == "Äá»“ng bá»™ yÃªu cáº§u xÃ¡c minh chuyá»ƒn khoáº£n Ä‘Ã£ táº¡o trÆ°á»›c phiÃªn báº£n tráº¡ng thÃ¡i má»›i.") &&
                     !dbContext.Notifications.Any(notification =>
                         notification.Type == "PaymentVerificationRequested" &&
                         notification.TargetId == order.Id &&
@@ -541,7 +600,7 @@ using (var scope = app.Services.CreateScope())
                     ActorId = order.BuyerId,
                     Type = "PaymentVerificationRequested",
                     TargetId = order.Id,
-                    Message = "đã báo chuyển khoản thành công. Vui lòng kiểm tra tài khoản và xác nhận giao dịch.",
+                    Message = "Ä‘Ã£ bÃ¡o chuyá»ƒn khoáº£n thÃ nh cÃ´ng. Vui lÃ²ng kiá»ƒm tra tÃ i khoáº£n vÃ  xÃ¡c nháº­n giao dá»‹ch.",
                     CreatedAt = DateTime.UtcNow,
                     IsRead = false
                 });
@@ -564,7 +623,7 @@ using (var scope = app.Services.CreateScope())
     // Seed Real Admin User (credentials loaded from appsettings.Local.json)
     var adminEmail = builder.Configuration["AdminSettings:Email"];
     var adminPassword = builder.Configuration["AdminSettings:Password"];
-    if (!string.IsNullOrEmpty(adminEmail) && !adminEmail.StartsWith("YOUR_"))
+    if (!string.IsNullOrWhiteSpace(adminEmail) && !adminEmail.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(adminPassword) && !adminPassword.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase) && adminPassword != "ChangeMe@2026!" && adminPassword.Length >= 8)
     {
         var existingAdmin = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
         if (existingAdmin == null)
@@ -575,16 +634,16 @@ using (var scope = app.Services.CreateScope())
                 Username = "admin_dang", 
                 Email = adminEmail,
                 FullName = "Admin Zynk",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword ?? "ChangeMe@2026!"),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword!),
                 Role = "Admin",
                 CreatedAt = DateTime.UtcNow
             });
             await dbContext.SaveChangesAsync();
         }
-        else if (existingAdmin.Role != "Admin")
+        // Existing accounts are not modified during startup
         {
-            existingAdmin.Role = "Admin";
-            await dbContext.SaveChangesAsync();
+            // no-op
+            // skipped
         }
     }
 }

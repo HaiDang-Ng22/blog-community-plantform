@@ -4,9 +4,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
     const token = localStorage.getItem('auth_token');
 
-    // Security Check: Only Admin can access this page
+    // Strict Security Check: Verify real Admin privilege with backend
     if (!token || (userInfo.role !== 'Admin' && userInfo.Role !== 'Admin')) {
         alert('Bạn không có quyền truy cập trang này.');
+        window.location.href = 'index.html';
+        return;
+    }
+
+    try {
+        await window.api.get('admin/ping');
+    } catch (err) {
+        alert('Phiên làm việc Quản trị viên không hợp lệ hoặc đã bị thu hồi quyền.');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_info');
         window.location.href = 'index.html';
         return;
     }
